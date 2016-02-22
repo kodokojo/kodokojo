@@ -2,6 +2,7 @@ package io.kodokojo.project.gitlab;
 
 import com.squareup.okhttp.*;
 import io.kodokojo.commons.utils.properties.provider.PropertyValueProvider;
+import io.kodokojo.project.launcher.brick.ProjectConfigurer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,9 +12,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.apache.commons.lang.StringUtils.isBlank;
-
-public class GitlabConfigurer {
+public class GitlabConfigurer implements ProjectConfigurer<String, String> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GitlabConfigurer.class);
 
@@ -32,6 +31,7 @@ public class GitlabConfigurer {
     public static final String ACCOUNT_URL = "/profile/account";
 
     public static final String OLD_PASSWORD = "5iveL!fe";
+
     public static final String ROOT_LOGIN = "root";
 
     private final PropertyValueProvider propertyValueProvider;
@@ -43,18 +43,16 @@ public class GitlabConfigurer {
         this.propertyValueProvider = propertyValueProvider;
     }
 
+    @Override
     public String configure(String gitlabUrl) {
-        if (isBlank(gitlabUrl)) {
-            throw new IllegalArgumentException("gitlabUrl must be defined.");
-        }
         OkHttpClient httpClient = new OkHttpClient();
         CookieManager cookieManager = new CookieManager(new GitlabCookieStore(), CookiePolicy.ACCEPT_ALL);
         httpClient.setCookieHandler(cookieManager);
-        if (signIn(httpClient,gitlabUrl, ROOT_LOGIN, OLD_PASSWORD)) {
+        if (signIn(httpClient, gitlabUrl, ROOT_LOGIN, OLD_PASSWORD)) {
             String token = getAuthenticityToken(httpClient, gitlabUrl + PASSWORD_FORM_URL, META_TOKEN_PATTERN);
             String newPassword = propertyValueProvider.providePropertyValue(String.class, "gitlab.root.password");
-            if (changePassword(httpClient,gitlabUrl, token , OLD_PASSWORD, newPassword)) {
-                if (signIn(httpClient,gitlabUrl, ROOT_LOGIN, newPassword)) {
+            if (changePassword(httpClient, gitlabUrl, token, OLD_PASSWORD, newPassword)) {
+                if (signIn(httpClient, gitlabUrl, ROOT_LOGIN, newPassword)) {
                     Request request = new Request.Builder().get().url(gitlabUrl + ACCOUNT_URL).build();
                     try {
                         Response response = httpClient.newCall(request).execute();
@@ -80,7 +78,6 @@ public class GitlabConfigurer {
                 .build();
         Request request = new Request.Builder()
                 .url(gitlabUrl + PASSWORD_URL)
-                .addHeader("Connection", "keep-alive")
                 .addHeader("Content-Type", "application/x-www-form-urlencoded")
                 .post(formBody).build();
 
@@ -106,7 +103,6 @@ public class GitlabConfigurer {
 
         Request request = new Request.Builder()
                 .url(gitlabUrl + SIGNIN_URL)
-                .addHeader("Connection", "keep-alive")
                 .addHeader("Content-Type", "application/x-www-form-urlencoded")
                 .post(formBody).build();
 

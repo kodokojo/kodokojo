@@ -1,26 +1,21 @@
-package io.kodokojo.project.docker;
+package io.kodokojo.project.launcher.brick.docker;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.core.command.PullImageResultCallback;
-import com.squareup.okhttp.HttpUrl;
-import com.squareup.okhttp.OkHttpClient;
+import io.kodokojo.commons.project.model.BrickConfiguration;
+import io.kodokojo.commons.project.model.BrickEntity;
 import io.kodokojo.commons.utils.docker.DockerSupport;
-import io.kodokojo.project.BrickLauncher;
-import io.kodokojo.project.model.Brick;
-import io.kodokojo.project.model.Service;
+import io.kodokojo.project.launcher.ConfigurationApplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
-import static org.apache.commons.lang.StringUtils.isBlank;
+public class DockerConfigurationApplier implements ConfigurationApplier<BrickConfiguration, BrickEntity> {
 
-public class DockerBrickLauncher implements BrickLauncher {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(DockerBrickLauncher.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DockerConfigurationApplier.class);
 
     private final DockerSupport dockerSupport;
 
@@ -30,7 +25,7 @@ public class DockerBrickLauncher implements BrickLauncher {
 
 
     @Inject
-    public DockerBrickLauncher(DockerSupport dockerSupport, Map<String, BrickDockerCommandFactory> commandFactory) {
+    public DockerConfigurationApplier(DockerSupport dockerSupport, Map<String, BrickDockerCommandFactory> commandFactory) {
         if (dockerSupport == null) {
             throw new IllegalArgumentException("dockerClient must be defined.");
         }
@@ -43,25 +38,24 @@ public class DockerBrickLauncher implements BrickLauncher {
     }
 
     @Override
-    public Service launch(Brick brick) {
-        if (brick == null) {
-            throw new IllegalArgumentException("brick must be defined.");
+    public BrickEntity apply(BrickConfiguration brickConfiguration) {
+        if (brickConfiguration == null) {
+            throw new IllegalArgumentException("brickConfiguration must be defined.");
         }
-        BrickDockerCommandFactory brickDockerCommandFactory = commandFactory.get(brick.getName());
+        BrickDockerCommandFactory brickDockerCommandFactory = commandFactory.get(brickConfiguration.getName());
 
         ContainerCommand containerCmd = brickDockerCommandFactory.createContainerCmd(dockerClient);
         try {
             dockerClient.pullImageCmd(containerCmd.getImageName().getDockerImageName()).exec(new PullImageResultCallback()).awaitCompletion();
             CreateContainerResponse createContainerResponse = containerCmd.getCreateContainerCmd().exec();
             dockerClient.startContainerCmd(createContainerResponse.getId()).exec();
-            Service service = new Service(brick, containerCmd.createHealthUrl(dockerSupport, createContainerResponse.getId()));
+            BrickEntity brickEntity = new BrickEntity(brickConfiguration.getBrick(), null, 1);
             dockerSupport.waitUntilHttpRequestRespond(containerCmd.createHealthUrl(dockerSupport, createContainerResponse.getId()), containerCmd.getStartTimeout());
-            return service;
+            return brickEntity;
         } catch (InterruptedException e) {
             String message = "Unable to pull image " + containerCmd.getImageName().getFullyQualifiedName();
             LOGGER.error(message, e);
             throw new RuntimeException(message, e);
         }
     }
-
 }

@@ -1,4 +1,4 @@
-package io.kodokojo.project.docker;
+package io.kodokojo.project.launcher.brick.docker;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
@@ -10,14 +10,18 @@ import io.kodokojo.commons.utils.docker.DockerSupport;
 
 import java.util.concurrent.TimeUnit;
 
-public class JenkinsCommandFactory implements BrickDockerCommandFactory {
+public class JenkinsCommandFactory extends BrickDockerCommandFactory {
 
     @Override
     public ContainerCommand createContainerCmd(DockerClient dockerClient) {
-        ExposedPort exposedPort = ExposedPort.tcp(8080);
+
+        ExposedPort[] exposedPorts =  new ExposedPort[0];
         Ports portBinding = new Ports();
-        portBinding.bind(exposedPort, Ports.Binding(null));
-        CreateContainerCmd createContainerCmd = dockerClient.createContainerCmd("jenkins").withExposedPorts(exposedPort).withPortBindings(portBinding);
+
+        exposeTcpPort(8080, portBinding, exposedPorts);
+        exposeTcpPort(50000, portBinding, exposedPorts);
+
+        CreateContainerCmd createContainerCmd = dockerClient.createContainerCmd("jenkins").withExposedPorts(exposedPorts).withPortBindings(portBinding);
         return new ContainerCommand(StringToImageNameConverter.convert("jenkins:latest"), createContainerCmd, new ExposedPorts(ExposedPort.tcp(8080)), TimeUnit.MILLISECONDS.convert(2, TimeUnit.MINUTES)) {
             @Override
             public String createHealthUrl(DockerSupport dockerSupport, String id) {

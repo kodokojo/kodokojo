@@ -2,18 +2,14 @@ package io.kodokojo.project.gitlab;
 
 import com.google.gson.*;
 import com.squareup.okhttp.Response;
-import io.kodokojo.project.UserManager;
-import io.kodokojo.project.model.User;
+import io.kodokojo.commons.project.model.User;
+import io.kodokojo.commons.project.model.UserService;
+import io.kodokojo.user.UserManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import retrofit.RestAdapter;
 import retrofit.RetrofitError;
 import retrofit.converter.GsonConverter;
-import retrofit.http.*;
-
-import javax.ws.rs.FormParam;
-
-import java.io.IOException;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
@@ -39,8 +35,6 @@ public class GitlabUserManager implements UserManager {
         gitlabRest = restAdapter.create(GitlabRest.class);
     }
 
-
-    @Override
     public boolean createUser(User user) {
         if (user == null) {
             throw new IllegalArgumentException("user must be defined.");
@@ -59,4 +53,23 @@ public class GitlabUserManager implements UserManager {
     }
 
 
+    @Override
+    public boolean addUser(User user) {
+        return false;
+    }
+
+    @Override
+    public boolean addUserService(UserService userService) {
+        return false;
+    }
+
+    @Override
+    public User getUserByUsername(String username) {
+        return null;
+    }
+
+    @Override
+    public UserService getUserServiceByName(String name) {
+        return null;
+    }
 }

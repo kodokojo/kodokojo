@@ -1,4 +1,4 @@
-package io.kodokojo.project.docker;
+package io.kodokojo.project.launcher.brick.docker;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
@@ -10,18 +10,18 @@ import io.kodokojo.commons.utils.docker.DockerSupport;
 
 import java.util.concurrent.TimeUnit;
 
-public class GitlabCommandFactory implements BrickDockerCommandFactory {
+public class GitlabCommandFactory extends BrickDockerCommandFactory {
 
     @Override
     public ContainerCommand createContainerCmd(DockerClient dockerClient) {
-        ExposedPort exposedPort = ExposedPort.tcp(80);
+        ExposedPort[] exposedPorts =  new ExposedPort[0];
         Ports portBinding = new Ports();
-        portBinding.bind(exposedPort, Ports.Binding(null));
-        exposedPort = ExposedPort.tcp(443);
-        portBinding.bind(exposedPort, Ports.Binding(null));
-        exposedPort = ExposedPort.tcp(22);
-        portBinding.bind(exposedPort, Ports.Binding(null));
-        CreateContainerCmd createContainerCmd = dockerClient.createContainerCmd("gitlab/gitlab-ce").withExposedPorts(exposedPort).withPortBindings(portBinding);
+
+        exposeTcpPort(80, portBinding, exposedPorts);
+        exposeTcpPort(443, portBinding, exposedPorts);
+        exposeTcpPort(22, portBinding, exposedPorts);
+
+        CreateContainerCmd createContainerCmd = dockerClient.createContainerCmd("gitlab/gitlab-ce").withExposedPorts(exposedPorts).withPortBindings(portBinding);
         return new ContainerCommand(StringToImageNameConverter.convert("gitlab/gitlab-ce"), createContainerCmd, new ExposedPorts(ExposedPort.tcp(80), ExposedPort.tcp(443), ExposedPort.tcp(22)), TimeUnit.MILLISECONDS.convert(5,TimeUnit.MINUTES)) {
             @Override
             public String createHealthUrl(DockerSupport dockerSupport, String id) {

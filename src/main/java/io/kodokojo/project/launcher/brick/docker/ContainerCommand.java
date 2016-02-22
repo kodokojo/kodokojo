@@ -1,4 +1,4 @@
-package io.kodokojo.project.docker;
+package io.kodokojo.project.launcher.brick.docker;
 
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.model.ExposedPorts;
