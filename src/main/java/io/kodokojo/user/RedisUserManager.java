@@ -28,20 +28,20 @@ public class RedisUserManager implements UserManager {
 
     private final JedisPool pool;
 
-    public RedisUserManager(Key key, String url) {
+    public RedisUserManager(Key key, String host, int port) {
         if (key == null) {
             throw new IllegalArgumentException("key must be defined.");
         }
-        if (isBlank(url)) {
-            throw new IllegalArgumentException("url must be defined.");
+        if (isBlank(host)) {
+            throw new IllegalArgumentException("host must be defined.");
         }
         this.key = key;
-        pool = createJedisPool(url);
+        pool = createJedisPool(host, port);
     }
 
     //  For testing
-    protected JedisPool createJedisPool(String url) {
-        return new JedisPool(new JedisPoolConfig(), url);
+    protected JedisPool createJedisPool(String host, int port) {
+        return new JedisPool(new JedisPoolConfig(), host, port);
     }
 
     @Override

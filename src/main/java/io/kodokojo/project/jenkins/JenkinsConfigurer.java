@@ -33,7 +33,7 @@ public class JenkinsConfigurer implements ProjectConfigurer<ConfigurerData, Bool
 
 
     @Override
-    public Boolean configure(ConfigurerData configurerData) {   
+    public Boolean configure(ConfigurerData configurerData) {
 
         String url = configurerData.getEntrypoint() + SCRIPT_URL_SUFFIX;
 
