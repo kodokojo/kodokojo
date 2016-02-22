@@ -103,7 +103,7 @@ public class RedisUserManager implements UserManager {
         RSAPrivateKey privateKey = RSAUtils.unwrapPrivateRsaKey(key, userServiceValue.getPrivateKey());
         RSAPublicKey publicKey = RSAUtils.unwrapPublicRsaKey(key, userServiceValue.getPublicKey());
         RSAUtils.unwrap(key, userServiceValue.getPublicKey());
-        return new UserService(id, userServiceValue.getName(), userServiceValue.getLogin(), password, privateKey, publicKey);
+        return new UserService(userServiceValue.getLogin(), userServiceValue.getName(), userServiceValue.getLogin(), password, privateKey, publicKey);
     }
 
     private Object readFromRedis(byte[] key) {

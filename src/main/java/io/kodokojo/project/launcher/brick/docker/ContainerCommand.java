@@ -42,6 +42,10 @@ public abstract class ContainerCommand {
         return startTimeout;
     }
 
+    public ExposedPorts getExposedPorts() {
+        return exposedPorts;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

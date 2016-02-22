@@ -2,7 +2,8 @@ package io.kodokojo.project.gitlab;
 
 import com.squareup.okhttp.*;
 import io.kodokojo.commons.utils.properties.provider.PropertyValueProvider;
-import io.kodokojo.project.launcher.brick.ProjectConfigurer;
+
+import io.kodokojo.project.launcher.ProjectConfigurer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

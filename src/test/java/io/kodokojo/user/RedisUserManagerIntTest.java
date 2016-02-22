@@ -35,7 +35,7 @@ public class RedisUserManagerIntTest {
         System.out.println(user.getSshPublicKey());
 
 
-        UserService jenkins = new UserService(id, "jenkins", "jenkins", "jenkins", (RSAPrivateKey) keyPair.getPrivate(), (RSAPublicKey) keyPair.getPublic());
+        UserService jenkins = new UserService("jenkins", "jenkins", "jenkins", "jenkins", (RSAPrivateKey) keyPair.getPrivate(), (RSAPublicKey) keyPair.getPublic());
         userManager.addUserService(jenkins);
 
         UserService userService = userManager.getUserServiceByName("jenkins");

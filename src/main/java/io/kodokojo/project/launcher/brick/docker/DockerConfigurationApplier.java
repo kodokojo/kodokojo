@@ -2,15 +2,20 @@ package io.kodokojo.project.launcher.brick.docker;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.model.ExposedPort;
+import com.github.dockerjava.api.model.ExposedPorts;
 import com.github.dockerjava.core.command.PullImageResultCallback;
 import io.kodokojo.commons.project.model.BrickConfiguration;
 import io.kodokojo.commons.project.model.BrickEntity;
+import io.kodokojo.commons.project.model.Service;
 import io.kodokojo.commons.utils.docker.DockerSupport;
 import io.kodokojo.project.launcher.ConfigurationApplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class DockerConfigurationApplier implements ConfigurationApplier<BrickConfiguration, BrickEntity> {
@@ -49,7 +54,14 @@ public class DockerConfigurationApplier implements ConfigurationApplier<BrickCon
             dockerClient.pullImageCmd(containerCmd.getImageName().getDockerImageName()).exec(new PullImageResultCallback()).awaitCompletion();
             CreateContainerResponse createContainerResponse = containerCmd.getCreateContainerCmd().exec();
             dockerClient.startContainerCmd(createContainerResponse.getId()).exec();
-            BrickEntity brickEntity = new BrickEntity(brickConfiguration.getBrick(), null, 1);
+            List<Service> services = new ArrayList<>();
+            ExposedPorts ports = containerCmd.getExposedPorts();
+            String host = dockerSupport.getDockerHost();
+            for (ExposedPort exposedPort : ports.getExposedPorts()) {
+                int port = dockerSupport.getExposedPort(createContainerResponse.getId(), exposedPort.getPort());
+                services.add(new Service(brickConfiguration.getName() + "-" + port, host, port));
+            }
+            BrickEntity brickEntity = new BrickEntity(brickConfiguration.getBrick(), services, 1);
             dockerSupport.waitUntilHttpRequestRespond(containerCmd.createHealthUrl(dockerSupport, createContainerResponse.getId()), containerCmd.getStartTimeout());
             return brickEntity;
         } catch (InterruptedException e) {
