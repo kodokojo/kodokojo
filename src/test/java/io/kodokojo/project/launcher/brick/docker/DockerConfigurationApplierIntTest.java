@@ -1,5 +1,27 @@
 package io.kodokojo.project.launcher.brick.docker;
 
+/*
+ * #%L
+ * project-manager
+ * %%
+ * Copyright (C) 2016 Kodo-kojo
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
+
 import io.kodokojo.commons.DockerIsRequire;
 import io.kodokojo.commons.DockerPresentMethodRule;
 import io.kodokojo.commons.config.DockerConfig;
@@ -48,9 +70,9 @@ public class DockerConfigurationApplierIntTest {
         String entrypoint = "http://" + service.getHost() + ":" + service.getPort();
 
         List<User> users = new ArrayList<>();
-        User user = new User("Jean-Pascal THIERY", "jpthiery", "jpthiery@xebia.fr", "jpascal", "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDJlKssV2knMeGglt31NWQVznhlzgCJtblmiN/QG5y+X4cJ9pDXzpRJ13L88ay7rGL5SC6UwjJTQB4y1RI0Jte4naYRprDHfOUbMfi3KEiRY0I9LCDjThmTJNK6KhK5iv1ybcEKQd65wu5lGFpPG+TQfxocIXIPe9y0ZPSCxOHPjP9c6Akq6ryBNo4tANPVXEB37K9c2/2l/y7hfLqzkUf36V9el4ptgtYwrhR3Jbx4Q4uadLOK/KO4Kh8HAWsFmTLNv4c9DurLZlNNn9iw6/pBR2C5agM+cPjQ8NDJhMAktcQo5pjeYFS91EXrb/0EsDUn1mUdFPQH8GiENdz5WVgf jpthiery@xebia.fr");
+        User user = new User("jpthiery","Jean-Pascal THIERY", "jpthiery", "jpthiery@xebia.fr", "jpascal", "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDJlKssV2knMeGglt31NWQVznhlzgCJtblmiN/QG5y+X4cJ9pDXzpRJ13L88ay7rGL5SC6UwjJTQB4y1RI0Jte4naYRprDHfOUbMfi3KEiRY0I9LCDjThmTJNK6KhK5iv1ybcEKQd65wu5lGFpPG+TQfxocIXIPe9y0ZPSCxOHPjP9c6Akq6ryBNo4tANPVXEB37K9c2/2l/y7hfLqzkUf36V9el4ptgtYwrhR3Jbx4Q4uadLOK/KO4Kh8HAWsFmTLNv4c9DurLZlNNn9iw6/pBR2C5agM+cPjQ8NDJhMAktcQo5pjeYFS91EXrb/0EsDUn1mUdFPQH8GiENdz5WVgf jpthiery@xebia.fr");
         users.add(user);
-        user = new User("Antoine LE TAXIN", "altaxin", "ataxin@xebia.fr", "antoine", "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDJlKssV2knMeGglt31NWQVznhlzgCJtblmiN/QG5y+X4cJ9pDXzpRJ13L88ay7rGL5SC6UwjJTQB4y1RI0Jte4naYRprDHfOUbMfi3KEiRY0I9LCDjThmTJNK6KhK5iv1ybcEKQd65wu5lGFpPG+TQfxocIXIPe9y0ZPSCxOHPjP9c6Akq6ryBNo4tANPVXEB37K9c2/2l/y7hfLqzkUf36V9el4ptgtYwrhR3Jbx4Q4uadLOK/KO4Kh8HAWsFmTLNv4c9DurLZlNNn9iw6/pBR2C5agM+cPjQ8NDJhMAktcQo5pjeYFS91EXrb/0EsDUn1mUdFPQH8GiENdz5WVgf ataxin@xebia.fr");
+        user = new User("aletaxin","Antoine LE TAXIN", "altaxin", "ataxin@xebia.fr", "antoine", "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDJlKssV2knMeGglt31NWQVznhlzgCJtblmiN/QG5y+X4cJ9pDXzpRJ13L88ay7rGL5SC6UwjJTQB4y1RI0Jte4naYRprDHfOUbMfi3KEiRY0I9LCDjThmTJNK6KhK5iv1ybcEKQd65wu5lGFpPG+TQfxocIXIPe9y0ZPSCxOHPjP9c6Akq6ryBNo4tANPVXEB37K9c2/2l/y7hfLqzkUf36V9el4ptgtYwrhR3Jbx4Q4uadLOK/KO4Kh8HAWsFmTLNv4c9DurLZlNNn9iw6/pBR2C5agM+cPjQ8NDJhMAktcQo5pjeYFS91EXrb/0EsDUn1mUdFPQH8GiENdz5WVgf ataxin@xebia.fr");
         users.add(user);
         ConfigurerData configurerData = new ConfigurerData(entrypoint, users);
         configurer.configure(configurerData);

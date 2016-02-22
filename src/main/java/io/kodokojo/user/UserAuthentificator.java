@@ -1,4 +1,4 @@
-package io.kodokojo.project.launcher;
+package io.kodokojo.user;
 
 /*
  * #%L
@@ -22,8 +22,10 @@ package io.kodokojo.project.launcher;
  * #L%
  */
 
-public interface ConfigurerFactory<C,L> {
+import io.kodokojo.commons.project.model.User;
 
-    ProjectConfigurer<C,L> create();
+public interface UserAuthentificator<T> {
+
+    User authenticate(T credentials);
 
 }

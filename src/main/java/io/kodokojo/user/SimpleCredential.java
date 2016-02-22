@@ -1,4 +1,4 @@
-package io.kodokojo.project.launcher;
+package io.kodokojo.user;
 
 /*
  * #%L
@@ -22,8 +22,30 @@ package io.kodokojo.project.launcher;
  * #L%
  */
 
-public interface ConfigurerFactory<C,L> {
+import static org.apache.commons.lang.StringUtils.isBlank;
 
-    ProjectConfigurer<C,L> create();
+public class SimpleCredential {
 
+    private final String username;
+
+    private final String password;
+
+    public SimpleCredential(String username, String password) {
+        if (isBlank(username)) {
+            throw new IllegalArgumentException("username must be defined.");
+        }
+        if (isBlank(password)) {
+            throw new IllegalArgumentException(" must be defined.");
+        }
+        this.username = username;
+        this.password = password;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
 }

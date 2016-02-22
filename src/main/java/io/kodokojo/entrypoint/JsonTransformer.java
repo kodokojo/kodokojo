@@ -1,4 +1,4 @@
-package io.kodokojo.project.launcher;
+package io.kodokojo.entrypoint;
 
 /*
  * #%L
@@ -22,8 +22,16 @@ package io.kodokojo.project.launcher;
  * #L%
  */
 
-public interface ConfigurerFactory<C,L> {
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import spark.ResponseTransformer;
 
-    ProjectConfigurer<C,L> create();
+public class JsonTransformer implements ResponseTransformer {
 
+    private Gson gson = new GsonBuilder().create();
+
+    @Override
+    public String render(Object model) throws Exception {
+        return gson.toJson(model);
+    }
 }
