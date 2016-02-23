@@ -353,6 +353,9 @@
                 <version>1.8</version>
                 <configuration>
                     <licenseName>gpl_v3</licenseName>
+                    <excludes>
+                        <exclude>webapp/**.*</exclude>
+                    </excludes>
                 </configuration>
                 <executions>
                     <execution>

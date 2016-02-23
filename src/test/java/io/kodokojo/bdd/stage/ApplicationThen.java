@@ -27,9 +27,13 @@ import com.google.gson.GsonBuilder;
 import com.tngtech.jgiven.CurrentStep;
 import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.ExpectedScenarioState;
+import com.tngtech.jgiven.annotation.Quoted;
 import com.tngtech.jgiven.attachment.Attachment;
 import io.kodokojo.commons.project.model.User;
 import io.kodokojo.user.RedisUserManager;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -41,7 +45,16 @@ public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF
     @ExpectedScenarioState
     CurrentStep currentStep;
 
-    public SELF it_exist_a_valid_user_with_username_$(String username) {
+    @ExpectedScenarioState
+    Map<String, UserInfo> currentUsers = new HashMap<>();
+
+    @ExpectedScenarioState
+    String restEntryPointHost;
+
+    @ExpectedScenarioState
+    int restEntryPointPort;
+
+    public SELF it_exist_a_valid_user_with_username_$(@Quoted String username) {
         User user = userManager.getUserByUsername(username);
 
         assertThat(user).isNotNull();
@@ -49,8 +62,15 @@ public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF
         Gson gson = new GsonBuilder().create();
         String json = gson.toJson(user);
         Attachment attachment = Attachment.plainText(json).withTitle("User generate");
-        System.out.println(json);
         currentStep.addAttachment(attachment);
         return self();
     }
+
+    public SELF it_NOT_exist_a_valid_user_with_username_$(@Quoted String username) {
+        User user = userManager.getUserByUsername(username);
+
+        assertThat(user).isNull();
+        return self();
+    }
+
 }

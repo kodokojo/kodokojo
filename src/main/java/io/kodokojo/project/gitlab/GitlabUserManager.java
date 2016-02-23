@@ -33,9 +33,11 @@ import retrofit.RestAdapter;
 import retrofit.RetrofitError;
 import retrofit.converter.GsonConverter;
 
+import java.security.interfaces.RSAPrivateKey;
+
 import static org.apache.commons.lang.StringUtils.isBlank;
 
-public class GitlabUserManager implements UserManager {
+public class GitlabUserManager  {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GitlabUserManager.class);
 
@@ -75,32 +77,41 @@ public class GitlabUserManager implements UserManager {
     }
 
 
-    @Override
+    
     public String generateId() {
         return null;
     }
 
-    @Override
+    
     public boolean identifierExpectedNewUser(String generatedId) {
         return false;
     }
 
-    @Override
+    
+    public boolean storeUserPrivateKey(String identifier, RSAPrivateKey privateKey) {
+        return false;
+    }
+
+    public RSAPrivateKey getUserPrivateKey(String identifier) {
+        return null;
+    }
+
+    
     public boolean addUser(User user) {
         return false;
     }
 
-    @Override
+    
     public boolean addUserService(UserService userService) {
         return false;
     }
 
-    @Override
+    
     public User getUserByUsername(String username) {
         return null;
     }
 
-    @Override
+    
     public UserService getUserServiceByName(String name) {
         return null;
     }

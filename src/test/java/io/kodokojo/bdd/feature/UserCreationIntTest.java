@@ -24,6 +24,7 @@ package io.kodokojo.bdd.feature;
 
 import com.tngtech.jgiven.annotation.As;
 import com.tngtech.jgiven.junit.ScenarioTest;
+import io.kodokojo.bdd.User;
 import io.kodokojo.bdd.stage.ApplicationGiven;
 import io.kodokojo.bdd.stage.ApplicationThen;
 import io.kodokojo.bdd.stage.ApplicationWhen;
@@ -34,8 +35,8 @@ import org.junit.Test;
 
 
 @As("User creation scenarios")
+@User
 public class UserCreationIntTest extends ScenarioTest<ApplicationGiven<?>, ApplicationWhen<?>, ApplicationThen<?>> {
-
 
     @Rule
     public DockerPresentMethodRule dockerPresentMethodRule = new DockerPresentMethodRule();
@@ -45,8 +46,32 @@ public class UserCreationIntTest extends ScenarioTest<ApplicationGiven<?>, Appli
     public void create_a_simple_user() {
         given().redis_is_started()
                 .and().kodokojo_restEntrypoint_is_available();
-        when().retrive_a_new_id().and().create_user_with_email_$("jpthiery@xebia.fr");
+        when().retrive_a_new_id()
+                .and().create_user_with_email_$("jpthiery@xebia.fr");
         then().it_exist_a_valid_user_with_username_$("jpthiery");
+    }
+
+    @Test
+    @DockerIsRequire
+    public void create_two_users_with_same_identifier() {
+        given().redis_is_started()
+                .and().kodokojo_restEntrypoint_is_available();
+        when().retrive_a_new_id()
+                .and().create_user_with_email_$("jpthiery@xebia.fr")
+                .and().create_user_with_email_$_which_must_fail("aletaxin@xebia.fr");
+
+        then().it_exist_a_valid_user_with_username_$("jpthiery")
+                .and().it_NOT_exist_a_valid_user_with_username_$("aletaxin");
+    }
+
+    @Test
+    @DockerIsRequire
+    public void try_to_create_user_without_identifier() {
+        given().redis_is_started()
+                .and().kodokojo_restEntrypoint_is_available();
+        when().create_user_with_email_$_which_must_fail("aletaxin@xebia.fr");
+
+        then().it_NOT_exist_a_valid_user_with_username_$("aletaxin");
     }
 
 }

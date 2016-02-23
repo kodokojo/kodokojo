@@ -23,22 +23,26 @@ package io.kodokojo.user;
  */
 
 import io.kodokojo.commons.project.model.User;
-import io.kodokojo.commons.project.model.UserService;
 
-import java.security.interfaces.RSAPrivateKey;
+import static org.apache.commons.lang.StringUtils.isBlank;
 
-public interface UserManager {
+public class UserCreationDto extends User {
 
-    String generateId();
+    private final String privateKey;
 
-    boolean identifierExpectedNewUser(String generatedId);
 
-    boolean addUser(User user);
+    public UserCreationDto(String identifier, String name, String username, String email, String password, String privateKey, String sshPublicKey) {
+        super(identifier, name, username, email, password, sshPublicKey);
+        if (isBlank(privateKey)) {
+            throw new IllegalArgumentException("privateKey must be defined.");
+        }
+        this.privateKey = privateKey;
+    }
 
-    boolean addUserService(UserService userService);
-
-    User getUserByUsername(String username);
-
-    UserService getUserServiceByName(String name);
-
+    public UserCreationDto(User user, String privateKey) {
+        this(user.getIdentifier(), user.getName(), user.getUsername(), user.getEmail(), user.getPassword(), privateKey, user.getSshPublicKey());
+    }
+    public String getPrivateKey() {
+        return privateKey;
+    }
 }

@@ -25,10 +25,8 @@ package io.kodokojo.entrypoint;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.kodokojo.commons.project.model.User;
-import io.kodokojo.user.RedisUserManager;
-import io.kodokojo.user.SimpleCredential;
-import io.kodokojo.user.UserAuthentificator;
-import io.kodokojo.user.UserManager;
+import io.kodokojo.commons.utils.RSAUtils;
+import io.kodokojo.user.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
@@ -38,9 +36,15 @@ import spark.Spark;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.StringWriter;
 import java.math.BigInteger;
+import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
 
 import static spark.Spark.*;
 
@@ -49,6 +53,12 @@ public class RestEntrypoint {
     private static final Logger LOGGER = LoggerFactory.getLogger(RestEntrypoint.class);
 
     private static final String JSON_CONTENT_TYPE = "application/json";
+
+    private static final String TEXT_CONTENT_TYPE = "text/plain";
+
+    private static final String API_VERSION = "v1";
+
+    private static final String BASE_API = "/api/" +API_VERSION ;
 
     private final int port;
 
@@ -70,12 +80,14 @@ public class RestEntrypoint {
 
         Spark.port(port);
 
+        staticFileLocation("webapp");
+
         before((request, response) -> {
-            boolean authenticationRequired = authentificationRequiereFor("POST", "/api/user", request);
+            boolean authenticationRequired = authentificationRequiereFor("POST", BASE_API + "/user", request);
             if (authenticationRequired) {
-                authenticationRequired = authentificationRequiereFor("GET", "/api", request);
+                authenticationRequired = !authentificationRequiereFor("GET", BASE_API, request) && !authentificationRequiereFor("GET", BASE_API + "/doc/*", request);
                 if (authenticationRequired) {
-                    authenticationRequired = !("PUT".equals(request.requestMethod()) && request.pathInfo().matches("/api/user/[^/]*"));
+                    authenticationRequired = !("PUT".equals(request.requestMethod()) && request.pathInfo().matches(BASE_API + "/user/[^/]*"));
                 }
             }
             if (authenticationRequired) {
@@ -96,12 +108,12 @@ public class RestEntrypoint {
             }
         });
 
-        get("/api", JSON_CONTENT_TYPE, (request, response) -> {
+        get(BASE_API, JSON_CONTENT_TYPE, (request, response) -> {
             response.type(JSON_CONTENT_TYPE);
             return "{\"version\":\"1.0.0\"}";
         });
 
-        post("/api/user", JSON_CONTENT_TYPE, (request, response) -> {
+        post(BASE_API + "/user", JSON_CONTENT_TYPE, (request, response) -> {
             String res = userManager.generateId();
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Generate id : {}", res);
@@ -109,20 +121,28 @@ public class RestEntrypoint {
             return res;
         });
 
-        put("/api/user/:id", JSON_CONTENT_TYPE, ((request, response) -> {
+        put(BASE_API + "/user/:id", JSON_CONTENT_TYPE, ((request, response) -> {
             String identifier = request.params(":id");
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Try to create user with id {}", identifier);
+            }
             if (userManager.identifierExpectedNewUser(identifier)) {
                 JsonParser parser = new JsonParser();
                 JsonObject json = (JsonObject) parser.parse(request.body());
                 String email = json.getAsJsonPrimitive("email").getAsString();
                 String username = email.substring(0,email.lastIndexOf("@"));
+
                 String password = new BigInteger(130, new SecureRandom()).toString(32);
-                User user = new User(identifier, username, username, email, password, null);
+                KeyPair keyPair = RSAUtils.generateRsaKeyPair();
+                RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
+                User user = new User(identifier, username, username, email, password, RSAUtils.encodePublicKey((RSAPublicKey) keyPair.getPublic(), email));
                 if (userManager.addUser(user)) {
                     response.status(201);
-                    return user;
+                    StringWriter sw = new StringWriter();
+                    RSAUtils.writeRsaPrivateKey(privateKey, sw);
+                    return new UserCreationDto(user, sw.toString());
                 }
-                halt(405);
+                halt(409);
                 return "";
             } else {
                 halt(412);
@@ -130,7 +150,12 @@ public class RestEntrypoint {
             }
         }), jsonResponseTransformer);
 
+
         Spark.awaitInitialization();
+    }
+
+    public void stop() {
+        Spark.stop();
     }
 
     private void authorizationRequiered(Response response) {

@@ -1,4 +1,4 @@
-package io.kodokojo.user;
+package io.kodokojo.bdd.stage;
 
 /*
  * #%L
@@ -22,23 +22,36 @@ package io.kodokojo.user;
  * #L%
  */
 
-import io.kodokojo.commons.project.model.User;
-import io.kodokojo.commons.project.model.UserService;
+public class UserInfo {
 
-import java.security.interfaces.RSAPrivateKey;
+    private final String username;
 
-public interface UserManager {
+    private final String identifier;
 
-    String generateId();
+    private final String password;
 
-    boolean identifierExpectedNewUser(String generatedId);
+    private final String email;
 
-    boolean addUser(User user);
+    public UserInfo(String username, String identifier, String password, String email) {
+        this.username = username;
+        this.identifier = identifier;
+        this.password = password;
+        this.email = email;
+    }
 
-    boolean addUserService(UserService userService);
+    public String getUsername() {
+        return username;
+    }
 
-    User getUserByUsername(String username);
+    public String getIdentifier() {
+        return identifier;
+    }
 
-    UserService getUserServiceByName(String name);
+    public String getPassword() {
+        return password;
+    }
 
+    public String getEmail() {
+        return email;
+    }
 }

@@ -40,8 +40,6 @@ import io.kodokojo.commons.utils.properties.PropertyResolver;
 import io.kodokojo.commons.utils.properties.provider.*;
 import io.kodokojo.entrypoint.RestEntrypoint;
 import io.kodokojo.user.RedisUserManager;
-import io.kodokojo.user.UserManager;
-import org.assertj.core.api.Assertions;
 import org.junit.Rule;
 
 import javax.crypto.KeyGenerator;
@@ -78,8 +76,6 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
     @ProvidedScenarioState
     RedisUserManager userManager;
 
-    private DockerSupport dockerSupport;
-
     @BeforeScenario
     public void create_a_docker_client() {
         dockerClient = dockerTestSupport.getDockerClient();
@@ -96,7 +92,6 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
             }
         });
         DockerConfig dockerConfig = injector.getInstance(DockerConfig.class);
-        dockerSupport = new DockerSupport(dockerConfig);
     }
 
     public SELF redis_is_started() {
@@ -130,6 +125,7 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
     @AfterScenario
     public void tear_down() {
         dockerTestSupport.stopAndRemoveContainer();
+        restEntrypoint.stop();
     }
 
 }

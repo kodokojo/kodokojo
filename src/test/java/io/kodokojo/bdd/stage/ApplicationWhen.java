@@ -22,17 +22,20 @@ package io.kodokojo.bdd.stage;
  * #L%
  */
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.squareup.okhttp.*;
+import com.tngtech.jgiven.CurrentStep;
 import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.ExpectedScenarioState;
 import com.tngtech.jgiven.annotation.ProvidedScenarioState;
 import com.tngtech.jgiven.annotation.Quoted;
+import com.tngtech.jgiven.attachment.Attachment;
 import io.kodokojo.entrypoint.RestEntrypoint;
-import org.assertj.core.api.Assertions;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -52,11 +55,18 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
     @ProvidedScenarioState
     String newUserId;
 
+    @ProvidedScenarioState
+    Map<String, UserInfo> currentUsers = new HashMap<>();
+
+    @ExpectedScenarioState
+    CurrentStep currentStep;
+
+
     public SELF retrive_a_new_id() {
         OkHttpClient httpClient = new OkHttpClient();
         RequestBody emptyBody = RequestBody.create(null, new byte[0]);
         String baseUrl = "http://" + restEntryPointHost + ":" + restEntryPointPort;
-        Request request = new Request.Builder().post(emptyBody).url(baseUrl + "/api/user").build();
+        Request request = new Request.Builder().post(emptyBody).url(baseUrl + "/api/v1/user").build();
         try {
             Response response = httpClient.newCall(request).execute();
             if (response.code() != 200) {
@@ -70,24 +80,45 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
     }
 
     public SELF create_user_with_email_$(@Quoted String email) {
+        return create_user(email, true);
+    }
+
+    public SELF create_user_with_email_$_which_must_fail(@Quoted String email) {
+        return create_user(email, false);
+    }
+
+    public SELF create_user(String email, boolean success) {
         if (isBlank(email)) {
             throw new IllegalArgumentException("email must be defined.");
         }
-        if (isBlank(newUserId)) {
-            throw new IllegalArgumentException("newUserId must be defined.");
-        }
+
         OkHttpClient httpClient = new OkHttpClient();
 
-        RequestBody body = RequestBody.create(MediaType.parse("application/json"), ("{\"email\": \"" + email +"\"}").getBytes());
+        RequestBody body = RequestBody.create(MediaType.parse("application/json"), ("{\"email\": \"" + email + "\"}").getBytes());
         String baseUrl = "http://" + restEntryPointHost + ":" + restEntryPointPort;
 
-        Request request = new Request.Builder().put(body).url(baseUrl + "/api/user/" + newUserId).build();
+        Request request = new Request.Builder().put(body).url(baseUrl + "/api/v1/user/" + (newUserId != null ? newUserId : "")).build();
         try {
             Response response = httpClient.newCall(request).execute();
-            assertThat(response.code()).isEqualTo(201);
-            System.out.println(response.body().string());
+            if (success) {
+                assertThat(response.code()).isEqualTo(201);
+                JsonParser parser = new JsonParser();
+                String bodyResponse = response.body().string();
+                JsonObject json = (JsonObject) parser.parse(bodyResponse);
+                String currentUsername = json.getAsJsonPrimitive("username").getAsString();
+                String currentUserPassword = json.getAsJsonPrimitive("password").getAsString();
+                String currentUserEmail = json.getAsJsonPrimitive("email").getAsString();
+                String currentUserIdentifier = json.getAsJsonPrimitive("identifier").getAsString();
+                currentUsers.put(currentUsername, new UserInfo(currentUsername, currentUserIdentifier, currentUserPassword, currentUserEmail));
+                Attachment privateKey = Attachment.plainText(bodyResponse).withTitle(currentUsername + " response");
+                currentStep.addAttachment(privateKey);
+            } else {
+                assertThat(response.code()).isNotEqualTo(201);
+            }
         } catch (IOException e) {
-            fail(e.getMessage(), e);
+            if (success) {
+                fail(e.getMessage(), e);
+            }
         }
         return self();
     }

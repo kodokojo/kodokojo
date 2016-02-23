@@ -1,4 +1,4 @@
-package io.kodokojo.user;
+package io.kodokojo.bdd;
 
 /*
  * #%L
@@ -22,23 +22,14 @@ package io.kodokojo.user;
  * #L%
  */
 
-import io.kodokojo.commons.project.model.User;
-import io.kodokojo.commons.project.model.UserService;
 
-import java.security.interfaces.RSAPrivateKey;
+import com.tngtech.jgiven.annotation.IsTag;
 
-public interface UserManager {
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
-    String generateId();
-
-    boolean identifierExpectedNewUser(String generatedId);
-
-    boolean addUser(User user);
-
-    boolean addUserService(UserService userService);
-
-    User getUserByUsername(String username);
-
-    UserService getUserServiceByName(String name);
-
+@IsTag
+@Retention(RetentionPolicy.RUNTIME)
+public @interface User {
+    // Nothing to do.
 }

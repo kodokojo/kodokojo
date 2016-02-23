@@ -43,6 +43,7 @@ import java.security.interfaces.RSAPublicKey;
 import java.util.Arrays;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
+import static org.apache.commons.lang.StringUtils.isNotBlank;
 
 public class RedisUserManager implements UserManager, UserAuthentificator<SimpleCredential> {
 
@@ -54,6 +55,18 @@ public class RedisUserManager implements UserManager, UserAuthentificator<Simple
 
     private static final byte[] NEW_USER_CONTENT = new byte[]{0, 1, 1, 0};
 
+    private static final int DEFAULT_NEW_ID_TTL = 5 * 60; //5 minutes
+
+    public static final String NEW_ID_PREFIX = "newId/";
+
+    public static final String USER_PREFIX = "user/";
+
+    public static final String USERNAME_PREFIX = "usenamer/";
+
+    public static final String USERSERVICE_PREFIX = "userservice/";
+
+    public static final String USERSERVICENAME_PREFIX = "userservicename/";
+
     private final Key key;
 
     private final JedisPool pool;
@@ -62,13 +75,16 @@ public class RedisUserManager implements UserManager, UserAuthentificator<Simple
 
     private final MessageDigest messageDigest;
 
-    public RedisUserManager(Key key, String host, int port) {
+    private final int newIdExpirationTime;
+
+    public RedisUserManager(Key key, String host, int port, int newIdExpirationTime) {
         if (key == null) {
             throw new IllegalArgumentException("key must be defined.");
         }
         if (isBlank(host)) {
             throw new IllegalArgumentException("host must be defined.");
         }
+
         this.key = key;
         pool = createJedisPool(host, port);
 
@@ -92,6 +108,12 @@ public class RedisUserManager implements UserManager, UserAuthentificator<Simple
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("Unable to get instance of SHA-1 digester");
         }
+        this.newIdExpirationTime = newIdExpirationTime;
+    }
+
+
+    public RedisUserManager(Key key, String host, int port) {
+        this(key, host, port, DEFAULT_NEW_ID_TTL);
     }
 
     //  For testing
@@ -104,7 +126,9 @@ public class RedisUserManager implements UserManager, UserAuthentificator<Simple
         try (Jedis jedis = pool.getResource()) {
             String id = salt + jedis.incr(ID_KEY).toString();
             String newId = hexEncode(messageDigest.digest(id.getBytes()));
-            jedis.set(newId.getBytes(), NEW_USER_CONTENT);
+            byte[] prefixedKey = aggregateKey(NEW_ID_PREFIX, newId);
+            jedis.set(prefixedKey, NEW_USER_CONTENT);
+            jedis.expire(prefixedKey, newIdExpirationTime);
             return newId;
         }
     }
@@ -115,7 +139,7 @@ public class RedisUserManager implements UserManager, UserAuthentificator<Simple
             throw new IllegalArgumentException("generatedId must be defined.");
         }
         try (Jedis jedis = pool.getResource()) {
-            return Arrays.equals(jedis.get(generatedId.getBytes()), NEW_USER_CONTENT);
+            return jedis.exists(aggregateKey(NEW_ID_PREFIX, generatedId));
         }
     }
 
@@ -126,14 +150,16 @@ public class RedisUserManager implements UserManager, UserAuthentificator<Simple
         }
         ByteArrayOutputStream byteArray = new ByteArrayOutputStream();
         try (ObjectOutputStream out = new ObjectOutputStream(byteArray); Jedis jedis = pool.getResource()) {
-            byte[] previous = jedis.get(user.getIdentifier().getBytes());
+            byte[] previous = jedis.get(aggregateKey(NEW_ID_PREFIX, user.getIdentifier()));
             if (Arrays.equals(previous, NEW_USER_CONTENT)) {
                 byte[] password = encrypt(user.getPassword());
 
                 UserValue userValue = new UserValue(user, password);
                 out.writeObject(userValue);
-                jedis.set(user.getIdentifier().getBytes(), byteArray.toByteArray());
-                jedis.set(user.getUsername(), user.getIdentifier());
+
+                jedis.set(aggregateKey(USER_PREFIX, user.getIdentifier()), byteArray.toByteArray());
+                jedis.set(USERNAME_PREFIX + user.getUsername(), user.getIdentifier());
+                jedis.del((NEW_ID_PREFIX + user.getIdentifier()).getBytes());
                 return true;
             } else {
                 return false;
@@ -157,8 +183,8 @@ public class RedisUserManager implements UserManager, UserAuthentificator<Simple
 
             UserServiceValue userServiceValue = new UserServiceValue(userService, password, privateKey, publicKey);
             out.writeObject(userServiceValue);
-            jedis.set(userService.getIdentifier().getBytes(), byteArray.toByteArray());
-            jedis.set(userService.getName(), userService.getIdentifier());
+            jedis.set(aggregateKey(USERSERVICE_PREFIX, userService.getIdentifier()), byteArray.toByteArray());
+            jedis.set(USERSERVICENAME_PREFIX + userService.getName(), userService.getIdentifier());
             return true;
         } catch (IOException e) {
             throw new RuntimeException("Unable to serialized UserValue.", e);
@@ -171,11 +197,11 @@ public class RedisUserManager implements UserManager, UserAuthentificator<Simple
             throw new IllegalArgumentException("username must be defined.");
         }
         try (Jedis jedis = pool.getResource()) {
-            String identifier = jedis.get(username);
+            String identifier = jedis.get(USERNAME_PREFIX + username);
             if (isBlank(identifier)) {
                 return null;
             }
-            UserValue userValue = (UserValue) readFromRedis(identifier.getBytes());
+            UserValue userValue = (UserValue) readFromRedis(aggregateKey(USER_PREFIX, identifier));
             String password = decrypt(userValue.getPassword());
             return new User(identifier, userValue.getName(), userValue.getUsername(), userValue.getEmail(), password, userValue.getSshPublicKey());
         }
@@ -187,17 +213,23 @@ public class RedisUserManager implements UserManager, UserAuthentificator<Simple
             throw new IllegalArgumentException("username must be defined.");
         }
         try (Jedis jedis = pool.getResource()) {
-            String identifier = jedis.get(name);
+            String identifier = jedis.get(USERSERVICENAME_PREFIX + name);
             if (isBlank(identifier)) {
                 return null;
             }
-            UserServiceValue userServiceValue = (UserServiceValue) readFromRedis(identifier.getBytes());
+            UserServiceValue userServiceValue = (UserServiceValue) readFromRedis(aggregateKey(USERSERVICE_PREFIX, identifier));
             String password = decrypt(userServiceValue.getPassword());
             RSAPrivateKey privateKey = RSAUtils.unwrapPrivateRsaKey(key, userServiceValue.getPrivateKey());
             RSAPublicKey publicKey = RSAUtils.unwrapPublicRsaKey(key, userServiceValue.getPublicKey());
             RSAUtils.unwrap(key, userServiceValue.getPublicKey());
             return new UserService(userServiceValue.getLogin(), userServiceValue.getName(), userServiceValue.getLogin(), password, privateKey, publicKey);
         }
+    }
+
+    private static byte[] aggregateKey(String prefix, String key) {
+        assert isNotBlank(prefix) : "prefix must be defined";
+        assert isNotBlank(key) : "key must be defined";
+        return (prefix + key).getBytes();
     }
 
     private Object readFromRedis(byte[] key) {
@@ -250,13 +282,13 @@ public class RedisUserManager implements UserManager, UserAuthentificator<Simple
         return (user != null && user.getPassword().equals(credentials.getPassword())) ? user : null;
     }
 
-    private static String hexEncode(byte[] aInput){
+    private static String hexEncode(byte[] aInput) {
         StringBuilder result = new StringBuilder();
-        char[] digits = {'0', '1', '2', '3', '4','5','6','7','8','9','a','b','c','d','e','f'};
+        char[] digits = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
         for (int idx = 0; idx < aInput.length; ++idx) {
             byte b = aInput[idx];
-            result.append(digits[ (b&0xf0) >> 4 ]);
-            result.append(digits[ b&0x0f]);
+            result.append(digits[(b & 0xf0) >> 4]);
+            result.append(digits[b & 0x0f]);
         }
         return result.toString();
     }
