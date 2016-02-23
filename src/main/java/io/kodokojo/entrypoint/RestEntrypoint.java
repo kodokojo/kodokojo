@@ -27,17 +27,13 @@ import com.google.gson.JsonParser;
 import io.kodokojo.commons.project.model.User;
 import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.user.*;
+import io.kodokojo.user.redis.RedisUserManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import spark.Request;
-import spark.Response;
-import spark.ResponseTransformer;
-import spark.Spark;
+import spark.*;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.StringWriter;
 import java.math.BigInteger;
 import java.security.KeyPair;
@@ -83,13 +79,15 @@ public class RestEntrypoint {
         staticFileLocation("webapp");
 
         before((request, response) -> {
-            boolean authenticationRequired = authentificationRequiereFor("POST", BASE_API + "/user", request);
-            if (authenticationRequired) {
-                authenticationRequired = !authentificationRequiereFor("GET", BASE_API, request) && !authentificationRequiereFor("GET", BASE_API + "/doc/*", request);
-                if (authenticationRequired) {
-                    authenticationRequired = !("PUT".equals(request.requestMethod()) && request.pathInfo().matches(BASE_API + "/user/[^/]*"));
-                }
+            boolean authenticationRequired = true ;
+            if (requestMatch("POST", BASE_API + "/user", request) ||
+                    requestMatch("GET", BASE_API, request) ||
+                    requestMatch("GET", BASE_API + "/doc/.*", request) ||
+                    requestMatch("PUT", BASE_API+ "/user/[^/]*", request)) {
+                authenticationRequired = false;
             }
+
+
             if (authenticationRequired) {
                 Authenticator authenticator = new Authenticator();
                 authenticator.handle(request, response);
@@ -163,8 +161,10 @@ public class RestEntrypoint {
         halt(401);
     }
 
-    private static boolean authentificationRequiereFor(String methodName, String path, Request request) {
-        return !(methodName.equals(request.requestMethod()) && path.equals(request.pathInfo()));
+    private static boolean requestMatch(String methodName, String path, Request request) {
+        boolean matchMethod = methodName.equals(request.requestMethod());
+        boolean pathMatch = request.pathInfo().matches(path);
+        return matchMethod && pathMatch;
     }
 
 

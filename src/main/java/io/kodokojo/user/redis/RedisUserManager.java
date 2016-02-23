@@ -1,4 +1,4 @@
-package io.kodokojo.user;
+package io.kodokojo.user.redis;
 
 /*
  * #%L
@@ -25,6 +25,7 @@ package io.kodokojo.user;
 import io.kodokojo.commons.project.model.User;
 import io.kodokojo.commons.project.model.UserService;
 import io.kodokojo.commons.utils.RSAUtils;
+import io.kodokojo.user.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
