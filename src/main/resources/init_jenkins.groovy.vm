@@ -106,9 +106,6 @@ def realm = new hudson.security.HudsonPrivateSecurityRealm(false, false, null)
 #foreach( $user in $users )
 create_or_update_user("$user.username", "$user.email", "$user.password", "$user.name", "$user.sshPublicKey")
 #end
-//create_or_update_user("jpthiery", "jpthiery@xebia.fr", "jpascal", "Jean-Pascal THIERY", "")
-
-//create_or_update_credentials('jpthiery', 'jpascal', "", "MYPRivateKey")
 
 instance.setAuthorizationStrategy(strategy)
 instance.setSecurityRealm(realm)

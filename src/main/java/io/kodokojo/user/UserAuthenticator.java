@@ -24,7 +24,7 @@ package io.kodokojo.user;
 
 import io.kodokojo.commons.project.model.User;
 
-public interface UserAuthentificator<T> {
+public interface UserAuthenticator<T> {
 
     User authenticate(T credentials);
 

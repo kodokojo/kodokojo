@@ -46,7 +46,7 @@ import java.util.Arrays;
 import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
 
-public class RedisUserManager implements UserManager, UserAuthentificator<SimpleCredential> {
+public class RedisUserManager implements UserManager, UserAuthenticator<SimpleCredential> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RedisUserManager.class);
 
@@ -275,11 +275,11 @@ public class RedisUserManager implements UserManager, UserAuthentificator<Simple
         }
     }
 
-    private String decrypt(byte[] encripted) {
+    private String decrypt(byte[] encrypted) {
         try {
             Cipher cipher = Cipher.getInstance("AES");
             cipher.init(Cipher.DECRYPT_MODE, key);
-            return new String(cipher.doFinal(encripted));
+            return new String(cipher.doFinal(encrypted));
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException e) {
             throw new RuntimeException("Unable to create Cipher", e);
         }

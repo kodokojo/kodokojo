@@ -60,15 +60,15 @@ public class RestEntrypoint {
 
     private final UserManager userManager;
 
-    private final UserAuthentificator<SimpleCredential> userAuthentificator;
+    private final UserAuthenticator<SimpleCredential> userAuthenticator;
 
 
     private final ResponseTransformer jsonResponseTransformer;
 
-    public RestEntrypoint(int port, UserManager userManager, UserAuthentificator<SimpleCredential> userAuthentificator) {
+    public RestEntrypoint(int port, UserManager userManager, UserAuthenticator<SimpleCredential> userAuthenticator) {
         this.port = port;
         this.userManager = userManager;
-        this.userAuthentificator = userAuthentificator;
+        this.userAuthenticator = userAuthenticator;
         jsonResponseTransformer = new JsonTransformer();
     }
 
@@ -87,19 +87,15 @@ public class RestEntrypoint {
                 authenticationRequired = false;
             }
 
-
             if (authenticationRequired) {
                 Authenticator authenticator = new Authenticator();
                 authenticator.handle(request, response);
                 if (authenticator.isProvideCredentials()) {
-                    User user = userAuthentificator.authenticate(new SimpleCredential(authenticator.getUsername(), authenticator.getPassword()));
-                    if (user != null) {
-                        if (LOGGER.isDebugEnabled()) {
-                            LOGGER.debug("User is user under user {}.", user);
-                        }
-                    } else {
+                    User user = userAuthenticator.authenticate(new SimpleCredential(authenticator.getUsername(), authenticator.getPassword()));
+                    if (user == null) {
                         authorizationRequiered(response);
                     }
+
                 } else {
                     authorizationRequiered(response);
                 }
@@ -176,7 +172,7 @@ public class RestEntrypoint {
         Spark.stop();
     }
 
-    private void authorizationRequiered(Response response) {
+    private static void authorizationRequiered(Response response) {
         response.header("WWW-Authenticate", "Basic realm=\"Kodokojo\"");
         halt(401);
     }
@@ -208,9 +204,10 @@ public class RestEntrypoint {
 
         RedisUserManager redisUserManager = new RedisUserManager(aesKey, "192.168.99.100", 6379);
         redisUserManager.addUser(new User(redisUserManager.generateId(), "Jean-Pascal THIERY", "jpthiery", "jpthiery@xebia.fr", "jpascal", "SSHPublic key"));
+        System.out.println(redisUserManager.getUserByUsername("jpthiery"));
         RestEntrypoint restEntrypoint = new RestEntrypoint(8080, redisUserManager, redisUserManager);
         restEntrypoint.start();
-        ;
+
     }
 
 }
