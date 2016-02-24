@@ -347,30 +347,44 @@
                     <format>html</format>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>license-maven-plugin</artifactId>
-                <version>1.8</version>
-                <configuration>
-                    <licenseName>gpl_v3</licenseName>
-                    <excludes>
-                        <exclude>webapp/**.*</exclude>
-                    </excludes>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>first</id>
-                        <goals>
-                            <goal>update-file-header</goal>
-                        </goals>
-                        <phase>process-sources</phase>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
     </build>
 
     <profiles>
+        <profile>
+            <id>license</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>license-maven-plugin</artifactId>
+                        <version>1.8</version>
+                        <configuration>
+                            <licenseName>gpl_v3</licenseName>
+                            <excludes>
+                                <exclude>*.js</exclude>
+                                <exclude>*.wolf</exclude>
+                                <exclude>*.raml</exclude>
+                                <exclude>*.gif</exclude>
+                                <exclude>*.icon</exclude>
+                            </excludes>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>first</id>
+                                <goals>
+                                    <goal>update-file-header</goal>
+                                </goals>
+                                <phase>process-sources</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
         <profile>
             <id>jenkins</id>
             <activation>
