@@ -129,6 +129,11 @@ public class RestEntrypoint {
                 JsonObject json = (JsonObject) parser.parse(request.body());
                 String email = json.getAsJsonPrimitive("email").getAsString();
                 String username = email.substring(0,email.lastIndexOf("@"));
+                User userByUsername = userManager.getUserByUsername(username);
+                if (userByUsername != null) {
+                    halt(409);
+                    return "";
+                }
 
                 String password = new BigInteger(130, new SecureRandom()).toString(32);
                 KeyPair keyPair = RSAUtils.generateRsaKeyPair();
@@ -140,7 +145,7 @@ public class RestEntrypoint {
                     RSAUtils.writeRsaPrivateKey(privateKey, sw);
                     return new UserCreationDto(user, sw.toString());
                 }
-                halt(409);
+                halt(428);
                 return "";
             } else {
                 halt(412);
@@ -149,8 +154,18 @@ public class RestEntrypoint {
         }), jsonResponseTransformer);
 
         get(BASE_API + "/user/:id", JSON_CONTENT_TYPE, (request, response) -> {
-
-            return null;
+            SimpleCredential credential = getCredential(request);
+            if (credential != null) {
+                String identifier = request.params(":id");
+                User user = userManager.getUserByIdentifier(identifier);
+                if (user.getUsername().equals(credential.getUsername())) {
+                    return user;
+                } else {
+                    return new User(user.getIdentifier(), user.getName(), user.getUsername(), "", "", "");
+                }
+            }
+            halt(500);
+            return "";
         }, jsonResponseTransformer);
 
         Spark.awaitInitialization();
@@ -172,6 +187,18 @@ public class RestEntrypoint {
         return matchMethod && pathMatch;
     }
 
+    private static SimpleCredential getCredential(Request request){
+        Authenticator authenticator = new Authenticator();
+        try {
+            authenticator.handle(request, null);
+            if (authenticator.isProvideCredentials()) {
+                return new SimpleCredential(authenticator.getUsername(), authenticator.getPassword());
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Unable to retrieve credentials", e);
+        }
+        return null;
+    }
 
     public static void main(String[] args) throws NoSuchAlgorithmException {
 

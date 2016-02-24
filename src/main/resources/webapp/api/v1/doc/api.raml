@@ -101,9 +101,12 @@ schemas:
                   "privateKey":"-----BEGIN RSA PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQCIiTddCskXUNi7\nRCcgnZGGcfqskOmLeL2pQc7W9wXrsbBDJz74J78LKWT+HvMVj+A8fKEVzh3Ftc6I\nlQFyQClXXnuhFY+nyoy9HDKxAw1SyesqE21Sb++ih7mOFU7UMGv2UCfKxVvOPFxR\n2Okjyar6CES9jG6u6quorwaBu9mUty0vej61PAQL65Txd8BTaGlKCTNEXLSFmvnp\npBIRvNBCRxgzJnRDly/afedmw+5KGXTxXZMSexGa9oe9fszCzvg0y8o17HUs/sW4\nOcZUeKHHplVTR+urZx7rSL6KjJ/hAH9TXlAx6JcIwrdHrVxz2SRTpLPWZQm5qzlb\n5OOqvFr1AgMBAAECggEAVCkorDxyueGGxt/6slsOEe5+ExL8MpGJbyR2aAE6cA9G\nVA6D/Rka5LluXEodksPt97rm3HcB2RX5Ki2XB6LPGODPmfqdY1MyL3uLL5tvAgIe\n5/+zmmYPM4Mv+Inf3mG+msTL0myW62g/i+AFzZ6IuriQDrramw1iJIdGnn95XfYe\nnT7Yk4I6JmaAu+DpbEGIZV2WoNXJnXK2EXFXzxkaMmdKjbsE0SBQCLUDaVZmn9bx\nBF51LL3a2aYTvFpb0ER6dWWSWIc9FLVzz10dEDDWvJoU6Z+SwS6/UUv/EJpp+DFy\nZDAajzYqZy6KficP8RoCEnPGHQAPgAo+siETK6qj3QKBgQD78/FQ0awQubWKOEH4\nOyz5sSUgtz17ZYDw3t3sX70o3tvEQxKZdWwCdqlI88eKYcCn3DcKAmJmhtJlVjRX\nKYkQQ43csDXfOHXen5MvU9svWVvZOIW7XAraZRsBeWLvhsCIdN+usE+YNAJ3s6SH\n4UJehmIjPnZTKkIM8vcMBn63pwKBgQCKuqq9JEPwZu+FkNnvoXtAtar0yH98vAYq\nTFkG7QXjQHRQbUns/e47e8p0Fvjq8yRHtCBfTnJqvCAlWpWY7JKMd5AfJ2T3YdcR\nTxSjJhFkIAxB60piI+QbTq0jLEn5CQfosGH7gPjVerA672L83OXtpyZPd+9x72AO\nWcJuaMSsAwKBgQCji9TP/lpvvOyfnScNZ/Qo3JlaJDfvmpLZSAHMRtU163vCaTtw\ni60h6D640S1soUl6bNL5V1Tico+uIgf1sEt9WCyE3YkKrc6tRO44oXk8wgeB+FOu\nq++LlmeyTEYxb0oZCayM63uvM8uKQf0CCvGXBCo98HTERUD8wNYmYyzsLwKBgQCC\npJlnd0B3oyhLOwbRcNvWK36r+Ch+ub6AlNd9+zYBNVCT8OeeQ9/WqpQUURHmiESR\nNeMKfaCoPTN0meKpWZgEqg/SFtIxWTUkurkvjwjvpnKEnWS2GSCWSrgnmGytFkEZ\ncwlCxMkQmPJe/dLVV907uZ4NVl/qhseJnCPKv+T+KwKBgQDLVeG47p69g5nLBR2K\nyO8CUXInsucTtjEx3d1GeHoooC/UjOLo8+aZ2DdGgRSbfjnPZQ7dNG8uZRDAiHjv\nW9ul87GGI4lGqbpzlVsSk8h5STeKWXcIbrnEOPBt6iRBSFT/7VdQIBQstJ/3qm05\nn57rpPmkEe4QCTx6MtLxzjRLPg\u003d\u003d\n-----END RSA PRIVATE KEY-----\n",
                   "sshPublicKey":"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCIiTddCskXUNi7RCcgnZGGcfqskOmLeL2pQc7W9wXrsbBDJz74J78LKWT+HvMVj+A8fKEVzh3Ftc6IlQFyQClXXnuhFY+nyoy9HDKxAw1SyesqE21Sb++ih7mOFU7UMGv2UCfKxVvOPFxR2Okjyar6CES9jG6u6quorwaBu9mUty0vej61PAQL65Txd8BTaGlKCTNEXLSFmvnppBIRvNBCRxgzJnRDly/afedmw+5KGXTxXZMSexGa9oe9fszCzvg0y8o17HUs/sW4OcZUeKHHplVTR+urZx7rSL6KjJ/hAH9TXlAx6JcIwrdHrVxz2SRTpLPWZQm5qzlb5OOqvFr1 jpthiery@xebia.fr"
                 }
+        428:
+          description:
+            Enable to create the user due to a error while processing creation of the user. May be due to a bad identifier.
         409:
           description:
-            Enable to create the user due to a conflict on the identifier.
+            The username already exist
         412:
           description:
             Identifier not valid.

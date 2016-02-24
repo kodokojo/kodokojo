@@ -205,9 +205,7 @@ public class RedisUserManager implements UserManager, UserAuthentificator<Simple
             if (isBlank(identifier)) {
                 return null;
             }
-            UserValue userValue = (UserValue) readFromRedis(aggregateKey(USER_PREFIX, identifier));
-            String password = decrypt(userValue.getPassword());
-            return new User(identifier, userValue.getName(), userValue.getUsername(), userValue.getEmail(), password, userValue.getSshPublicKey());
+            return getUserByIdentifier(identifier);
         }
     }
 
@@ -228,6 +226,16 @@ public class RedisUserManager implements UserManager, UserAuthentificator<Simple
             RSAUtils.unwrap(key, userServiceValue.getPublicKey());
             return new UserService(userServiceValue.getLogin(), userServiceValue.getName(), userServiceValue.getLogin(), password, privateKey, publicKey);
         }
+    }
+
+    @Override
+    public User getUserByIdentifier(String identifier) {
+        if (isBlank(identifier)) {
+            throw new IllegalArgumentException("identifier must be defined.");
+        }
+        UserValue userValue = (UserValue) readFromRedis(aggregateKey(USER_PREFIX, identifier));
+        String password = decrypt(userValue.getPassword());
+        return new User(identifier, userValue.getName(), userValue.getUsername(), userValue.getEmail(), password, userValue.getSshPublicKey());
     }
 
     private static byte[] aggregateKey(String prefix, String key) {

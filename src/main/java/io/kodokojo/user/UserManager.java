@@ -39,6 +39,8 @@ public interface UserManager {
 
     User getUserByUsername(String username);
 
+    User getUserByIdentifier(String identifier);
+
     UserService getUserServiceByName(String name);
 
 }
