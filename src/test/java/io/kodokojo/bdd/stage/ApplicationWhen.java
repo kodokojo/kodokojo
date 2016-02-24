@@ -44,9 +44,6 @@ import static org.assertj.core.api.Assertions.fail;
 public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF> {
 
     @ExpectedScenarioState
-    RestEntrypoint restEntrypoint;
-
-    @ExpectedScenarioState
     String restEntryPointHost;
 
     @ExpectedScenarioState
@@ -65,7 +62,7 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
     public SELF retrive_a_new_id() {
         OkHttpClient httpClient = new OkHttpClient();
         RequestBody emptyBody = RequestBody.create(null, new byte[0]);
-        String baseUrl = "http://" + restEntryPointHost + ":" + restEntryPointPort;
+        String baseUrl = betBaseUrl();
         Request request = new Request.Builder().post(emptyBody).url(baseUrl + "/api/v1/user").build();
         try {
             Response response = httpClient.newCall(request).execute();
@@ -73,6 +70,7 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
                 fail("Invalid HTTP code status " + response.code() + " expected 200");
             }
             newUserId = response.body().string();
+            response.body().close();
         } catch (IOException e) {
             fail(e.getMessage(), e);
         }
@@ -87,15 +85,14 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
         return create_user(email, false);
     }
 
-    public SELF create_user(String email, boolean success) {
+    private SELF create_user(String email, boolean success) {
         if (isBlank(email)) {
             throw new IllegalArgumentException("email must be defined.");
         }
 
         OkHttpClient httpClient = new OkHttpClient();
-
         RequestBody body = RequestBody.create(MediaType.parse("application/json"), ("{\"email\": \"" + email + "\"}").getBytes());
-        String baseUrl = "http://" + restEntryPointHost + ":" + restEntryPointPort;
+        String baseUrl = betBaseUrl();
 
         Request request = new Request.Builder().put(body).url(baseUrl + "/api/v1/user/" + (newUserId != null ? newUserId : "")).build();
         try {
@@ -115,11 +112,16 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
             } else {
                 assertThat(response.code()).isNotEqualTo(201);
             }
+            response.body().close();
         } catch (IOException e) {
             if (success) {
                 fail(e.getMessage(), e);
             }
         }
         return self();
+    }
+
+    private String betBaseUrl() {
+        return "http://" + restEntryPointHost + ":" + restEntryPointPort;
     }
 }

@@ -26,6 +26,7 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.Ports;
+import io.kodokojo.bdd.Back;
 import io.kodokojo.commons.DockerIsRequire;
 import io.kodokojo.commons.DockerPresentMethodRule;
 import io.kodokojo.commons.project.model.User;
@@ -47,6 +48,7 @@ import java.security.interfaces.RSAPublicKey;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
+@Back
 public class RedisUserManagerIntTest {
 
     @Rule

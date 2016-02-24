@@ -148,6 +148,10 @@ public class RestEntrypoint {
             }
         }), jsonResponseTransformer);
 
+        get(BASE_API + "/user/:id", JSON_CONTENT_TYPE, (request, response) -> {
+
+            return null;
+        }, jsonResponseTransformer);
 
         Spark.awaitInitialization();
 
