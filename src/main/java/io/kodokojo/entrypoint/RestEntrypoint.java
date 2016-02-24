@@ -150,6 +150,7 @@ public class RestEntrypoint {
 
 
         Spark.awaitInitialization();
+
     }
 
     public void stop() {

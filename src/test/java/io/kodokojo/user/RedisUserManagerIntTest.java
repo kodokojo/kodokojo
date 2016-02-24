@@ -32,6 +32,7 @@ import io.kodokojo.commons.project.model.User;
 import io.kodokojo.commons.project.model.UserService;
 import io.kodokojo.commons.utils.DockerTestSupport;
 import io.kodokojo.commons.utils.RSAUtils;
+import io.kodokojo.user.redis.RedisUserManager;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;

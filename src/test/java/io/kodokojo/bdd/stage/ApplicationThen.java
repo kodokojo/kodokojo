@@ -30,7 +30,7 @@ import com.tngtech.jgiven.annotation.ExpectedScenarioState;
 import com.tngtech.jgiven.annotation.Quoted;
 import com.tngtech.jgiven.attachment.Attachment;
 import io.kodokojo.commons.project.model.User;
-import io.kodokojo.user.RedisUserManager;
+import io.kodokojo.user.redis.RedisUserManager;
 
 import java.util.HashMap;
 import java.util.Map;

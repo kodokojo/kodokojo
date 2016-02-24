@@ -35,15 +35,17 @@ import com.tngtech.jgiven.annotation.BeforeScenario;
 import com.tngtech.jgiven.annotation.ProvidedScenarioState;
 import io.kodokojo.commons.config.DockerConfig;
 import io.kodokojo.commons.utils.DockerTestSupport;
-import io.kodokojo.commons.utils.docker.DockerSupport;
 import io.kodokojo.commons.utils.properties.PropertyResolver;
 import io.kodokojo.commons.utils.properties.provider.*;
 import io.kodokojo.entrypoint.RestEntrypoint;
-import io.kodokojo.user.RedisUserManager;
+import io.kodokojo.user.redis.RedisUserManager;
 import org.junit.Rule;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.security.NoSuchAlgorithmException;
 import java.util.LinkedList;
 
@@ -104,7 +106,15 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
     }
 
     public SELF kodokojo_restEntrypoint_is_available() {
-        return kodokojo_restEntrypoint_is_available_on_port_$(8080);
+        int port = 0;
+        try {
+            ServerSocket serverSocket = new ServerSocket(0);
+            port = ((InetSocketAddress )serverSocket.getLocalSocketAddress()).getPort();
+            serverSocket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return kodokojo_restEntrypoint_is_available_on_port_$(port);
     }
 
     public SELF kodokojo_restEntrypoint_is_available_on_port_$(int port) {

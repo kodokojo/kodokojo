@@ -151,23 +151,26 @@ public class RedisUserManager implements UserManager, UserAuthentificator<Simple
         }
         ByteArrayOutputStream byteArray = new ByteArrayOutputStream();
         try (ObjectOutputStream out = new ObjectOutputStream(byteArray); Jedis jedis = pool.getResource()) {
-            byte[] previous = jedis.get(aggregateKey(NEW_ID_PREFIX, user.getIdentifier()));
-            if (Arrays.equals(previous, NEW_USER_CONTENT)) {
-                byte[] password = encrypt(user.getPassword());
+            if (jedis.get(aggregateKey(USERNAME_PREFIX, user.getUsername())) == null) {
+                byte[] previous = jedis.get(aggregateKey(NEW_ID_PREFIX, user.getIdentifier()));
+                if (Arrays.equals(previous, NEW_USER_CONTENT) &&
+                        !jedis.exists(aggregateKey(USER_PREFIX, user.getIdentifier()))) {
+                    byte[] password = encrypt(user.getPassword());
 
-                UserValue userValue = new UserValue(user, password);
-                out.writeObject(userValue);
+                    UserValue userValue = new UserValue(user, password);
+                    out.writeObject(userValue);
 
-                jedis.set(aggregateKey(USER_PREFIX, user.getIdentifier()), byteArray.toByteArray());
-                jedis.set(USERNAME_PREFIX + user.getUsername(), user.getIdentifier());
-                jedis.del((NEW_ID_PREFIX + user.getIdentifier()).getBytes());
-                return true;
-            } else {
-                return false;
+                    jedis.set(aggregateKey(USER_PREFIX, user.getIdentifier()), byteArray.toByteArray());
+                    jedis.set(USERNAME_PREFIX + user.getUsername(), user.getIdentifier());
+                    jedis.del((NEW_ID_PREFIX + user.getIdentifier()).getBytes());
+                    return true;
+                }
+
             }
         } catch (IOException e) {
             throw new RuntimeException("Unable to serialized UserValue.", e);
         }
+        return false;
     }
 
 
