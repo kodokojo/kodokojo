@@ -1,4 +1,4 @@
-package io.kodokojo.project.launcher;
+package io.kodokojo.project.starter;
 
 /*
  * #%L
@@ -22,7 +22,10 @@ package io.kodokojo.project.launcher;
  * #L%
  */
 
-public interface ProjectConfigurer<E,R> {
+import io.kodokojo.commons.project.model.Configuration;
 
-    R configure(E entrypoint);
+public interface ConfigurationApplierFactory<C extends Configuration,L> {
+
+    ConfigurationApplier<C,L> create();
+
 }

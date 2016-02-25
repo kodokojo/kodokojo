@@ -1,4 +1,4 @@
-package io.kodokojo.project.launcher.brick.docker;
+package io.kodokojo.project.starter.brick.docker;
 
 /*
  * #%L

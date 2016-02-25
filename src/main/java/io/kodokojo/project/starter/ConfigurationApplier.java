@@ -1,4 +1,4 @@
-package io.kodokojo.project.launcher;
+package io.kodokojo.project.starter;
 
 /*
  * #%L

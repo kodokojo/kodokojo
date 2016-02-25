@@ -24,14 +24,13 @@ package io.kodokojo.project;
 
 import io.kodokojo.commons.project.model.*;
 import io.kodokojo.commons.project.model.Stack;
-import io.kodokojo.project.launcher.ConfigurationApplier;
 import io.kodokojo.user.UserManager;
 
 import java.security.interfaces.RSAPrivateKey;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class DefaultProjectLauncher implements ProjectLauncher {
+public class DefaultProjectStarter implements ProjectStarter {
 
     private RSAPrivateKey key;
 

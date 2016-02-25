@@ -23,8 +23,8 @@ package io.kodokojo.project.jenkins;
  */
 
 import com.squareup.okhttp.*;
-import io.kodokojo.project.launcher.ConfigurerData;
-import io.kodokojo.project.launcher.ProjectConfigurer;
+import io.kodokojo.project.starter.ConfigurerData;
+import io.kodokojo.project.starter.ProjectConfigurer;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;

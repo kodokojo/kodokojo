@@ -1,4 +1,4 @@
-package io.kodokojo.project.launcher.brick.docker;
+package io.kodokojo.project.starter.brick.docker;
 
 /*
  * #%L
@@ -29,11 +29,9 @@ import io.kodokojo.commons.project.model.*;
 import io.kodokojo.commons.utils.docker.DockerSupport;
 import io.kodokojo.commons.utils.properties.PropertyResolver;
 import io.kodokojo.commons.utils.properties.provider.DockerConfigValueProvider;
-import io.kodokojo.commons.utils.properties.provider.PropertyValueProvider;
 import io.kodokojo.commons.utils.properties.provider.SystemEnvValueProvider;
-import io.kodokojo.project.gitlab.GitlabConfigurer;
 import io.kodokojo.project.jenkins.JenkinsConfigurer;
-import io.kodokojo.project.launcher.ConfigurerData;
+import io.kodokojo.project.starter.ConfigurerData;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;

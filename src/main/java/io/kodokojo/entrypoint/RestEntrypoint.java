@@ -26,19 +26,26 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.kodokojo.commons.project.model.User;
 import io.kodokojo.commons.utils.RSAUtils;
-import io.kodokojo.user.*;
+import io.kodokojo.user.SimpleCredential;
+import io.kodokojo.user.UserAuthenticator;
+import io.kodokojo.user.UserCreationDto;
+import io.kodokojo.user.UserManager;
 import io.kodokojo.user.redis.RedisUserManager;
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import spark.*;
+import spark.Request;
+import spark.Response;
+import spark.ResponseTransformer;
+import spark.Spark;
 
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
-import java.io.StringWriter;
+import javax.crypto.*;
+import javax.crypto.spec.SecretKeySpec;
+import java.io.*;
 import java.math.BigInteger;
-import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
+import java.security.*;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 
@@ -54,14 +61,13 @@ public class RestEntrypoint {
 
     private static final String API_VERSION = "v1";
 
-    private static final String BASE_API = "/api/" +API_VERSION ;
+    private static final String BASE_API = "/api/" + API_VERSION;
 
     private final int port;
 
     private final UserManager userManager;
 
     private final UserAuthenticator<SimpleCredential> userAuthenticator;
-
 
     private final ResponseTransformer jsonResponseTransformer;
 
@@ -79,11 +85,12 @@ public class RestEntrypoint {
         staticFileLocation("webapp");
 
         before((request, response) -> {
-            boolean authenticationRequired = true ;
+            boolean authenticationRequired = true;
+            // White list of url which not require to have an identifier.
             if (requestMatch("POST", BASE_API + "/user", request) ||
                     requestMatch("GET", BASE_API, request) ||
                     requestMatch("GET", BASE_API + "/doc/.*", request) ||
-                    requestMatch("PUT", BASE_API+ "/user/[^/]*", request)) {
+                    requestMatch("PUT", BASE_API + "/user/[^/]*", request)) {
                 authenticationRequired = false;
             }
 
@@ -124,9 +131,12 @@ public class RestEntrypoint {
                 JsonParser parser = new JsonParser();
                 JsonObject json = (JsonObject) parser.parse(request.body());
                 String email = json.getAsJsonPrimitive("email").getAsString();
-                String username = email.substring(0,email.lastIndexOf("@"));
+                String username = email.substring(0, email.lastIndexOf("@"));
                 User userByUsername = userManager.getUserByUsername(username);
                 if (userByUsername != null) {
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug("Trying to create user {} from email '{}' who already exist.", username, email);
+                    }
                     halt(409);
                     return "";
                 }
@@ -141,6 +151,10 @@ public class RestEntrypoint {
                     RSAUtils.writeRsaPrivateKey(privateKey, sw);
                     return new UserCreationDto(user, sw.toString());
                 }
+
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("The UserManager not abel to add following user {}.", user.toString());
+                }
                 halt(428);
                 return "";
             } else {
@@ -150,7 +164,7 @@ public class RestEntrypoint {
         }), jsonResponseTransformer);
 
         get(BASE_API + "/user/:id", JSON_CONTENT_TYPE, (request, response) -> {
-            SimpleCredential credential = getCredential(request);
+            SimpleCredential credential = extractCredential(request);
             if (credential != null) {
                 String identifier = request.params(":id");
                 User user = userManager.getUserByIdentifier(identifier);
@@ -177,13 +191,13 @@ public class RestEntrypoint {
         halt(401);
     }
 
-    private static boolean requestMatch(String methodName, String path, Request request) {
+    private static boolean requestMatch(String methodName, String regexpPath, Request request) {
         boolean matchMethod = methodName.equals(request.requestMethod());
-        boolean pathMatch = request.pathInfo().matches(path);
+        boolean pathMatch = request.pathInfo().matches(regexpPath);
         return matchMethod && pathMatch;
     }
 
-    private static SimpleCredential getCredential(Request request){
+    private static SimpleCredential extractCredential(Request request) {
         Authenticator authenticator = new Authenticator();
         try {
             authenticator.handle(request, null);
@@ -196,18 +210,67 @@ public class RestEntrypoint {
         return null;
     }
 
-    public static void main(String[] args) throws NoSuchAlgorithmException {
+
+    //  TODO Move following code in Test runer class.
+    public static void main(String[] args) throws NoSuchAlgorithmException, DecoderException, IOException {
 
         KeyGenerator generator = KeyGenerator.getInstance("AES");
         generator.init(128);
         SecretKey aesKey = generator.generateKey();
 
+
+        String encodedString = Hex.encodeHexString(aesKey.getEncoded());
+        System.out.println(encodedString);
+
+        byte[] byteKey = Hex.decodeHex(encodedString.toCharArray());
+
+        System.out.println(new File("").getAbsolutePath());
+        byte[] encodeKeyByteArray = FileUtils.readFileToByteArray(new File("temp.key"));
+        SecretKeySpec keySpec = new SecretKeySpec(encodeKeyByteArray, "AES");
+/*
+        String data = "Coucou !";
+
+        byte[] encrypt = encrypt(data, keySpec);
+
+        FileOutputStream outputStream = new FileOutputStream("content_crypted.txt");
+        outputStream.write(encrypt);
+        outputStream.flush();
+        outputStream.close();
+*/
+        byte[] readFileToByteArray = FileUtils.readFileToByteArray(new File("content_crypted.txt"));
+
+        String decrypt = decrypt(readFileToByteArray, keySpec);
+        System.out.println(decrypt);
+
+        /*
+
         RedisUserManager redisUserManager = new RedisUserManager(aesKey, "192.168.99.100", 6379);
         redisUserManager.addUser(new User(redisUserManager.generateId(), "Jean-Pascal THIERY", "jpthiery", "jpthiery@xebia.fr", "jpascal", "SSHPublic key"));
         System.out.println(redisUserManager.getUserByUsername("jpthiery"));
-        RestEntrypoint restEntrypoint = new RestEntrypoint(8080, redisUserManager, redisUserManager);
+        RestEntrypoint restEntrypoint = new RestEntrypoint(80, redisUserManager, redisUserManager);
         restEntrypoint.start();
-
+        */
     }
+
+    private static byte[] encrypt(String data, SecretKey key) {
+        try {
+            Cipher cipher = Cipher.getInstance("AES");
+            cipher.init(Cipher.ENCRYPT_MODE, key);
+            return cipher.doFinal(data.getBytes());
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException e) {
+            throw new RuntimeException("Unable to create Cipher", e);
+        }
+    }
+
+    private static String decrypt(byte[] encrypted, SecretKey key) {
+        try {
+            Cipher cipher = Cipher.getInstance("AES");
+            cipher.init(Cipher.DECRYPT_MODE, key);
+            return new String(cipher.doFinal(encrypted));
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException e) {
+            throw new RuntimeException("Unable to create Cipher", e);
+        }
+    }
+
 
 }
