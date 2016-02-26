@@ -29,8 +29,7 @@
         </encoder>
     </appender>
 
-    <logger name="io.kodokojo" level="TRACE"/>
-    <logger name="retrofit" level="TRACE"/>
+    <logger name="io.kodokojo" level="INFO"/>
 
     <root level="WARN">
         <appender-ref ref="STDOUT" />

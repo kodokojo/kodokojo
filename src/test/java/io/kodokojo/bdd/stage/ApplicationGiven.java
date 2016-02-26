@@ -33,25 +33,46 @@ import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.AfterScenario;
 import com.tngtech.jgiven.annotation.BeforeScenario;
 import com.tngtech.jgiven.annotation.ProvidedScenarioState;
+import com.tngtech.jgiven.annotation.Quoted;
 import io.kodokojo.commons.config.DockerConfig;
+import io.kodokojo.commons.project.model.User;
 import io.kodokojo.commons.utils.DockerTestSupport;
+import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.commons.utils.properties.PropertyResolver;
 import io.kodokojo.commons.utils.properties.provider.*;
 import io.kodokojo.entrypoint.RestEntrypoint;
+import io.kodokojo.user.SimpleCredential;
+import io.kodokojo.user.SimpleUserAuthenticator;
+import io.kodokojo.user.UserAuthenticator;
+import io.kodokojo.user.UserManager;
 import io.kodokojo.user.redis.RedisUserManager;
 import org.junit.Rule;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
+import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<SELF> {
+
+    private static final Map<String, String> USER_PASSWORD = new HashMap<>();
+
+    static {
+        USER_PASSWORD.put("jpthiery", "jpascal");
+    }
 
     @Rule
     @ProvidedScenarioState
@@ -77,6 +98,12 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
 
     @ProvidedScenarioState
     RedisUserManager userManager;
+
+    @ProvidedScenarioState
+    String currentUserLogin;
+
+    @ProvidedScenarioState
+    String currentUserPassword;
 
     @BeforeScenario
     public void create_a_docker_client() {
@@ -117,13 +144,19 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
         return kodokojo_restEntrypoint_is_available_on_port_$(port);
     }
 
+    public SELF kodokojo_is_running() {
+        redis_is_started();
+        return kodokojo_restEntrypoint_is_available();
+    }
+
     public SELF kodokojo_restEntrypoint_is_available_on_port_$(int port) {
         try {
             KeyGenerator generator = KeyGenerator.getInstance("AES");
             generator.init(128);
             SecretKey aesKey = generator.generateKey();
             userManager = new RedisUserManager(aesKey, redisHost, redisPort);
-            restEntrypoint = new RestEntrypoint(port, userManager,userManager);
+            UserAuthenticator<SimpleCredential> userAuthenticator = new SimpleUserAuthenticator(userManager);
+            restEntrypoint = new RestEntrypoint(port, userManager,userAuthenticator);
             restEntrypoint.start();
             restEntryPointPort = port;
             restEntryPointHost = "localhost";
@@ -132,6 +165,24 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
         }
         return self();
     }
+
+    public SELF i_am_user_$(@Quoted String username) {
+        String identifier = userManager.generateId();
+        String password = USER_PASSWORD.get(username) == null ? new BigInteger(130, new SecureRandom()).toString(32) : USER_PASSWORD.get(username);
+        try {
+            KeyPair keyPair = RSAUtils.generateRsaKeyPair();
+            RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPrivate();
+            String email = username + "@kodokojo.io";
+            boolean userAdded = userManager.addUser(new User(identifier, username, username, email, password, RSAUtils.encodePublicKey(publicKey, email)));
+            assertThat(userAdded).isTrue();
+            currentUserLogin = username;
+            currentUserPassword = password;
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return self();
+    }
+
     @AfterScenario
     public void tear_down() {
         dockerTestSupport.stopAndRemoveContainer();

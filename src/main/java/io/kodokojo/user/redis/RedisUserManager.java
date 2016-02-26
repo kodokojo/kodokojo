@@ -22,6 +22,7 @@ package io.kodokojo.user.redis;
  * #L%
  */
 
+import io.kodokojo.lifecycle.ApplicationLifeCycleListener;
 import io.kodokojo.commons.project.model.User;
 import io.kodokojo.commons.project.model.UserService;
 import io.kodokojo.commons.utils.RSAUtils;
@@ -46,7 +47,7 @@ import java.util.Arrays;
 import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
 
-public class RedisUserManager implements UserManager, UserAuthenticator<SimpleCredential> {
+public class RedisUserManager implements UserManager, ApplicationLifeCycleListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RedisUserManager.class);
 
@@ -220,6 +221,9 @@ public class RedisUserManager implements UserManager, UserAuthenticator<SimpleCr
                 return null;
             }
             UserServiceValue userServiceValue = (UserServiceValue) readFromRedis(aggregateKey(USERSERVICE_PREFIX, identifier));
+            if (userServiceValue == null) {
+                return null;
+            }
             String password = decrypt(userServiceValue.getPassword());
             RSAPrivateKey privateKey = RSAUtils.unwrapPrivateRsaKey(key, userServiceValue.getPrivateKey());
             RSAPublicKey publicKey = RSAUtils.unwrapPublicRsaKey(key, userServiceValue.getPublicKey());
@@ -234,6 +238,9 @@ public class RedisUserManager implements UserManager, UserAuthenticator<SimpleCr
             throw new IllegalArgumentException("identifier must be defined.");
         }
         UserValue userValue = (UserValue) readFromRedis(aggregateKey(USER_PREFIX, identifier));
+        if (userValue == null) {
+            return null;
+        }
         String password = decrypt(userValue.getPassword());
         return new User(identifier, userValue.getName(), userValue.getUsername(), userValue.getEmail(), password, userValue.getSshPublicKey());
     }
@@ -246,23 +253,32 @@ public class RedisUserManager implements UserManager, UserAuthenticator<SimpleCr
 
     private Object readFromRedis(byte[] key) {
         try (Jedis jedis = pool.getResource()) {
-            byte[] buffer = jedis.get(key);
-            ByteArrayInputStream input = new ByteArrayInputStream(buffer);
-            try (ObjectInputStream in = new ObjectInputStream(input)) {
-                return in.readObject();
-            } catch (IOException e) {
-                throw new RuntimeException("Unable to create Object input stream", e);
-            } catch (ClassNotFoundException e) {
-                throw new IllegalStateException("Unable to found class UserServiceValue ?", e);
+            if (jedis.exists(key)) {
+                byte[] buffer = jedis.get(key);
+                ByteArrayInputStream input = new ByteArrayInputStream(buffer);
+                try (ObjectInputStream in = new ObjectInputStream(input)) {
+                    return in.readObject();
+                } catch (IOException e) {
+                    throw new RuntimeException("Unable to create Object input stream", e);
+                } catch (ClassNotFoundException e) {
+                    throw new IllegalStateException("Unable to found class UserServiceValue ?", e);
+                }
             }
         }
+        return null;
     }
 
+    @Override
+    public void start() {
+        // Nothing to do
+    }
+
+    @Override
     public void stop() {
+        LOGGER.info("Stopping RedisUserManager.");
         if (pool != null) {
             pool.destroy();
         }
-
     }
 
     private byte[] encrypt(String data) {
@@ -285,14 +301,6 @@ public class RedisUserManager implements UserManager, UserAuthenticator<SimpleCr
         }
     }
 
-    @Override
-    public User authenticate(SimpleCredential credentials) {
-        if (credentials == null) {
-            throw new IllegalArgumentException("credentials must be defined.");
-        }
-        User user = getUserByUsername(credentials.getUsername());
-        return (user != null && user.getPassword().equals(credentials.getPassword())) ? user : null;
-    }
 
     private static String hexEncode(byte[] aInput) {
         StringBuilder result = new StringBuilder();

@@ -24,16 +24,13 @@ package io.kodokojo.entrypoint;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import io.kodokojo.lifecycle.ApplicationLifeCycleListener;
 import io.kodokojo.commons.project.model.User;
 import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.user.SimpleCredential;
 import io.kodokojo.user.UserAuthenticator;
 import io.kodokojo.user.UserCreationDto;
 import io.kodokojo.user.UserManager;
-import io.kodokojo.user.redis.RedisUserManager;
-import org.apache.commons.codec.DecoderException;
-import org.apache.commons.codec.binary.Hex;
-import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
@@ -41,17 +38,16 @@ import spark.Response;
 import spark.ResponseTransformer;
 import spark.Spark;
 
-import javax.crypto.*;
-import javax.crypto.spec.SecretKeySpec;
-import java.io.*;
+import java.io.StringWriter;
 import java.math.BigInteger;
-import java.security.*;
+import java.security.KeyPair;
+import java.security.SecureRandom;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 
 import static spark.Spark.*;
 
-public class RestEntrypoint {
+public class RestEntrypoint implements ApplicationLifeCycleListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RestEntrypoint.class);
 
@@ -78,6 +74,7 @@ public class RestEntrypoint {
         jsonResponseTransformer = new JsonTransformer();
     }
 
+    @Override
     public void start() {
 
         Spark.port(port);
@@ -89,11 +86,13 @@ public class RestEntrypoint {
             // White list of url which not require to have an identifier.
             if (requestMatch("POST", BASE_API + "/user", request) ||
                     requestMatch("GET", BASE_API, request) ||
-                    requestMatch("GET", BASE_API + "/doc/.*", request) ||
+                    requestMatch("GET", BASE_API + "/doc(/)?.*", request) ||
                     requestMatch("PUT", BASE_API + "/user/[^/]*", request)) {
                 authenticationRequired = false;
             }
-
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace("Authentication is {}require for request {} {}.", authenticationRequired ? "": "NOT ", request.requestMethod(), request.pathInfo());
+            }
             if (authenticationRequired) {
                 Authenticator authenticator = new Authenticator();
                 authenticator.handle(request, response);
@@ -182,7 +181,9 @@ public class RestEntrypoint {
 
     }
 
+    @Override
     public void stop() {
+        LOGGER.info("Stopping RestEntryPoint.");
         Spark.stop();
     }
 
@@ -209,68 +210,5 @@ public class RestEntrypoint {
         }
         return null;
     }
-
-
-    //  TODO Move following code in Test runer class.
-    public static void main(String[] args) throws NoSuchAlgorithmException, DecoderException, IOException {
-
-        KeyGenerator generator = KeyGenerator.getInstance("AES");
-        generator.init(128);
-        SecretKey aesKey = generator.generateKey();
-
-
-        String encodedString = Hex.encodeHexString(aesKey.getEncoded());
-        System.out.println(encodedString);
-
-        byte[] byteKey = Hex.decodeHex(encodedString.toCharArray());
-
-        System.out.println(new File("").getAbsolutePath());
-        byte[] encodeKeyByteArray = FileUtils.readFileToByteArray(new File("temp.key"));
-        SecretKeySpec keySpec = new SecretKeySpec(encodeKeyByteArray, "AES");
-/*
-        String data = "Coucou !";
-
-        byte[] encrypt = encrypt(data, keySpec);
-
-        FileOutputStream outputStream = new FileOutputStream("content_crypted.txt");
-        outputStream.write(encrypt);
-        outputStream.flush();
-        outputStream.close();
-*/
-        byte[] readFileToByteArray = FileUtils.readFileToByteArray(new File("content_crypted.txt"));
-
-        String decrypt = decrypt(readFileToByteArray, keySpec);
-        System.out.println(decrypt);
-
-        /*
-
-        RedisUserManager redisUserManager = new RedisUserManager(aesKey, "192.168.99.100", 6379);
-        redisUserManager.addUser(new User(redisUserManager.generateId(), "Jean-Pascal THIERY", "jpthiery", "jpthiery@xebia.fr", "jpascal", "SSHPublic key"));
-        System.out.println(redisUserManager.getUserByUsername("jpthiery"));
-        RestEntrypoint restEntrypoint = new RestEntrypoint(80, redisUserManager, redisUserManager);
-        restEntrypoint.start();
-        */
-    }
-
-    private static byte[] encrypt(String data, SecretKey key) {
-        try {
-            Cipher cipher = Cipher.getInstance("AES");
-            cipher.init(Cipher.ENCRYPT_MODE, key);
-            return cipher.doFinal(data.getBytes());
-        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException e) {
-            throw new RuntimeException("Unable to create Cipher", e);
-        }
-    }
-
-    private static String decrypt(byte[] encrypted, SecretKey key) {
-        try {
-            Cipher cipher = Cipher.getInstance("AES");
-            cipher.init(Cipher.DECRYPT_MODE, key);
-            return new String(cipher.doFinal(encrypted));
-        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException e) {
-            throw new RuntimeException("Unable to create Cipher", e);
-        }
-    }
-
 
 }

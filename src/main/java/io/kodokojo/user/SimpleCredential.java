@@ -24,7 +24,7 @@ package io.kodokojo.user;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
-public class SimpleCredential {
+public class SimpleCredential implements Credential {
 
     private final String username;
 
@@ -47,5 +47,10 @@ public class SimpleCredential {
 
     public String getPassword() {
         return password;
+    }
+
+    @Override
+    public String identity() {
+        return username;
     }
 }

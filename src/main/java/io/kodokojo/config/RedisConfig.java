@@ -5,10 +5,14 @@ import io.kodokojo.commons.utils.properties.PropertyConfig;
 
 public interface RedisConfig extends PropertyConfig {
 
-    @Key("redis.host")
+    String REDIS_HOST = "redis.host";
+
+    String REDIS_PORT = "redis.port";
+
+    @Key(value = REDIS_HOST, defaultValue = "redis")
     String host();
 
-    @Key("redis.port")
+    @Key(value = REDIS_PORT, defaultValue = "6379")
     int port();
 
 }

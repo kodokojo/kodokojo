@@ -1,8 +1,9 @@
-package io.kodokojo.config;
+package io.kodokojo.config.module;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import io.kodokojo.config.SecurityConfig;
 import org.apache.commons.io.FileUtils;
 
 import javax.crypto.KeyGenerator;
@@ -33,6 +34,11 @@ public class SecurityModule extends AbstractModule {
             return provideAesKey(keyFile);
         } else {
             SecretKey res = generateAesKey();
+            try {
+                keyFile.createNewFile();
+            } catch (IOException e) {
+                throw new RuntimeException("Unable to create " + keyFile.getAbsolutePath() + " file.", e);
+            }
             try (FileOutputStream out = new FileOutputStream(securityConfig.privateKeyPath())) {
                 out.write(res.getEncoded());
                 out.flush();
