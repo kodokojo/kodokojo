@@ -24,6 +24,7 @@ package io.kodokojo.bdd.feature;
 
 import com.tngtech.jgiven.annotation.As;
 import com.tngtech.jgiven.junit.ScenarioTest;
+import io.kodokojo.bdd.API;
 import io.kodokojo.bdd.User;
 import io.kodokojo.bdd.stage.*;
 import io.kodokojo.commons.DockerIsRequire;
@@ -33,7 +34,7 @@ import org.junit.Test;
 
 
 @As("REST access right")
-@User
+@API
 public class AccessRestIntTest extends ScenarioTest<ApplicationGiven<?>, AccessRestWhen<?>, AccessRestThen<?>> {
 
     @Rule

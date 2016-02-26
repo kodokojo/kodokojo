@@ -5,7 +5,7 @@ import io.kodokojo.commons.utils.properties.PropertyConfig;
 
 public interface ApplicationConfig extends PropertyConfig {
 
-    @Key(value = "application.port", defaultValue = "8080")
+    @Key(value = "application.port", defaultValue = "80")
     int port();
 
 }

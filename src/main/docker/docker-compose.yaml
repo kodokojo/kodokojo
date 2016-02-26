@@ -1,0 +1,8 @@
+redis:
+  image: redis:latest
+kodokojo-back:
+  image: kodokojo/project-manager
+  ports:
+    - 8080:80
+  links:
+    - redis
