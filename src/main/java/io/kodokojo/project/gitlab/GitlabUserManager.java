@@ -76,43 +76,4 @@ public class GitlabUserManager  {
         return false;
     }
 
-
-    
-    public String generateId() {
-        return null;
-    }
-
-    
-    public boolean identifierExpectedNewUser(String generatedId) {
-        return false;
-    }
-
-    
-    public boolean storeUserPrivateKey(String identifier, RSAPrivateKey privateKey) {
-        return false;
-    }
-
-    public RSAPrivateKey getUserPrivateKey(String identifier) {
-        return null;
-    }
-
-    
-    public boolean addUser(User user) {
-        return false;
-    }
-
-    
-    public boolean addUserService(UserService userService) {
-        return false;
-    }
-
-    
-    public User getUserByUsername(String username) {
-        return null;
-    }
-
-    
-    public UserService getUserServiceByName(String name) {
-        return null;
-    }
 }

@@ -29,8 +29,12 @@ import io.kodokojo.project.starter.ProjectConfigurer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.*;
 import java.io.IOException;
 import java.net.*;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,17 +49,17 @@ public class GitlabConfigurer implements ProjectConfigurer<String, String> {
 
     private static final Pattern PRIVATE_TOKEN_PATTERN = Pattern.compile(".*<input type=\"text\" name=\"token\" id=\"token\" value=\"([^\"]*)\" class=\"form-control\" />.*");
 
-    public static final String SIGNIN_URL = "/users/sign_in";
+    private static final String SIGNIN_URL = "/users/sign_in";
 
-    public static final String PASSWORD_URL = "/profile/password";
+    private static final String PASSWORD_URL = "/profile/password";
 
-    public static final String PASSWORD_FORM_URL = PASSWORD_URL + "/new";
+    private static final String PASSWORD_FORM_URL = PASSWORD_URL + "/new";
 
-    public static final String ACCOUNT_URL = "/profile/account";
+    private static final String ACCOUNT_URL = "/profile/account";
 
-    public static final String OLD_PASSWORD = "5iveL!fe";
+    private static final String OLD_PASSWORD = "5iveL!fe";
 
-    public static final String ROOT_LOGIN = "root";
+    private static final String ROOT_LOGIN = "root";
 
     private final PropertyValueProvider propertyValueProvider;
 
@@ -68,7 +72,7 @@ public class GitlabConfigurer implements ProjectConfigurer<String, String> {
 
     @Override
     public String configure(String gitlabUrl) {
-        OkHttpClient httpClient = new OkHttpClient();
+        OkHttpClient httpClient = generateDefaultOkHttp();
         CookieManager cookieManager = new CookieManager(new GitlabCookieStore(), CookiePolicy.ACCEPT_ALL);
         httpClient.setCookieHandler(cookieManager);
         if (signIn(httpClient, gitlabUrl, ROOT_LOGIN, OLD_PASSWORD)) {
@@ -91,7 +95,7 @@ public class GitlabConfigurer implements ProjectConfigurer<String, String> {
         return null;
     }
 
-    private boolean changePassword(OkHttpClient httpClient, String gitlabUrl, String token, String oldPassword, String newPassword) {
+    private static boolean changePassword(OkHttpClient httpClient, String gitlabUrl, String token, String oldPassword, String newPassword) {
         RequestBody formBody = new FormEncodingBuilder()
                 .addEncoded("utf8", "%E2%9C%93")
                 .add("authenticity_token", token)
@@ -114,7 +118,7 @@ public class GitlabConfigurer implements ProjectConfigurer<String, String> {
 
     }
 
-    private boolean signIn(OkHttpClient httpClient, String gitlabUrl, String login, String password) {
+    private static boolean signIn(OkHttpClient httpClient, String gitlabUrl, String login, String password) {
         String token = getAuthenticityToken(httpClient, gitlabUrl + SIGNIN_URL, FORM_TOKEN_PATTERN);
         RequestBody formBody = new FormEncodingBuilder()
                 .addEncoded("utf8", "%E2%9C%93")
@@ -140,7 +144,7 @@ public class GitlabConfigurer implements ProjectConfigurer<String, String> {
     }
 
 
-    private String getAuthenticityToken(OkHttpClient httpClient, String url, Pattern pattern) {
+    private static String getAuthenticityToken(OkHttpClient httpClient, String url, Pattern pattern) {
         Request request = new Request.Builder().url(url).get().build();
         try {
             Response response = httpClient.newCall(request).execute();
@@ -194,5 +198,62 @@ public class GitlabConfigurer implements ProjectConfigurer<String, String> {
         public boolean removeAll() {
             return false;
         }
+    }
+
+    public static void main(String[] args) {
+        GitlabConfigurer configurer = new GitlabConfigurer(new PropertyValueProvider() {
+            @Override
+            public <T> T providePropertyValue(Class<T> classType, String key) {
+                if ("gitlab.root.password".equals(key)) {
+                    return (T) "admin1234";
+                }
+                return null;
+            }
+        });
+        configurer.configure("https://scm.acme.kodokojo.dev");
+    }
+    private static OkHttpClient generateDefaultOkHttp() {
+        OkHttpClient client = new OkHttpClient();
+
+
+
+        final TrustManager[] certs = new TrustManager[]{new X509TrustManager() {
+
+            @Override
+            public X509Certificate[] getAcceptedIssuers() {
+                return null;
+            }
+
+            @Override
+            public void checkServerTrusted(final X509Certificate[] chain,
+                                           final String authType) throws CertificateException {
+            }
+
+            @Override
+            public void checkClientTrusted(final X509Certificate[] chain,
+                                           final String authType) throws CertificateException {
+            }
+        }};
+
+        SSLContext ctx = null;
+        try {
+            ctx = SSLContext.getInstance("TLS");
+            ctx.init(null, certs, new SecureRandom());
+        } catch (final java.security.GeneralSecurityException ex) {
+        }
+
+        try {
+            final HostnameVerifier hostnameVerifier = new HostnameVerifier() {
+                @Override
+                public boolean verify(final String hostname,
+                                      final SSLSession session) {
+                    return true;
+                }
+            };
+            client.setHostnameVerifier(hostnameVerifier);
+            client.setSslSocketFactory(ctx.getSocketFactory());
+        } catch (final Exception e) {
+        }
+        return client;
     }
 }
