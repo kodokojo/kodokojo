@@ -1,4 +1,4 @@
-package io.kodokojo.commons.model;
+package io.kodokojo.model;
 
 /*
  * #%L
@@ -22,16 +22,31 @@ package io.kodokojo.commons.model;
  * #L%
  */
 
-import java.util.Date;
+public enum BrickType {
 
-public interface Configuration {
+    SCM(true, StackType.BUILD),
+    QA(false, StackType.BUILD),
+    CI(true, StackType.BUILD),
+    REPOSITORY(true, StackType.BUILD),
+    MONITORING(false, StackType.RUN),
+    ALTERTING(false, StackType.RUN),
+    AUTHENTIFICATOR(true, StackType.RUN),
+    LOADBALANCER(false, StackType.RUN);
 
-    String getVersion();
+    private final boolean requiered;
 
-    void setVersion(String version);
+    private final StackType stackType;
 
-    Date getVersionDate();
+    BrickType(boolean requiered, StackType stackType) {
+        this.requiered = requiered;
+        this.stackType = stackType;
+    }
 
-    void setVersionDate(Date versionDate);
+    public boolean isRequiered() {
+        return requiered;
+    }
 
+    public StackType getStackType() {
+        return stackType;
+    }
 }

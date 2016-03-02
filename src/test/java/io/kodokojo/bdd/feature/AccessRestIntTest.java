@@ -50,6 +50,14 @@ public class AccessRestIntTest extends ScenarioTest<ApplicationGiven<?>, AccessR
 
     @Test
     @DockerIsRequire
+    public void anonymous_user_access_to_api_version() {
+        given().kodokojo_is_running();
+        when().try_to_access_to_get_url_$("/api/v1");
+        then().it_should_return_status_$(200);
+    }
+
+    @Test
+    @DockerIsRequire
     public void anonymous_can_not_access_to_random_url() {
         given().kodokojo_is_running();
         when().try_to_access_to_get_url_$("/my/awersome/url/of/the/death");

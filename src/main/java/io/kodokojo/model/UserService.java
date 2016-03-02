@@ -1,4 +1,4 @@
-package io.kodokojo.commons.model;
+package io.kodokojo.model;
 
 /*
  * #%L
@@ -22,38 +22,52 @@ package io.kodokojo.commons.model;
  * #L%
  */
 
+import io.kodokojo.commons.utils.RSAUtils;
+
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
+
 import static org.apache.commons.lang.StringUtils.isBlank;
 
-public class User {
+public class UserService {
 
     private final String identifier;
 
     private final String name;
 
-    private final String username;
-
-    private final String email;
+    private final String login;
 
     private final String password;
 
-    private final String sshPublicKey;
+    private final RSAPrivateKey privateKey;
 
-    public User(String identifier, String name, String username, String email, String password, String sshPublicKey) {
+    private final RSAPublicKey publicKey;
+
+    public UserService(String identifier, String name, String login, String password, RSAPrivateKey privateKey, RSAPublicKey publicKey) {
         if (isBlank(identifier)) {
             throw new IllegalArgumentException("identifier must be defined.");
         }
         if (isBlank(name)) {
             throw new IllegalArgumentException("name must be defined.");
         }
-        if (isBlank(username)) {
-            throw new IllegalArgumentException("username must be defined.");
+        if (isBlank(login)) {
+            throw new IllegalArgumentException("login must be defined.");
+        }
+        if (isBlank(password)) {
+            throw new IllegalArgumentException("password must be defined.");
+        }
+        if (privateKey == null) {
+            throw new IllegalArgumentException("privateKey must be defined.");
+        }
+        if (publicKey == null) {
+            throw new IllegalArgumentException("publicKey must be defined.");
         }
         this.identifier = identifier;
         this.name = name;
-        this.username = username;
-        this.email = email;
+        this.login = login;
         this.password = password;
-        this.sshPublicKey = sshPublicKey;
+        this.privateKey = privateKey;
+        this.publicKey = publicKey;
     }
 
     public String getIdentifier() {
@@ -64,31 +78,32 @@ public class User {
         return name;
     }
 
-    public String getUsername() {
-        return username;
-    }
-
-    public String getEmail() {
-        return email;
+    public String getLogin() {
+        return login;
     }
 
     public String getPassword() {
         return password;
     }
 
-    public String getSshPublicKey() {
-        return sshPublicKey;
+    public RSAPrivateKey getPrivateKey() {
+        return privateKey;
+    }
+
+    public RSAPublicKey getPublicKey() {
+        return publicKey;
     }
 
     @Override
     public String toString() {
-        return "User{" +
-                "identifier='" + identifier + '\'' +
+        String encodePublicKey = RSAUtils.encodePublicKey(publicKey, name);
+
+        return "UserService{" +
                 "name='" + name + '\'' +
-                ", username='" + username + '\'' +
-                ", email='" + email + '\'' +
-                ", password='" + (password != null ? "DEFINED" : "NOT DEFINED") + '\'' +
-                ", sshPublicKey='" +  (sshPublicKey != null ? "DEFINED" : "NOT DEFINED") + '\'' +
+                "identifier='" + identifier + '\'' +
+                ", login='" + login + '\'' +
+                ", password='" + password + '\'' +
+                ", publicKeys=" + encodePublicKey +
                 '}';
     }
 }

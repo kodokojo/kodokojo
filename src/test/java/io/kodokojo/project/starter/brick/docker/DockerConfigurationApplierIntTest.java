@@ -26,11 +26,11 @@ import io.kodokojo.commons.DockerIsRequire;
 import io.kodokojo.commons.DockerPresentMethodRule;
 import io.kodokojo.commons.config.DockerConfig;
 import io.kodokojo.commons.model.*;
-import io.kodokojo.commons.project.model.*;
 import io.kodokojo.commons.utils.docker.DockerSupport;
 import io.kodokojo.commons.utils.properties.PropertyResolver;
 import io.kodokojo.commons.utils.properties.provider.DockerConfigValueProvider;
 import io.kodokojo.commons.utils.properties.provider.SystemEnvValueProvider;
+import io.kodokojo.model.*;
 import io.kodokojo.project.jenkins.JenkinsConfigurer;
 import io.kodokojo.project.starter.ConfigurerData;
 import org.junit.Before;
@@ -38,7 +38,10 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Ignore
 public class DockerConfigurationApplierIntTest {

@@ -22,8 +22,8 @@ package io.kodokojo.user;
  * #L%
  */
 
-import io.kodokojo.commons.model.User;
-import io.kodokojo.commons.model.UserService;
+import io.kodokojo.model.User;
+import io.kodokojo.model.UserService;
 
 public interface UserManager {
 

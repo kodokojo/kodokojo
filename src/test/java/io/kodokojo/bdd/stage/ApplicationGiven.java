@@ -35,7 +35,7 @@ import com.tngtech.jgiven.annotation.BeforeScenario;
 import com.tngtech.jgiven.annotation.ProvidedScenarioState;
 import com.tngtech.jgiven.annotation.Quoted;
 import io.kodokojo.commons.config.DockerConfig;
-import io.kodokojo.commons.model.User;
+import io.kodokojo.model.User;
 import io.kodokojo.commons.utils.DockerTestSupport;
 import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.commons.utils.properties.PropertyResolver;
@@ -184,7 +184,10 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
     @AfterScenario
     public void tear_down() {
         dockerTestSupport.stopAndRemoveContainer();
-        restEntrypoint.stop();
+        if (restEntrypoint != null) {
+            restEntrypoint.stop();
+            restEntrypoint = null;
+        }
     }
 
 }

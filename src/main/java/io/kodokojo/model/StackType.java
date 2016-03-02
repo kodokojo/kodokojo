@@ -1,4 +1,4 @@
-package io.kodokojo.commons.model;
+package io.kodokojo.model;
 
 /*
  * #%L
@@ -22,31 +22,7 @@ package io.kodokojo.commons.model;
  * #L%
  */
 
-public enum BrickType {
-
-    SCM(true, StackType.BUILD),
-    QA(false, StackType.BUILD),
-    CI(true, StackType.BUILD),
-    REPOSITORY(true, StackType.BUILD),
-    MONITORING(false, StackType.RUN),
-    ALTERTING(false, StackType.RUN),
-    AUTHENTIFICATOR(true, StackType.RUN),
-    LOADBALANCER(false, StackType.RUN);
-
-    private final boolean requiered;
-
-    private final StackType stackType;
-
-    BrickType(boolean requiered, StackType stackType) {
-        this.requiered = requiered;
-        this.stackType = stackType;
-    }
-
-    public boolean isRequiered() {
-        return requiered;
-    }
-
-    public StackType getStackType() {
-        return stackType;
-    }
+public enum StackType {
+    BUILD,
+    RUN
 }

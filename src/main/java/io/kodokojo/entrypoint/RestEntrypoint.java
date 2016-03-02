@@ -25,7 +25,7 @@ package io.kodokojo.entrypoint;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.kodokojo.lifecycle.ApplicationLifeCycleListener;
-import io.kodokojo.commons.model.User;
+import io.kodokojo.model.User;
 import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.user.SimpleCredential;
 import io.kodokojo.user.UserAuthenticator;

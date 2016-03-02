@@ -1,4 +1,4 @@
-package io.kodokojo.commons.model;
+package io.kodokojo.model;
 
 /*
  * #%L
@@ -22,7 +22,16 @@ package io.kodokojo.commons.model;
  * #L%
  */
 
-public enum StackType {
-    BUILD,
-    RUN
+import java.util.Date;
+
+public interface Configuration {
+
+    String getVersion();
+
+    void setVersion(String version);
+
+    Date getVersionDate();
+
+    void setVersionDate(Date versionDate);
+
 }

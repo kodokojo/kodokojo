@@ -22,7 +22,7 @@ package io.kodokojo.project.starter;
  * #L%
  */
 
-import io.kodokojo.commons.model.User;
+import io.kodokojo.model.User;
 
 import java.util.List;
 

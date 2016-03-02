@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.kodokojo</groupId>
-    <artifactId>project-manager</artifactId>
+    <artifactId>kodokojo</artifactId>
     <version>0.1.0-SNAPSHOT</version>
 
     <properties>
@@ -494,7 +494,7 @@
                         <artifactId>docker-maven-plugin</artifactId>
                         <version>0.3.258</version>
                         <configuration>
-                            <imageName>kodokojo/project-manager</imageName>
+                            <imageName>kodokojo/kodokojo</imageName>
                             <dockerDirectory>${project.basedir}/src/main/docker/local</dockerDirectory>
                             <noCache>true</noCache>
                         </configuration>

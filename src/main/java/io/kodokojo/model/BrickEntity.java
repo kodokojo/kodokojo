@@ -1,4 +1,4 @@
-package io.kodokojo.commons.model;
+package io.kodokojo.model;
 
 /*
  * #%L
@@ -23,6 +23,7 @@ package io.kodokojo.commons.model;
  */
 
 
+import io.kodokojo.commons.model.Service;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.ArrayList;

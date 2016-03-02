@@ -1,7 +1,7 @@
 package io.kodokojo.project.starter.brick;
 
-import io.kodokojo.commons.model.BrickConfiguration;
-import io.kodokojo.commons.model.ProjectConfiguration;
+import io.kodokojo.model.BrickConfiguration;
+import io.kodokojo.model.ProjectConfiguration;
 
 public interface BrickManager {
 

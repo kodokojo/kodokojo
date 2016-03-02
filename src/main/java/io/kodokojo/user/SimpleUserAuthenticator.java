@@ -1,6 +1,6 @@
 package io.kodokojo.user;
 
-import io.kodokojo.commons.model.User;
+import io.kodokojo.model.User;
 
 import javax.inject.Inject;
 

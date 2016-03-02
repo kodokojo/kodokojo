@@ -22,7 +22,7 @@ package io.kodokojo.user;
  * #L%
  */
 
-import io.kodokojo.commons.model.UserService;
+import io.kodokojo.model.UserService;
 
 import java.io.Serializable;
 

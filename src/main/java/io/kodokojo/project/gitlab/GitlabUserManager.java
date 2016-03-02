@@ -24,7 +24,7 @@ package io.kodokojo.project.gitlab;
 
 import com.google.gson.*;
 import com.squareup.okhttp.Response;
-import io.kodokojo.commons.model.User;
+import io.kodokojo.model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import retrofit.RestAdapter;

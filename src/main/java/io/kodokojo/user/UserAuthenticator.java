@@ -22,7 +22,7 @@ package io.kodokojo.user;
  * #L%
  */
 
-import io.kodokojo.commons.model.User;
+import io.kodokojo.model.User;
 
 public interface UserAuthenticator<T extends Credential> {
 

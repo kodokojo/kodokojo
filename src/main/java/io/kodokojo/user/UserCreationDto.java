@@ -22,7 +22,7 @@ package io.kodokojo.user;
  * #L%
  */
 
-import io.kodokojo.commons.model.User;
+import io.kodokojo.model.User;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
