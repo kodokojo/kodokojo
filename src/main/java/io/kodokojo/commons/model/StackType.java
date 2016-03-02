@@ -1,8 +1,8 @@
-package io.kodokojo.project.starter;
+package io.kodokojo.commons.model;
 
 /*
  * #%L
- * project-manager
+ * kodokojo-commons
  * %%
  * Copyright (C) 2016 Kodo-kojo
  * %%
@@ -22,10 +22,7 @@ package io.kodokojo.project.starter;
  * #L%
  */
 
-import io.kodokojo.commons.model.Configuration;
-
-public interface ConfigurationApplierFactory<C extends Configuration,L> {
-
-    ConfigurationApplier<C,L> create();
-
+public enum StackType {
+    BUILD,
+    RUN
 }

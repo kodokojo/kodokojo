@@ -1,8 +1,8 @@
-package io.kodokojo.project.starter;
+package io.kodokojo.commons.model;
 
 /*
  * #%L
- * project-manager
+ * kodokojo-commons
  * %%
  * Copyright (C) 2016 Kodo-kojo
  * %%
@@ -22,10 +22,16 @@ package io.kodokojo.project.starter;
  * #L%
  */
 
-import io.kodokojo.commons.model.Configuration;
+import java.util.Date;
 
-public interface ConfigurationApplierFactory<C extends Configuration,L> {
+public interface Configuration {
 
-    ConfigurationApplier<C,L> create();
+    String getVersion();
+
+    void setVersion(String version);
+
+    Date getVersionDate();
+
+    void setVersionDate(Date versionDate);
 
 }

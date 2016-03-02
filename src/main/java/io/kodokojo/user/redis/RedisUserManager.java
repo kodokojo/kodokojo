@@ -23,8 +23,8 @@ package io.kodokojo.user.redis;
  */
 
 import io.kodokojo.lifecycle.ApplicationLifeCycleListener;
-import io.kodokojo.commons.project.model.User;
-import io.kodokojo.commons.project.model.UserService;
+import io.kodokojo.commons.model.User;
+import io.kodokojo.commons.model.UserService;
 import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.user.*;
 import org.slf4j.Logger;

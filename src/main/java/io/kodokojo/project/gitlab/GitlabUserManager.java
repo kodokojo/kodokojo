@@ -24,16 +24,12 @@ package io.kodokojo.project.gitlab;
 
 import com.google.gson.*;
 import com.squareup.okhttp.Response;
-import io.kodokojo.commons.project.model.User;
-import io.kodokojo.commons.project.model.UserService;
-import io.kodokojo.user.UserManager;
+import io.kodokojo.commons.model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import retrofit.RestAdapter;
 import retrofit.RetrofitError;
 import retrofit.converter.GsonConverter;
-
-import java.security.interfaces.RSAPrivateKey;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 

@@ -22,8 +22,9 @@ package io.kodokojo.project;
  * #L%
  */
 
+import io.kodokojo.commons.model.*;
+import io.kodokojo.commons.model.Stack;
 import io.kodokojo.commons.project.model.*;
-import io.kodokojo.commons.project.model.Stack;
 import io.kodokojo.user.UserManager;
 
 import java.security.interfaces.RSAPrivateKey;

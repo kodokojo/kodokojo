@@ -174,7 +174,12 @@
             <version>1.10.19</version>
             <scope>test</scope>
         </dependency>
-
+        <dependency>
+            <groupId>com.github.ContainerSolutions</groupId>
+            <artifactId>minimesos</artifactId>
+            <version>0.6.1</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>com.tngtech.jgiven</groupId>
             <artifactId>jgiven-html5-report</artifactId>
@@ -397,7 +402,9 @@
                 </configuration>
             </plugin>
         </plugins>
+
     </build>
+
 
     <profiles>
         <profile>
@@ -504,6 +511,12 @@
             </build>
         </profile>
     </profiles>
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
     <licenses>
         <license>
             <name>GPLv3</name>

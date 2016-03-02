@@ -22,10 +22,8 @@ package io.kodokojo.user;
  * #L%
  */
 
-import io.kodokojo.commons.project.model.User;
-import io.kodokojo.commons.project.model.UserService;
-
-import java.security.interfaces.RSAPrivateKey;
+import io.kodokojo.commons.model.User;
+import io.kodokojo.commons.model.UserService;
 
 public interface UserManager {
 

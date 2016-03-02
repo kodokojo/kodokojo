@@ -22,8 +22,8 @@ package io.kodokojo.project;
  * #L%
  */
 
-import io.kodokojo.commons.project.model.Project;
-import io.kodokojo.commons.project.model.ProjectConfiguration;
+import io.kodokojo.commons.model.Project;
+import io.kodokojo.commons.model.ProjectConfiguration;
 
 public interface ProjectStarter {
 

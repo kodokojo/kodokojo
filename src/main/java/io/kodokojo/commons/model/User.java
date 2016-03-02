@@ -1,8 +1,8 @@
-package io.kodokojo.user;
+package io.kodokojo.commons.model;
 
 /*
  * #%L
- * project-manager
+ * kodokojo-commons
  * %%
  * Copyright (C) 2016 Kodo-kojo
  * %%
@@ -22,25 +22,33 @@ package io.kodokojo.user;
  * #L%
  */
 
-import io.kodokojo.commons.model.User;
+import static org.apache.commons.lang.StringUtils.isBlank;
 
-import java.io.Serializable;
+public class User {
 
-public class UserValue implements Serializable {
+    private final String identifier;
 
-    private String id;
+    private final String name;
 
-    private String name;
+    private final String username;
 
-    private String username;
+    private final String email;
 
-    private String email;
+    private final String password;
 
-    private byte[] password;
+    private final String sshPublicKey;
 
-    private String sshPublicKey;
-
-    public UserValue(String name, String username, String email, byte[] password, String sshPublicKey) {
+    public User(String identifier, String name, String username, String email, String password, String sshPublicKey) {
+        if (isBlank(identifier)) {
+            throw new IllegalArgumentException("identifier must be defined.");
+        }
+        if (isBlank(name)) {
+            throw new IllegalArgumentException("name must be defined.");
+        }
+        if (isBlank(username)) {
+            throw new IllegalArgumentException("username must be defined.");
+        }
+        this.identifier = identifier;
         this.name = name;
         this.username = username;
         this.email = email;
@@ -48,28 +56,8 @@ public class UserValue implements Serializable {
         this.sshPublicKey = sshPublicKey;
     }
 
-    public UserValue(User user, byte[] password) {
-        this(user.getName(), user.getUsername(), user.getEmail(), password, user.getSshPublicKey());
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public void setPassword(byte[] password) {
-        this.password = password;
-    }
-
-    public void setSshPublicKey(String sshPublicKey) {
-        this.sshPublicKey = sshPublicKey;
+    public String getIdentifier() {
+        return identifier;
     }
 
     public String getName() {
@@ -84,7 +72,7 @@ public class UserValue implements Serializable {
         return email;
     }
 
-    public byte[] getPassword() {
+    public String getPassword() {
         return password;
     }
 
@@ -94,11 +82,13 @@ public class UserValue implements Serializable {
 
     @Override
     public String toString() {
-        return "UserValue{" +
+        return "User{" +
+                "identifier='" + identifier + '\'' +
                 "name='" + name + '\'' +
                 ", username='" + username + '\'' +
                 ", email='" + email + '\'' +
-                ", sshPublicKey='" + sshPublicKey + '\'' +
+                ", password='" + (password != null ? "DEFINED" : "NOT DEFINED") + '\'' +
+                ", sshPublicKey='" +  (sshPublicKey != null ? "DEFINED" : "NOT DEFINED") + '\'' +
                 '}';
     }
 }

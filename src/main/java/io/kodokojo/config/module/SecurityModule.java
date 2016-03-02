@@ -3,8 +3,11 @@ package io.kodokojo.config.module;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import io.kodokojo.commons.utils.ssl.SSLKeyPair;
+import io.kodokojo.commons.utils.ssl.SSLRootCaKey;
 import io.kodokojo.config.SecurityConfig;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -13,7 +16,16 @@ import javax.inject.Named;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
+import java.security.*;
+import java.security.cert.*;
+import java.security.cert.Certificate;
+import java.security.interfaces.RSAPrivateKey;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static org.apache.commons.lang.StringUtils.isBlank;
 
 public class SecurityModule extends AbstractModule {
 
@@ -47,6 +59,26 @@ public class SecurityModule extends AbstractModule {
                 throw new RuntimeException("unable to read and/or create key file at path " + keyFile.getAbsolutePath(), e);
             }
         }
+    }
+
+    @Provides
+    @Singleton
+    SSLRootCaKey provideSSLRootCaKey(SecurityConfig securityConfig) {
+        if (securityConfig == null) {
+            throw new IllegalArgumentException("securityConfig must be defined.");
+        }
+        if (isBlank(securityConfig.sslRootCaPemPath())) {
+            try {
+                KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+                RSAPrivateKey key = (RSAPrivateKey) ks.getKey(securityConfig.sslRootCaKsAlias(), securityConfig.sslRootCaKsPassword().toCharArray());
+                Certificate[] certificateChain = ks.getCertificateChain(securityConfig.sslRootCaKsAlias());
+                List<X509Certificate> x509Certificates = Arrays.asList(certificateChain).stream().map(c -> (X509Certificate) c).collect(Collectors.toList());
+                return new SSLRootCaKey(key, x509Certificates.toArray(new X509Certificate[x509Certificates.size()]));
+            } catch (UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException e) {
+                throw new RuntimeException("Unable to open default Keystore", e);
+            }
+        }
+        return null;
     }
 
     private SecretKey generateAesKey() {

@@ -1,6 +1,6 @@
 package io.kodokojo.project;
 
-import io.kodokojo.commons.project.model.Project;
+import io.kodokojo.commons.model.Project;
 
 public interface ProjectStore {
 

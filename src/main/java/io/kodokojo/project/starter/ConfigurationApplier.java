@@ -22,7 +22,7 @@ package io.kodokojo.project.starter;
  * #L%
  */
 
-import io.kodokojo.commons.project.model.Configuration;
+import io.kodokojo.commons.model.Configuration;
 
 public interface ConfigurationApplier<C extends Configuration,L> {
 
