@@ -30,8 +30,8 @@ public enum BrickType {
     REPOSITORY(true, StackType.BUILD),
     MONITORING(false, StackType.RUN),
     ALTERTING(false, StackType.RUN),
-    AUTHENTIFICATOR(true, StackType.RUN),
-    LOADBALANCER(false, StackType.RUN);
+    AUTHENTIFICATOR(false, StackType.RUN),
+    LOADBALANCER(true, StackType.RUN);
 
     private final boolean requiered;
 

@@ -181,6 +181,10 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
 
     }
 
+    public int getPort() {
+        return port;
+    }
+
     @Override
     public void stop() {
         LOGGER.info("Stopping RestEntryPoint.");

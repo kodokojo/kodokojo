@@ -33,6 +33,7 @@ import io.kodokojo.commons.utils.properties.provider.SystemEnvValueProvider;
 import io.kodokojo.model.*;
 import io.kodokojo.project.jenkins.JenkinsConfigurer;
 import io.kodokojo.project.starter.ConfigurerData;
+import io.kodokojo.service.DefaultBrickFactory;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -66,17 +67,18 @@ public class DockerConfigurationApplierIntTest {
 
         DockerConfigurationApplier launcher = new DockerConfigurationApplier(new DockerSupport(dockerConfig), commands);
 
-        BrickEntity jenkins = launcher.apply(new BrickConfiguration(Brick.JENKINS));
+        BrickEntity jenkins = launcher.apply(new BrickConfiguration(new DefaultBrickFactory(null).createBrick(DefaultBrickFactory.JENKINS)));
         JenkinsConfigurer configurer = new JenkinsConfigurer();
         Service service = jenkins.getServices().get(0);
         String entrypoint = "http://" + service.getHost() + ":" + service.getPort();
 
         List<User> users = new ArrayList<>();
         User user = new User("jpthiery","Jean-Pascal THIERY", "jpthiery", "jpthiery@xebia.fr", "jpascal", "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDJlKssV2knMeGglt31NWQVznhlzgCJtblmiN/QG5y+X4cJ9pDXzpRJ13L88ay7rGL5SC6UwjJTQB4y1RI0Jte4naYRprDHfOUbMfi3KEiRY0I9LCDjThmTJNK6KhK5iv1ybcEKQd65wu5lGFpPG+TQfxocIXIPe9y0ZPSCxOHPjP9c6Akq6ryBNo4tANPVXEB37K9c2/2l/y7hfLqzkUf36V9el4ptgtYwrhR3Jbx4Q4uadLOK/KO4Kh8HAWsFmTLNv4c9DurLZlNNn9iw6/pBR2C5agM+cPjQ8NDJhMAktcQo5pjeYFS91EXrb/0EsDUn1mUdFPQH8GiENdz5WVgf jpthiery@xebia.fr");
+        User adminUser = user;
         users.add(user);
         user = new User("aletaxin","Antoine LE TAXIN", "altaxin", "ataxin@xebia.fr", "antoine", "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDJlKssV2knMeGglt31NWQVznhlzgCJtblmiN/QG5y+X4cJ9pDXzpRJ13L88ay7rGL5SC6UwjJTQB4y1RI0Jte4naYRprDHfOUbMfi3KEiRY0I9LCDjThmTJNK6KhK5iv1ybcEKQd65wu5lGFpPG+TQfxocIXIPe9y0ZPSCxOHPjP9c6Akq6ryBNo4tANPVXEB37K9c2/2l/y7hfLqzkUf36V9el4ptgtYwrhR3Jbx4Q4uadLOK/KO4Kh8HAWsFmTLNv4c9DurLZlNNn9iw6/pBR2C5agM+cPjQ8NDJhMAktcQo5pjeYFS91EXrb/0EsDUn1mUdFPQH8GiENdz5WVgf ataxin@xebia.fr");
         users.add(user);
-        ConfigurerData configurerData = new ConfigurerData(entrypoint, users);
+        ConfigurerData configurerData = new ConfigurerData(entrypoint, adminUser, users);
         configurer.configure(configurerData);
 
         //BrickEntity jenkins = launcher.apply(Brick.JENKINS);

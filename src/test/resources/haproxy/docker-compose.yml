@@ -1,1 +1,47 @@
-haproxy:  image: haproxy:1.6  ports:    - 10022:10022    - 80:80    - 443:443  volumes:    - /Users/jpthiery/workspace/project-manager/src/test/resources/haproxy/:/usr/local/etc/haproxy/:rogitlab:  image: gitlab/gitlab-ce  ports:    - 192.168.99.100:22022:22/tcp    - 7080:80  environment:    GITLAB_OMNIBUS_CONFIG: "external_url 'https://scm.acme.kodokojo.dev/';nginx['enable'] = true; nginx['redirect_http_to_https'] = false; nginx['listen_port'] = 80; nginx['listen_https'] = false; gitlab_rails['gitlab_shell_ssh_port'] = 10022"  log_driver: "fluentd"  log_opt:    fluentd-address: "192.168.99.100:24224"registry:  image: registry:2  ports:    - 5000:5000  log_driver: "fluentd"  log_opt:    fluentd-address: "192.168.99.100:24224"jenkinsA:  image: jenkins:latest  ports:    - 7180:8080  log_driver: "fluentd"  log_opt:    fluentd-address: "192.168.99.100:24224"jenkinsB:  image: jenkins:latest  ports:    - 7280:8080  log_driver: "fluentd"  log_opt:    fluentd-address: "192.168.99.100:24224"logger:  image: fluent/fluentd  ports:    - 514:5140/udp    - 24224:24224  volumes:    - /Users/jpthiery/workspace/project-manager/src/test/resources/haproxy/fluentd.conf:/fluentd/etc/fluent.conf#  log_driver: "syslog"#  log_opt:#    syslog-address: "udp://192.168.99.100:514"
+haproxy:
+  image: haproxy:1.6
+  ports:
+    - 10022:10022
+    - 80:80
+    - 443:443
+
+  volumes:
+    - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    - ./ssl/:/usr/local/etc/haproxy/ssl/:ro
+gitlab:
+  image: gitlab/gitlab-ce
+  ports:
+    - 192.168.99.100:22022:22/tcp
+    - 7080:80
+  environment:
+    GITLAB_OMNIBUS_CONFIG: "external_url 'https://scm.acme.kodokojo.dev/';nginx['enable'] = true; nginx['redirect_http_to_https'] = false; nginx['listen_port'] = 80; nginx['listen_https'] = false; gitlab_rails['gitlab_shell_ssh_port'] = 10022"
+  log_driver: "fluentd"
+  log_opt:
+    fluentd-address: "192.168.99.100:24224"
+registry:
+  image: registry:2
+  ports:
+    - 5000:5000
+  log_driver: "fluentd"
+  log_opt:
+    fluentd-address: "192.168.99.100:24224"
+jenkins:
+  image: jenkins:latest
+  ports:
+    - 7180:8080
+  log_driver: "fluentd"
+  log_opt:
+    fluentd-address: "192.168.99.100:24224"
+
+logger:
+  image: fluent/fluentd
+  ports:
+    - 514:5140/udp
+    - 24224:24224
+  volumes:
+    - ./fluentd.conf:/fluentd/etc/fluent.conf
+
+
+#  log_driver: "syslog"
+#  log_opt:
+#    syslog-address: "udp://192.168.99.100:514"

@@ -22,7 +22,14 @@ package io.kodokojo.project.starter;
  * #L%
  */
 
-public interface ProjectConfigurer<E,R> {
+import io.kodokojo.model.User;
 
-    R configure(E entrypoint);
+import java.util.List;
+
+public interface ProjectConfigurer {
+
+    ConfigurerData configure(ConfigurerData configurerData);
+
+    ConfigurerData addUsers(ConfigurerData configurerData, List<User> users);
+
 }

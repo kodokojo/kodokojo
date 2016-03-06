@@ -26,11 +26,10 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.ExposedPorts;
-import com.github.dockerjava.core.command.PullImageResultCallback;
-import io.kodokojo.model.BrickConfiguration;
-import io.kodokojo.model.BrickEntity;
 import io.kodokojo.commons.model.Service;
 import io.kodokojo.commons.utils.docker.DockerSupport;
+import io.kodokojo.model.BrickConfiguration;
+import io.kodokojo.model.BrickEntity;
 import io.kodokojo.project.starter.ConfigurationApplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,7 +72,7 @@ public class DockerConfigurationApplier implements ConfigurationApplier<BrickCon
 
         ContainerCommand containerCmd = brickDockerCommandFactory.createContainerCmd(dockerClient);
         try {
-            dockerClient.pullImageCmd(containerCmd.getImageName().getDockerImageName()).exec(new PullImageResultCallback()).awaitCompletion();
+            //dockerClient.pullImageCmd(containerCmd.getImageName().getDockerImageName()).exec(new PullImageResultCallback()).awaitCompletion();
             CreateContainerResponse createContainerResponse = containerCmd.getCreateContainerCmd().exec();
             dockerClient.startContainerCmd(createContainerResponse.getId()).exec();
             List<Service> services = new ArrayList<>();
@@ -86,10 +85,14 @@ public class DockerConfigurationApplier implements ConfigurationApplier<BrickCon
             BrickEntity brickEntity = new BrickEntity(brickConfiguration.getBrick(), services, 1);
             dockerSupport.waitUntilHttpRequestRespond(containerCmd.createHealthUrl(dockerSupport, createContainerResponse.getId()), containerCmd.getStartTimeout());
             return brickEntity;
-        } catch (InterruptedException e) {
+        } catch (Exception e) {
+            return null;
+        }
+        /*
+        catch (InterruptedException e) {
             String message = "Unable to pull image " + containerCmd.getImageName().getFullyQualifiedName();
             LOGGER.error(message, e);
             throw new RuntimeException(message, e);
-        }
+        }*/
     }
 }

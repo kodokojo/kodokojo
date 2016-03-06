@@ -40,27 +40,33 @@ public class StackConfiguration implements Configuration {
 
     private final Set<BrickConfiguration> brickConfigurations;
 
-    private  String version;
+    private final String loadBalancerIp;
 
-    private  Date versionDate;
+    private final int scmSshPort;
 
-    public StackConfiguration(String name, StackType type, Set<BrickConfiguration> brickConfigurations) {
+    private String version;
+
+    private Date versionDate;
+
+    public StackConfiguration(String name, StackType type, Set<BrickConfiguration> brickConfigurations, String loadBalancerIp, int scmSshPort) {
         if (isBlank(name)) {
             throw new IllegalArgumentException("name must be defined.");
         }
         if (type == null) {
             throw new IllegalArgumentException("type must be defined.");
         }
-        if (CollectionUtils.isNotEmpty(brickConfigurations)) {
+        if (CollectionUtils.isEmpty(brickConfigurations)) {
             throw new IllegalArgumentException("brickConfigurations must be defined.");
         }
 
         for (BrickType expectedType : BrickType.values()) {
-            checkIfConfigurationExist(expectedType, brickConfigurations);
+//            checkIfConfigurationExist(expectedType, brickConfigurations);
         }
         this.name = name;
         this.type = type;
         this.brickConfigurations = brickConfigurations;
+        this.loadBalancerIp = loadBalancerIp;
+        this.scmSshPort = scmSshPort;
     }
 
     public String getName() {
@@ -73,6 +79,14 @@ public class StackConfiguration implements Configuration {
 
     public Set<BrickConfiguration> getBrickConfigurations() {
         return new HashSet<>(brickConfigurations);
+    }
+
+    public String getLoadBalancerIp() {
+        return loadBalancerIp;
+    }
+
+    public int getScmSshPort() {
+        return scmSshPort;
     }
 
     @Override
@@ -123,23 +137,26 @@ public class StackConfiguration implements Configuration {
                 "name='" + name + '\'' +
                 ", type=" + type +
                 ", brickConfigurations=" + brickConfigurations +
+                ", loadBalancerIp=" + loadBalancerIp +
+                ", scmSshPort=" + scmSshPort +
                 '}';
     }
-
 
     private void checkIfConfigurationExist(BrickType expectedBrick, Set<BrickConfiguration> brickConfigurations) {
         assert expectedBrick != null : "expectedBrick must be defined";
         assert brickConfigurations != null : "brickConfigurations must be defined";
 
-        Iterator<BrickConfiguration> iterator = brickConfigurations.iterator();
-        boolean found = false;
-        while (!found && iterator.hasNext()) {
-            BrickConfiguration brickConfiguration = iterator.next();
-            found = brickConfiguration != null && expectedBrick.equals(brickConfiguration.getType());
-        }
+        if (expectedBrick.isRequiered()) {
+            Iterator<BrickConfiguration> iterator = brickConfigurations.iterator();
+            boolean found = false;
+            while (!found && iterator.hasNext()) {
+                BrickConfiguration brickConfiguration = iterator.next();
+                found = brickConfiguration != null && expectedBrick.equals(brickConfiguration.getType());
+            }
 
-        if (!found) {
-            throw new IllegalArgumentException("brickConfigurations " + StringUtils.join(brickConfigurations, ",") + " not contain " + expectedBrick);
+            if (!found) {
+                throw new IllegalArgumentException("brickConfigurations " + StringUtils.join(brickConfigurations, ",") + " not contain " + expectedBrick);
+            }
         }
     }
 }

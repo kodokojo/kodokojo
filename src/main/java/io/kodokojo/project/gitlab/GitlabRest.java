@@ -29,11 +29,11 @@ import retrofit.http.*;
 public interface GitlabRest {
 
     @FormUrlEncoded
-    @POST("/users")
+    @POST("/api/v3/users")
     JsonObject createUser(@Header("PRIVATE-TOKEN") String privateToken, @Field("username") String username, @Field("password") String password, @Field("email") String email, @Field("name") String name, @Field("confirm") String confirmationExpected);
 
     @FormUrlEncoded
-    @POST("/users/{id}/keys")
+    @POST("/api/v3/users/{id}/keys")
     Response addSshKey(@Header("PRIVATE-TOKEN") String privateToken, @Path("id") String id, @Field("title") String title, @Field("key") String key);
 
 }

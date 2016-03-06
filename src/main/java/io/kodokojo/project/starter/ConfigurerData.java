@@ -24,7 +24,9 @@ package io.kodokojo.project.starter;
 
 import io.kodokojo.model.User;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
@@ -32,32 +34,58 @@ public class ConfigurerData {
 
     private final String entrypoint;
 
+    private final User adminUser;
+
     private final List<User> users;
 
-    public ConfigurerData(String entrypoint, List<User> users) {
+    private final Map<String, Object> context;
+
+    public ConfigurerData(String entrypoint, User adminUser, List<User> users) {
         if (isBlank(entrypoint)) {
             throw new IllegalArgumentException("entrypoint must be defined.");
+        }
+        if (adminUser == null) {
+            throw new IllegalArgumentException("adminUser must be defined.");
         }
         if (users == null) {
             throw new IllegalArgumentException("users must be defined.");
         }
         this.entrypoint = entrypoint;
+        this.adminUser = adminUser;
         this.users = users;
+        this.context = new HashMap<>();
     }
 
     public String getEntrypoint() {
         return entrypoint;
     }
 
+    public User getAdminUser() {
+        return adminUser;
+    }
+
     public List<User> getUsers() {
         return users;
+    }
+
+    public void addInContext(String key, Object data) {
+        if (isBlank(key)) {
+            throw new IllegalArgumentException("key must be defined.");
+        }
+        context.put(key, data);
+    }
+
+    public Map<String, Object> getContext() {
+        return context;
     }
 
     @Override
     public String toString() {
         return "ConfigurerData{" +
                 "entrypoint='" + entrypoint + '\'' +
+                ", adminUser=" + adminUser +
                 ", users=" + users +
+                ", context=" + context +
                 '}';
     }
 }

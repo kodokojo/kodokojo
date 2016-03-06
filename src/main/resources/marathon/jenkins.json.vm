@@ -1,0 +1,65 @@
+{
+  "id": "$ID",
+  "instance": 1,
+  "cpus": 1,
+  "mem": 2048,
+  "type": "DOCKER",
+  "container": {
+    "docker": {
+      "image": "jenkins",
+      "network": "BRIDGE",
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "hostPort": 0,
+          "protocol": "tcp",
+          "servicePort": 0
+        }
+      ],
+      "parameters": [
+        {
+          "key": "env",
+          "value": "JENKINS_SLAVE_AGENT_PORT=50000"
+        },
+        {
+          "key": "env",
+          "value": "JAVA_OPTS=-Duser.timezone=Europe/Paris"
+        },
+        {
+          "key": "label",
+          "value": "project=$projectName"
+        },
+        {
+          "key": "label",
+          "value": "componentType=ci"
+        },
+        {
+          "key": "label",
+          "value": "component=jenkins"
+        }
+      ]
+    }
+  },
+  "constraints": [
+    [
+      "type",
+      "LIKE",
+      "operator"
+    ]
+  ],
+  "healthChecks": [
+    {
+      "protocol": "HTTP",
+      "portIndex": 0,
+      "path": "/",
+      "gracePeriodSeconds": 180,
+      "intervalSeconds": 20,
+      "maxConsecutiveFailures": 10
+    }
+  ],
+  "labels": {
+    "project": "$projectName",
+    "componentType": "ci",
+    "component": "jenkins"
+  }
+}

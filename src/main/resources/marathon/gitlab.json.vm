@@ -1,0 +1,68 @@
+{
+  "id": "$ID",
+  "instance": 1,
+  "cpus": 2.0,
+  "mem": 2048,
+  "type": "DOCKER",
+  "container": {
+    "docker": {
+      "image": "gitlab/gitlab-ce",
+      "network": "BRIDGE",
+      "portMappings": [
+        {
+          "containerPort": 80,
+          "hostPort": 0,
+          "protocol": "tcp",
+          "servicePort": 0
+        },
+        {
+          "containerPort": 22,
+          "hostPort": 0,
+          "protocol": "tcp",
+          "servicePort": 0
+        }
+      ],
+      "parameters": [
+        {
+          "key": "env",
+       ##   "value": "GITLAB_OMNIBUS_CONFIG=external_url 'https://scm.${projectName}.kodokojo.io/';nginx['enable'] = true; nginx['redirect_http_to_https'] = false; nginx['listen_port'] = 80; nginx['listen_https'] = false; gitlab_rails['gitlab_shell_ssh_port'] = ${stack.scmSshPort}"
+          "value": "GITLAB_OMNIBUS_CONFIG=gitlab_rails['gitlab_shell_ssh_port'] = ${stack.scmSshPort}"
+        },
+        {
+          "key": "label",
+          "value": "project=$projectName"
+        },
+        {
+          "key": "label",
+          "value": "componentType=scm"
+        },
+        {
+          "key": "label",
+          "value": "component=gitlab"
+        }
+      ]
+    }
+  },
+  "constraints": [
+    [
+      "type",
+      "LIKE",
+      "operator"
+    ]
+  ],
+  "healthChecks": [
+    {
+      "protocol": "HTTP",
+      "portIndex": 0,
+      "path": "/",
+      "gracePeriodSeconds": 180,
+      "intervalSeconds": 20,
+      "maxConsecutiveFailures": 10
+    }
+  ],
+  "labels": {
+    "project": "$projectName",
+    "componentType": "scm",
+    "component": "gitlab"
+  }
+}

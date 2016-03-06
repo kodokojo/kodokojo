@@ -36,9 +36,9 @@ public class BrickConfiguration implements Configuration {
 
     private final String url;
 
-    private  String version;
+    private String version;
 
-    private  Date versionDate;
+    private Date versionDate;
 
     public BrickConfiguration(Brick brick, String name, BrickType type, String url) {
         if (isBlank(name)) {

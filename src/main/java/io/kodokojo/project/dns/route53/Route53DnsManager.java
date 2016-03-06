@@ -42,7 +42,8 @@ public class Route53DnsManager implements DnsManager {
         if (hostedZone != null) {
             List<ResourceRecord> resourceRecords = new ArrayList<>();
             ResourceRecord resourceRecord = new ResourceRecord();
-            resourceRecord.setValue(valideDnsName(dnsEntry.getValue()));
+            String value = dnsEntry.getValue();
+            resourceRecord.setValue((dnsEntry.getType().equals(DnsEntry.Type.CNAME) ? valideDnsName(value) : value));
             resourceRecords.add(resourceRecord);
 
             ResourceRecordSet resourceRecordSet = new ResourceRecordSet();

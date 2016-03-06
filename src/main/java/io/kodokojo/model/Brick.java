@@ -22,26 +22,19 @@ package io.kodokojo.model;
  * #L%
  */
 
+import io.kodokojo.project.starter.ProjectConfigurer;
+
 import static org.apache.commons.lang.StringUtils.isBlank;
 
-public enum Brick {
-
-    JENKINS("jenkins", BrickType.CI),
-    GITLAB("gitlab", BrickType.SCM),
-    SONAR("sonar", BrickType.QA),
-    DOCKER_REGISTRY("registry", BrickType.REPOSITORY),
-    NEXUS("nexus", BrickType.REPOSITORY),
-    LDAP("ldap", BrickType.AUTHENTIFICATOR),
-    OAUTH("oauth", BrickType.AUTHENTIFICATOR),
-    FLAPJACK("flapjack", BrickType.ALTERTING),
-    SENSU("sensu", BrickType.MONITORING),
-    HAPROXY("haproxy", BrickType.LOADBALANCER);
+public class Brick {
 
     private final String name;
 
     private final BrickType type;
 
-    Brick(String name, BrickType type) {
+    private final ProjectConfigurer configurer;
+
+    public Brick(String name, BrickType type, ProjectConfigurer configurer) {
         if (isBlank(name)) {
             throw new IllegalArgumentException("name must be defined.");
         }
@@ -50,6 +43,7 @@ public enum Brick {
         }
         this.name = name;
         this.type = type;
+        this.configurer = configurer;
     }
 
     public String getName() {
@@ -60,11 +54,16 @@ public enum Brick {
         return type;
     }
 
+    public ProjectConfigurer getConfigurer() {
+        return configurer;
+    }
+
     @Override
     public String toString() {
         return "Brick{" +
                 "name='" + name + '\'' +
                 ", type=" + type +
+                ", configurer=" + configurer +
                 '}';
     }
 }

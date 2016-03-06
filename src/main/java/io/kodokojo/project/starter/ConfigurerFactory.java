@@ -22,8 +22,8 @@ package io.kodokojo.project.starter;
  * #L%
  */
 
-public interface ConfigurerFactory<C,L> {
+public interface ConfigurerFactory {
 
-    ProjectConfigurer<C,L> create();
+    ProjectConfigurer create();
 
 }

@@ -22,24 +22,29 @@ package io.kodokojo.project.gitlab;
  * #L%
  */
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.squareup.okhttp.*;
-import io.kodokojo.commons.utils.properties.provider.PropertyValueProvider;
-
+import io.kodokojo.commons.utils.RSAUtils;
+import io.kodokojo.model.User;
+import io.kodokojo.project.starter.ConfigurerData;
 import io.kodokojo.project.starter.ProjectConfigurer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import retrofit.RestAdapter;
+import retrofit.RetrofitError;
 
-import javax.net.ssl.*;
 import java.io.IOException;
 import java.net.*;
-import java.security.SecureRandom;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
+import java.security.KeyPair;
+import java.security.NoSuchAlgorithmException;
+import java.security.interfaces.RSAPublicKey;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class GitlabConfigurer implements ProjectConfigurer<String, String> {
+public class GitlabConfigurer implements ProjectConfigurer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GitlabConfigurer.class);
 
@@ -61,29 +66,25 @@ public class GitlabConfigurer implements ProjectConfigurer<String, String> {
 
     private static final String ROOT_LOGIN = "root";
 
-    private final PropertyValueProvider propertyValueProvider;
-
-    public GitlabConfigurer(PropertyValueProvider propertyValueProvider) {
-        if (propertyValueProvider == null) {
-            throw new IllegalArgumentException("propertyValueProvider must be defined.");
-        }
-        this.propertyValueProvider = propertyValueProvider;
-    }
+    public static final String GITLAB_ADMIN_TOKEN_KEY = "GITLAB_ADMIN_API_TOKEN";
 
     @Override
-    public String configure(String gitlabUrl) {
-        OkHttpClient httpClient = generateDefaultOkHttp();
+    public ConfigurerData configure(ConfigurerData configurerData) {
+        String gitlabUrl = configurerData.getEntrypoint();
+        OkHttpClient httpClient = new OkHttpClient();
         CookieManager cookieManager = new CookieManager(new GitlabCookieStore(), CookiePolicy.ACCEPT_ALL);
         httpClient.setCookieHandler(cookieManager);
         if (signIn(httpClient, gitlabUrl, ROOT_LOGIN, OLD_PASSWORD)) {
             String token = getAuthenticityToken(httpClient, gitlabUrl + PASSWORD_FORM_URL, META_TOKEN_PATTERN);
-            String newPassword = propertyValueProvider.providePropertyValue(String.class, "gitlab.root.password");
+            String newPassword = configurerData.getAdminUser().getPassword();
             if (changePassword(httpClient, gitlabUrl, token, OLD_PASSWORD, newPassword)) {
                 if (signIn(httpClient, gitlabUrl, ROOT_LOGIN, newPassword)) {
                     Request request = new Request.Builder().get().url(gitlabUrl + ACCOUNT_URL).build();
                     try {
                         Response response = httpClient.newCall(request).execute();
-                        return getAuthenticityToken(response.body().string(), PRIVATE_TOKEN_PATTERN);
+                        String authenticityToken = getAuthenticityToken(response.body().string(), PRIVATE_TOKEN_PATTERN);
+                        configurerData.addInContext(GITLAB_ADMIN_TOKEN_KEY, authenticityToken);
+                        return configurerData;
                     } catch (IOException e) {
                         LOGGER.error("Unable to retrieve account page", e);
                     }
@@ -92,7 +93,27 @@ public class GitlabConfigurer implements ProjectConfigurer<String, String> {
                 }
             }
         }
+
         return null;
+    }
+
+    @Override
+    public ConfigurerData addUsers(ConfigurerData configurerData, List<User> users) {
+        if (configurerData == null) {
+            throw new IllegalArgumentException("configurerData must be defined.");
+        }
+        if (users == null) {
+            throw new IllegalArgumentException("users must be defined.");
+        }
+
+        RestAdapter adapter = new RestAdapter.Builder().setEndpoint(configurerData.getEntrypoint()).build();
+        GitlabRest gitlabRest = adapter.create(GitlabRest.class);
+
+        for(User user : users) {
+            createUser(gitlabRest, (String) configurerData.getContext().get(GITLAB_ADMIN_TOKEN_KEY), user);
+        }
+
+        return configurerData;
     }
 
     private static boolean changePassword(OkHttpClient httpClient, String gitlabUrl, String token, String oldPassword, String newPassword) {
@@ -155,6 +176,22 @@ public class GitlabConfigurer implements ProjectConfigurer<String, String> {
         return null;
     }
 
+    private boolean createUser(GitlabRest gitlabRest,String privateToken, User user) {
+        try {
+            JsonObject jsonObject = gitlabRest.createUser(privateToken, user.getUsername(), user.getPassword(), user.getEmail(), user.getName(), "false");
+            System.out.println(jsonObject);
+
+            int id = jsonObject.getAsJsonPrimitive("id").getAsInt();
+
+            Response response = gitlabRest.addSshKey(privateToken, Integer.toString(id), "SSH Key", user.getSshPublicKey());
+            return response.code() == 201;
+
+        } catch (RetrofitError e) {
+            LOGGER.error("unable to complete creation of user : ", e);
+        }
+        return false;
+    }
+
     private static String getAuthenticityToken(String bodyReponse, Pattern pattern) {
         String token = "";
         Matcher matcher = pattern.matcher(bodyReponse);
@@ -200,60 +237,14 @@ public class GitlabConfigurer implements ProjectConfigurer<String, String> {
         }
     }
 
-    public static void main(String[] args) {
-        GitlabConfigurer configurer = new GitlabConfigurer(new PropertyValueProvider() {
-            @Override
-            public <T> T providePropertyValue(Class<T> classType, String key) {
-                if ("gitlab.root.password".equals(key)) {
-                    return (T) "admin1234";
-                }
-                return null;
-            }
-        });
-        configurer.configure("https://scm.acme.kodokojo.dev");
+    public static void main(String[] args) throws NoSuchAlgorithmException {
+        GitlabConfigurer gitlabConfigurer = new GitlabConfigurer();
+        KeyPair keyPair = RSAUtils.generateRsaKeyPair();
+        User user = new User("123456", "jpthiery", "jpthiery", "jpthiery@kodokojo.io", "jpthiery", RSAUtils.encodePublicKey((RSAPublicKey) keyPair.getPublic(), "jpthiery@kodokojo.io"));
+        List<User> users = Collections.singletonList(user);
+        ConfigurerData configurerData = new ConfigurerData("http://52.50.52.177:41534", user, users);
+        configurerData.getContext().put(GITLAB_ADMIN_TOKEN_KEY, "xwYT3q3QB-pbFkJy5sc6");
+        gitlabConfigurer.addUsers(configurerData, users);
     }
-    private static OkHttpClient generateDefaultOkHttp() {
-        OkHttpClient client = new OkHttpClient();
 
-
-
-        final TrustManager[] certs = new TrustManager[]{new X509TrustManager() {
-
-            @Override
-            public X509Certificate[] getAcceptedIssuers() {
-                return null;
-            }
-
-            @Override
-            public void checkServerTrusted(final X509Certificate[] chain,
-                                           final String authType) throws CertificateException {
-            }
-
-            @Override
-            public void checkClientTrusted(final X509Certificate[] chain,
-                                           final String authType) throws CertificateException {
-            }
-        }};
-
-        SSLContext ctx = null;
-        try {
-            ctx = SSLContext.getInstance("TLS");
-            ctx.init(null, certs, new SecureRandom());
-        } catch (final java.security.GeneralSecurityException ex) {
-        }
-
-        try {
-            final HostnameVerifier hostnameVerifier = new HostnameVerifier() {
-                @Override
-                public boolean verify(final String hostname,
-                                      final SSLSession session) {
-                    return true;
-                }
-            };
-            client.setHostnameVerifier(hostnameVerifier);
-            client.setSslSocketFactory(ctx.getSocketFactory());
-        } catch (final Exception e) {
-        }
-        return client;
-    }
 }

@@ -23,6 +23,7 @@ package io.kodokojo.project.jenkins;
  */
 
 import com.squareup.okhttp.*;
+import io.kodokojo.model.User;
 import io.kodokojo.project.starter.ConfigurerData;
 import io.kodokojo.project.starter.ProjectConfigurer;
 import org.apache.velocity.Template;
@@ -33,9 +34,10 @@ import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.List;
 import java.util.Properties;
 
-public class JenkinsConfigurer implements ProjectConfigurer<ConfigurerData, Boolean> {
+public class JenkinsConfigurer implements ProjectConfigurer{
 
     private static final Properties VE_PROPERTIES = new Properties();
 
@@ -55,7 +57,7 @@ public class JenkinsConfigurer implements ProjectConfigurer<ConfigurerData, Bool
 
 
     @Override
-    public Boolean configure(ConfigurerData configurerData) {
+    public ConfigurerData configure(ConfigurerData configurerData) {
 
         String url = configurerData.getEntrypoint() + SCRIPT_URL_SUFFIX;
 
@@ -79,10 +81,15 @@ public class JenkinsConfigurer implements ProjectConfigurer<ConfigurerData, Bool
 
             Request request = new Request.Builder().url(url).post(body).build();
             Response response = httpClient.newCall(request).execute();
-            return response.code() == 200 ? Boolean.TRUE : Boolean.FALSE;
+            return configurerData;
         } catch (IOException e) {
             throw new RuntimeException("Unable to configure Jenkins " + configurerData.getEntrypoint(), e);
         }
+    }
+
+    @Override
+    public ConfigurerData addUsers(ConfigurerData configurerData, List<User> users) {
+        return configurerData;
     }
 
 }

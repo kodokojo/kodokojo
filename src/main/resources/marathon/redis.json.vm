@@ -1,0 +1,32 @@
+{
+  "id": "$ID",
+  "instance": 1,
+  "cpus": 0.1,
+  "mem": 128,
+  "type": "DOCKER",
+  "container": {
+    "docker": {
+      "image": "redis",
+      "network": "BRIDGE",
+      "portMappings": [
+        {
+          "containerPort": 6379,
+          "hostPort": 0,
+          "protocol": "tcp",
+          "servicePort": 0
+        }
+      ]
+    }
+  },
+  "constraints": [
+    [
+      "type",
+      "LIKE",
+      "operator"
+    ]
+  ],
+  "labels": {
+    "entity": "kodokojo",
+    "component": "redis"
+  }
+}
