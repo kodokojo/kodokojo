@@ -37,7 +37,7 @@ import java.util.concurrent.*;
 public class ClusterApplicationWhen<SELF extends ClusterApplicationWhen<?>> extends Stage<SELF> {
 
     @ExpectedScenarioState
-    MarathonIsPresent marathon;
+    String marathonUrl;
 
     @ExpectedScenarioState
     String domain;
@@ -65,7 +65,7 @@ public class ClusterApplicationWhen<SELF extends ClusterApplicationWhen<?>> exte
 
         loadBalancerIp = "52.50.157.189";    //Ha proxy may be reloadable in a short future.
 
-        String url = marathon.getMarathonUrl() + "/v2/artifacts/config/acme.json";
+        String url = marathonUrl + "/v2/artifacts/config/acme.json";
 
         OkHttpClient httpClient = new OkHttpClient();
         RequestBody requestBody = new MultipartBuilder()
@@ -115,7 +115,7 @@ public class ClusterApplicationWhen<SELF extends ClusterApplicationWhen<?>> exte
     }
 
     public SELF i_start_the_project() {
-        MarathonBrickManager marathonBrickManager = new MarathonBrickManager(marathon.getMarathonUrl(), new MarathonServiceLocator(marathon.getMarathonUrl()));
+        MarathonBrickManager marathonBrickManager = new MarathonBrickManager(marathonUrl, new MarathonServiceLocator(marathonUrl));
 
         Future<Void> lbFut = startAndConfigure(marathonBrickManager, projectConfiguration, BrickType.LOADBALANCER);
         Future<Void> scmFut = startAndConfigure(marathonBrickManager, projectConfiguration, BrickType.SCM);
@@ -150,7 +150,7 @@ public class ClusterApplicationWhen<SELF extends ClusterApplicationWhen<?>> exte
 
     private void pushCertificate(String project, String entityType, byte[] certificat) {
 
-        String url = marathon.getMarathonUrl() + "/v2/artifacts/ssl/" + project + "/" + entityType + "/" + project + "-" + entityType + "-server.pem";
+        String url = marathonUrl + "/v2/artifacts/ssl/" + project + "/" + entityType + "/" + project + "-" + entityType + "-server.pem";
         OkHttpClient httpClient = new OkHttpClient();
         RequestBody requestBody = new MultipartBuilder()
                 .type(MultipartBuilder.FORM)

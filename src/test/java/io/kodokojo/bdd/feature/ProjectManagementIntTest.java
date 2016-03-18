@@ -6,18 +6,20 @@ import io.kodokojo.bdd.MarathonIsRequire;
 import io.kodokojo.bdd.stage.ClusterApplicationGiven;
 import io.kodokojo.bdd.stage.ClusterApplicationThen;
 import io.kodokojo.bdd.stage.ClusterApplicationWhen;
+import io.kodokojo.commons.DockerIsRequire;
+import io.kodokojo.commons.DockerPresentMethodRule;
 import org.junit.Rule;
 import org.junit.Test;
 
 public class ProjectManagementIntTest extends ScenarioTest<ClusterApplicationGiven<?>, ClusterApplicationWhen<?>, ClusterApplicationThen<?>> {
 
     @Rule
-    public MarathonIsPresent marathonIsPresent = new MarathonIsPresent();
+    public DockerPresentMethodRule dockerPresentMethodRule = new DockerPresentMethodRule();
 
     @Test
-    @MarathonIsRequire
+    @DockerIsRequire
     public void create_a_simple_project_build_stack() {
-        given().kodokojo_is_running(marathonIsPresent)
+        given().kodokojo_is_running(dockerPresentMethodRule)
                 .and().i_am_user_$("jpthiery");
         when().i_create_a_default_project("Acme")
                 .and().i_start_the_project();

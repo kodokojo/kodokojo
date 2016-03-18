@@ -1,13 +1,24 @@
 package io.kodokojo.bdd.stage;
 
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.model.Bind;
+import com.github.dockerjava.api.model.ExposedPort;
+import com.github.dockerjava.api.model.Ports;
+import com.github.dockerjava.api.model.Volume;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.squareup.okhttp.*;
 import com.tngtech.jgiven.Stage;
-import com.tngtech.jgiven.annotation.*;
+import com.tngtech.jgiven.annotation.AfterScenario;
+import com.tngtech.jgiven.annotation.Hidden;
+import com.tngtech.jgiven.annotation.ProvidedScenarioState;
+import com.tngtech.jgiven.annotation.Quoted;
 import io.kodokojo.bdd.MarathonIsPresent;
+import io.kodokojo.commons.DockerPresentMethodRule;
 import io.kodokojo.commons.model.Service;
+import io.kodokojo.commons.utils.DockerTestSupport;
 import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.entrypoint.RestEntrypoint;
 import io.kodokojo.model.User;
@@ -19,7 +30,6 @@ import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
-import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,10 +41,7 @@ import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.interfaces.RSAPublicKey;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
-import java.util.Random;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -53,10 +60,13 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
     }
 
     @ProvidedScenarioState
+    DockerTestSupport dockerTestSupport = new DockerTestSupport();
+
+    @ProvidedScenarioState
     RestEntrypoint restEntrypoint;
 
     @ProvidedScenarioState
-    MarathonIsPresent marathon;
+    String marathonUrl;
 
     @ProvidedScenarioState
     Service redisService;
@@ -80,14 +90,26 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
     List<Service> services = new ArrayList<>();
 
     public SELF kodokojo_is_running(@Hidden MarathonIsPresent marathonIsPresent) {
-        return kodokojo_is_running_on_domain_$(marathonIsPresent, "kodokojo.io");
+        marathonUrl = marathonIsPresent.getMarathonUrl();
+        return kodokojo_is_running_on_domain_$("kodokojo.io");
     }
 
-    public SELF kodokojo_is_running_on_domain_$(@Hidden MarathonIsPresent marathonIsPresent, @Quoted String domain) {
-        marathon = marathonIsPresent;
+    public SELF kodokojo_is_running(@Hidden DockerPresentMethodRule dockerPresentMethodRule) {
+        startMesosCluster();
+        try {
+            Thread.sleep(12000); //Allow to all component to start.
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        marathonUrl = "http://" + dockerTestSupport.getServerIp() + ":8080";
+
+        return kodokojo_is_running_on_domain_$("kodokojo.dev");
+    }
+
+    public SELF kodokojo_is_running_on_domain_$(@Quoted String domain) {
+
         this.domain = domain;
         testId = generateUid();
-
         startRedis();
         startKodokojo();
         return self();
@@ -98,13 +120,18 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         try {
             userKeyPair = RSAUtils.generateRsaKeyPair();
             String email = username + "@kodokojo.io";
-            currentUser= new User(identifier, username, username, email, username, RSAUtils.encodePublicKey((RSAPublicKey) userKeyPair.getPublic(), email) );
+            currentUser = new User(identifier, username, username, email, username, RSAUtils.encodePublicKey((RSAPublicKey) userKeyPair.getPublic(), email));
             redisUserManager.addUser(currentUser);
             LOGGER.info("Current user {} with password {}", currentUser, currentUser.getPassword());
         } catch (NoSuchAlgorithmException e) {
             fail("Unable to generate a new RSA key pair for user " + username, e);
         }
         return self();
+    }
+
+    @AfterScenario
+    public void tear_down() {
+        dockerTestSupport.stopAndRemoveContainer();
     }
 
     private String generateUid() {
@@ -129,14 +156,16 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
 
         OkHttpClient httpClient = new OkHttpClient();
         RequestBody body = RequestBody.create(MediaType.parse("application/json"), redisJson.getBytes());
-        Request request = new Request.Builder().post(body).url(marathon.getMarathonUrl() + "/v2/apps").build();
+        String url = marathonUrl + "/v2/apps";
+        System.out.println("Start Redis on url " + url);
+        Request request = new Request.Builder().post(body).url(url).build();
         try {
             Response response = httpClient.newCall(request).execute();
             assertThat(response.code()).isEqualTo(201);
             response.body().close();
             List<Service> servicesResponse = waitForAppAvailable(id);
             try {
-                Thread.sleep(1000);
+                Thread.sleep(2000);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
@@ -150,9 +179,112 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         }
     }
 
+    private void startMesosCluster() {
+        DockerClient dockerClient = dockerTestSupport.getDockerClient();
+        String zookeeper = startZookeeper(dockerClient);
+        String mesosMaster = startMesosMaster(dockerClient, zookeeper);
+        startMesosSlave(dockerClient, mesosMaster);
+        startMarathon(dockerClient, zookeeper);
+    }
+
+    private String startZookeeper(DockerClient dockerClient) {
+
+
+        Ports portBinding = new Ports();
+        ExposedPort exposedPort = ExposedPort.tcp(2181);
+        portBinding.bind(exposedPort, Ports.Binding(null));
+        CreateContainerResponse zookeeperContainer = dockerClient.createContainerCmd("jplock/zookeeper")
+                .withPortBindings(portBinding)
+                .withExposedPorts(exposedPort).exec();
+
+        dockerClient.startContainerCmd(zookeeperContainer.getId()).exec();
+        dockerTestSupport.addContainerIdToClean(zookeeperContainer.getId());
+        return zookeeperContainer.getId();
+    }
+
+    private String startMesosMaster(DockerClient dockerClient, String zookeeperId) {
+
+        Ports portBinding = new Ports();
+        ExposedPort exposedPort = ExposedPort.tcp(5050);
+        portBinding.bind(exposedPort, Ports.Binding(5050));
+
+        int zookeeperPort = dockerTestSupport.getExposedPort(zookeeperId, 2181);
+        String serverIp = dockerTestSupport.getServerIp();
+
+        CreateContainerResponse mesosMasterContainer = dockerClient.createContainerCmd("mesosphere/mesos-master:0.27.1-2.0.226.ubuntu1404")
+                .withCmd("--zk=zk://" + serverIp + ":" + zookeeperPort + "/mesos",
+                        "--registry=in_memory", "--advertise_ip=" + serverIp,
+                        "--no-hostname_lookup"
+                )
+                .withPortBindings(portBinding)
+                .withExposedPorts(exposedPort)
+                .exec();
+        dockerClient.startContainerCmd(mesosMasterContainer.getId()).exec();
+        dockerTestSupport.addContainerIdToClean(mesosMasterContainer.getId());
+        return mesosMasterContainer.getId();
+
+    }
+
+    private String startMesosSlave(DockerClient dockerClient, String mesosMasterId) {
+
+        Ports portBinding = new Ports();
+        ExposedPort exposedPort = ExposedPort.tcp(5051);
+        portBinding.bind(exposedPort, Ports.Binding(5051));
+
+        int mesosMasterPort = dockerTestSupport.getExposedPort(mesosMasterId, 5050);
+        String serverIp = dockerTestSupport.getServerIp();
+
+        ArrayList<Bind> bind = new ArrayList<>(Arrays.asList(
+                new Bind("/usr/local/bin/docker", new Volume("/usr/local/bin/docker")),
+                new Bind("/var/run/docker.sock", new Volume("/var/run/docker.sock"))
+        ));
+
+        CreateContainerResponse mesosSlaveContainer = dockerClient.createContainerCmd("mesosphere/mesos-slave:0.27.1-2.0.226.ubuntu1404")
+                .withCmd("--master=" + serverIp + ":" + mesosMasterPort,
+                        "--containerizers=docker,mesos",
+                        "--docker=/usr/local/bin/docker",
+                        "--advertise_ip=" + serverIp,
+                        "--no-hostname_lookup"
+                )
+                .withPortBindings(portBinding)
+                .withExposedPorts(exposedPort)
+                .withBinds(bind.toArray(new Bind[0]))
+                .withPrivileged(true)
+                .exec();
+        dockerClient.startContainerCmd(mesosSlaveContainer.getId()).exec();
+        dockerTestSupport.addContainerIdToClean(mesosSlaveContainer.getId());
+        return mesosSlaveContainer.getId();
+
+    }
+
+    private String startMarathon(DockerClient dockerClient, String zookeeperId) {
+
+        Ports portBinding = new Ports();
+        ExposedPort exposedPort = ExposedPort.tcp(8080);
+        portBinding.bind(exposedPort, Ports.Binding(8080));
+
+        int zookeeperPort = dockerTestSupport.getExposedPort(zookeeperId, 2181);
+        String serverIp = dockerTestSupport.getServerIp();
+
+        CreateContainerResponse marathonContainer = dockerClient.createContainerCmd("mesosphere/marathon")
+                .withCmd("--master", "zk://" + serverIp + ":" + zookeeperPort + "/mesos",
+                        "--zk", "zk://" + serverIp + ":" + zookeeperPort + "/marathon",
+                        "--hostname", serverIp,
+                        "--event_subscriber", "http_callback",
+                        "--artifact_store", "file:///tmp/"
+                )
+                .withPortBindings(portBinding)
+                .withExposedPorts(exposedPort)
+                .exec();
+        dockerClient.startContainerCmd(marathonContainer.getId()).exec();
+        dockerTestSupport.addContainerIdToClean(marathonContainer.getId());
+        return marathonContainer.getId();
+
+    }
+
     private List<Service> waitForAppAvailable(String appId) {
         OkHttpClient httpClient = new OkHttpClient();
-        Request request = new Request.Builder().get().url(marathon.getMarathonUrl() + "/v2/apps/" + appId).build();
+        Request request = new Request.Builder().get().url(marathonUrl + "/v2/apps/" + appId).build();
         List<Service> res = null;
         int nbMaxTry = 1000;
         int nbTry = 0;
@@ -194,7 +326,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
 
     private void killApp(String appId) {
         OkHttpClient httpClient = new OkHttpClient();
-        Request request = new Request.Builder().delete().url(marathon.getMarathonUrl() + "/v2/apps/" + appId).build();
+        Request request = new Request.Builder().delete().url(marathonUrl + "/v2/apps/" + appId).build();
         try {
             Response response = httpClient.newCall(request).execute();
             assertThat(response.code()).isEqualTo(200);
@@ -208,7 +340,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         if (restEntrypoint != null) {
             restEntrypoint.stop();
         }
-        for(Service service : services) {
+        for (Service service : services) {
             killApp(service.getName());
         }
     }
@@ -218,7 +350,11 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         ProjectManager projectManager = mock(ProjectManager.class); // Change this by launching a Mesos master/slave, Zookeeper and Marathon.
         restEntrypoint = new RestEntrypoint(8080, redisUserManager, new SimpleUserAuthenticator(redisUserManager), projectManager);
         restEntrypoint.start();
-      
+
+    }
+
+    interface MarathonConfiguration {
+        String getMarathonUrl();
     }
 
 }
