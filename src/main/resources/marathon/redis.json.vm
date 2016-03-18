@@ -2,7 +2,7 @@
   "id": "$ID",
   "instance": 1,
   "cpus": 0.1,
-  "mem": 128,
+  "mem": 90,
   "type": "DOCKER",
   "container": {
     "docker": {
@@ -18,15 +18,9 @@
       ]
     }
   },
-  "constraints": [
-    [
-      "type",
-      "LIKE",
-      "operator"
-    ]
-  ],
   "labels": {
     "entity": "kodokojo",
     "component": "redis"
   }
 }
+

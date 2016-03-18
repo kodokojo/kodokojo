@@ -22,24 +22,32 @@ package io.kodokojo.model;
  * #L%
  */
 
+import io.kodokojo.commons.utils.ssl.SSLKeyPair;
+import io.kodokojo.commons.utils.ssl.SSLRootCaKey;
 import org.apache.commons.collections4.CollectionUtils;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.Set;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
-public class Project {
+public class Project implements Serializable {
 
     private final String name;
+
+    private final SSLKeyPair sslRootCaKey;
 
     private final Date snapshotDate;
 
     private final Set<Stack> stacks;
 
-    public Project(String name, Date snapshotDate, Set<Stack> stacks) {
+    public Project(String name, SSLKeyPair sslRootCaKey, Date snapshotDate, Set<Stack> stacks) {
         if (isBlank(name)) {
             throw new IllegalArgumentException("name must be defined.");
+        }
+        if (sslRootCaKey == null) {
+            throw new IllegalArgumentException("sslRootCaKey must be defined.");
         }
         if (snapshotDate == null) {
             throw new IllegalArgumentException("snapshotDate must be defined.");
@@ -48,8 +56,13 @@ public class Project {
             throw new IllegalArgumentException("stacks must be defined.");
         }
         this.name = name;
+        this.sslRootCaKey = sslRootCaKey;
         this.snapshotDate = snapshotDate;
         this.stacks = stacks;
+    }
+
+    public SSLKeyPair getSslRootCaKey() {
+        return sslRootCaKey;
     }
 
     public String getName() {

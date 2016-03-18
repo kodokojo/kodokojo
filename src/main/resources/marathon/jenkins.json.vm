@@ -2,7 +2,7 @@
   "id": "$ID",
   "instance": 1,
   "cpus": 1,
-  "mem": 2048,
+  "mem": 1024,
   "type": "DOCKER",
   "container": {
     "docker": {

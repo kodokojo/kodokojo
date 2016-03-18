@@ -11,13 +11,15 @@ import io.kodokojo.commons.model.Service;
 import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.entrypoint.RestEntrypoint;
 import io.kodokojo.model.User;
-import io.kodokojo.user.SimpleUserAuthenticator;
-import io.kodokojo.user.redis.RedisUserManager;
+import io.kodokojo.service.ProjectManager;
+import io.kodokojo.service.user.SimpleUserAuthenticator;
+import io.kodokojo.service.user.redis.RedisUserManager;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,6 +38,7 @@ import java.util.Random;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.Mockito.mock;
 
 public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> extends Stage<SELF> {
 
@@ -59,6 +62,9 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
     Service redisService;
 
     @ProvidedScenarioState
+    String domain;
+
+    @ProvidedScenarioState
     RedisUserManager redisUserManager;
 
     @ProvidedScenarioState
@@ -74,8 +80,14 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
     List<Service> services = new ArrayList<>();
 
     public SELF kodokojo_is_running(@Hidden MarathonIsPresent marathonIsPresent) {
+        return kodokojo_is_running_on_domain_$(marathonIsPresent, "kodokojo.io");
+    }
+
+    public SELF kodokojo_is_running_on_domain_$(@Hidden MarathonIsPresent marathonIsPresent, @Quoted String domain) {
         marathon = marathonIsPresent;
+        this.domain = domain;
         testId = generateUid();
+
         startRedis();
         startKodokojo();
         return self();
@@ -203,37 +215,10 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
 
     private void startKodokojo() {
 
-        restEntrypoint = new RestEntrypoint(8080, redisUserManager, new SimpleUserAuthenticator(redisUserManager));
+        ProjectManager projectManager = mock(ProjectManager.class); // Change this by launching a Mesos master/slave, Zookeeper and Marathon.
+        restEntrypoint = new RestEntrypoint(8080, redisUserManager, new SimpleUserAuthenticator(redisUserManager), projectManager);
         restEntrypoint.start();
-        /*
-        VelocityEngine ve = new VelocityEngine();
-        ve.init(VE_PROPERTIES);
-
-        Template template = ve.getTemplate("marathon/kodokojo.json.vm");
-
-        VelocityContext context = new VelocityContext();
-        context.put("REDISHOST", redisService.getHost());
-        context.put("REDISPORT", redisService.getPort());
-
-        StringWriter sw = new StringWriter();
-        template.merge(context, sw);
-        String redisJson = sw.toString();
-
-        OkHttpClient httpClient = new OkHttpClient();
-        RequestBody body = RequestBody.create(MediaType.parse("application/json"), redisJson.getBytes());
-        Request request = new Request.Builder().post(body).url(marathon.getMarathonUrl() + "/v2/apps").build();
-        try {
-            Response response = httpClient.newCall(request).execute();
-            System.out.println(response.body().string());
-            assertThat(response.code()).isIn(201, 409);
-            response.body().close();
-            List<Service> services = waitForAppAvailable("/kodokojo");
-            assertThat(services).isNotEmpty();
-            redisService = services.get(0);
-        } catch (IOException e) {
-            fail("Unable to start Redis", e);
-        }
-        */
+      
     }
 
 }

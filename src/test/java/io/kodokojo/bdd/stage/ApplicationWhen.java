@@ -32,6 +32,7 @@ import com.tngtech.jgiven.annotation.ProvidedScenarioState;
 import com.tngtech.jgiven.annotation.Quoted;
 import com.tngtech.jgiven.attachment.Attachment;
 import io.kodokojo.entrypoint.RestEntrypoint;
+import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -94,9 +95,10 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
         RequestBody body = RequestBody.create(MediaType.parse("application/json"), ("{\"email\": \"" + email + "\"}").getBytes());
         String baseUrl = betBaseUrl();
 
-        Request request = new Request.Builder().put(body).url(baseUrl + "/api/v1/user/" + (newUserId != null ? newUserId : "")).build();
+        Request request = new Request.Builder().post(body).url(baseUrl + "/api/v1/user/" + (newUserId != null ? newUserId : "")).build();
+        Response response = null;
         try {
-            Response response = httpClient.newCall(request).execute();
+            response = httpClient.newCall(request).execute();
             if (success) {
                 assertThat(response.code()).isEqualTo(201);
                 JsonParser parser = new JsonParser();
@@ -116,6 +118,10 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
         } catch (IOException e) {
             if (success) {
                 fail(e.getMessage(), e);
+            }
+        } finally {
+            if (response != null) {
+                IOUtils.closeQuietly(response.body());
             }
         }
         return self();

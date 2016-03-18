@@ -41,9 +41,9 @@ public class Stack {
 
     private final StackType stackType;
 
-    private final Set<BrickEntity> brickEntities;
+    private final Set<BrickDeploymentState> brickEntities;
 
-    public Stack(String name, StackType stackType, OrchestratorType orchestratorType, Set<BrickEntity> brickEntities) {
+    public Stack(String name, StackType stackType, OrchestratorType orchestratorType, Set<BrickDeploymentState> brickEntities) {
         if (isBlank(name)) {
             throw new IllegalArgumentException("name must be defined.");
         }
@@ -74,7 +74,7 @@ public class Stack {
         return stackType;
     }
 
-    public Set<BrickEntity> getBrickEntities() {
+    public Set<BrickDeploymentState> getBrickEntities() {
         return brickEntities;
     }
 

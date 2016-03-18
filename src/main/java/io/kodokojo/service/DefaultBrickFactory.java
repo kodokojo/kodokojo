@@ -14,11 +14,11 @@ import static org.apache.commons.lang.StringUtils.isBlank;
 
 public class DefaultBrickFactory implements BrickFactory {
 
-
-
     public static final String JENKINS = "jenkins";
 
     public static final String GITLAB = "gitlab";
+
+    public static final String HAPROXY = "haproxy";
 
     private final Map<String, Brick> cache ;
 
@@ -32,6 +32,7 @@ public class DefaultBrickFactory implements BrickFactory {
         cache = new HashMap<>();
         cache.put(JENKINS, new Brick(JENKINS, BrickType.CI, new JenkinsConfigurer()));
         cache.put(GITLAB, new Brick(GITLAB, BrickType.SCM, new GitlabConfigurer()));
+        cache.put(HAPROXY, new Brick(HAPROXY, BrickType.LOADBALANCER, null));
     }
 
     @Override
@@ -41,16 +42,4 @@ public class DefaultBrickFactory implements BrickFactory {
         }
         return cache.get(name);
     }
-    /*
-    JENKINS("jenkins", BrickType.CI),
-    GITLAB("gitlab", BrickType.SCM),
-    SONAR("sonar", BrickType.QA),
-    DOCKER_REGISTRY("registry", BrickType.REPOSITORY),
-    NEXUS("nexus", BrickType.REPOSITORY),
-    LDAP("ldap", BrickType.AUTHENTIFICATOR),
-    OAUTH("oauth", BrickType.AUTHENTIFICATOR),
-    FLAPJACK("flapjack", BrickType.ALTERTING),
-    SENSU("sensu", BrickType.MONITORING),
-    HAPROXY("haproxy", BrickType.LOADBALANCER);
-*/
 }

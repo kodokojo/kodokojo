@@ -24,13 +24,14 @@ package io.kodokojo.entrypoint;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.lifecycle.ApplicationLifeCycleListener;
 import io.kodokojo.model.User;
-import io.kodokojo.commons.utils.RSAUtils;
-import io.kodokojo.user.SimpleCredential;
-import io.kodokojo.user.UserAuthenticator;
-import io.kodokojo.user.UserCreationDto;
-import io.kodokojo.user.UserManager;
+import io.kodokojo.service.ProjectManager;
+import io.kodokojo.service.UserAuthenticator;
+import io.kodokojo.service.UserManager;
+import io.kodokojo.service.user.SimpleCredential;
+import io.kodokojo.service.user.UserCreationDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
@@ -38,6 +39,7 @@ import spark.Response;
 import spark.ResponseTransformer;
 import spark.Spark;
 
+import javax.inject.Inject;
 import java.io.StringWriter;
 import java.math.BigInteger;
 import java.security.KeyPair;
@@ -65,12 +67,25 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
 
     private final UserAuthenticator<SimpleCredential> userAuthenticator;
 
+    private final ProjectManager projectManager;
+
     private final ResponseTransformer jsonResponseTransformer;
 
-    public RestEntrypoint(int port, UserManager userManager, UserAuthenticator<SimpleCredential> userAuthenticator) {
+    @Inject
+    public RestEntrypoint(int port, UserManager userManager, UserAuthenticator<SimpleCredential> userAuthenticator, ProjectManager projectManager) {
+        if (userManager == null) {
+            throw new IllegalArgumentException("userManager must be defined.");
+        }
+        if (userAuthenticator == null) {
+            throw new IllegalArgumentException("userAuthenticator must be defined.");
+        }
+        if (projectManager == null) {
+            throw new IllegalArgumentException("projectManager must be defined.");
+        }
         this.port = port;
         this.userManager = userManager;
         this.userAuthenticator = userAuthenticator;
+        this.projectManager = projectManager;
         jsonResponseTransformer = new JsonTransformer();
     }
 
@@ -87,11 +102,11 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
             if (requestMatch("POST", BASE_API + "/user", request) ||
                     requestMatch("GET", BASE_API, request) ||
                     requestMatch("GET", BASE_API + "/doc(/)?.*", request) ||
-                    requestMatch("PUT", BASE_API + "/user/[^/]*", request)) {
+                    requestMatch("POST", BASE_API + "/user/[^/]*", request)) {
                 authenticationRequired = false;
             }
             if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace("Authentication is {}require for request {} {}.", authenticationRequired ? "": "NOT ", request.requestMethod(), request.pathInfo());
+                LOGGER.trace("Authentication is {}require for request {} {}.", authenticationRequired ? "" : "NOT ", request.requestMethod(), request.pathInfo());
             }
             if (authenticationRequired) {
                 Authenticator authenticator = new Authenticator();
@@ -113,15 +128,8 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
             return "{\"version\":\"1.0.0\"}";
         });
 
-        post(BASE_API + "/user", JSON_CONTENT_TYPE, (request, response) -> {
-            String res = userManager.generateId();
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Generate id : {}", res);
-            }
-            return res;
-        });
 
-        put(BASE_API + "/user/:id", JSON_CONTENT_TYPE, ((request, response) -> {
+        post(BASE_API + "/user/:id", JSON_CONTENT_TYPE, ((request, response) -> {
             String identifier = request.params(":id");
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Try to create user with id {}", identifier);
@@ -162,6 +170,14 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
             }
         }), jsonResponseTransformer);
 
+        post(BASE_API + "/user", JSON_CONTENT_TYPE, (request, response) -> {
+            String res = userManager.generateId();
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Generate id : {}", res);
+            }
+            return res;
+        });
+
         get(BASE_API + "/user/:id", JSON_CONTENT_TYPE, (request, response) -> {
             SimpleCredential credential = extractCredential(request);
             if (credential != null) {
@@ -173,7 +189,7 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
                     return new User(user.getIdentifier(), user.getName(), user.getUsername(), "", "", "");
                 }
             }
-            halt(500);
+            halt(404);
             return "";
         }, jsonResponseTransformer);
 

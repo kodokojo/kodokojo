@@ -1,7 +1,7 @@
 {
   "id": "$ID",
   "instance": 1,
-  "cpus": 2.0,
+  "cpus": 1.5,
   "mem": 2048,
   "type": "DOCKER",
   "container": {
@@ -25,8 +25,8 @@
       "parameters": [
         {
           "key": "env",
-       ##   "value": "GITLAB_OMNIBUS_CONFIG=external_url 'https://scm.${projectName}.kodokojo.io/';nginx['enable'] = true; nginx['redirect_http_to_https'] = false; nginx['listen_port'] = 80; nginx['listen_https'] = false; gitlab_rails['gitlab_shell_ssh_port'] = ${stack.scmSshPort}"
-          "value": "GITLAB_OMNIBUS_CONFIG=gitlab_rails['gitlab_shell_ssh_port'] = ${stack.scmSshPort}"
+          "value": "GITLAB_OMNIBUS_CONFIG=external_url 'https://scm.${projectName}.kodokojo.io/';nginx['enable'] = true; nginx['redirect_http_to_https'] = false; nginx['listen_port'] = 80; nginx['listen_https'] = false; gitlab_rails['gitlab_shell_ssh_port'] = ${stack.scmSshPort}"
+       ##   "value": "GITLAB_OMNIBUS_CONFIG=gitlab_rails['gitlab_shell_ssh_port'] = ${stack.scmSshPort}"
         },
         {
           "key": "label",

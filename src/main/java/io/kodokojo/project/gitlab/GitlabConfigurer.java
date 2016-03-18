@@ -22,29 +22,32 @@ package io.kodokojo.project.gitlab;
  * #L%
  */
 
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.squareup.okhttp.*;
 import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.model.User;
 import io.kodokojo.project.starter.ConfigurerData;
-import io.kodokojo.project.starter.ProjectConfigurer;
+import io.kodokojo.project.starter.BrickConfigurer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import retrofit.RestAdapter;
 import retrofit.RetrofitError;
+import retrofit.client.OkClient;
 
+import javax.net.ssl.*;
 import java.io.IOException;
 import java.net.*;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class GitlabConfigurer implements ProjectConfigurer {
+public class GitlabConfigurer implements BrickConfigurer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GitlabConfigurer.class);
 
@@ -70,10 +73,8 @@ public class GitlabConfigurer implements ProjectConfigurer {
 
     @Override
     public ConfigurerData configure(ConfigurerData configurerData) {
-        String gitlabUrl = configurerData.getEntrypoint();
-        OkHttpClient httpClient = new OkHttpClient();
-        CookieManager cookieManager = new CookieManager(new GitlabCookieStore(), CookiePolicy.ACCEPT_ALL);
-        httpClient.setCookieHandler(cookieManager);
+        String gitlabUrl = getGitlabEntryPoint(configurerData);
+        OkHttpClient httpClient = provideDefaultOkHttpClient();
         if (signIn(httpClient, gitlabUrl, ROOT_LOGIN, OLD_PASSWORD)) {
             String token = getAuthenticityToken(httpClient, gitlabUrl + PASSWORD_FORM_URL, META_TOKEN_PATTERN);
             String newPassword = configurerData.getAdminUser().getPassword();
@@ -91,11 +92,16 @@ public class GitlabConfigurer implements ProjectConfigurer {
                 } else {
                     LOGGER.error("Unable to log on Gitlab with new password");
                 }
+            } else {
+                LOGGER.error("Unable to change root password on entrypoint {}", gitlabUrl);
             }
+        } else {
+            LOGGER.error("Unable to log as root on entrypoint {}", gitlabUrl);
         }
 
-        return null;
+        return configurerData;
     }
+
 
     @Override
     public ConfigurerData addUsers(ConfigurerData configurerData, List<User> users) {
@@ -106,7 +112,7 @@ public class GitlabConfigurer implements ProjectConfigurer {
             throw new IllegalArgumentException("users must be defined.");
         }
 
-        RestAdapter adapter = new RestAdapter.Builder().setEndpoint(configurerData.getEntrypoint()).build();
+        RestAdapter adapter = new RestAdapter.Builder().setEndpoint(getGitlabEntryPoint(configurerData)).setClient(new OkClient(provideDefaultOkHttpClient())).build();
         GitlabRest gitlabRest = adapter.create(GitlabRest.class);
 
         for(User user : users) {
@@ -114,6 +120,10 @@ public class GitlabConfigurer implements ProjectConfigurer {
         }
 
         return configurerData;
+    }
+
+    private String getGitlabEntryPoint(ConfigurerData configurerData) {
+        return "https://scm." + configurerData.getProjectName().toLowerCase() + "."+ configurerData.getDomaine();
     }
 
     private static boolean changePassword(OkHttpClient httpClient, String gitlabUrl, String token, String oldPassword, String newPassword) {
@@ -201,6 +211,44 @@ public class GitlabConfigurer implements ProjectConfigurer {
         return token;
     }
 
+    private OkHttpClient provideDefaultOkHttpClient() {
+        OkHttpClient httpClient = new OkHttpClient();
+        final TrustManager[] certs = new TrustManager[]{new X509TrustManager() {
+
+            @Override
+            public X509Certificate[] getAcceptedIssuers() {
+                return null;
+            }
+
+            @Override
+            public void checkServerTrusted(final X509Certificate[] chain,
+                                           final String authType) throws CertificateException {
+            }
+
+            @Override
+            public void checkClientTrusted(final X509Certificate[] chain,
+                                           final String authType) throws CertificateException {
+            }
+        }};
+
+        SSLContext ctx = null;
+        try {
+            ctx = SSLContext.getInstance("TLS");
+            ctx.init(null, certs, new SecureRandom());
+        } catch (final java.security.GeneralSecurityException ex) {
+        }
+        httpClient.setHostnameVerifier(new HostnameVerifier() {
+            @Override
+            public boolean verify(String s, SSLSession sslSession) {
+                return true;
+            }
+        });
+        httpClient.setSslSocketFactory(ctx.getSocketFactory());
+        CookieManager cookieManager = new CookieManager(new GitlabCookieStore(), CookiePolicy.ACCEPT_ALL);
+        httpClient.setCookieHandler(cookieManager);
+        return httpClient;
+    }
+
     private class GitlabCookieStore implements CookieStore {
 
         private final Map<String, HttpCookie> cache = new HashMap<>();
@@ -237,13 +285,16 @@ public class GitlabConfigurer implements ProjectConfigurer {
         }
     }
 
+
+
     public static void main(String[] args) throws NoSuchAlgorithmException {
         GitlabConfigurer gitlabConfigurer = new GitlabConfigurer();
         KeyPair keyPair = RSAUtils.generateRsaKeyPair();
         User user = new User("123456", "jpthiery", "jpthiery", "jpthiery@kodokojo.io", "jpthiery", RSAUtils.encodePublicKey((RSAPublicKey) keyPair.getPublic(), "jpthiery@kodokojo.io"));
         List<User> users = Collections.singletonList(user);
-        ConfigurerData configurerData = new ConfigurerData("http://52.50.52.177:41534", user, users);
-        configurerData.getContext().put(GITLAB_ADMIN_TOKEN_KEY, "xwYT3q3QB-pbFkJy5sc6");
+        //ConfigurerData configurerData = new ConfigurerData("http://52.50.9.72:41440", user, users);
+        ConfigurerData configurerData = new ConfigurerData("acme","", "kodokojo.io", user, users);
+        configurerData = gitlabConfigurer.configure(configurerData);
         gitlabConfigurer.addUsers(configurerData, users);
     }
 

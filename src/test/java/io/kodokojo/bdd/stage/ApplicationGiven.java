@@ -41,11 +41,13 @@ import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.commons.utils.properties.PropertyResolver;
 import io.kodokojo.commons.utils.properties.provider.*;
 import io.kodokojo.entrypoint.RestEntrypoint;
-import io.kodokojo.user.SimpleCredential;
-import io.kodokojo.user.SimpleUserAuthenticator;
-import io.kodokojo.user.UserAuthenticator;
-import io.kodokojo.user.redis.RedisUserManager;
+import io.kodokojo.service.ProjectManager;
+import io.kodokojo.service.user.SimpleCredential;
+import io.kodokojo.service.user.SimpleUserAuthenticator;
+import io.kodokojo.service.UserAuthenticator;
+import io.kodokojo.service.user.redis.RedisUserManager;
 import org.junit.Rule;
+import org.mockito.Mockito;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -63,6 +65,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.Mockito.mock;
 
 public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<SELF> {
 
@@ -102,6 +105,9 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
 
     @ProvidedScenarioState
     String currentUserPassword;
+
+    @ProvidedScenarioState
+    ProjectManager projectManager;
 
     @BeforeScenario
     public void create_a_docker_client() {
@@ -154,7 +160,8 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
             SecretKey aesKey = generator.generateKey();
             userManager = new RedisUserManager(aesKey, redisHost, redisPort);
             UserAuthenticator<SimpleCredential> userAuthenticator = new SimpleUserAuthenticator(userManager);
-            restEntrypoint = new RestEntrypoint(port, userManager,userAuthenticator);
+            projectManager = mock(ProjectManager.class);
+            restEntrypoint = new RestEntrypoint(port, userManager,userAuthenticator, projectManager);
             restEntrypoint.start();
             restEntryPointPort = port;
             restEntryPointHost = "localhost";

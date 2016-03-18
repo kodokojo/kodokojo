@@ -7,9 +7,7 @@ import io.kodokojo.commons.config.KodokojoConfig;
 import io.kodokojo.commons.utils.properties.PropertyConfig;
 import io.kodokojo.commons.utils.properties.PropertyResolver;
 import io.kodokojo.commons.utils.properties.provider.*;
-import io.kodokojo.config.ApplicationConfig;
-import io.kodokojo.config.RedisConfig;
-import io.kodokojo.config.SecurityConfig;
+import io.kodokojo.config.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,6 +87,18 @@ public class PropertyModule extends AbstractModule {
     @Singleton
     ApplicationConfig provideApplicationConfig(PropertyValueProvider valueProvider) {
         return createConfig(ApplicationConfig.class, valueProvider);
+    }
+
+    @Provides
+    @Singleton
+    MarathonConfig provideMarathonConfig(PropertyValueProvider valueProvider) {
+        return createConfig(MarathonConfig.class, valueProvider);
+    }
+
+    @Provides
+    @Singleton
+    AwsConfig provideAwsConfig(PropertyValueProvider valueProvider) {
+        return createConfig(AwsConfig.class, valueProvider);
     }
 
     private <T extends PropertyConfig> T createConfig(Class<T> configClass, PropertyValueProvider valueProvider) {

@@ -1,0 +1,46 @@
+{
+  "id": "$ID",
+  "instance": 1,
+  "cpus": 0.5,
+  "mem": 256,
+  "type": "DOCKER",
+  "container": {
+    "docker": {
+      "image": "kodokojo/kodokojo-haproxy-marathon",
+      "network": "HOST",
+      "parameters": [
+        {
+          "key": "env",
+          "value": "MARATHON_URL=http://52.50.152.79:8080"
+        },
+        {
+          "key": "env",
+          "value": "PORT=12022"
+        },
+        {
+          "key": "env",
+          "value": "MARATHON_URL_CALLBACK=http://52.50.157.189:12022/callback"
+        },
+        {
+          "key": "label",
+          "value": "componentType=lb"
+        },
+        {
+          "key": "label",
+          "value": "component=haproxy"
+        }
+      ]
+    }
+  },
+  "constraints": [
+    [
+      "type",
+      "LIKE",
+      "entrypoint"
+    ]
+  ],
+  "labels": {
+    "componentType": "ha",
+    "component": "haproxy"
+  }
+}

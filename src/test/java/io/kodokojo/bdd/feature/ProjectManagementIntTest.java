@@ -22,8 +22,7 @@ public class ProjectManagementIntTest extends ScenarioTest<ClusterApplicationGiv
         when().i_create_a_default_project("Acme")
                 .and().i_start_the_project();
         then().i_have_a_valid_scm()
-                .and().i_have_a_valid_ci()
-                .and().i_have_a_valid_repo();
+                .and().i_have_a_valid_ci();
     }
 
 }

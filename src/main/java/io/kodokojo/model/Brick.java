@@ -22,7 +22,7 @@ package io.kodokojo.model;
  * #L%
  */
 
-import io.kodokojo.project.starter.ProjectConfigurer;
+import io.kodokojo.project.starter.BrickConfigurer;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
@@ -32,9 +32,9 @@ public class Brick {
 
     private final BrickType type;
 
-    private final ProjectConfigurer configurer;
+    private final BrickConfigurer configurer;
 
-    public Brick(String name, BrickType type, ProjectConfigurer configurer) {
+    public Brick(String name, BrickType type, BrickConfigurer configurer) {
         if (isBlank(name)) {
             throw new IllegalArgumentException("name must be defined.");
         }
@@ -54,7 +54,7 @@ public class Brick {
         return type;
     }
 
-    public ProjectConfigurer getConfigurer() {
+    public BrickConfigurer getConfigurer() {
         return configurer;
     }
 

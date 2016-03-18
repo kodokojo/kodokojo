@@ -4,28 +4,28 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import io.kodokojo.commons.utils.ssl.SSLKeyPair;
-import io.kodokojo.commons.utils.ssl.SSLRootCaKey;
 import io.kodokojo.config.SecurityConfig;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.StringUtils;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import javax.inject.Named;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.*;
-import java.security.cert.*;
 import java.security.cert.Certificate;
-import java.security.interfaces.RSAPrivateKey;
-import java.util.ArrayList;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import java.security.interfaces.RSAPrivateCrtKey;
+import java.security.interfaces.RSAPublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.RSAPublicKeySpec;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static org.apache.commons.lang.StringUtils.isBlank;
 
 public class SecurityModule extends AbstractModule {
 
@@ -63,22 +63,30 @@ public class SecurityModule extends AbstractModule {
 
     @Provides
     @Singleton
-    SSLRootCaKey provideSSLRootCaKey(SecurityConfig securityConfig) {
+    SSLKeyPair provideSSLKeyPair(SecurityConfig securityConfig) {
         if (securityConfig == null) {
             throw new IllegalArgumentException("securityConfig must be defined.");
         }
-        if (isBlank(securityConfig.sslRootCaPemPath())) {
-            try {
-                KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
-                RSAPrivateKey key = (RSAPrivateKey) ks.getKey(securityConfig.sslRootCaKsAlias(), securityConfig.sslRootCaKsPassword().toCharArray());
-                Certificate[] certificateChain = ks.getCertificateChain(securityConfig.sslRootCaKsAlias());
-                List<X509Certificate> x509Certificates = Arrays.asList(certificateChain).stream().map(c -> (X509Certificate) c).collect(Collectors.toList());
-                return new SSLRootCaKey(key, x509Certificates.toArray(new X509Certificate[x509Certificates.size()]));
-            } catch (UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException e) {
-                throw new RuntimeException("Unable to open default Keystore", e);
+        try {
+            KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+            ks.load(new FileInputStream(System.getProperty("javax.net.ssl.keyStore")), System.getProperty("javax.net.ssl.keyStorePassword", "").toCharArray());
+
+            RSAPrivateCrtKey key = (RSAPrivateCrtKey) ks.getKey(securityConfig.sslRootCaKsAlias(), securityConfig.sslRootCaKsPassword().toCharArray());
+            if (key == null) {
+                return null;
             }
+
+            RSAPublicKeySpec publicKeySpec = new RSAPublicKeySpec(key.getModulus(), key.getPublicExponent());
+
+            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+            RSAPublicKey publicKey = (RSAPublicKey) keyFactory.generatePublic(publicKeySpec);
+            Certificate[] certificateChain = ks.getCertificateChain(securityConfig.sslRootCaKsAlias());
+            List<X509Certificate> x509Certificates = Arrays.asList(certificateChain).stream().map(c -> (X509Certificate) c).collect(Collectors.toList());
+
+            return new SSLKeyPair(key, publicKey, x509Certificates.toArray(new X509Certificate[x509Certificates.size()]));
+        } catch (UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException | InvalidKeySpecException | CertificateException | IOException e) {
+            throw new RuntimeException("Unable to open default Keystore", e);
         }
-        return null;
     }
 
     private SecretKey generateAesKey() {

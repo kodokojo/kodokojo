@@ -24,22 +24,30 @@ package io.kodokojo.model;
 
 public enum BrickType {
 
-    SCM(true, StackType.BUILD),
-    QA(false, StackType.BUILD),
-    CI(true, StackType.BUILD),
-    REPOSITORY(true, StackType.BUILD),
-    MONITORING(false, StackType.RUN),
-    ALTERTING(false, StackType.RUN),
-    AUTHENTIFICATOR(false, StackType.RUN),
-    LOADBALANCER(true, StackType.RUN);
+    SCM(true, StackType.BUILD, true),
+    QA(false, StackType.BUILD, true),
+    CI(true, StackType.BUILD, true),
+    REPOSITORY(true, StackType.BUILD, true),
+    MONITORING(false, StackType.RUN, true),
+    ALTERTING(false, StackType.RUN, true),
+    AUTHENTIFICATOR(false, StackType.RUN, false),
+    LOADBALANCER(true, StackType.RUN, false);
 
     private final boolean requiered;
 
     private final StackType stackType;
 
-    BrickType(boolean requiered, StackType stackType) {
+    private final boolean requiredHttpExposed;
+
+    BrickType(boolean requiered, StackType stackType, boolean requiredHttpExposed) {
         this.requiered = requiered;
         this.stackType = stackType;
+        this.requiredHttpExposed = requiredHttpExposed;
+    }
+
+
+    public boolean isRequiredHttpExposed() {
+        return requiredHttpExposed;
     }
 
     public boolean isRequiered() {

@@ -40,7 +40,9 @@ public class BrickConfiguration implements Configuration {
 
     private Date versionDate;
 
-    public BrickConfiguration(Brick brick, String name, BrickType type, String url) {
+    private final boolean waitRunning;
+
+    public BrickConfiguration(Brick brick, String name, BrickType type, String url, boolean waitRunning) {
         if (isBlank(name)) {
             throw new IllegalArgumentException("name must be defined.");
         }
@@ -56,12 +58,19 @@ public class BrickConfiguration implements Configuration {
         this.name = name;
         this.type = type;
         this.url = url;
+        this.waitRunning = waitRunning;
+    }
+    public BrickConfiguration(Brick brick, String name, BrickType type, String url) {
+        this(brick, name, type, url, true);
     }
 
     public BrickConfiguration(String name, BrickType type, String url) {
         this(null, name, type, url);
     }
 
+    public BrickConfiguration(Brick brick, boolean waitRunning) {
+        this(brick, brick.getName(), brick.getType(), null, waitRunning);
+    }
     public BrickConfiguration(Brick brick) {
         this(brick, brick.getName(), brick.getType(), null);
     }
@@ -102,6 +111,10 @@ public class BrickConfiguration implements Configuration {
         return url;
     }
 
+    public boolean isWaitRunning() {
+        return waitRunning;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -136,6 +149,7 @@ public class BrickConfiguration implements Configuration {
                 ", name='" + name + '\'' +
                 ", type=" + type +
                 ", url='" + url + '\'' +
+                ", waitRunning='" + waitRunning + '\'' +
                 ", version='" + version + '\'' +
                 ", versionDate=" + versionDate +
                 '}';

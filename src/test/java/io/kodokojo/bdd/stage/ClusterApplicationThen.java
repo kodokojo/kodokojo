@@ -10,10 +10,14 @@ import io.kodokojo.commons.model.Service;
 import io.kodokojo.entrypoint.RestEntrypoint;
 import io.kodokojo.model.ProjectConfiguration;
 import io.kodokojo.model.User;
-import io.kodokojo.user.redis.RedisUserManager;
+import io.kodokojo.service.user.redis.RedisUserManager;
 
+import javax.net.ssl.*;
 import java.io.IOException;
 import java.security.KeyPair;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -64,14 +68,49 @@ public class ClusterApplicationThen<SELF extends ClusterApplicationThen<?>> exte
     }
 
     private void checkHttpService(String serviceUrl) {
-        OkHttpClient httpClient = new OkHttpClient();
-        Request request = new Request.Builder().url(serviceUrl).get().build();
+        OkHttpClient httpClient = provideDefaultOkHttpClient();
+        Request request = new Request.Builder().url("https://" + serviceUrl).get().build();
         try {
             Response response = httpClient.newCall(request).execute();
             assertThat(response.code()).isBetween(200, 299);
         } catch (IOException e) {
-            fail("Unable to request service URL " + serviceUrl);
+            fail("Unable to request service URL " + serviceUrl,e);
         }
     }
 
+    private OkHttpClient provideDefaultOkHttpClient() {
+        OkHttpClient httpClient = new OkHttpClient();
+        final TrustManager[] certs = new TrustManager[]{new X509TrustManager() {
+
+            @Override
+            public X509Certificate[] getAcceptedIssuers() {
+                return null;
+            }
+
+            @Override
+            public void checkServerTrusted(final X509Certificate[] chain,
+                                           final String authType) throws CertificateException {
+            }
+
+            @Override
+            public void checkClientTrusted(final X509Certificate[] chain,
+                                           final String authType) throws CertificateException {
+            }
+        }};
+
+        SSLContext ctx = null;
+        try {
+            ctx = SSLContext.getInstance("TLS");
+            ctx.init(null, certs, new SecureRandom());
+        } catch (final java.security.GeneralSecurityException ex) {
+        }
+        httpClient.setHostnameVerifier(new HostnameVerifier() {
+            @Override
+            public boolean verify(String s, SSLSession sslSession) {
+                return true;
+            }
+        });
+        httpClient.setSslSocketFactory(ctx.getSocketFactory());
+        return httpClient;
+    }
 }

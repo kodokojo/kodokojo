@@ -25,7 +25,7 @@ package io.kodokojo.project.jenkins;
 import com.squareup.okhttp.*;
 import io.kodokojo.model.User;
 import io.kodokojo.project.starter.ConfigurerData;
-import io.kodokojo.project.starter.ProjectConfigurer;
+import io.kodokojo.project.starter.BrickConfigurer;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
@@ -37,7 +37,7 @@ import java.io.StringWriter;
 import java.util.List;
 import java.util.Properties;
 
-public class JenkinsConfigurer implements ProjectConfigurer{
+public class JenkinsConfigurer implements BrickConfigurer {
 
     private static final Properties VE_PROPERTIES = new Properties();
 

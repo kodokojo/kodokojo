@@ -32,17 +32,26 @@ import static org.apache.commons.lang.StringUtils.isBlank;
 
 public class ConfigurerData {
 
+    private final String projectName;
     private final String entrypoint;
 
     private final User adminUser;
 
     private final List<User> users;
 
+    private final String domaine;
+
     private final Map<String, Object> context;
 
-    public ConfigurerData(String entrypoint, User adminUser, List<User> users) {
+    public ConfigurerData(String projectName, String entrypoint,String domaine, User adminUser, List<User> users) {
+        if (isBlank(projectName)) {
+            throw new IllegalArgumentException("projectName must be defined.");
+        }
         if (isBlank(entrypoint)) {
             throw new IllegalArgumentException("entrypoint must be defined.");
+        }
+        if (isBlank(domaine)) {
+            throw new IllegalArgumentException("domaine must be defined.");
         }
         if (adminUser == null) {
             throw new IllegalArgumentException("adminUser must be defined.");
@@ -50,14 +59,24 @@ public class ConfigurerData {
         if (users == null) {
             throw new IllegalArgumentException("users must be defined.");
         }
+        this.projectName = projectName;
         this.entrypoint = entrypoint;
+        this.domaine = domaine;
         this.adminUser = adminUser;
         this.users = users;
         this.context = new HashMap<>();
     }
 
+    public String getProjectName() {
+        return projectName;
+    }
+
     public String getEntrypoint() {
         return entrypoint;
+    }
+
+    public String getDomaine() {
+        return domaine;
     }
 
     public User getAdminUser() {
@@ -82,7 +101,9 @@ public class ConfigurerData {
     @Override
     public String toString() {
         return "ConfigurerData{" +
-                "entrypoint='" + entrypoint + '\'' +
+                "projectName='" + projectName + '\'' +
+                ",domaine='" + domaine + '\'' +
+                ",entrypoint='" + entrypoint + '\'' +
                 ", adminUser=" + adminUser +
                 ", users=" + users +
                 ", context=" + context +
