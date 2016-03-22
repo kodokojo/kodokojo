@@ -1,8 +1,8 @@
 {
   "id": "$ID",
   "instance": 1,
-  "cpus": 1,
-  "mem": 1024,
+  "cpus": 0.2,
+  "mem": 256,
   "type": "DOCKER",
   "container": {
     "docker": {
@@ -39,14 +39,14 @@
         }
       ]
     }
-  },
+  },#if( $constrainByTypeAttribute )
   "constraints": [
     [
       "type",
       "LIKE",
       "operator"
     ]
-  ],
+  ],#end
   "healthChecks": [
     {
       "protocol": "HTTP",

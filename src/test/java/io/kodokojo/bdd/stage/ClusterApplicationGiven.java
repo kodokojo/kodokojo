@@ -59,6 +59,11 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         VE_PROPERTIES.setProperty("runtime.log.logsystem.class", "org.apache.velocity.runtime.log.NullLogChute");
     }
 
+    public enum TestContext {
+        LOCAL,
+        REMOTE_CLUSTER
+    }
+
     @ProvidedScenarioState
     DockerTestSupport dockerTestSupport = new DockerTestSupport();
 
@@ -89,12 +94,17 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
     @ProvidedScenarioState
     List<Service> services = new ArrayList<>();
 
+    @ProvidedScenarioState
+    TestContext testContext;
+
     public SELF kodokojo_is_running(@Hidden MarathonIsPresent marathonIsPresent) {
         marathonUrl = marathonIsPresent.getMarathonUrl();
-        return kodokojo_is_running_on_domain_$("kodokojo.io");
+        testContext = TestContext.REMOTE_CLUSTER;
+        return kodokojo_is_running_on_domain_$("kodokojo.dev");
     }
 
     public SELF kodokojo_is_running(@Hidden DockerPresentMethodRule dockerPresentMethodRule) {
+        testContext = TestContext.LOCAL;
         startMesosCluster();
         try {
             Thread.sleep(12000); //Allow to all component to start.
@@ -211,7 +221,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         int zookeeperPort = dockerTestSupport.getExposedPort(zookeeperId, 2181);
         String serverIp = dockerTestSupport.getServerIp();
 
-        CreateContainerResponse mesosMasterContainer = dockerClient.createContainerCmd("mesosphere/mesos-master:0.27.1-2.0.226.ubuntu1404")
+        CreateContainerResponse mesosMasterContainer = dockerClient.createContainerCmd("mesosphere/mesos-master:0.28.0-2.0.16.ubuntu1404")
                 .withCmd("--zk=zk://" + serverIp + ":" + zookeeperPort + "/mesos",
                         "--registry=in_memory", "--advertise_ip=" + serverIp,
                         "--no-hostname_lookup"
@@ -239,12 +249,13 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
                 new Bind("/var/run/docker.sock", new Volume("/var/run/docker.sock"))
         ));
 
-        CreateContainerResponse mesosSlaveContainer = dockerClient.createContainerCmd("mesosphere/mesos-slave:0.27.1-2.0.226.ubuntu1404")
+        CreateContainerResponse mesosSlaveContainer = dockerClient.createContainerCmd("mesosphere/mesos-slave:0.28.0-2.0.16.ubuntu1404")
                 .withCmd("--master=" + serverIp + ":" + mesosMasterPort,
                         "--containerizers=docker,mesos",
                         "--docker=/usr/local/bin/docker",
                         "--advertise_ip=" + serverIp,
-                        "--no-hostname_lookup"
+                        "--no-hostname_lookup",
+                        "--resources=mem(*):2048;ports(*):[80-80,443-443,10000-20000]"
                 )
                 .withPortBindings(portBinding)
                 .withExposedPorts(exposedPort)
@@ -351,10 +362,6 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         restEntrypoint = new RestEntrypoint(8080, redisUserManager, new SimpleUserAuthenticator(redisUserManager), projectManager);
         restEntrypoint.start();
 
-    }
-
-    interface MarathonConfiguration {
-        String getMarathonUrl();
     }
 
 }

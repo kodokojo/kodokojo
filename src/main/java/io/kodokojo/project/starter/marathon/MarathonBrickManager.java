@@ -36,21 +36,31 @@ public class MarathonBrickManager implements BrickManager {
         VE_PROPERTIES.setProperty("runtime.log.logsystem.class", "org.apache.velocity.runtime.log.NullLogChute");
     }
 
+    private final String marathonUrl;
+
     private final MarathonRestApi marathonRestApi;
 
     private final MarathonServiceLocator marathonServiceLocator;
 
+    private final boolean constrainByTypeAttribute;
+
     @Inject
-    public MarathonBrickManager(String marathonUrl, MarathonServiceLocator marathonServiceLocator) {
+    public MarathonBrickManager(String marathonUrl, MarathonServiceLocator marathonServiceLocator, boolean constrainByTypeAttribute) {
         if (isBlank(marathonUrl)) {
             throw new IllegalArgumentException("marathonUrl must be defined.");
         }
         if (marathonServiceLocator == null) {
             throw new IllegalArgumentException("marathonServiceLocator must be defined.");
         }
+        this.marathonUrl = marathonUrl;
         RestAdapter adapter = new RestAdapter.Builder().setEndpoint(marathonUrl).build();
         marathonRestApi = adapter.create(MarathonRestApi.class);
         this.marathonServiceLocator = marathonServiceLocator;
+        this.constrainByTypeAttribute = constrainByTypeAttribute;
+    }
+
+    public MarathonBrickManager(String marathonUrl, MarathonServiceLocator marathonServiceLocator) {
+        this(marathonUrl, marathonServiceLocator, true);
     }
 
 
@@ -82,6 +92,7 @@ public class MarathonBrickManager implements BrickManager {
         if (brickConfiguration.isWaitRunning()) {
             marathonServiceLocator.getService(type, name);
             boolean haveHttpService = getAnHttpService(res);
+            // TODO remove this, listen the Marathon event bus instead
             int nbTry = 0;
             int maxNbTry = 10000;
             while (nbTry < maxNbTry && !haveHttpService) {
@@ -177,9 +188,12 @@ public class MarathonBrickManager implements BrickManager {
 
         VelocityContext context = new VelocityContext();
         context.put("ID", id);
+        context.put("marathonUrl", marathonUrl);
         context.put("project", projectConfiguration);
         context.put("projectName", projectConfiguration.getName().toLowerCase());
         context.put("stack", stackConfiguration);
+        context.put("brick", brickConfiguration);
+        context.put("constrainByTypeAttribute", this.constrainByTypeAttribute);
         StringWriter sw = new StringWriter();
         template.merge(context, sw);
         return sw.toString();

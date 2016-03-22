@@ -60,7 +60,7 @@ public class StackConfiguration implements Configuration {
         }
 
         for (BrickType expectedType : BrickType.values()) {
-//            checkIfConfigurationExist(expectedType, brickConfigurations);
+     //       checkIfConfigurationExist(expectedType, brickConfigurations);
         }
         this.name = name;
         this.type = type;

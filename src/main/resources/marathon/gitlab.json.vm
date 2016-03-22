@@ -1,12 +1,12 @@
 {
   "id": "$ID",
   "instance": 1,
-  "cpus": 1.5,
-  "mem": 2048,
+  "cpus": 0.5,
+  "mem": 1024,
   "type": "DOCKER",
   "container": {
     "docker": {
-      "image": "gitlab/gitlab-ce",
+      "image": "gitlab/gitlab-ce:8.5.8-ce.0",
       "network": "BRIDGE",
       "portMappings": [
         {
@@ -42,14 +42,14 @@
         }
       ]
     }
-  },
+  },#if( $constrainByTypeAttribute )
   "constraints": [
     [
       "type",
       "LIKE",
       "operator"
     ]
-  ],
+  ],#end
   "healthChecks": [
     {
       "protocol": "HTTP",

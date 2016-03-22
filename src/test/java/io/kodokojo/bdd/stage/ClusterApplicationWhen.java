@@ -63,7 +63,7 @@ public class ClusterApplicationWhen<SELF extends ClusterApplicationWhen<?>> exte
         brickConfigurations.add(new BrickConfiguration(brickFactory.createBrick(DefaultBrickFactory.GITLAB)));
         brickConfigurations.add(new BrickConfiguration(brickFactory.createBrick(DefaultBrickFactory.HAPROXY),false));
 
-        loadBalancerIp = "52.50.157.189";    //Ha proxy may be reloadable in a short future.
+        loadBalancerIp = "192.168.99.100";    //Ha proxy may be reloadable in a short future.
 
         String url = marathonUrl + "/v2/artifacts/config/acme.json";
 
@@ -73,7 +73,7 @@ public class ClusterApplicationWhen<SELF extends ClusterApplicationWhen<?>> exte
                 .addFormDataPart("file", "acme.json",
                         RequestBody.create(MediaType.parse("application/json"), ("{\n" +
                                 "  \"projectName\": \"acme\",\n" +
-                                "  \"sshPort\": 42022\n" +
+                                "  \"sshPort\": 10022\n" +
                                 "}").getBytes()))
                 .build();
         Request request = new Request.Builder().url(url).post(requestBody).build();
@@ -101,7 +101,7 @@ public class ClusterApplicationWhen<SELF extends ClusterApplicationWhen<?>> exte
             e.printStackTrace();
         }
 
-        StackConfiguration stackConfiguration = new StackConfiguration("build-A", StackType.BUILD, brickConfigurations, loadBalancerIp, 40022);
+        StackConfiguration stackConfiguration = new StackConfiguration("build-A", StackType.BUILD, brickConfigurations, loadBalancerIp, 10022);
         stackConfigurations.add(stackConfiguration);
         if (false) {
             DnsManager dnsManager = new Route53DnsManager("kodokojo.io", Region.getRegion(Regions.EU_WEST_1));
@@ -115,7 +115,7 @@ public class ClusterApplicationWhen<SELF extends ClusterApplicationWhen<?>> exte
     }
 
     public SELF i_start_the_project() {
-        MarathonBrickManager marathonBrickManager = new MarathonBrickManager(marathonUrl, new MarathonServiceLocator(marathonUrl));
+        MarathonBrickManager marathonBrickManager = new MarathonBrickManager(marathonUrl, new MarathonServiceLocator(marathonUrl),false);
 
         Future<Void> lbFut = startAndConfigure(marathonBrickManager, projectConfiguration, BrickType.LOADBALANCER);
         Future<Void> scmFut = startAndConfigure(marathonBrickManager, projectConfiguration, BrickType.SCM);

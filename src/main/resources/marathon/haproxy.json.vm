@@ -1,26 +1,22 @@
+#set ( $d = "$")
 {
   "id": "$ID",
   "instance": 1,
-  "cpus": 0.5,
-  "mem": 256,
+  "cpus": 0.1,
+  "mem": 128,
   "type": "DOCKER",
+  "cmd": "/start.sh -httpPort 4444 -marathonUrl $marathonUrl -marathonCallbackUrl http://${d}HOST:${d}PORT/callback",
   "container": {
     "docker": {
       "image": "kodokojo/kodokojo-haproxy-marathon",
-      "network": "HOST",
+      "network": "BRIDGE",
+      "portMappings": [
+        { "containerPort": 4444, "hostPort": 0, "servicePort": 0, "protocol": "tcp" },
+        { "containerPort": 80, "hostPort": 80, "servicePort": 0, "protocol": "tcp" },
+        { "containerPort": 443, "hostPort": 443, "servicePort": 0, "protocol": "tcp" },
+        { "containerPort": ${stack.scmSshPort}, "hostPort": ${stack.scmSshPort}, "servicePort": 0, "protocol": "tcp" }
+      ],
       "parameters": [
-        {
-          "key": "env",
-          "value": "MARATHON_URL=http://52.50.152.79:8080"
-        },
-        {
-          "key": "env",
-          "value": "PORT=12022"
-        },
-        {
-          "key": "env",
-          "value": "MARATHON_URL_CALLBACK=http://52.50.157.189:12022/callback"
-        },
         {
           "key": "label",
           "value": "componentType=lb"
@@ -31,14 +27,14 @@
         }
       ]
     }
-  },
+  },#if( $constrainByTypeAttribute )
   "constraints": [
     [
       "type",
       "LIKE",
       "entrypoint"
     ]
-  ],
+  ],#end
   "labels": {
     "componentType": "ha",
     "component": "haproxy"
