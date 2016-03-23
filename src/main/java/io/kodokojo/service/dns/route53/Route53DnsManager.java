@@ -38,6 +38,7 @@ public class Route53DnsManager implements DnsManager {
         if (dnsEntry == null) {
             throw new IllegalArgumentException("dnsEntry must be defined.");
         }
+
         HostedZone hostedZone = getHostedZone();
         if (hostedZone != null) {
             List<ResourceRecord> resourceRecords = new ArrayList<>();
@@ -55,7 +56,7 @@ public class Route53DnsManager implements DnsManager {
 
             List<Change> changes = new ArrayList<>();
             Change change = new Change();
-            change.setAction(ChangeAction.CREATE);
+            change.setAction(dnsEntryExist(dnsEntry) ? ChangeAction.UPSERT : ChangeAction.CREATE);
             change.setResourceRecordSet(resourceRecordSet);
             changes.add(change);
 
@@ -68,6 +69,7 @@ public class Route53DnsManager implements DnsManager {
             client.changeResourceRecordSets(request);
             return true;
         }
+
         return false;
     }
 
