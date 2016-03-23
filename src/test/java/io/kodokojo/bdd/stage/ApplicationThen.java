@@ -22,20 +22,27 @@ package io.kodokojo.bdd.stage;
  * #L%
  */
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.amazonaws.util.IOUtils;
+import com.google.gson.*;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 import com.tngtech.jgiven.CurrentStep;
 import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.ExpectedScenarioState;
+import com.tngtech.jgiven.annotation.ProvidedScenarioState;
 import com.tngtech.jgiven.annotation.Quoted;
 import com.tngtech.jgiven.attachment.Attachment;
 import io.kodokojo.model.User;
 import io.kodokojo.service.user.redis.RedisUserManager;
 
+import java.io.IOException;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF> {
 
@@ -46,13 +53,16 @@ public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF
     CurrentStep currentStep;
 
     @ExpectedScenarioState
-    Map<String, UserInfo> currentUsers = new HashMap<>();
-
-    @ExpectedScenarioState
     String restEntryPointHost;
 
     @ExpectedScenarioState
     int restEntryPointPort;
+
+    @ExpectedScenarioState
+    String currentUserLogin;
+
+    @ExpectedScenarioState
+    Map<String, UserInfo> currentUsers;
 
     public SELF it_exist_a_valid_user_with_username_$(@Quoted String username) {
         User user = userManager.getUserByUsername(username);
@@ -73,4 +83,63 @@ public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF
         return self();
     }
 
+    public SELF it_is_possible_to_get_details_for_user_$(@Quoted String username) {
+        getUserDetails(username, false);
+        return self();
+    }
+
+    public SELF it_is_possible_to_get_complete_details_for_user_$(@Quoted String username) {
+        getUserDetails(username, true);
+        return self();
+    }
+
+    public SELF it_is_NOT_possible_to_get_complete_details_for_user_$(@Quoted String username) {
+        getUserDetails(username, false);
+        return self();
+    }
+
+    private void getUserDetails(String username, boolean complete) {
+        OkHttpClient httpClient = new OkHttpClient();
+        UserInfo requesterUserInfo = currentUsers.get(currentUserLogin);
+        UserInfo targetUserInfo = currentUsers.get(username);
+        String url = getBaseUrl() + "/api/v1/user";
+        if (!requesterUserInfo.getIdentifier().equals(targetUserInfo.getIdentifier())) {
+            url += "/" + targetUserInfo.getIdentifier();
+        }
+        String encoded = Base64.getEncoder().encodeToString((requesterUserInfo.getUsername() + ":" + requesterUserInfo.getPassword()).getBytes());
+        Request request = new Request.Builder().get().url(url).addHeader("Authorization", "Basic " + encoded).build();
+        Response response = null;
+        try {
+            response = httpClient.newCall(request).execute();
+            assertThat(response.code()).isEqualTo(200);
+
+            JsonParser parser = new JsonParser();
+            JsonObject json = (JsonObject) parser.parse(response.body().string());
+            System.out.println(json.toString());
+            assertThat(json.getAsJsonPrimitive("name").getAsString()).isNotEmpty();
+            if (complete) {
+                assertThat(json.getAsJsonPrimitive("password").getAsString()).isNotEmpty();
+                assertThat(json.getAsJsonPrimitive("email").getAsString()).isNotEmpty();
+                assertThat(json.getAsJsonPrimitive("sshPublicKey").getAsString()).isNotEmpty();
+            } else {
+                assertThat(json.getAsJsonPrimitive("password").getAsString()).isEmpty();
+                assertThat(json.getAsJsonPrimitive("email").getAsString()).isEmpty();
+                assertThat(json.getAsJsonPrimitive("sshPublicKey").getAsString()).isEmpty();
+            }
+        } catch (IOException e) {
+            fail("Unable to get User details on Url " + url, e);
+        } finally {
+            if (response != null) {
+                try {
+                    response.body().close();
+                } catch (IOException e) {
+                    fail("Fail to close Http response.", e);
+                }
+            }
+        }
+    }
+
+    private String getBaseUrl() {
+        return "http://" + restEntryPointHost + ":" + restEntryPointPort;
+    }
 }

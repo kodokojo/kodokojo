@@ -1,0 +1,43 @@
+kodokojo-ui:
+  image: kodokojo/kodokojo-ui
+  ports:
+    - 80:80
+  links:
+    - kodokojo
+kodokojo:
+  image: kodokojo/kodokojo
+  entrypoint: java -Dlogback.configurationFile=/debug-logback.xml -Djavax.net.ssl.keyStore=/keystore.jks -Djavax.net.ssl.keyStorePassword=password -Dsecurity.ssl.rootCa.ks.alias=rootcafake -Dsecurity.ssl.rootCa.ks.password=password -Dapplication.dns.domain=kodokojo.dev -Dmarathon.url=http://192.168.99.100:8080 -Dlb.defaultIp=192.168.99.100 -jar /project/kodokojo.jar
+  volumes:
+    - ./logback-docker.xml:/debug-logback.xml
+    - ./mykeystore.jks:/keystore.jks
+  links:
+    - redis
+redis:
+  image: redis
+
+zookeeper:
+  image: jplock/zookeeper
+  ports:
+    - 2181:2181
+mesos-master:
+  image: mesosphere/mesos-master:0.28.0-2.0.16.ubuntu1404
+  ports:
+    - 5050:5050
+  command: --zk=zk://192.168.99.100:2181/mesos --registry=in_memory --advertise_ip=192.168.99.100  --no-hostname_lookup
+  links:
+    - zookeeper
+mesos-slave:
+  image: mesosphere/mesos-slave:0.28.0-2.0.16.ubuntu1404
+    ports:
+      - 5051:5051
+  command: --master=192.168.99.100:5050  --containerizers=docker,mesos --docker=/usr/local/bin/docker --advertise_ip=192.168.99.100 --no-hostname_lookup
+  privileged: true
+  volumes:
+    - /usr/local/bin/docker:/usr/local/bin/docker
+    - /var/run/docker.sock:/var/run/docker.sock
+marathon:
+  image: mesosphere/marathon
+  ports:
+    - 8080:8080
+  command: --master zk://192.168.99.100:2181/mesos --zk zk://192.168.99.100:2181/marathon --hostname 192.168.99.100 --event_subscriber http_callback --artifact_store file:///tmp/
+

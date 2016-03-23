@@ -31,8 +31,8 @@ import com.tngtech.jgiven.annotation.ExpectedScenarioState;
 import com.tngtech.jgiven.annotation.ProvidedScenarioState;
 import com.tngtech.jgiven.annotation.Quoted;
 import com.tngtech.jgiven.attachment.Attachment;
-import io.kodokojo.entrypoint.RestEntrypoint;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -53,17 +53,19 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
     @ProvidedScenarioState
     String newUserId;
 
-    @ProvidedScenarioState
-    Map<String, UserInfo> currentUsers = new HashMap<>();
+    @ExpectedScenarioState
+    Map<String, UserInfo> currentUsers;
+
+    @ExpectedScenarioState
+    String currentUserLogin;
 
     @ExpectedScenarioState
     CurrentStep currentStep;
 
-
     public SELF retrive_a_new_id() {
         OkHttpClient httpClient = new OkHttpClient();
         RequestBody emptyBody = RequestBody.create(null, new byte[0]);
-        String baseUrl = betBaseUrl();
+        String baseUrl = getBaseUrl();
         Request request = new Request.Builder().post(emptyBody).url(baseUrl + "/api/v1/user").build();
         try {
             Response response = httpClient.newCall(request).execute();
@@ -93,7 +95,7 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
 
         OkHttpClient httpClient = new OkHttpClient();
         RequestBody body = RequestBody.create(MediaType.parse("application/json"), ("{\"email\": \"" + email + "\"}").getBytes());
-        String baseUrl = betBaseUrl();
+        String baseUrl = getBaseUrl();
 
         Request request = new Request.Builder().post(body).url(baseUrl + "/api/v1/user/" + (newUserId != null ? newUserId : "")).build();
         Response response = null;
@@ -109,6 +111,9 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
                 String currentUserEmail = json.getAsJsonPrimitive("email").getAsString();
                 String currentUserIdentifier = json.getAsJsonPrimitive("identifier").getAsString();
                 currentUsers.put(currentUsername, new UserInfo(currentUsername, currentUserIdentifier, currentUserPassword, currentUserEmail));
+                if (StringUtils.isBlank(currentUserLogin)) {
+                    currentUserLogin = currentUsername;
+                }
                 Attachment privateKey = Attachment.plainText(bodyResponse).withTitle(currentUsername + " response");
                 currentStep.addAttachment(privateKey);
             } else {
@@ -127,7 +132,7 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
         return self();
     }
 
-    private String betBaseUrl() {
+    private String getBaseUrl() {
         return "http://" + restEntryPointHost + ":" + restEntryPointPort;
     }
 }

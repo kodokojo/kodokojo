@@ -8,9 +8,11 @@ import io.kodokojo.bdd.stage.ClusterApplicationThen;
 import io.kodokojo.bdd.stage.ClusterApplicationWhen;
 import io.kodokojo.commons.DockerIsRequire;
 import io.kodokojo.commons.DockerPresentMethodRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
+@Ignore
 public class ProjectManagementIntTest extends ScenarioTest<ClusterApplicationGiven<?>, ClusterApplicationWhen<?>, ClusterApplicationThen<?>> {
 
     @Rule

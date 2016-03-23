@@ -30,10 +30,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.tngtech.jgiven.Stage;
-import com.tngtech.jgiven.annotation.AfterScenario;
-import com.tngtech.jgiven.annotation.BeforeScenario;
-import com.tngtech.jgiven.annotation.ProvidedScenarioState;
-import com.tngtech.jgiven.annotation.Quoted;
+import com.tngtech.jgiven.annotation.*;
 import io.kodokojo.commons.config.DockerConfig;
 import io.kodokojo.model.User;
 import io.kodokojo.commons.utils.DockerTestSupport;
@@ -104,7 +101,10 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
     String currentUserLogin;
 
     @ProvidedScenarioState
-    String currentUserPassword;
+    String whoAmI;
+
+    @ProvidedScenarioState
+    Map<String, UserInfo> currentUsers = new HashMap<>();
 
     @ProvidedScenarioState
     ProjectManager projectManager;
@@ -170,20 +170,25 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
         }
         return self();
     }
-
-    public SELF i_am_user_$(@Quoted String username) {
-        String identifier = userManager.generateId();
-        String password = USER_PASSWORD.get(username) == null ? new BigInteger(130, new SecureRandom()).toString(32) : USER_PASSWORD.get(username);
-        try {
-            KeyPair keyPair = RSAUtils.generateRsaKeyPair();
-            RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPrivate();
-            String email = username + "@kodokojo.io";
-            boolean userAdded = userManager.addUser(new User(identifier, username, username, email, password, RSAUtils.encodePublicKey(publicKey, email)));
-            assertThat(userAdded).isTrue();
-            currentUserLogin = username;
-            currentUserPassword = password;
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
+    public SELF i_will_be_user_$(@Quoted String username) {
+        return i_am_user_$(username, false);
+    }
+    public SELF i_am_user_$(@Quoted String username, @Hidden boolean createUser) {
+        currentUserLogin = username;
+        if (createUser) {
+            String identifier = userManager.generateId();
+            String password = USER_PASSWORD.get(username) == null ? new BigInteger(130, new SecureRandom()).toString(32) : USER_PASSWORD.get(username);
+            try {
+                KeyPair keyPair = RSAUtils.generateRsaKeyPair();
+                RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPrivate();
+                String email = username + "@kodokojo.io";
+                boolean userAdded = userManager.addUser(new User(identifier, username, username, email, password, RSAUtils.encodePublicKey(publicKey, email)));
+                assertThat(userAdded).isTrue();
+                whoAmI = username;
+                currentUsers.put(currentUserLogin, new UserInfo(currentUserLogin, identifier, password, email));
+            } catch (NoSuchAlgorithmException e) {
+                e.printStackTrace();
+            }
         }
         return self();
     }

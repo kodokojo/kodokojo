@@ -45,10 +45,12 @@ public class UserCreationIntTest extends ScenarioTest<ApplicationGiven<?>, Appli
     @DockerIsRequire
     public void create_a_simple_user() {
         given().redis_is_started()
-                .and().kodokojo_restEntrypoint_is_available();
+                .and().kodokojo_restEntrypoint_is_available()
+                .and().i_will_be_user_$("jpthiery");
         when().retrive_a_new_id()
                 .and().create_user_with_email_$("jpthiery@xebia.fr");
-        then().it_exist_a_valid_user_with_username_$("jpthiery");
+        then().it_exist_a_valid_user_with_username_$("jpthiery")
+                .and().it_is_possible_to_get_complete_details_for_user_$("jpthiery");
     }
 
     @Test
@@ -62,6 +64,23 @@ public class UserCreationIntTest extends ScenarioTest<ApplicationGiven<?>, Appli
 
         then().it_exist_a_valid_user_with_username_$("jpthiery")
                 .and().it_NOT_exist_a_valid_user_with_username_$("aletaxin");
+    }
+
+    @Test
+    @DockerIsRequire
+    public void create_two_users_and_get_details() {
+        given().redis_is_started()
+                .and().kodokojo_restEntrypoint_is_available()
+                .and().i_will_be_user_$("jpthiery");
+        when().retrive_a_new_id()
+                .and().create_user_with_email_$("jpthiery@xebia.fr")
+        .and().retrive_a_new_id()
+                .and().create_user_with_email_$("aletaxin@xebia.fr");
+        then().it_exist_a_valid_user_with_username_$("jpthiery")
+                .and().it_exist_a_valid_user_with_username_$("aletaxin")
+                .and().it_is_possible_to_get_complete_details_for_user_$("jpthiery")
+        .and().it_is_possible_to_get_details_for_user_$("aletaxin")
+        .and().it_is_NOT_possible_to_get_complete_details_for_user_$("aletaxin");
     }
 
     @Test

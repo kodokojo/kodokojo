@@ -59,7 +59,7 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
 
     private static final String API_VERSION = "v1";
 
-    private static final String BASE_API = "/api/" + API_VERSION;
+    public static final String BASE_API = "/api/" + API_VERSION;
 
     private final int port;
 
@@ -109,24 +109,19 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
                 LOGGER.trace("Authentication is {}require for request {} {}.", authenticationRequired ? "" : "NOT ", request.requestMethod(), request.pathInfo());
             }
             if (authenticationRequired) {
-                Authenticator authenticator = new Authenticator();
-                authenticator.handle(request, response);
-                if (authenticator.isProvideCredentials()) {
-                    User user = userAuthenticator.authenticate(new SimpleCredential(authenticator.getUsername(), authenticator.getPassword()));
+                BasicAuthenticator basicAuthenticator = new BasicAuthenticator();
+                basicAuthenticator.handle(request, response);
+                if (basicAuthenticator.isProvideCredentials()) {
+                    User user = userAuthenticator.authenticate(new SimpleCredential(basicAuthenticator.getUsername(), basicAuthenticator.getPassword()));
                     if (user == null) {
                         authorizationRequiered(response);
                     }
-
                 } else {
                     authorizationRequiered(response);
                 }
             }
         });
 
-        get(BASE_API, JSON_CONTENT_TYPE, (request, response) -> {
-            response.type(JSON_CONTENT_TYPE);
-            return "{\"version\":\"1.0.0\"}";
-        });
 
 
         post(BASE_API + "/user/:id", JSON_CONTENT_TYPE, ((request, response) -> {
@@ -178,6 +173,16 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
             return res;
         });
 
+        get(BASE_API + "/user", JSON_CONTENT_TYPE, (request, response) -> {
+            SimpleCredential credential = extractCredential(request);
+            if (credential != null) {
+                User user = userManager.getUserByUsername(credential.getUsername());
+                return user;
+            }
+            halt(401);
+            return "";
+        }, jsonResponseTransformer);
+
         get(BASE_API + "/user/:id", JSON_CONTENT_TYPE, (request, response) -> {
             SimpleCredential credential = extractCredential(request);
             if (credential != null) {
@@ -192,6 +197,12 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
             halt(404);
             return "";
         }, jsonResponseTransformer);
+
+
+        get(BASE_API, JSON_CONTENT_TYPE, (request, response) -> {
+            response.type(JSON_CONTENT_TYPE);
+            return "{\"version\":\"1.0.0\"}";
+        });
 
         Spark.awaitInitialization();
 
@@ -219,11 +230,11 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
     }
 
     private static SimpleCredential extractCredential(Request request) {
-        Authenticator authenticator = new Authenticator();
+        BasicAuthenticator basicAuthenticator = new BasicAuthenticator();
         try {
-            authenticator.handle(request, null);
-            if (authenticator.isProvideCredentials()) {
-                return new SimpleCredential(authenticator.getUsername(), authenticator.getPassword());
+            basicAuthenticator.handle(request, null);
+            if (basicAuthenticator.isProvideCredentials()) {
+                return new SimpleCredential(basicAuthenticator.getUsername(), basicAuthenticator.getPassword());
             }
         } catch (Exception e) {
             LOGGER.debug("Unable to retrieve credentials", e);

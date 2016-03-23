@@ -32,10 +32,6 @@
     <logger name="org.springframework" level="WARN"/>
 
     <logger name="io.kodokojo" level="TRACE"/>
-    <!--logger name="retrofit" level="TRACE"/-->
-    <!--logger name="spark" level="INFOS"/-->
-    <logger name="org.eclipse.jetty.http" level="INFO"/>
-    <logger name="com.github.dockerjava.core.command.LogContainerResultCallback" level="DEBUG"/>
 
     <root level="WARN">
         <appender-ref ref="STDOUT" />

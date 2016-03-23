@@ -23,6 +23,8 @@ package io.kodokojo.entrypoint;
  */
 
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import spark.Filter;
 import spark.Request;
 import spark.Response;
@@ -31,7 +33,9 @@ import java.util.Base64;
 
 import static org.apache.commons.lang.StringUtils.isNotBlank;
 
-public class Authenticator implements Filter {
+public class BasicAuthenticator implements Filter {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(BasicAuthenticator.class);
 
     private String username;
 
@@ -46,6 +50,11 @@ public class Authenticator implements Filter {
             String[] split = decoded.split(":");
             username = split[0];
             password = split[1];
+        } else if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Basic Authorization header not found.");
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace("List of Header of current request {}", StringUtils.join(request.headers(), ","));
+            }
         }
     }
 
