@@ -2,6 +2,7 @@ package io.kodokojo.bdd.stage;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.command.SyncDockerCmd;
 import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.Ports;
@@ -9,6 +10,9 @@ import com.github.dockerjava.api.model.Volume;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import com.squareup.okhttp.*;
 import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.AfterScenario;
@@ -20,11 +24,18 @@ import io.kodokojo.commons.DockerPresentMethodRule;
 import io.kodokojo.commons.model.Service;
 import io.kodokojo.commons.utils.DockerTestSupport;
 import io.kodokojo.commons.utils.RSAUtils;
+import io.kodokojo.config.module.PropertyModule;
+import io.kodokojo.config.module.RedisModule;
+import io.kodokojo.config.module.SecurityModule;
+import io.kodokojo.config.module.ServiceModule;
 import io.kodokojo.entrypoint.RestEntrypoint;
 import io.kodokojo.model.User;
+import io.kodokojo.service.DefaultProjectManager;
 import io.kodokojo.service.ProjectManager;
+import io.kodokojo.service.UserManager;
 import io.kodokojo.service.user.SimpleUserAuthenticator;
 import io.kodokojo.service.user.redis.RedisUserManager;
+import org.apache.commons.lang.StringUtils;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
@@ -34,6 +45,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.crypto.KeyGenerator;
+import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.math.BigInteger;
@@ -65,10 +77,16 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
     }
 
     @ProvidedScenarioState
+    Injector injector;
+
+    @ProvidedScenarioState
     DockerTestSupport dockerTestSupport = new DockerTestSupport();
 
     @ProvidedScenarioState
     RestEntrypoint restEntrypoint;
+
+    @ProvidedScenarioState
+    ProjectManager projectManager;
 
     @ProvidedScenarioState
     String marathonUrl;
@@ -100,7 +118,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
     public SELF kodokojo_is_running(@Hidden MarathonIsPresent marathonIsPresent) {
         marathonUrl = marathonIsPresent.getMarathonUrl();
         testContext = TestContext.REMOTE_CLUSTER;
-        return kodokojo_is_running_on_domain_$("kodokojo.dev");
+        return kodokojo_is_running_on_domain_$("kodokojo.io");
     }
 
     public SELF kodokojo_is_running(@Hidden DockerPresentMethodRule dockerPresentMethodRule) {
@@ -346,22 +364,47 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         }
     }
 
-    @AfterScenario
+    //@AfterScenario
     public void tearDown() {
         if (restEntrypoint != null) {
             restEntrypoint.stop();
         }
         for (Service service : services) {
-            killApp(service.getName());
+       //     killApp(service.getName());
         }
+        dockerTestSupport.stopAndRemoveContainer();
     }
 
     private void startKodokojo() {
-
-        ProjectManager projectManager = mock(ProjectManager.class); // Change this by launching a Mesos master/slave, Zookeeper and Marathon.
+        String keystorePath = System.getProperty("javax.net.ssl.keyStore", null);
+        if (StringUtils.isBlank(keystorePath)) {
+            String keystorePathDefined = new File("").getAbsolutePath() + "/src/test/resources/keystore/mykeystore.jks";
+            System.out.println(keystorePathDefined);
+            System.setProperty("javax.net.ssl.keyStore", keystorePathDefined);
+            System.setProperty("javax.net.ssl.keyStorePassword", "password");
+            System.setProperty("security.ssl.rootCa.ks.alias","rootcafake");
+            System.setProperty("security.ssl.rootCa.ks.password","password");
+            System.setProperty("application.dns.domain","kodokojo.io");
+            System.setProperty("redis.host",redisService.getHost());
+            System.setProperty("redis.port",""+redisService.getPort());
+            if (testContext == TestContext.LOCAL) {
+                System.setProperty("marathon.url", "http://" + dockerTestSupport.getServerIp() + ":8080");
+                System.setProperty("lb.defaultIp", dockerTestSupport.getServerIp());
+                System.setProperty("application.dns.domain","kodokojo.dev");
+            }
+        }
+        injector = Guice.createInjector(new PropertyModule(new String[]{}), new TestModule(),new SecurityModule(), new ServiceModule());
+        projectManager = injector.getInstance(ProjectManager.class);
         restEntrypoint = new RestEntrypoint(8080, redisUserManager, new SimpleUserAuthenticator(redisUserManager), projectManager);
         restEntrypoint.start();
 
+    }
+
+    private class TestModule extends AbstractModule {
+        @Override
+        protected void configure() {
+            bind(UserManager.class).toInstance(redisUserManager);
+        }
     }
 
 }

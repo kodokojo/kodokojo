@@ -1,8 +1,8 @@
 {
   "id": "$ID",
   "instance": 1,
-  "cpus": 0.2,
-  "mem": 256,
+  "cpus": 0.4,
+  "mem": 1024,
   "type": "DOCKER",
   "container": {
     "docker": {

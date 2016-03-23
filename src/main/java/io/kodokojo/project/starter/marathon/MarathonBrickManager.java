@@ -44,23 +44,29 @@ public class MarathonBrickManager implements BrickManager {
 
     private final boolean constrainByTypeAttribute;
 
+    private final String domain;
+
     @Inject
-    public MarathonBrickManager(String marathonUrl, MarathonServiceLocator marathonServiceLocator, boolean constrainByTypeAttribute) {
+    public MarathonBrickManager(String marathonUrl, MarathonServiceLocator marathonServiceLocator, boolean constrainByTypeAttribute, String domain) {
         if (isBlank(marathonUrl)) {
             throw new IllegalArgumentException("marathonUrl must be defined.");
         }
         if (marathonServiceLocator == null) {
             throw new IllegalArgumentException("marathonServiceLocator must be defined.");
         }
+        if (isBlank(domain)) {
+            throw new IllegalArgumentException("domain must be defined.");
+        }
         this.marathonUrl = marathonUrl;
         RestAdapter adapter = new RestAdapter.Builder().setEndpoint(marathonUrl).build();
         marathonRestApi = adapter.create(MarathonRestApi.class);
         this.marathonServiceLocator = marathonServiceLocator;
         this.constrainByTypeAttribute = constrainByTypeAttribute;
+        this.domain = domain;
     }
 
-    public MarathonBrickManager(String marathonUrl, MarathonServiceLocator marathonServiceLocator) {
-        this(marathonUrl, marathonServiceLocator, true);
+    public MarathonBrickManager(String marathonUrl, MarathonServiceLocator marathonServiceLocator,String domain) {
+        this(marathonUrl, marathonServiceLocator, true, domain);
     }
 
 
@@ -132,7 +138,7 @@ public class MarathonBrickManager implements BrickManager {
             Set<Service> services = marathonServiceLocator.getService(type, name);
             List<User> users = projectConfiguration.getUsers();
             String entrypoint = getEntryPoint(services);
-            ConfigurerData configurerData = configurer.configure(new ConfigurerData(projectConfiguration.getName(),entrypoint,"kodokojo.io", users.get(0), users));
+            ConfigurerData configurerData = configurer.configure(new ConfigurerData(projectConfiguration.getName(),entrypoint,domain, users.get(0), users));
             configurer.addUsers(configurerData, users);
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Adding users {} to brick {}", StringUtils.join(users, ","), brickType);

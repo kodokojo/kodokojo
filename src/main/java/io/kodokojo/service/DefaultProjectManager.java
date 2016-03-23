@@ -30,6 +30,9 @@ import io.kodokojo.project.starter.BrickManager;
 import io.kodokojo.service.dns.DnsEntry;
 import io.kodokojo.service.dns.DnsManager;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -40,6 +43,8 @@ import java.util.Set;
 import static org.apache.commons.lang.StringUtils.isBlank;
 
 public class DefaultProjectManager implements ProjectManager {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultProjectManager.class);
 
     private final DnsManager dnsManager;
 
@@ -115,7 +120,7 @@ public class DefaultProjectManager implements ProjectManager {
         }
 
         String projectName = projectConfiguration.getName();
-        String projectDomainName = projectName + "." + domain;
+        String projectDomainName = (projectName + "." + domain).toLowerCase();
         SSLKeyPair projectCaSSL = SSLUtils.createSSLKeyPair(projectDomainName, caKey.getPrivateKey(), caKey.getPublicKey(), caKey.getCertificates(), sslCaDuration, true);
 
         Set<Stack> stacks = new HashSet<>();
@@ -133,7 +138,13 @@ public class DefaultProjectManager implements ProjectManager {
                     configurationStore.storeSSLKeys(projectName, brickTypeName, brickSslKeyPair);
                 }
                 Set<Service> services = brickManager.start(projectConfiguration, brickType);
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("{} for project {} started : {}", brickType, projectName, StringUtils.join(services, ","));
+                }
                 brickManager.configure(projectConfiguration, brickType);
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("{} for project {} configured", brickType, projectName);
+                }
                 BrickDeploymentState brickDeploymentState = new BrickDeploymentState(brickConfiguration.getBrick(), new ArrayList<>(services), 1);
                 brickEntities.add(brickDeploymentState);
             }

@@ -41,9 +41,11 @@ public class BrickDeploymentState {
         if (brick == null) {
             throw new IllegalArgumentException("brick must be defined.");
         }
+       /*
         if (CollectionUtils.isEmpty(services)) {
-            throw new IllegalArgumentException(" must be defined.");
+            throw new IllegalArgumentException("services must be defined.");
         }
+        */
         this.brick = brick;
         this.services = services;
         this.nbInstance = nbInstance;

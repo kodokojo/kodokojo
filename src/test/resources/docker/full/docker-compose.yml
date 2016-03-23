@@ -28,8 +28,8 @@ mesos-master:
     - zookeeper
 mesos-slave:
   image: mesosphere/mesos-slave:0.28.0-2.0.16.ubuntu1404
-    ports:
-      - 5051:5051
+  ports:
+    - 5051:5051
   command: --master=192.168.99.100:5050  --containerizers=docker,mesos --docker=/usr/local/bin/docker --advertise_ip=192.168.99.100 --no-hostname_lookup
   privileged: true
   volumes:

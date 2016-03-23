@@ -70,9 +70,9 @@ public class ServiceModule extends AbstractModule {
 
     @Provides
     @Singleton
-    BrickManager provideBrickManager(MarathonConfig marathonConfig) {
+    BrickManager provideBrickManager(MarathonConfig marathonConfig, ApplicationConfig applicationConfig) {
         MarathonServiceLocator marathonServiceLocator = new MarathonServiceLocator(marathonConfig.url());
-        return new MarathonBrickManager(marathonConfig.url(),marathonServiceLocator);
+        return new MarathonBrickManager(marathonConfig.url(),marathonServiceLocator, applicationConfig.domain());
     }
 
     @Provides

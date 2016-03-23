@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 public class JenkinsConfigurer implements BrickConfigurer {
 
@@ -62,7 +63,8 @@ public class JenkinsConfigurer implements BrickConfigurer {
         String url = configurerData.getEntrypoint() + SCRIPT_URL_SUFFIX;
 
         OkHttpClient httpClient = new OkHttpClient();
-
+        //httpClient.setReadTimeout(10, TimeUnit.MINUTES);    //  jenkins may be long to start ...
+        Response response = null;
         try {
             VelocityEngine ve = new VelocityEngine();
             ve.init(VE_PROPERTIES);
@@ -80,10 +82,18 @@ public class JenkinsConfigurer implements BrickConfigurer {
             RequestBody body = new FormEncodingBuilder().add(SCRIPT_KEY, script).build();
 
             Request request = new Request.Builder().url(url).post(body).build();
-            Response response = httpClient.newCall(request).execute();
+            response = httpClient.newCall(request).execute();
             return configurerData;
         } catch (IOException e) {
             throw new RuntimeException("Unable to configure Jenkins " + configurerData.getEntrypoint(), e);
+        } finally {
+            if (response != null) {
+                try {
+                    response.body().close();
+                } catch (IOException e) {
+                    throw new RuntimeException("Unable to close http response", e);
+                }
+            }
         }
     }
 

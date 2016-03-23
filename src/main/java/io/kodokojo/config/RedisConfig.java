@@ -13,6 +13,6 @@ public interface RedisConfig extends PropertyConfig {
     String host();
 
     @Key(value = REDIS_PORT, defaultValue = "6379")
-    int port();
+    Integer port();
 
 }
