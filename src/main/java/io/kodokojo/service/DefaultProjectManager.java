@@ -154,6 +154,8 @@ public class DefaultProjectManager implements ProjectManager {
 
         }
 
-        return new Project(projectName, projectCaSSL, new Date(), stacks);
+        Project project = new Project(projectName, projectCaSSL, new Date(), stacks);
+        projectStore.addProject(project);
+        return project;
     }
 }

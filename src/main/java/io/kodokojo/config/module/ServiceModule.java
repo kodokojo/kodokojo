@@ -46,8 +46,8 @@ public class ServiceModule extends AbstractModule {
 
     @Provides
     @Singleton
-    RestEntrypoint provideRestEntrypoint(ApplicationConfig applicationConfig, UserManager userManager, UserAuthenticator<SimpleCredential> userAuthenticator, ProjectManager projectManager, ApplicationLifeCycleManager applicationLifeCycleManager) {
-        RestEntrypoint restEntrypoint = new RestEntrypoint(applicationConfig.port(), userManager, userAuthenticator, projectManager);
+    RestEntrypoint provideRestEntrypoint(ApplicationConfig applicationConfig, UserManager userManager, UserAuthenticator<SimpleCredential> userAuthenticator, ProjectStore projectStore, ProjectManager projectManager, ApplicationLifeCycleManager applicationLifeCycleManager) {
+        RestEntrypoint restEntrypoint = new RestEntrypoint(applicationConfig.port(), userManager, userAuthenticator,projectStore, projectManager);
         applicationLifeCycleManager.addService(restEntrypoint);
         return restEntrypoint;
     }

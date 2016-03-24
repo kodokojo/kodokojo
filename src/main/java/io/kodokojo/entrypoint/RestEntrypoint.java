@@ -22,12 +22,16 @@ package io.kodokojo.entrypoint;
  * #L%
  */
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.kodokojo.commons.utils.RSAUtils;
+import io.kodokojo.entrypoint.dto.ProjectCreationDto;
 import io.kodokojo.lifecycle.ApplicationLifeCycleListener;
 import io.kodokojo.model.User;
 import io.kodokojo.service.ProjectManager;
+import io.kodokojo.service.ProjectStore;
 import io.kodokojo.service.UserAuthenticator;
 import io.kodokojo.service.UserManager;
 import io.kodokojo.service.user.SimpleCredential;
@@ -69,15 +73,27 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
 
     private final ProjectManager projectManager;
 
+    private final ProjectStore projectStore;
+
+    private final ThreadLocal<Gson> localGson = new ThreadLocal<Gson>() {
+        @Override
+        protected Gson initialValue() {
+            return new GsonBuilder().create();
+        }
+    };
+
     private final ResponseTransformer jsonResponseTransformer;
 
     @Inject
-    public RestEntrypoint(int port, UserManager userManager, UserAuthenticator<SimpleCredential> userAuthenticator, ProjectManager projectManager) {
+    public RestEntrypoint(int port, UserManager userManager, UserAuthenticator<SimpleCredential> userAuthenticator,ProjectStore projectStore,  ProjectManager projectManager) {
         if (userManager == null) {
             throw new IllegalArgumentException("userManager must be defined.");
         }
         if (userAuthenticator == null) {
             throw new IllegalArgumentException("userAuthenticator must be defined.");
+        }
+        if (projectStore == null) {
+            throw new IllegalArgumentException("projectStore must be defined.");
         }
         if (projectManager == null) {
             throw new IllegalArgumentException("projectManager must be defined.");
@@ -85,6 +101,7 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
         this.port = port;
         this.userManager = userManager;
         this.userAuthenticator = userAuthenticator;
+        this.projectStore = projectStore;
         this.projectManager = projectManager;
         jsonResponseTransformer = new JsonTransformer();
     }
@@ -122,7 +139,7 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
             }
         });
 
-
+    //  User --
 
         post(BASE_API + "/user/:id", JSON_CONTENT_TYPE, ((request, response) -> {
             String identifier = request.params(":id");
@@ -198,6 +215,16 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
             return "";
         }, jsonResponseTransformer);
 
+        //  Project --
+
+        post(BASE_API + "/project", JSON_CONTENT_TYPE, (request, response) -> {
+            Gson gson = localGson.get();
+            String body = request.body();
+            ProjectCreationDto projectCreationDto = gson.fromJson(body, ProjectCreationDto.class);
+
+
+            return "";
+        });
 
         get(BASE_API, JSON_CONTENT_TYPE, (request, response) -> {
             response.type(JSON_CONTENT_TYPE);

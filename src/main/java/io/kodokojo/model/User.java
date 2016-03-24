@@ -22,9 +22,11 @@ package io.kodokojo.model;
  * #L%
  */
 
+import java.io.Serializable;
+
 import static org.apache.commons.lang.StringUtils.isBlank;
 
-public class User {
+public class User implements Serializable {
 
     private final String identifier;
 

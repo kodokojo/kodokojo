@@ -32,6 +32,7 @@ import io.kodokojo.entrypoint.RestEntrypoint;
 import io.kodokojo.model.User;
 import io.kodokojo.service.DefaultProjectManager;
 import io.kodokojo.service.ProjectManager;
+import io.kodokojo.service.ProjectStore;
 import io.kodokojo.service.UserManager;
 import io.kodokojo.service.user.SimpleUserAuthenticator;
 import io.kodokojo.service.user.redis.RedisUserManager;
@@ -71,6 +72,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         VE_PROPERTIES.setProperty("runtime.log.logsystem.class", "org.apache.velocity.runtime.log.NullLogChute");
     }
 
+
     public enum TestContext {
         LOCAL,
         REMOTE_CLUSTER
@@ -87,6 +89,9 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
 
     @ProvidedScenarioState
     ProjectManager projectManager;
+
+    @ProvidedScenarioState
+    ProjectStore projectStore;
 
     @ProvidedScenarioState
     String marathonUrl;
@@ -395,7 +400,8 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         }
         injector = Guice.createInjector(new PropertyModule(new String[]{}), new TestModule(),new SecurityModule(), new ServiceModule());
         projectManager = injector.getInstance(ProjectManager.class);
-        restEntrypoint = new RestEntrypoint(8080, redisUserManager, new SimpleUserAuthenticator(redisUserManager), projectManager);
+        projectStore = injector.getInstance(ProjectStore.class);
+        restEntrypoint = new RestEntrypoint(8080, redisUserManager, new SimpleUserAuthenticator(redisUserManager),projectStore, projectManager);
         restEntrypoint.start();
 
     }

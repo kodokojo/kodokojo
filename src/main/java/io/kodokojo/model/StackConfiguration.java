@@ -25,6 +25,7 @@ package io.kodokojo.model;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -32,7 +33,7 @@ import java.util.Set;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
-public class StackConfiguration implements Configuration {
+public class StackConfiguration implements Configuration, Serializable {
 
     private final String name;
 

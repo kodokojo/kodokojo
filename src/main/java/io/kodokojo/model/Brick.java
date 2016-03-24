@@ -24,9 +24,11 @@ package io.kodokojo.model;
 
 import io.kodokojo.project.starter.BrickConfigurer;
 
+import java.io.Serializable;
+
 import static org.apache.commons.lang.StringUtils.isBlank;
 
-public class Brick {
+public class Brick implements Serializable {
 
     private final String name;
 

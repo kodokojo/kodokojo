@@ -22,11 +22,12 @@ package io.kodokojo.model;
  * #L%
  */
 
+import java.io.Serializable;
 import java.util.Date;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
-public class BrickConfiguration implements Configuration {
+public class BrickConfiguration implements Configuration, Serializable {
 
     private final Brick brick;
 

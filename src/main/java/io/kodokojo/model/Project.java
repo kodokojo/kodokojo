@@ -34,6 +34,8 @@ import static org.apache.commons.lang.StringUtils.isBlank;
 
 public class Project implements Serializable {
 
+    private final String identifier;
+
     private final String name;
 
     private final SSLKeyPair sslRootCaKey;
@@ -42,7 +44,7 @@ public class Project implements Serializable {
 
     private final Set<Stack> stacks;
 
-    public Project(String name, SSLKeyPair sslRootCaKey, Date snapshotDate, Set<Stack> stacks) {
+    public Project(String identifier, String name, SSLKeyPair sslRootCaKey, Date snapshotDate, Set<Stack> stacks) {
         if (isBlank(name)) {
             throw new IllegalArgumentException("name must be defined.");
         }
@@ -55,10 +57,19 @@ public class Project implements Serializable {
         if (CollectionUtils.isEmpty(stacks)) {
             throw new IllegalArgumentException("stacks must be defined.");
         }
+        this.identifier = identifier;
         this.name = name;
         this.sslRootCaKey = sslRootCaKey;
         this.snapshotDate = snapshotDate;
         this.stacks = stacks;
+    }
+
+    public Project( String name, SSLKeyPair sslRootCaKey, Date snapshotDate, Set<Stack> stacks) {
+        this(null, name, sslRootCaKey, snapshotDate, stacks);
+    }
+
+    public String getIdentifier() {
+        return identifier;
     }
 
     public SSLKeyPair getSslRootCaKey() {
@@ -102,6 +113,7 @@ public class Project implements Serializable {
     public String toString() {
         return "Project{" +
                 "name='" + name + '\'' +
+                ",identifier='" + identifier + '\'' +
                 ", snapshotDate=" + snapshotDate +
                 ", stacks=" + stacks +
                 '}';

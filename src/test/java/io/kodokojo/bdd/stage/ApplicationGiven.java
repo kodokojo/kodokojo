@@ -39,6 +39,8 @@ import io.kodokojo.commons.utils.properties.PropertyResolver;
 import io.kodokojo.commons.utils.properties.provider.*;
 import io.kodokojo.entrypoint.RestEntrypoint;
 import io.kodokojo.service.ProjectManager;
+import io.kodokojo.service.ProjectStore;
+import io.kodokojo.service.redis.RedisProjectStore;
 import io.kodokojo.service.user.SimpleCredential;
 import io.kodokojo.service.user.SimpleUserAuthenticator;
 import io.kodokojo.service.UserAuthenticator;
@@ -109,6 +111,9 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
     @ProvidedScenarioState
     ProjectManager projectManager;
 
+    @ProvidedScenarioState
+    ProjectStore projectStore;
+
     @BeforeScenario
     public void create_a_docker_client() {
         dockerClient = dockerTestSupport.getDockerClient();
@@ -159,9 +164,10 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
             generator.init(128);
             SecretKey aesKey = generator.generateKey();
             userManager = new RedisUserManager(aesKey, redisHost, redisPort);
+            projectStore = new RedisProjectStore(aesKey, redisHost, redisPort);
             UserAuthenticator<SimpleCredential> userAuthenticator = new SimpleUserAuthenticator(userManager);
             projectManager = mock(ProjectManager.class);
-            restEntrypoint = new RestEntrypoint(port, userManager,userAuthenticator, projectManager);
+            restEntrypoint = new RestEntrypoint(port, userManager,userAuthenticator,projectStore, projectManager);
             restEntrypoint.start();
             restEntryPointPort = port;
             restEntryPointHost = "localhost";

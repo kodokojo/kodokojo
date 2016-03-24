@@ -24,11 +24,14 @@ package io.kodokojo.model;
 
 import org.apache.commons.collections4.CollectionUtils;
 
+import java.io.Serializable;
 import java.util.*;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
-public class ProjectConfiguration implements Configuration, Cloneable {
+public class ProjectConfiguration implements Configuration, Cloneable, Serializable {
+
+    private final String identifier;
 
     private final String name;
 
@@ -42,7 +45,7 @@ public class ProjectConfiguration implements Configuration, Cloneable {
 
     private  Date versionDate;
 
-    public ProjectConfiguration(String name, String ownerEmail, Set<StackConfiguration> stackConfigurations, List<User> users) {
+    public ProjectConfiguration(String identifier, String name, String ownerEmail, Set<StackConfiguration> stackConfigurations, List<User> users) {
         if (isBlank(name)) {
             throw new IllegalArgumentException("name must be defined.");
         }
@@ -55,10 +58,19 @@ public class ProjectConfiguration implements Configuration, Cloneable {
         if (CollectionUtils.isEmpty(users)) {
             throw new IllegalArgumentException("users must be defined and contain some values.");
         }
+        this.identifier = identifier;
         this.name = name;
         this.ownerEmail = ownerEmail;
         this.stackConfigurations = stackConfigurations;
         this.users = users;
+    }
+
+    public ProjectConfiguration( String name, String ownerEmail, Set<StackConfiguration> stackConfigurations, List<User> users) {
+        this(null,name,ownerEmail, stackConfigurations, users);
+    }
+
+    public String getIdentifier() {
+        return identifier;
     }
 
     public String getOwnerEmail() {

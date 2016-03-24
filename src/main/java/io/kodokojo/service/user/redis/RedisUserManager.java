@@ -105,7 +105,7 @@ public class RedisUserManager implements UserManager, ApplicationLifeCycleListen
         try {
             messageDigest = MessageDigest.getInstance("SHA-1");
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Unable to get instance of SHA-1 digester");
+            throw new RuntimeException("Unable to get instance of SHA-1 digest");
         }
         this.newIdExpirationTime = newIdExpirationTime;
     }
@@ -124,7 +124,7 @@ public class RedisUserManager implements UserManager, ApplicationLifeCycleListen
     public String generateId() {
         try (Jedis jedis = pool.getResource()) {
             String id = salt + jedis.incr(ID_KEY).toString();
-            String newId = hexEncode(messageDigest.digest(id.getBytes()));
+            String newId = RedisUtils.hexEncode(messageDigest.digest(id.getBytes()));
             byte[] prefixedKey = RedisUtils.aggregateKey(NEW_ID_PREFIX, newId);
             jedis.set(prefixedKey, NEW_USER_CONTENT);
             jedis.expire(prefixedKey, newIdExpirationTime);
@@ -257,14 +257,5 @@ public class RedisUserManager implements UserManager, ApplicationLifeCycleListen
     }
 
 
-    private static String hexEncode(byte[] aInput) {
-        StringBuilder result = new StringBuilder();
-        char[] digits = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
-        for (int idx = 0; idx < aInput.length; ++idx) {
-            byte b = aInput[idx];
-            result.append(digits[(b & 0xf0) >> 4]);
-            result.append(digits[b & 0x0f]);
-        }
-        return result.toString();
-    }
+
 }

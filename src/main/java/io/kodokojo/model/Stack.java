@@ -24,11 +24,12 @@ package io.kodokojo.model;
 
 import org.apache.commons.collections4.CollectionUtils;
 
+import java.io.Serializable;
 import java.util.Set;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
-public class Stack {
+public class Stack implements Serializable {
 
     public enum OrchestratorType {
         DOCKER,
