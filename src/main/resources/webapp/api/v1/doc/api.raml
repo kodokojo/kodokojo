@@ -102,6 +102,27 @@ schemas:
           }
         }
       }
+  - projectCreation: |
+      {
+        "type": "string",
+        "$schema": "http://json-schema.org/draft-03/schema",
+        "id": "http://jsonschema.net",
+        "required": true,
+        "properties": {
+          "identifier": {
+            "type": "string",
+            "required": true
+          },
+          "name": {
+            "type": "string",
+            "required": true
+          },
+          "ownerIdentifier": {
+            "type": "string",
+            "required": true
+          }
+        }
+      }
 /user:
   post:
     description: Allow to obtain a temporary identifier which may use _post_ to create a new user.
@@ -199,3 +220,22 @@ schemas:
         403:
           description:
             This user details can't be visible
+/project:
+  post:
+    description: Create a user with given identifier
+      body:
+        application/json:
+          schema: projectCreation
+          example: |
+            {
+              "name": "Acme",
+              "ownerIdentifier": "b818adf9e28d0bae432b3b89fa7b2f5be682a15d"
+            }
+      responses:
+        201:
+          description:
+            Return project configuration Id.
+          body:
+            application/json:
+              example: |
+                59e860b31588a0a1f2ae3fa75764ce133a6985e3
