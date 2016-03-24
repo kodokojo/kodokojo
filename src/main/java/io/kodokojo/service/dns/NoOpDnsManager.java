@@ -15,7 +15,7 @@ public class NoOpDnsManager implements DnsManager {
     }
 
     @Override
-    public boolean createDnsEntry(DnsEntry dnsEntry) {
+    public boolean createOrUpdateDnsEntry(DnsEntry dnsEntry) {
         return false;
     }
 }

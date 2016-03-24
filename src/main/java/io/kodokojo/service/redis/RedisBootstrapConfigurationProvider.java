@@ -19,7 +19,7 @@ public class RedisBootstrapConfigurationProvider implements BootstrapConfigurati
 
     public static final String DEFAULT_LB_IP_KEY = "loadbalancerIp";
 
-    public static final String DEFAULT_SSH_PORT = "loadbalancerIp";
+    public static final String DEFAULT_SSH_PORT = "sshPort";
 
     private final JedisPool pool;
 
@@ -38,7 +38,7 @@ public class RedisBootstrapConfigurationProvider implements BootstrapConfigurati
                 jedis.set(DEFAULT_LB_IP_KEY, defaultLbIp);
             }
             if (!jedis.exists(DEFAULT_SSH_PORT)) {
-                jedis.set(DEFAULT_LB_IP_KEY, "" + initSshPort);
+                jedis.set(DEFAULT_SSH_PORT, "" + initSshPort);
             }
         }
     }

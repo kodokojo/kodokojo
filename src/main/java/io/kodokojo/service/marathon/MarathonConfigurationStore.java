@@ -79,7 +79,7 @@ public class MarathonConfigurationStore implements ConfigurationStore {
             SSLUtils.writeSSLKeyPairPem(sslKeyPair, writer);
             byte[] certificat = writer.toString().getBytes();
 
-            String url = marathonUrl + "/v2/artifacts/ssl/" + project + "/" + entityType + "/" + project + "-" + entityType + "-server.pem";
+            String url = marathonUrl + "/v2/artifacts/ssl/" + project.toLowerCase() + "/" + entityType.toLowerCase() + "/" + project.toLowerCase() + "-" + entityType.toLowerCase() + "-server.pem";
             OkHttpClient httpClient = new OkHttpClient();
             RequestBody requestBody = new MultipartBuilder()
                     .type(MultipartBuilder.FORM)

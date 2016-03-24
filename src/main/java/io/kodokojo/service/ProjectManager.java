@@ -22,15 +22,12 @@ package io.kodokojo.service;
  * #L%
  */
 
-import io.kodokojo.model.BootstrapStackData;
-import io.kodokojo.model.Project;
-import io.kodokojo.model.ProjectConfiguration;
-import io.kodokojo.model.StackConfiguration;
+import io.kodokojo.model.*;
 
 public interface ProjectManager {
 
-    public BootstrapStackData bootstrapStack(String projectName, StackConfiguration stackConfiguration);
+    BootstrapStackData bootstrapStack(String projectName,String stackName, StackType stackType);
 
-    Project start(ProjectConfiguration projectConfiguration);
+    Project start(ProjectConfiguration projectConfiguration) throws ProjectAlreadyExistException;
 
 }

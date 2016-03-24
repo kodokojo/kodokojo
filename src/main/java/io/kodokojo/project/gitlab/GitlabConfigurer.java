@@ -26,8 +26,8 @@ import com.google.gson.JsonObject;
 import com.squareup.okhttp.*;
 import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.model.User;
-import io.kodokojo.project.starter.ConfigurerData;
 import io.kodokojo.project.starter.BrickConfigurer;
+import io.kodokojo.project.starter.ConfigurerData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import retrofit.RestAdapter;
@@ -44,6 +44,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -81,13 +82,23 @@ public class GitlabConfigurer implements BrickConfigurer {
             if (changePassword(httpClient, gitlabUrl, token, OLD_PASSWORD, newPassword)) {
                 if (signIn(httpClient, gitlabUrl, ROOT_LOGIN, newPassword)) {
                     Request request = new Request.Builder().get().url(gitlabUrl + ACCOUNT_URL).build();
+                    Response response = null;
                     try {
-                        Response response = httpClient.newCall(request).execute();
-                        String authenticityToken = getAuthenticityToken(response.body().string(), PRIVATE_TOKEN_PATTERN);
+                        response = httpClient.newCall(request).execute();
+                        String body = response.body().string();
+                        String authenticityToken = getAuthenticityToken(body, PRIVATE_TOKEN_PATTERN);
                         configurerData.addInContext(GITLAB_ADMIN_TOKEN_KEY, authenticityToken);
                         return configurerData;
                     } catch (IOException e) {
                         LOGGER.error("Unable to retrieve account page", e);
+                    } finally {
+                        if (response != null) {
+                            try {
+                                response.body().close();
+                            } catch (IOException e) {
+                                LOGGER.debug("Unable to close body response", e);
+                            }
+                        }
                     }
                 } else {
                     LOGGER.error("Unable to log on Gitlab with new password");
@@ -115,7 +126,8 @@ public class GitlabConfigurer implements BrickConfigurer {
         RestAdapter adapter = new RestAdapter.Builder().setEndpoint(getGitlabEntryPoint(configurerData)).setClient(new OkClient(provideDefaultOkHttpClient())).build();
         GitlabRest gitlabRest = adapter.create(GitlabRest.class);
 
-        for(User user : users) {
+        for (User user : users) {
+
             createUser(gitlabRest, (String) configurerData.getContext().get(GITLAB_ADMIN_TOKEN_KEY), user);
         }
 
@@ -123,7 +135,7 @@ public class GitlabConfigurer implements BrickConfigurer {
     }
 
     private String getGitlabEntryPoint(ConfigurerData configurerData) {
-        return "https://scm." + configurerData.getProjectName().toLowerCase() + "."+ configurerData.getDomaine();
+        return "https://scm." + configurerData.getProjectName().toLowerCase() + "." + configurerData.getDomaine();
     }
 
     private static boolean changePassword(OkHttpClient httpClient, String gitlabUrl, String token, String oldPassword, String newPassword) {
@@ -138,13 +150,21 @@ public class GitlabConfigurer implements BrickConfigurer {
                 .url(gitlabUrl + PASSWORD_URL)
                 .addHeader("Content-Type", "application/x-www-form-urlencoded")
                 .post(formBody).build();
-
+        Response response = null;
         try {
-            Response response = httpClient.newCall(request).execute();
+            response = httpClient.newCall(request).execute();
             return response.code() == 200;
         } catch (IOException e) {
             LOGGER.error("Unable to change the default password", e);
             return false;
+        } finally {
+            if (response != null) {
+                try {
+                    response.body().close();
+                } catch (IOException e) {
+                    LOGGER.debug("Unable to close body response", e);
+                }
+            }
         }
 
     }
@@ -165,39 +185,68 @@ public class GitlabConfigurer implements BrickConfigurer {
                 .post(formBody).build();
 
         Call call = httpClient.newCall(request);
+        Response response = null;
         try {
-            Response response = call.execute();
-            return response.isSuccessful() && !response.body().string().contains("Invalid login or password.");
+            response = call.execute();
+            String body = response.body().string();
+            return response.isSuccessful() && !body.contains("Invalid login or password.");
         } catch (IOException e) {
             LOGGER.error("Unable to change default password for Gitlab", e);
             return false;
+        } finally {
+            if (response != null && response.body() != null) {
+                try {
+                    response.body().close();
+                } catch (IOException e) {
+                    LOGGER.debug("Unable to close body response", e);
+                }
+            }
         }
     }
 
 
     private static String getAuthenticityToken(OkHttpClient httpClient, String url, Pattern pattern) {
         Request request = new Request.Builder().url(url).get().build();
+        Response response = null;
         try {
-            Response response = httpClient.newCall(request).execute();
-            return getAuthenticityToken(response.body().string(), pattern);
+            response = httpClient.newCall(request).execute();
+            String bodyReponse = response.body().string();
+            return getAuthenticityToken(bodyReponse, pattern);
         } catch (IOException e) {
             LOGGER.error("Unable to request " + url, e);
+        } finally {
+            if (response != null && response.body() != null) {
+                try {
+                    response.body().close();
+                } catch (IOException e) {
+                    LOGGER.debug("Unable to close body response", e);
+                }
+            }
         }
         return null;
     }
 
-    private boolean createUser(GitlabRest gitlabRest,String privateToken, User user) {
+    private boolean createUser(GitlabRest gitlabRest, String privateToken, User user) {
+        Response response = null;
         try {
             JsonObject jsonObject = gitlabRest.createUser(privateToken, user.getUsername(), user.getPassword(), user.getEmail(), user.getName(), "false");
             System.out.println(jsonObject);
 
             int id = jsonObject.getAsJsonPrimitive("id").getAsInt();
 
-            Response response = gitlabRest.addSshKey(privateToken, Integer.toString(id), "SSH Key", user.getSshPublicKey());
+            response = gitlabRest.addSshKey(privateToken, Integer.toString(id), "SSH Key", user.getSshPublicKey());
             return response.code() == 201;
 
         } catch (RetrofitError e) {
             LOGGER.error("unable to complete creation of user : ", e);
+        } finally {
+            if (response != null && response.body() != null) {
+                try {
+                    response.body().close();
+                } catch (IOException e) {
+                    LOGGER.debug("Unable to close body response", e);
+                }
+            }
         }
         return false;
     }
@@ -236,6 +285,7 @@ public class GitlabConfigurer implements BrickConfigurer {
             ctx = SSLContext.getInstance("TLS");
             ctx.init(null, certs, new SecureRandom());
         } catch (final java.security.GeneralSecurityException ex) {
+            //
         }
         httpClient.setHostnameVerifier(new HostnameVerifier() {
             @Override
@@ -246,6 +296,9 @@ public class GitlabConfigurer implements BrickConfigurer {
         httpClient.setSslSocketFactory(ctx.getSocketFactory());
         CookieManager cookieManager = new CookieManager(new GitlabCookieStore(), CookiePolicy.ACCEPT_ALL);
         httpClient.setCookieHandler(cookieManager);
+        httpClient.setReadTimeout(2, TimeUnit.MINUTES);
+        httpClient.setConnectTimeout(1, TimeUnit.MINUTES);
+        httpClient.setWriteTimeout(1, TimeUnit.MINUTES);
         return httpClient;
     }
 
@@ -286,14 +339,13 @@ public class GitlabConfigurer implements BrickConfigurer {
     }
 
 
-
     public static void main(String[] args) throws NoSuchAlgorithmException {
         GitlabConfigurer gitlabConfigurer = new GitlabConfigurer();
         KeyPair keyPair = RSAUtils.generateRsaKeyPair();
         User user = new User("123456", "jpthiery", "jpthiery", "jpthiery@kodokojo.io", "jpthiery", RSAUtils.encodePublicKey((RSAPublicKey) keyPair.getPublic(), "jpthiery@kodokojo.io"));
         List<User> users = Collections.singletonList(user);
         //ConfigurerData configurerData = new ConfigurerData("http://52.50.9.72:41440", user, users);
-        ConfigurerData configurerData = new ConfigurerData("acme","", "kodokojo.io", user, users);
+        ConfigurerData configurerData = new ConfigurerData("acme", "", "kodokojo.io", user, users);
         configurerData = gitlabConfigurer.configure(configurerData);
         gitlabConfigurer.addUsers(configurerData, users);
     }

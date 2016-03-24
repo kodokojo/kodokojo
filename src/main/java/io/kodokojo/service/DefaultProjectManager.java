@@ -23,9 +23,11 @@ package io.kodokojo.service;
  */
 
 import io.kodokojo.commons.model.Service;
+import io.kodokojo.commons.utils.servicelocator.ServiceLocator;
 import io.kodokojo.commons.utils.ssl.SSLKeyPair;
 import io.kodokojo.commons.utils.ssl.SSLUtils;
 import io.kodokojo.model.*;
+import io.kodokojo.model.Stack;
 import io.kodokojo.project.starter.BrickManager;
 import io.kodokojo.service.dns.DnsEntry;
 import io.kodokojo.service.dns.DnsManager;
@@ -35,10 +37,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
@@ -60,10 +63,12 @@ public class DefaultProjectManager implements ProjectManager {
 
     private final BootstrapConfigurationProvider bootstrapConfigurationProvider;
 
+    private final ExecutorService executorService;
+
     private final long sslCaDuration;
 
     @Inject
-    public DefaultProjectManager(SSLKeyPair caKey, String domain, DnsManager dnsManager, BrickManager brickManager, ConfigurationStore configurationStore, ProjectStore projectStore,BootstrapConfigurationProvider bootstrapConfigurationProvider, long sslCaDuration) {
+    public DefaultProjectManager(SSLKeyPair caKey, String domain, DnsManager dnsManager, BrickManager brickManager, ConfigurationStore configurationStore, ProjectStore projectStore, BootstrapConfigurationProvider bootstrapConfigurationProvider, ExecutorService executorService, long sslCaDuration) {
         if (caKey == null) {
             throw new IllegalArgumentException("caKey must be defined.");
         }
@@ -85,8 +90,12 @@ public class DefaultProjectManager implements ProjectManager {
         if (bootstrapConfigurationProvider == null) {
             throw new IllegalArgumentException("bootstrapConfigurationProvider must be defined.");
         }
+        if (executorService == null) {
+            throw new IllegalArgumentException("executorService must be defined.");
+        }
         this.dnsManager = dnsManager;
         this.brickManager = brickManager;
+        this.executorService = executorService;
         this.caKey = caKey;
         this.domain = domain;
         this.configurationStore = configurationStore;
@@ -96,22 +105,22 @@ public class DefaultProjectManager implements ProjectManager {
     }
 
     @Override
-    public BootstrapStackData bootstrapStack(String projectName, StackConfiguration stackConfiguration) {
+    public BootstrapStackData bootstrapStack(String projectName, String stackName, StackType stackType) {
         if (!projectStore.projectNameIsValid(projectName)) {
             throw new IllegalArgumentException("project name " + projectName + " isn't valid.");
         }
-        String loadBalancerIp = bootstrapConfigurationProvider.provideLoadBalancerIp(projectName, stackConfiguration.getName());
+        String loadBalancerIp = bootstrapConfigurationProvider.provideLoadBalancerIp(projectName, stackName);
         int sshPortEntrypoint = 0;
-        if (stackConfiguration.getType() == StackType.BUILD) {
-            bootstrapConfigurationProvider.provideSshPortEntrypoint(projectName, stackConfiguration.getName());
+        if (stackType == StackType.BUILD) {
+            sshPortEntrypoint = bootstrapConfigurationProvider.provideSshPortEntrypoint(projectName, stackName);
         }
-        BootstrapStackData res = new BootstrapStackData(projectName, stackConfiguration.getName(), loadBalancerIp, sshPortEntrypoint);
+        BootstrapStackData res = new BootstrapStackData(projectName, stackName, loadBalancerIp, sshPortEntrypoint);
         configurationStore.storeBootstrapStackData(res);
         return res;
     }
 
     @Override
-    public Project start(ProjectConfiguration projectConfiguration) {
+    public Project start(ProjectConfiguration projectConfiguration) throws ProjectAlreadyExistException {
         if (projectConfiguration == null) {
             throw new IllegalArgumentException("projectConfiguration must be defined.");
         }
@@ -124,20 +133,46 @@ public class DefaultProjectManager implements ProjectManager {
         SSLKeyPair projectCaSSL = SSLUtils.createSSLKeyPair(projectDomainName, caKey.getPrivateKey(), caKey.getPublicKey(), caKey.getCertificates(), sslCaDuration, true);
 
         Set<Stack> stacks = new HashSet<>();
+        List<Runnable> tasks = new ArrayList<>();
         for (StackConfiguration stackConfiguration : projectConfiguration.getStackConfigurations()) {
             Set<BrickDeploymentState> brickEntities = new HashSet<>();
             String lbIp = stackConfiguration.getLoadBalancerIp();
 
             for (BrickConfiguration brickConfiguration : stackConfiguration.getBrickConfigurations()) {
-                BrickType brickType = brickConfiguration.getType();
-                if (brickType.isRequiredHttpExposed()) {
-                    String brickTypeName = brickType.name().toLowerCase();
-                    String brickDomainName = brickTypeName + "." + projectDomainName;
-                    dnsManager.createDnsEntry(new DnsEntry(brickDomainName, DnsEntry.Type.A, lbIp));
-                    SSLKeyPair brickSslKeyPair = SSLUtils.createSSLKeyPair(brickDomainName, projectCaSSL.getPrivateKey(), projectCaSSL.getPublicKey(), projectCaSSL.getCertificates());
-                    configurationStore.storeSSLKeys(projectName, brickTypeName, brickSslKeyPair);
+                if (brickConfiguration.getType() == BrickType.LOADBALANCER) {
+                    Runnable task = startBrick(projectConfiguration, projectName, projectDomainName, projectCaSSL, lbIp, brickConfiguration);
+                    tasks.add(task);
                 }
-                Set<Service> services = brickManager.start(projectConfiguration, brickType);
+            }
+            for (BrickConfiguration brickConfiguration : stackConfiguration.getBrickConfigurations()) {
+                if (brickConfiguration.getType() != BrickType.LOADBALANCER) {
+                    Runnable task = startBrick(projectConfiguration, projectName, projectDomainName, projectCaSSL, lbIp, brickConfiguration);
+                    tasks.add(task);
+                }
+            }
+
+            Stack stack = new Stack(stackConfiguration.getName(), stackConfiguration.getType(), brickManager.getOrchestratorType(), brickEntities);
+            stacks.add(stack);
+
+        }
+        tasks.stream().forEach(executorService::submit);
+        Project project = new Project(projectName, projectCaSSL, new Date(), stacks);
+        return project;
+    }
+
+    private Runnable startBrick(ProjectConfiguration projectConfiguration, String projectName, String projectDomainName, SSLKeyPair projectCaSSL, String lbIp, BrickConfiguration brickConfiguration) throws ProjectAlreadyExistException {
+        return () -> {
+            BrickType brickType = brickConfiguration.getType();
+            if (brickType.isRequiredHttpExposed()) {
+                String brickTypeName = brickType.name().toLowerCase();
+                String brickDomainName = brickTypeName + "." + projectDomainName;
+                dnsManager.createOrUpdateDnsEntry(new DnsEntry(brickDomainName, DnsEntry.Type.A, lbIp));
+                SSLKeyPair brickSslKeyPair = SSLUtils.createSSLKeyPair(brickDomainName, projectCaSSL.getPrivateKey(), projectCaSSL.getPublicKey(), projectCaSSL.getCertificates());
+                configurationStore.storeSSLKeys(projectName, brickTypeName, brickSslKeyPair);
+            }
+            Set<Service> services = null;
+            try {
+                services = brickManager.start(projectConfiguration, brickType);
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("{} for project {} started : {}", brickType, projectName, StringUtils.join(services, ","));
                 }
@@ -145,17 +180,10 @@ public class DefaultProjectManager implements ProjectManager {
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("{} for project {} configured", brickType, projectName);
                 }
-                BrickDeploymentState brickDeploymentState = new BrickDeploymentState(brickConfiguration.getBrick(), new ArrayList<>(services), 1);
-                brickEntities.add(brickDeploymentState);
+            } catch (BrickAlreadyExist brickAlreadyExist) {
+                LOGGER.error("Brick {} already exist for project {}, not reconfigure it.", brickAlreadyExist.getBrickName(), brickAlreadyExist.getProjectName());
             }
+        };
 
-            Stack stack = new Stack(stackConfiguration.getName(), stackConfiguration.getType(), brickManager.getOrchestratorType(), brickEntities);
-            stacks.add(stack);
-
-        }
-
-        Project project = new Project(projectName, projectCaSSL, new Date(), stacks);
-        projectStore.addProject(project);
-        return project;
     }
 }

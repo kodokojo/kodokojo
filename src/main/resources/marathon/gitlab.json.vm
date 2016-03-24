@@ -1,8 +1,8 @@
 {
   "id": "$ID",
   "instance": 1,
-  "cpus": 0.5,
-  "mem": 1024,
+  "cpus": 1,
+  "mem": 2048,
   "type": "DOCKER",
   "container": {
     "docker": {
@@ -54,10 +54,10 @@
     {
       "protocol": "HTTP",
       "portIndex": 0,
-      "path": "/",
-      "gracePeriodSeconds": 180,
-      "intervalSeconds": 20,
-      "maxConsecutiveFailures": 10
+      "path": "/users/sign_in",
+      "gracePeriodSeconds": 60,
+      "intervalSeconds": 10,
+      "maxConsecutiveFailures": 20
     }
   ],
   "labels": {

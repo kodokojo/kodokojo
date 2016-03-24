@@ -8,6 +8,6 @@ public interface DnsManager {
 
     List<DnsEntry> getDnsEntries(String name);
 
-    boolean createDnsEntry(DnsEntry dnsEntry);
+    boolean createOrUpdateDnsEntry(DnsEntry dnsEntry);
 
 }

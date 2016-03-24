@@ -24,6 +24,7 @@ package io.kodokojo.model;
 
 import io.kodokojo.project.starter.BrickConfigurer;
 
+import java.beans.Transient;
 import java.io.Serializable;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
@@ -34,7 +35,7 @@ public class Brick implements Serializable {
 
     private final BrickType type;
 
-    private final BrickConfigurer configurer;
+    private final transient BrickConfigurer configurer;
 
     public Brick(String name, BrickType type, BrickConfigurer configurer) {
         if (isBlank(name)) {

@@ -1,6 +1,6 @@
-package io.kodokojo.service;
+package io.kodokojo.service.redis;
 
-import io.kodokojo.service.redis.RedisProjectStore;
+import io.kodokojo.service.DefaultBrickFactory;
 import org.junit.Before;
 import org.junit.Test;
 import redis.clients.jedis.Jedis;
@@ -25,7 +25,7 @@ public class RedisProjectStoreTest {
         KeyGenerator kg = KeyGenerator.getInstance("AES");
 
         jedisPool = mock(JedisPool.class);
-        redisProjectStore = new RedisProjectStore(kg.generateKey(), "localhost", 6379) {
+        redisProjectStore = new RedisProjectStore(kg.generateKey(), "localhost", 6379, new DefaultBrickFactory(null)) {
             @Override
             protected JedisPool createJedisPool(String host, int port) {
                 return jedisPool;

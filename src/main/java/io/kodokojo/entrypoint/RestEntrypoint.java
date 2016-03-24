@@ -29,13 +29,11 @@ import com.google.gson.JsonParser;
 import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.entrypoint.dto.ProjectCreationDto;
 import io.kodokojo.lifecycle.ApplicationLifeCycleListener;
-import io.kodokojo.model.User;
-import io.kodokojo.service.ProjectManager;
-import io.kodokojo.service.ProjectStore;
-import io.kodokojo.service.UserAuthenticator;
-import io.kodokojo.service.UserManager;
+import io.kodokojo.model.*;
+import io.kodokojo.service.*;
 import io.kodokojo.service.user.SimpleCredential;
 import io.kodokojo.service.user.UserCreationDto;
+import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
@@ -50,6 +48,7 @@ import java.security.KeyPair;
 import java.security.SecureRandom;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.util.*;
 
 import static spark.Spark.*;
 
@@ -75,6 +74,8 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
 
     private final ProjectStore projectStore;
 
+    private final BrickFactory brickFactory;
+
     private final ThreadLocal<Gson> localGson = new ThreadLocal<Gson>() {
         @Override
         protected Gson initialValue() {
@@ -85,7 +86,7 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
     private final ResponseTransformer jsonResponseTransformer;
 
     @Inject
-    public RestEntrypoint(int port, UserManager userManager, UserAuthenticator<SimpleCredential> userAuthenticator,ProjectStore projectStore,  ProjectManager projectManager) {
+    public RestEntrypoint(int port, UserManager userManager, UserAuthenticator<SimpleCredential> userAuthenticator, ProjectStore projectStore, ProjectManager projectManager, BrickFactory brickFactory) {
         if (userManager == null) {
             throw new IllegalArgumentException("userManager must be defined.");
         }
@@ -98,11 +99,15 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
         if (projectManager == null) {
             throw new IllegalArgumentException("projectManager must be defined.");
         }
+        if (brickFactory == null) {
+            throw new IllegalArgumentException("brickFactory must be defined.");
+        }
         this.port = port;
         this.userManager = userManager;
         this.userAuthenticator = userAuthenticator;
         this.projectStore = projectStore;
         this.projectManager = projectManager;
+        this.brickFactory = brickFactory;
         jsonResponseTransformer = new JsonTransformer();
     }
 
@@ -139,7 +144,7 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
             }
         });
 
-    //  User --
+        //  User --
 
         post(BASE_API + "/user/:id", JSON_CONTENT_TYPE, ((request, response) -> {
             String identifier = request.params(":id");
@@ -220,8 +225,28 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
         post(BASE_API + "/project", JSON_CONTENT_TYPE, (request, response) -> {
             Gson gson = localGson.get();
             String body = request.body();
-            ProjectCreationDto projectCreationDto = gson.fromJson(body, ProjectCreationDto.class);
+            ProjectCreationDto dto = gson.fromJson(body, ProjectCreationDto.class);
+            User owner = userManager.getUserByIdentifier(dto.getOwnerIdentifier());
+            Set<StackConfiguration> stackConfigurations = createDefaultStackConfiguration(dto.getName());
+            List<User> users = new ArrayList<>();
+            users.add(owner);
+            if (CollectionUtils.isNotEmpty(dto.getUserIdentifiers())) {
+                for (String userId : dto.getUserIdentifiers()) {
+                    User user = userManager.getUserByIdentifier(userId);
+                    users.add(user);
+                }
+            }
+            ProjectConfiguration projectConfiguration = new ProjectConfiguration(dto.getName(), owner, stackConfigurations, users);
+            String projectConfigIdentifier = projectStore.addProjectConfiguration(projectConfiguration);
 
+            try {
+                Project project = projectManager.start(projectConfiguration);
+                projectStore.addProject(project);
+                response.status(201);
+                return projectConfigIdentifier;
+            } catch (ProjectAlreadyExistException e) {
+                halt(409);
+            }
 
             return "";
         });
@@ -233,6 +258,17 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
 
         Spark.awaitInitialization();
 
+    }
+
+    private Set<StackConfiguration> createDefaultStackConfiguration(String projectName) {
+        Set<BrickConfiguration> bricksConfigurations = new HashSet<>();
+        bricksConfigurations.add(new BrickConfiguration(brickFactory.createBrick(DefaultBrickFactory.HAPROXY), false));
+        bricksConfigurations.add(new BrickConfiguration(brickFactory.createBrick(DefaultBrickFactory.JENKINS)));
+        bricksConfigurations.add(new BrickConfiguration(brickFactory.createBrick(DefaultBrickFactory.GITLAB)));
+        String stackName = "build-A";
+        BootstrapStackData bootstrapStackData = projectManager.bootstrapStack(projectName, stackName, StackType.BUILD);
+        StackConfiguration stackConfiguration = new StackConfiguration(stackName, StackType.BUILD, bricksConfigurations, bootstrapStackData.getLoadBalancerIp(), bootstrapStackData.getSshPort());
+        return Collections.singleton(stackConfiguration);
     }
 
     public int getPort() {

@@ -53,6 +53,11 @@ public class ClusterApplicationThen<SELF extends ClusterApplicationThen<?>> exte
     ProjectConfiguration projectConfiguration;
 
     public SELF i_have_a_valid_scm() {
+        try {
+            Thread.sleep(90000);// Use future websocket endpoint to wait services started and configured
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
         checkHttpService("scm." + projectConfiguration.getName().toLowerCase() + ".kodokojo.io");
         return self();
     }

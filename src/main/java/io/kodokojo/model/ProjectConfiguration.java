@@ -35,7 +35,7 @@ public class ProjectConfiguration implements Configuration, Cloneable, Serializa
 
     private final String name;
 
-    private final String ownerEmail;
+    private final User owner;
 
     private final Set<StackConfiguration> stackConfigurations;
 
@@ -45,36 +45,34 @@ public class ProjectConfiguration implements Configuration, Cloneable, Serializa
 
     private  Date versionDate;
 
-    public ProjectConfiguration(String identifier, String name, String ownerEmail, Set<StackConfiguration> stackConfigurations, List<User> users) {
+    public ProjectConfiguration(String identifier, String name, User owner, Set<StackConfiguration> stackConfigurations, List<User> users) {
         if (isBlank(name)) {
             throw new IllegalArgumentException("name must be defined.");
         }
-        if (isBlank(ownerEmail)) {
-            throw new IllegalArgumentException("ownerEmail must be defined.");
+        if (owner == null) {
+            throw new IllegalArgumentException("owner must be defined.");
         }
         if (CollectionUtils.isEmpty(stackConfigurations)) {
             throw new IllegalArgumentException("stackConfigurations must be defined and contain some values.");
         }
-        if (CollectionUtils.isEmpty(users)) {
-            throw new IllegalArgumentException("users must be defined and contain some values.");
-        }
+
         this.identifier = identifier;
         this.name = name;
-        this.ownerEmail = ownerEmail;
+        this.owner = owner;
         this.stackConfigurations = stackConfigurations;
         this.users = users;
     }
 
-    public ProjectConfiguration( String name, String ownerEmail, Set<StackConfiguration> stackConfigurations, List<User> users) {
-        this(null,name,ownerEmail, stackConfigurations, users);
+    public ProjectConfiguration( String name, User owner, Set<StackConfiguration> stackConfigurations, List<User> users) {
+        this(null,name,owner, stackConfigurations, users);
     }
 
     public String getIdentifier() {
         return identifier;
     }
 
-    public String getOwnerEmail() {
-        return ownerEmail;
+    public User getOwner() {
+        return owner;
     }
 
     public String getName() {
@@ -117,7 +115,7 @@ public class ProjectConfiguration implements Configuration, Cloneable, Serializa
         ProjectConfiguration projectConfiguration = (ProjectConfiguration) o;
 
         if (!name.equals(projectConfiguration.name)) return false;
-        if (!ownerEmail.equals(projectConfiguration.ownerEmail)) return false;
+        if (!owner.equals(projectConfiguration.owner)) return false;
         if (!stackConfigurations.equals(projectConfiguration.stackConfigurations)) return false;
         return users.equals(projectConfiguration.users);
 
@@ -126,7 +124,7 @@ public class ProjectConfiguration implements Configuration, Cloneable, Serializa
     @Override
     public int hashCode() {
         int result = name.hashCode();
-        result = 31 * result + ownerEmail.hashCode();
+        result = 31 * result + owner.hashCode();
         result = 31 * result + stackConfigurations.hashCode();
         result = 31 * result + users.hashCode();
         return result;
@@ -134,7 +132,7 @@ public class ProjectConfiguration implements Configuration, Cloneable, Serializa
 
     @Override
     protected Object clone() throws CloneNotSupportedException {
-        return new ProjectConfiguration(name, ownerEmail, new HashSet<StackConfiguration>(stackConfigurations), new ArrayList<User>(users));
+        return new ProjectConfiguration(name, owner, new HashSet<StackConfiguration>(stackConfigurations), new ArrayList<User>(users));
     }
 
 

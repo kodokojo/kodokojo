@@ -34,7 +34,7 @@ public class Route53DnsManager implements DnsManager {
     }
 
     @Override
-    public boolean createDnsEntry(DnsEntry dnsEntry) {
+    public boolean createOrUpdateDnsEntry(DnsEntry dnsEntry) {
         if (dnsEntry == null) {
             throw new IllegalArgumentException("dnsEntry must be defined.");
         }

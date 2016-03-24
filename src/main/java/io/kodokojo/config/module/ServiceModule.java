@@ -6,9 +6,10 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
+import io.kodokojo.commons.utils.properties.provider.PropertyValueProvider;
+import io.kodokojo.commons.utils.servicelocator.ServiceLocator;
 import io.kodokojo.commons.utils.servicelocator.marathon.MarathonServiceLocator;
 import io.kodokojo.commons.utils.ssl.SSLKeyPair;
-import io.kodokojo.commons.utils.ssl.SSLRootCaKey;
 import io.kodokojo.config.ApplicationConfig;
 import io.kodokojo.config.AwsConfig;
 import io.kodokojo.config.MarathonConfig;
@@ -18,7 +19,6 @@ import io.kodokojo.lifecycle.ApplicationLifeCycleManager;
 import io.kodokojo.project.starter.BrickManager;
 import io.kodokojo.project.starter.marathon.MarathonBrickManager;
 import io.kodokojo.service.*;
-import io.kodokojo.service.dns.DnsEntry;
 import io.kodokojo.service.dns.DnsManager;
 import io.kodokojo.service.dns.NoOpDnsManager;
 import io.kodokojo.service.dns.route53.Route53DnsManager;
@@ -29,13 +29,14 @@ import io.kodokojo.service.user.SimpleCredential;
 
 import javax.crypto.SecretKey;
 import javax.inject.Named;
-import java.util.List;
+import java.util.concurrent.Executors;
 
 public class ServiceModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(new TypeLiteral<UserAuthenticator<SimpleCredential>>() {/**/}).toProvider(SimpleUserAuthenticatorProvider.class);
+        bind(new TypeLiteral<UserAuthenticator<SimpleCredential>>() {/**/
+        }).toProvider(SimpleUserAuthenticatorProvider.class);
     }
 
     @Provides
@@ -46,18 +47,24 @@ public class ServiceModule extends AbstractModule {
 
     @Provides
     @Singleton
-    RestEntrypoint provideRestEntrypoint(ApplicationConfig applicationConfig, UserManager userManager, UserAuthenticator<SimpleCredential> userAuthenticator, ProjectStore projectStore, ProjectManager projectManager, ApplicationLifeCycleManager applicationLifeCycleManager) {
-        RestEntrypoint restEntrypoint = new RestEntrypoint(applicationConfig.port(), userManager, userAuthenticator,projectStore, projectManager);
+    RestEntrypoint provideRestEntrypoint(ApplicationConfig applicationConfig, UserManager userManager, UserAuthenticator<SimpleCredential> userAuthenticator, ProjectStore projectStore, ProjectManager projectManager, BrickFactory brickFactory, ApplicationLifeCycleManager applicationLifeCycleManager) {
+        RestEntrypoint restEntrypoint = new RestEntrypoint(applicationConfig.port(), userManager, userAuthenticator, projectStore, projectManager, brickFactory);
         applicationLifeCycleManager.addService(restEntrypoint);
         return restEntrypoint;
     }
 
     @Provides
     @Singleton
-    ProjectStore provideProjectStore(@Named("securityKey") SecretKey key, RedisConfig redisConfig, ApplicationLifeCycleManager applicationLifeCycleManager) {
-        RedisProjectStore redisProjectStore = new RedisProjectStore(key, redisConfig.host(), redisConfig.port());
+    ProjectStore provideProjectStore(@Named("securityKey") SecretKey key, RedisConfig redisConfig, BrickFactory brickFactory, ApplicationLifeCycleManager applicationLifeCycleManager) {
+        RedisProjectStore redisProjectStore = new RedisProjectStore(key, redisConfig.host(), redisConfig.port(), brickFactory);
         applicationLifeCycleManager.addService(redisProjectStore);
         return redisProjectStore;
+    }
+
+    @Provides
+    @Singleton
+    BrickFactory provideBrickFactory(PropertyValueProvider propertyValueProvider) {
+        return new DefaultBrickFactory(propertyValueProvider);
     }
 
     @Provides
@@ -70,9 +77,15 @@ public class ServiceModule extends AbstractModule {
 
     @Provides
     @Singleton
+    ServiceLocator provideServiceLocator(MarathonConfig marathonConfig) {
+        return new MarathonServiceLocator(marathonConfig.url());
+    }
+
+    @Provides
+    @Singleton
     BrickManager provideBrickManager(MarathonConfig marathonConfig, ApplicationConfig applicationConfig) {
         MarathonServiceLocator marathonServiceLocator = new MarathonServiceLocator(marathonConfig.url());
-        return new MarathonBrickManager(marathonConfig.url(),marathonServiceLocator, applicationConfig.domain());
+        return new MarathonBrickManager(marathonConfig.url(), marathonServiceLocator, applicationConfig.domain());
     }
 
     @Provides
@@ -94,7 +107,7 @@ public class ServiceModule extends AbstractModule {
     @Provides
     @Singleton
     ProjectManager provideProjectManager(SSLKeyPair caKey, ApplicationConfig applicationConfig, DnsManager dnsManager, BrickManager brickManager, ConfigurationStore configurationStore, ProjectStore projectStore, BootstrapConfigurationProvider bootstrapConfigurationProvider) {
-        return new DefaultProjectManager(caKey, applicationConfig.domain(), dnsManager, brickManager, configurationStore, projectStore, bootstrapConfigurationProvider, applicationConfig.sslCaDuration());
+        return new DefaultProjectManager(caKey, applicationConfig.domain(), dnsManager, brickManager, configurationStore, projectStore, bootstrapConfigurationProvider, Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()+2), applicationConfig.sslCaDuration());
     }
 
 }

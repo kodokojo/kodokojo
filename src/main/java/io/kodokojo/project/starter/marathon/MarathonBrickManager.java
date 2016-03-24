@@ -7,6 +7,7 @@ import io.kodokojo.model.Stack;
 import io.kodokojo.project.starter.BrickManager;
 import io.kodokojo.project.starter.ConfigurerData;
 import io.kodokojo.project.starter.BrickConfigurer;
+import io.kodokojo.service.BrickAlreadyExist;
 import org.apache.commons.lang.StringUtils;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
@@ -16,6 +17,7 @@ import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import retrofit.RestAdapter;
+import retrofit.RetrofitError;
 import retrofit.mime.TypedString;
 
 import javax.inject.Inject;
@@ -71,7 +73,7 @@ public class MarathonBrickManager implements BrickManager {
 
 
     @Override
-    public Set<Service> start(ProjectConfiguration projectConfiguration, BrickType brickType) {
+    public Set<Service> start(ProjectConfiguration projectConfiguration, BrickType brickType) throws BrickAlreadyExist {
         if (projectConfiguration == null) {
             throw new IllegalArgumentException("projectConfiguration must be defined.");
         }
@@ -93,7 +95,13 @@ public class MarathonBrickManager implements BrickManager {
             LOGGER.trace("Push new Application configuration to Marathon :\n{}", body);
         }
         TypedString input = new TypedString(body);
-        marathonRestApi.startApplication(input);
+        try {
+            marathonRestApi.startApplication(input);
+        } catch (RetrofitError e) {
+            if (e.getResponse().getStatus() == 409) {
+                throw new BrickAlreadyExist(e,type, name);
+            }
+        }
         Set<Service> res = new HashSet<>();
         if (brickConfiguration.isWaitRunning()) {
             marathonServiceLocator.getService(type, name);
@@ -138,7 +146,7 @@ public class MarathonBrickManager implements BrickManager {
             Set<Service> services = marathonServiceLocator.getService(type, name);
             List<User> users = projectConfiguration.getUsers();
             String entrypoint = getEntryPoint(services);
-            ConfigurerData configurerData = configurer.configure(new ConfigurerData(projectConfiguration.getName(),entrypoint,domain, users.get(0), users));
+            ConfigurerData configurerData = configurer.configure(new ConfigurerData(projectConfiguration.getName(),entrypoint,domain, projectConfiguration.getOwner()  , users));
             configurer.addUsers(configurerData, users);
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Adding users {} to brick {}", StringUtils.join(users, ","), brickType);

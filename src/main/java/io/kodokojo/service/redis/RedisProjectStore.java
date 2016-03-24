@@ -2,9 +2,13 @@ package io.kodokojo.service.redis;
 
 import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.lifecycle.ApplicationLifeCycleListener;
+import io.kodokojo.model.BrickConfiguration;
 import io.kodokojo.model.Project;
 import io.kodokojo.model.ProjectConfiguration;
+import io.kodokojo.model.StackConfiguration;
+import io.kodokojo.service.BrickFactory;
 import io.kodokojo.service.ProjectStore;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,9 +21,10 @@ import java.security.Key;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.util.Date;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
@@ -35,10 +40,6 @@ public class RedisProjectStore implements ProjectStore, ApplicationLifeCycleList
 
     public static final String PROJECTCONFIGURATION_PREFIX = "projectConfiguration/";
 
-    public static final String DEFAULT_LB_IP_KEY = "loadbalancerIp";
-
-    public static final String DEFAULT_SSH_PORT = "loadbalancerIp";
-
     private static final Pattern PROJECT_NAME_PATTERN = Pattern.compile("([a-zA-Z0-9\\-_]){0,20}");
 
     static {
@@ -50,16 +51,22 @@ public class RedisProjectStore implements ProjectStore, ApplicationLifeCycleList
 
     private final JedisPool pool;
 
+    private final BrickFactory brickFactory;
+
     private final MessageDigest messageDigest;
 
-    public RedisProjectStore(Key key, String host, int port) {
+    public RedisProjectStore(Key key, String host, int port, BrickFactory brickFactory) {
         if (key == null) {
             throw new IllegalArgumentException("key must be defined.");
         }
         if (isBlank(host)) {
             throw new IllegalArgumentException("host must be defined.");
         }
+        if (brickFactory == null) {
+            throw new IllegalArgumentException("brickFactory must be defined.");
+        }
         this.key = key;
+        this.brickFactory = brickFactory;
         pool = createJedisPool(host, port);
         try {
             messageDigest = MessageDigest.getInstance("SHA-1");
@@ -94,7 +101,7 @@ public class RedisProjectStore implements ProjectStore, ApplicationLifeCycleList
         try (Jedis jedis = pool.getResource()) {
             String identifier = generateId();
             Date versionDate = new Date();
-            ProjectConfiguration toInsert = new ProjectConfiguration(identifier, projectConfiguration.getName(), projectConfiguration.getOwnerEmail(), projectConfiguration.getStackConfigurations(), projectConfiguration.getUsers());
+            ProjectConfiguration toInsert = new ProjectConfiguration(identifier, projectConfiguration.getName(), projectConfiguration.getOwner(), projectConfiguration.getStackConfigurations(), projectConfiguration.getUsers());
             toInsert.setVersionDate(versionDate);
             byte[] encryptedObject = RSAUtils.encryptObjectWithAES(key, toInsert);
             jedis.set(RedisUtils.aggregateKey(PROJECTCONFIGURATION_PREFIX, identifier), encryptedObject);
@@ -111,10 +118,21 @@ public class RedisProjectStore implements ProjectStore, ApplicationLifeCycleList
             byte[] projectConfigKey = RedisUtils.aggregateKey(PROJECTCONFIGURATION_PREFIX, identifier);
             if (jedis.exists(projectConfigKey)) {
                 byte[] encrypted = jedis.get(projectConfigKey);
-                return (ProjectConfiguration) RSAUtils.decryptObjectWithAES(key, encrypted);
+                ProjectConfiguration projectConfiguration = (ProjectConfiguration) RSAUtils.decryptObjectWithAES(key, encrypted);
+                projectConfiguration.getStackConfigurations().forEach(this::fillStackConfigurationBrick);
+                return projectConfiguration;
             }
         }
         return null;
+    }
+
+    private void fillStackConfigurationBrick(StackConfiguration stackConfiguration) {
+        List<BrickConfiguration> brickConfigurationUpdated = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(stackConfiguration.getBrickConfigurations())) {
+            brickConfigurationUpdated.addAll(stackConfiguration.getBrickConfigurations().stream().map(brickConfiguration -> new BrickConfiguration(brickFactory.createBrick(brickConfiguration.getName()), brickConfiguration.getName(), brickConfiguration.getType(), brickConfiguration.getUrl(), brickConfiguration.isWaitRunning())).collect(Collectors.toList()));
+        }
+        stackConfiguration.getBrickConfigurations().clear();
+        stackConfiguration.getBrickConfigurations().addAll(brickConfigurationUpdated);
     }
 
     @Override

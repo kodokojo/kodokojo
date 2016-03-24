@@ -54,9 +54,6 @@ public class Stack implements Serializable {
         if (stackType == null) {
             throw new IllegalArgumentException("stackType must be defined.");
         }
-        if (CollectionUtils.isEmpty(brickEntities)) {
-            throw new IllegalArgumentException("brickEntities must be defined.");
-        }
         this.name = name;
         this.orchestratorType = orchestratorType;
         this.stackType = stackType;

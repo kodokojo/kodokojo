@@ -29,13 +29,13 @@ import io.kodokojo.config.module.RedisModule;
 import io.kodokojo.config.module.SecurityModule;
 import io.kodokojo.config.module.ServiceModule;
 import io.kodokojo.entrypoint.RestEntrypoint;
+import io.kodokojo.lifecycle.ApplicationLifeCycleListener;
+import io.kodokojo.lifecycle.ApplicationLifeCycleManager;
 import io.kodokojo.model.User;
-import io.kodokojo.service.DefaultProjectManager;
-import io.kodokojo.service.ProjectManager;
-import io.kodokojo.service.ProjectStore;
-import io.kodokojo.service.UserManager;
+import io.kodokojo.service.*;
 import io.kodokojo.service.user.SimpleUserAuthenticator;
 import io.kodokojo.service.user.redis.RedisUserManager;
+import io.kodokojo.test.utils.TestUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
@@ -50,6 +50,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.math.BigInteger;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -86,6 +88,12 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
 
     @ProvidedScenarioState
     RestEntrypoint restEntrypoint;
+
+    @ProvidedScenarioState
+    String restEntryPointHost;
+
+    @ProvidedScenarioState
+    int restEntryPointPort;
 
     @ProvidedScenarioState
     ProjectManager projectManager;
@@ -162,11 +170,6 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         return self();
     }
 
-    @AfterScenario
-    public void tear_down() {
-        dockerTestSupport.stopAndRemoveContainer();
-    }
-
     private String generateUid() {
         byte[] seed = new byte[1024];
         new Random(System.currentTimeMillis()).nextBytes(seed);
@@ -192,8 +195,9 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         String url = marathonUrl + "/v2/apps";
         System.out.println("Start Redis on url " + url);
         Request request = new Request.Builder().post(body).url(url).build();
+        Response response = null;
         try {
-            Response response = httpClient.newCall(request).execute();
+            response = httpClient.newCall(request).execute();
             assertThat(response.code()).isEqualTo(201);
             response.body().close();
             List<Service> servicesResponse = waitForAppAvailable(id);
@@ -209,6 +213,14 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
             redisUserManager = new RedisUserManager(kg.generateKey(), redisService.getHost(), redisService.getPort());
         } catch (NoSuchAlgorithmException | IOException e) {
             fail("Unable to start Redis", e);
+        } finally {
+            if (response != null) {
+                try {
+                    response.body().close();
+                } catch (IOException e) {
+                    fail(e.getMessage());
+                }
+            }
         }
     }
 
@@ -369,13 +381,14 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         }
     }
 
-    //@AfterScenario
+    @AfterScenario
     public void tearDown() {
-        if (restEntrypoint != null) {
-            restEntrypoint.stop();
+        if (injector != null) {
+            ApplicationLifeCycleManager applicationLifeCycleManager = injector.getInstance(ApplicationLifeCycleManager.class);
+            applicationLifeCycleManager.stop();
         }
         for (Service service : services) {
-       //     killApp(service.getName());
+            killApp(service.getName());
         }
         dockerTestSupport.stopAndRemoveContainer();
     }
@@ -401,7 +414,10 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         injector = Guice.createInjector(new PropertyModule(new String[]{}), new TestModule(),new SecurityModule(), new ServiceModule());
         projectManager = injector.getInstance(ProjectManager.class);
         projectStore = injector.getInstance(ProjectStore.class);
-        restEntrypoint = new RestEntrypoint(8080, redisUserManager, new SimpleUserAuthenticator(redisUserManager),projectStore, projectManager);
+        BrickFactory brickFactory = injector.getInstance(BrickFactory.class);
+        restEntryPointHost = "localhost";
+        restEntryPointPort = TestUtils.getEphemeralPort();
+        restEntrypoint = new RestEntrypoint(restEntryPointPort, redisUserManager, new SimpleUserAuthenticator(redisUserManager),projectStore, projectManager, brickFactory);
         restEntrypoint.start();
 
     }

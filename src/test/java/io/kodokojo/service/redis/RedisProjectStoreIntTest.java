@@ -13,6 +13,7 @@ import io.kodokojo.commons.utils.ssl.SSLKeyPair;
 import io.kodokojo.commons.utils.ssl.SSLUtils;
 import io.kodokojo.model.*;
 import io.kodokojo.model.Stack;
+import io.kodokojo.service.DefaultBrickFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -48,7 +49,7 @@ public class RedisProjectStoreIntTest {
         dockerTestSupport.addContainerIdToClean(createContainerResponse.getId());
         String redisHost = dockerTestSupport.getServerIp();
         int redisPort = dockerTestSupport.getExposedPort(createContainerResponse.getId(), 6379);
-        redisProjectStore = new RedisProjectStore(aesKey, redisHost, redisPort);
+        redisProjectStore = new RedisProjectStore(aesKey, redisHost, redisPort, new DefaultBrickFactory(null));
     }
 
     @After
@@ -76,12 +77,13 @@ public class RedisProjectStoreIntTest {
     @DockerIsRequire
     public void add_valid_project_configuration() {
         List<User> users = new ArrayList<>();
-        users.add(new User("1234", "Jpascal", "jpthiery", "jpthiery@kodokojo.io", "mysecretpassword", "ssh public key"));
+        User owner = new User("1234", "Jpascal", "jpthiery", "jpthiery@kodokojo.io", "mysecretpassword", "ssh public key");
+
         Set<StackConfiguration> stackConfigurations = new HashSet<>();
         Set<BrickConfiguration> brickConfigurations = new HashSet<>();
         brickConfigurations.add(new BrickConfiguration(new Brick("fake", BrickType.CI, null)));
         stackConfigurations.add(new StackConfiguration("build-A", StackType.BUILD, brickConfigurations, "127.0.0.1", 10022));
-        ProjectConfiguration projectConfiguration = new ProjectConfiguration("acme-a", "jpthiery@kodokojo.io", stackConfigurations,users);
+        ProjectConfiguration projectConfiguration = new ProjectConfiguration("acme-a", owner, stackConfigurations,users);
 
         String identifier = redisProjectStore.addProjectConfiguration(projectConfiguration);
         assertThat(identifier).isNotEmpty();
