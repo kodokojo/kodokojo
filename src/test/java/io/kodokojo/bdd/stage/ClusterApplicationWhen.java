@@ -84,7 +84,7 @@ public class ClusterApplicationWhen<SELF extends ClusterApplicationWhen<?>> exte
             assertThat(configuration).isNotNull();
 //            assertThat(configuration.getStackConfigurations()).isNotEmpty();
             projectConfiguration = configuration;
-            loadBalancerIp = projectConfiguration.getStackConfigurations().iterator().next().getLoadBalancerIp();
+            loadBalancerIp = projectConfiguration.getStackConfiguration().getLoadBalancerIp();
         } catch (IOException e) {
             fail("Unable to request RestEntryPoint", e);
         } finally {
