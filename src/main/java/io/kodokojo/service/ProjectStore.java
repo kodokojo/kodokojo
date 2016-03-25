@@ -15,4 +15,5 @@ public interface ProjectStore {
 
     Project getProjectByName(String name);
 
+    void updateProjectConfiguration(ProjectConfiguration projectConfiguration);
 }

@@ -187,7 +187,7 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
             String password = USER_PASSWORD.get(username) == null ? new BigInteger(130, new SecureRandom()).toString(32) : USER_PASSWORD.get(username);
             try {
                 KeyPair keyPair = RSAUtils.generateRsaKeyPair();
-                RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPrivate();
+                RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
                 String email = username + "@kodokojo.io";
                 boolean userAdded = userManager.addUser(new User(identifier, username, username, email, password, RSAUtils.encodePublicKey(publicKey, email)));
                 assertThat(userAdded).isTrue();

@@ -64,7 +64,7 @@ public class ClusterApplicationWhen<SELF extends ClusterApplicationWhen<?>> exte
         httpClient.setReadTimeout(10, TimeUnit.MINUTES);
         httpClient.setConnectTimeout(10, TimeUnit.MINUTES);
         httpClient.setWriteTimeout(10, TimeUnit.MINUTES);
-        String url = "http://" + restEntryPointHost + ":" + restEntryPointPort + "/api/v1/project";
+        String url = "http://" + restEntryPointHost + ":" + restEntryPointPort + "/api/v1/projectconfig";
         String auth = "Basic " + Base64.getEncoder().encodeToString((currentUser.getUsername() + ":" + currentUser.getPassword()).getBytes());
         RequestBody body = RequestBody.create(MediaType.parse("application/json"), "{\n" +
                 "  \"name\": \"" + projectName + "\",\n" +

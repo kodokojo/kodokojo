@@ -22,11 +22,9 @@ package io.kodokojo.entrypoint;
  * #L%
  */
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 import io.kodokojo.commons.utils.RSAUtils;
+import io.kodokojo.entrypoint.dto.ProjectConfigDto;
 import io.kodokojo.entrypoint.dto.ProjectCreationDto;
 import io.kodokojo.lifecycle.ApplicationLifeCycleListener;
 import io.kodokojo.model.*;
@@ -137,6 +135,7 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
                     User user = userAuthenticator.authenticate(new SimpleCredential(basicAuthenticator.getUsername(), basicAuthenticator.getPassword()));
                     if (user == null) {
                         authorizationRequiered(response);
+
                     }
                 } else {
                     authorizationRequiered(response);
@@ -173,6 +172,7 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
                     response.status(201);
                     StringWriter sw = new StringWriter();
                     RSAUtils.writeRsaPrivateKey(privateKey, sw);
+                    response.header("Location", "/user/" + user.getIdentifier());
                     return new UserCreationDto(user, sw.toString());
                 }
 
@@ -220,11 +220,14 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
             return "";
         }, jsonResponseTransformer);
 
-        //  Project --
+        //  ProjectConfiguration --
 
-        post(BASE_API + "/project", JSON_CONTENT_TYPE, (request, response) -> {
-            Gson gson = localGson.get();
+        post(BASE_API + "/projectconfig", JSON_CONTENT_TYPE, (request, response) -> {
             String body = request.body();
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Try to create project {}", body);
+            }
+            Gson gson = localGson.get();
             ProjectCreationDto dto = gson.fromJson(body, ProjectCreationDto.class);
             User owner = userManager.getUserByIdentifier(dto.getOwnerIdentifier());
             Set<StackConfiguration> stackConfigurations = createDefaultStackConfiguration(dto.getName());
@@ -239,17 +242,83 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
             ProjectConfiguration projectConfiguration = new ProjectConfiguration(dto.getName(), owner, stackConfigurations, users);
             String projectConfigIdentifier = projectStore.addProjectConfiguration(projectConfiguration);
 
-            try {
-                Project project = projectManager.start(projectConfiguration);
-                projectStore.addProject(project);
-                response.status(201);
-                return projectConfigIdentifier;
-            } catch (ProjectAlreadyExistException e) {
-                halt(409);
+            response.status(201);
+            response.header("Location", "/projectconfig/" + projectConfigIdentifier);
+            return projectConfigIdentifier;
+        });
+
+
+        get(BASE_API + "/projectconfig/:id", JSON_CONTENT_TYPE, (request, response) -> {
+            String identifier = request.params(":id");
+            ProjectConfiguration projectConfiguration = projectStore.getProjectConfigurationById(identifier);
+            if (projectConfiguration == null) {
+                halt(404);
+                return "";
+            }
+            SimpleCredential credential = extractCredential(request);
+            User user = userManager.getUserByUsername(credential.getUsername());
+            if (user.getIdentifier().equals(projectConfiguration.getOwner().getIdentifier())) {
+                return new ProjectConfigDto(projectConfiguration);
+            }
+            halt(403);
+            return "";
+        }, jsonResponseTransformer);
+
+        put(BASE_API + "/projectconfig/:id/user", JSON_CONTENT_TYPE, ((request, response) -> {
+            SimpleCredential credential = extractCredential(request);
+
+            String identifier = request.params(":id");
+            ProjectConfiguration projectConfiguration = projectStore.getProjectConfigurationById(identifier);
+            if (projectConfiguration == null) {
+                halt(404);
+                return "";
+            }
+            User user = userManager.getUserByUsername(credential.getUsername());
+            if (user.getIdentifier().equals(projectConfiguration.getOwner().getIdentifier())) {
+                JsonParser parser = new JsonParser();
+                JsonArray root = (JsonArray) parser.parse(request.body());
+                for (JsonElement el : root) {
+                    String userToAddId = el.getAsJsonPrimitive().getAsString();
+                    User userToAdd = userManager.getUserByIdentifier(userToAddId);
+                    if (userToAdd != null) {
+                        projectConfiguration.getUsers().add(userToAdd);
+                    }
+                }
+                projectStore.updateProjectConfiguration(projectConfiguration);
+            } else {
+                halt(403);
             }
 
             return "";
-        });
+        }), jsonResponseTransformer);
+
+        delete(BASE_API + "/projectconfig/:id/user", JSON_CONTENT_TYPE, ((request, response) -> {
+            SimpleCredential credential = extractCredential(request);
+            if (credential != null) {
+                String identifier = request.params(":id");
+                ProjectConfiguration projectConfiguration = projectStore.getProjectConfigurationById(identifier);
+                if (projectConfiguration == null) {
+                    halt(404);
+                    return "";
+                }
+                User user = userManager.getUserByUsername(credential.getUsername());
+                if (user.getIdentifier().equals(projectConfiguration.getOwner().getIdentifier())) {
+                    JsonParser parser = new JsonParser();
+                    JsonArray root = (JsonArray) parser.parse(request.body());
+                    for (JsonElement el : root) {
+                        String userToDeleteId = el.getAsJsonPrimitive().getAsString();
+                        User userToDelete = userManager.getUserByIdentifier(userToDeleteId);
+                        if (userToDelete != null) {
+                            projectConfiguration.getUsers().remove(userToDelete);
+                        }
+                    }
+                    projectStore.updateProjectConfiguration(projectConfiguration);
+                } else {
+                    halt(403);
+                }
+            }
+            return "";
+        }), jsonResponseTransformer);
 
         get(BASE_API, JSON_CONTENT_TYPE, (request, response) -> {
             response.type(JSON_CONTENT_TYPE);
@@ -282,7 +351,11 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
     }
 
     private static void authorizationRequiered(Response response) {
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Current request required an authentication which not currently provide.");
+        }
         response.header("WWW-Authenticate", "Basic realm=\"Kodokojo\"");
+        response.status(401);
         halt(401);
     }
 

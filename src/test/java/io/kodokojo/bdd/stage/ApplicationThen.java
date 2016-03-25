@@ -56,6 +56,9 @@ public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF
     String restEntryPointHost;
 
     @ExpectedScenarioState
+    String projectConfigurationId;
+
+    @ExpectedScenarioState
     int restEntryPointPort;
 
     @ExpectedScenarioState
@@ -106,8 +109,8 @@ public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF
         if (!requesterUserInfo.getIdentifier().equals(targetUserInfo.getIdentifier())) {
             url += "/" + targetUserInfo.getIdentifier();
         }
-        String encoded = Base64.getEncoder().encodeToString((requesterUserInfo.getUsername() + ":" + requesterUserInfo.getPassword()).getBytes());
-        Request request = new Request.Builder().get().url(url).addHeader("Authorization", "Basic " + encoded).build();
+        Request.Builder builder = new Request.Builder().get().url(url);
+        Request request = StageUtils.addBasicAuthentification(requesterUserInfo, builder).build();
         Response response = null;
         try {
             response = httpClient.newCall(request).execute();
@@ -139,7 +142,13 @@ public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF
         }
     }
 
+    public SELF it_exist_a_valid_project_configuration_in_store() {
+
+        return self();
+    }
+
     private String getBaseUrl() {
         return "http://" + restEntryPointHost + ":" + restEntryPointPort;
     }
+
 }

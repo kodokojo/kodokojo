@@ -1,5 +1,7 @@
 package io.kodokojo.entrypoint.dto;
 
+import io.kodokojo.model.ProjectConfiguration;
+
 import java.io.Serializable;
 import java.util.List;
 

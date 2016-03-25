@@ -23,7 +23,7 @@ mvn clean install
 popd
 
 pushd commons
-mvn clean verify
+mvn clean install verify
 popd
 
 pushd kodokojo-haproxy-marathon
@@ -37,5 +37,5 @@ chmod +x build.sh
 popd
 
 pushd kodokojo
-mvn -P docker clean verify
+mvn -P docker clean install verify
 popd
