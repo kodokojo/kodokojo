@@ -191,6 +191,8 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
             response = httpClient.newCall(request).execute();
             assertThat(response.code()).isEqualTo(201);
             projectConfigurationId = response.body().string();
+            String projectConfiguration = getProjectConfiguration(currentUserLogin, projectConfigurationId);
+            currentStep.addAttachment(Attachment.plainText(projectConfiguration).withTitle("Project configuration for " + projectName).withFileName("projectconfiguration_" + projectName + ".json"));
         } catch (IOException e) {
             fail(e.getMessage());
         } finally {
@@ -199,6 +201,28 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
             }
         }
         return self();
+    }
+
+    private String getProjectConfiguration(String username, String projectConfigurationId) {
+        UserInfo userInfo = currentUsers.get(username);
+        Request.Builder builder = new Request.Builder().get().url(getApiBaseUrl() + "/projectconfig/" + projectConfigurationId);
+        Request request = StageUtils.addBasicAuthentification(userInfo, builder).build();
+        Response response = null;
+        try {
+            OkHttpClient httpClient = new OkHttpClient();
+            response = httpClient.newCall(request).execute();
+            assertThat(response.code()).isEqualTo(200);
+            String body = response.body().string();
+            return body;
+        } catch (IOException e) {
+            fail(e.getMessage());
+        } finally {
+            if (response != null) {
+                IOUtils.closeQuietly(response.body());
+            }
+        }
+        return null;
+
     }
 
     public SELF add_user_$_to_project_configuration(@Quoted String username) {

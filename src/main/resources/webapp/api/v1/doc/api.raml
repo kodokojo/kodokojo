@@ -140,8 +140,92 @@ schemas:
           "ownerIdentifier"
         ]
       }
-
-
+  - projectConfiguration: |
+      {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "id": "http://kodokojo.io",
+        "type": "object",
+        "properties": {
+          "identifier": {
+            "id": "http://kodokojo.io/identifier",
+            "type": "string"
+          },
+          "name": {
+            "id": "http://kodokojo.io/name",
+            "type": "string"
+          },
+          "owner": {
+            "id": "http://kodokojo.io/owner",
+            "type": "object",
+            "properties": {
+              "identifer": {
+                "id": "http://kodokojo.io/owner/identifer",
+                "type": "string"
+              },
+              "username": {
+                "id": "http://kodokojo.io/owner/username",
+                "type": "string"
+              }
+            }
+          },
+          "users": {
+            "id": "http://kodokojo.io/users",
+            "type": "array",
+            "items": {
+              "id": "http://kodokojo.io/user",
+              "type": "object",
+              "properties": {
+                "identifer": {
+                  "id": "http://kodokojo.io/user/identifer",
+                  "type": "string"
+                },
+                "username": {
+                  "id": "http://kodokojo.io/user/username",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "stackConfigs": {
+            "id": "http://kodokojo.io/stackConfigs",
+            "type": "array",
+            "items": {
+              "id": "http://kodokojo.io/stackConfig",
+              "type": "object",
+              "properties": {
+                "name": {
+                  "id": "http://kodokojo.io/stackConfig/name",
+                  "type": "string"
+                },
+                "type": {
+                  "id": "http://kodokojo.io/stackConfig/type",
+                  "type": "string"
+                },
+                "brickConfigs": {
+                  "id": "http://kodokojo.io/stackConfigs/brickConfigs",
+                  "type": "array",
+                  "items": [
+                    {
+                      "id": "http://kodokojo.io/stackConfigs/brickConfig",
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "id": "http://kodokojo.io/stackConfigs/brickConfig/name",
+                          "type": "string"
+                        },
+                        "type": {
+                          "id": "http://kodokojo.io/stackConfigs/brickConfig/type",
+                          "type": "string"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
 /user:
   post:
     description: Allow to obtain a temporary identifier which may use _post_ to create a new user.
@@ -287,6 +371,41 @@ schemas:
           body:
             application/json:
               schema: projectConfiguration
+              example: |
+                {
+                  "identifier":"4ae84a999e553e4a85778c3229cc67fe4d4888d1",
+                  "name":"Acme",
+                  "owner": {
+                    "identifer":"61e8209320eb5c1257e992db84bffe7e14cc7eb1",
+                    "username":"jpthiery"
+                  },
+                  "users": [
+                    {
+                      "identifer":"61e8209320eb5c1257e992db84bffe7e14cc7eb1",
+                      "username":"jpthiery"
+                    }
+                  ],
+                  "stackConfigs": [
+                    {
+                      "name":"build-A",
+                      "type":"BUILD",
+                      "brickConfigs": [
+                        {
+                          "name":"jenkins",
+                          "type":"CI"
+                        },
+                        {
+                          "name":"gitlab",
+                          "type":"SCM"
+                        },
+                        {
+                          "name":"haproxy",
+                          "type":"LOADBALANCER"
+                        }
+                      ]
+                    }
+                  ]
+                }
         401:
           description: Authentification requiered.
         403:

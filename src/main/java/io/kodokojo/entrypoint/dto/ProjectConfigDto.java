@@ -8,6 +8,8 @@ import java.util.List;
 
 public class ProjectConfigDto implements Serializable {
 
+    private String name;
+
     private String identifier;
 
     private UserDto owner;
@@ -16,7 +18,8 @@ public class ProjectConfigDto implements Serializable {
 
     private List<StackConfigDto> stackConfigs;
 
-    public ProjectConfigDto(String identifier, UserDto owner, List<UserDto> users) {
+    public ProjectConfigDto(String name, String identifier, UserDto owner, List<UserDto> users) {
+        this.name = name;
         this.identifier = identifier;
         this.owner = owner;
         this.users = users;
@@ -26,12 +29,21 @@ public class ProjectConfigDto implements Serializable {
         if (projectConfiguration == null) {
             throw new IllegalArgumentException("projectConfiguration must be defined.");
         }
+        this.name = projectConfiguration.getName();
         this.identifier = projectConfiguration.getIdentifier();
         this.owner = new UserDto(projectConfiguration.getOwner());
         this.users = new ArrayList<>(projectConfiguration.getUsers().size());
         this.stackConfigs = new ArrayList<>(projectConfiguration.getStackConfigurations().size());
         projectConfiguration.getUsers().forEach(user -> users.add(new UserDto(user)));
         projectConfiguration.getStackConfigurations().forEach(stackConfiguration -> stackConfigs.add(new StackConfigDto(stackConfiguration)));
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public UserDto getOwner() {
@@ -70,6 +82,7 @@ public class ProjectConfigDto implements Serializable {
     public String toString() {
         return "ProjectConfigDto{" +
                 "identifier='" + identifier + '\'' +
+                ", name='" + name + '\'' +
                 ", owner=" + owner +
                 ", users=" + users +
                 ", stackConfigs=" + stackConfigs +
