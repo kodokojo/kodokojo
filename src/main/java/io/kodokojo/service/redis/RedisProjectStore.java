@@ -98,7 +98,8 @@ public class RedisProjectStore implements ProjectStore, ApplicationLifeCycleList
         if (StringUtils.isNotBlank(projectConfiguration.getIdentifier())) {
             throw new IllegalArgumentException("ProjectConfiguration " + projectConfiguration.getName() + " already exist");
         }
-        return writeProjectConfiguration(projectConfiguration);
+        String identifier = generateId();
+        return writeProjectConfiguration(new ProjectConfiguration(identifier, projectConfiguration.getName(), projectConfiguration.getOwner(), projectConfiguration.getStackConfigurations(), projectConfiguration.getUsers()));
     }
 
     @Override
@@ -111,7 +112,7 @@ public class RedisProjectStore implements ProjectStore, ApplicationLifeCycleList
 
     private String writeProjectConfiguration(ProjectConfiguration projectConfiguration) {
         try (Jedis jedis = pool.getResource()) {
-            String identifier = generateId();
+            String identifier = projectConfiguration.getIdentifier();
             Date versionDate = new Date();
             ProjectConfiguration toInsert = new ProjectConfiguration(identifier, projectConfiguration.getName(), projectConfiguration.getOwner(), projectConfiguration.getStackConfigurations(), projectConfiguration.getUsers());
             toInsert.setVersionDate(versionDate);

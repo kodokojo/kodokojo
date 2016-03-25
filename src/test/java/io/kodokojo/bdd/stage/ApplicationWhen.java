@@ -34,10 +34,10 @@ import com.tngtech.jgiven.attachment.Attachment;
 import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.commons.utils.ssl.SSLUtils;
 import io.kodokojo.model.*;
-import io.kodokojo.model.Stack;
 import io.kodokojo.service.ProjectAlreadyExistException;
 import io.kodokojo.service.ProjectManager;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.mockito.Mockito;
 
 import java.io.IOException;
@@ -45,7 +45,10 @@ import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.util.*;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -107,7 +110,9 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
         if (isBlank(email)) {
             throw new IllegalArgumentException("email must be defined.");
         }
-
+        if (success && StringUtils.isBlank(newUserId)) {
+            retrive_a_new_id();
+        }
         OkHttpClient httpClient = new OkHttpClient();
         RequestBody body = RequestBody.create(MediaType.parse("application/json"), ("{\"email\": \"" + email + "\"}").getBytes());
         String baseUrl = getBaseUrl();
@@ -176,8 +181,6 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
                 "   \"ownerIdentifier\": \"" + currentUser.getIdentifier() + "\"\n" +
                 "}";
 
-        System.out.println(json);
-
         OkHttpClient httpClient = new OkHttpClient();
 
         RequestBody body = RequestBody.create(MediaType.parse("application/json"), json.getBytes());
@@ -198,6 +201,56 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
         return self();
     }
 
+    public SELF add_user_$_to_project_configuration(@Quoted String username) {
+        UserInfo currentUser = currentUsers.get(currentUserLogin);
+        UserInfo userToAdd = currentUsers.get(username);
+
+        String json = "[\n" +
+                "    \"" + userToAdd.getIdentifier() + "\"\n" +
+                "  ]";
+
+
+        RequestBody body = RequestBody.create(MediaType.parse("application/json"), json.getBytes());
+        Request.Builder builder = new Request.Builder().url(getApiBaseUrl() + "/projectconfig/" + projectConfigurationId + "/user").put(body);
+        Request request = StageUtils.addBasicAuthentification(currentUser, builder).build();
+
+        executeRequestWithExpectedStatus(request, 200);
+
+        return self();
+    }
+
+    public SELF remove_user_$_to_project_configuration(String usernameToDelete) {
+        UserInfo currentUser = currentUsers.get(currentUserLogin);
+        UserInfo userToAdd = currentUsers.get(usernameToDelete);
+
+        String json = "[\n" +
+                "    \"" + userToAdd.getIdentifier() + "\"\n" +
+                "  ]";
+
+        RequestBody body = RequestBody.create(MediaType.parse("application/json"), json.getBytes());
+        Request.Builder builder = new Request.Builder().url(getApiBaseUrl() + "/projectconfig/" + projectConfigurationId + "/user").delete(body);
+        Request request = StageUtils.addBasicAuthentification(currentUser, builder).build();
+
+        executeRequestWithExpectedStatus(request, 200);
+
+        return self();
+    }
+
+    private void executeRequestWithExpectedStatus(Request request, int expectedStatus) {
+        OkHttpClient httpClient = new OkHttpClient();
+        Response response = null;
+        try {
+            response = httpClient.newCall(request).execute();
+            assertThat(response.code()).isEqualTo(expectedStatus);
+        } catch (IOException e) {
+            fail(e.getMessage());
+        } finally {
+            if (response != null) {
+                IOUtils.closeQuietly(response.body());
+            }
+        }
+    }
+
     private String getBaseUrl() {
         return "http://" + restEntryPointHost + ":" + restEntryPointPort;
     }
@@ -205,7 +258,5 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
     private String getApiBaseUrl() {
         return getBaseUrl() + "/api/v1";
     }
-
-
 
 }

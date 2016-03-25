@@ -15,8 +15,12 @@ public class UserDto implements Serializable {
         this.username = username;
     }
 
-    public UserDto(User owner) {
-
+    public UserDto(User user) {
+        if (user == null) {
+            throw new IllegalArgumentException("user must be defined.");
+        }
+        this.identifer = user.getIdentifier();
+        this.username = user.getUsername();
     }
 
     public String getIdentifer() {

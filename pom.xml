@@ -177,13 +177,13 @@
         <dependency>
             <groupId>com.tngtech.jgiven</groupId>
             <artifactId>jgiven-html5-report</artifactId>
-            <version>0.11.0</version>
+            <version>0.11.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.tngtech.jgiven</groupId>
             <artifactId>jgiven-junit</artifactId>
-            <version>0.11.0</version>
+            <version>0.11.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
