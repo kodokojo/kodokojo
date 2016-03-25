@@ -107,6 +107,14 @@ public class ProjectConfiguration implements Configuration, Cloneable, Serializa
         this.versionDate = versionDate;
     }
 
+    public StackConfiguration getStackConfiguration() {
+        return stackConfigurations.iterator().next();
+    }
+
+    public Iterator<BrickConfiguration> getBrickConfigurations() {
+        return getStackConfiguration().getBrickConfigurations().iterator();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

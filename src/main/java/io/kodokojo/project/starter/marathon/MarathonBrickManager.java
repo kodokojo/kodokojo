@@ -80,9 +80,10 @@ public class MarathonBrickManager implements BrickManager {
         if (brickType == null) {
             throw new IllegalArgumentException("brickType must be defined.");
         }
-        StackConfiguration stackConfiguration = projectConfiguration.getStackConfigurations().iterator().next();
-        Iterator<BrickConfiguration> iterator = stackConfiguration.getBrickConfigurations().iterator();
-        BrickConfiguration brickConfiguration = getBrickConfiguration(brickType, iterator);
+
+        Iterator<BrickConfiguration> brickConfigurations = projectConfiguration.getBrickConfigurations();
+        BrickConfiguration brickConfiguration = getBrickConfiguration(brickType, brickConfigurations);
+
         if (brickConfiguration == null) {
             throw new IllegalStateException("Unable to find brickConfiguration for " + brickType);
         }
@@ -90,7 +91,7 @@ public class MarathonBrickManager implements BrickManager {
         String type = brickType.name().toLowerCase();
 
         String id = "/" + name.toLowerCase() + "/" + brickConfiguration.getType().name().toLowerCase();
-        String body = provideStartAppBody(projectConfiguration, stackConfiguration, brickConfiguration, id);
+        String body = provideStartAppBody(projectConfiguration, brickConfiguration, id);
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace("Push new Application configuration to Marathon :\n{}", body);
         }
@@ -133,9 +134,10 @@ public class MarathonBrickManager implements BrickManager {
         if (brickType == null) {
             throw new IllegalArgumentException("brickType must be defined.");
         }
-        StackConfiguration stackConfiguration = projectConfiguration.getStackConfigurations().iterator().next();
-        Iterator<BrickConfiguration> iterator = stackConfiguration.getBrickConfigurations().iterator();
-        BrickConfiguration brickConfiguration = getBrickConfiguration(brickType, iterator);
+
+        Iterator<BrickConfiguration> brickConfigurations = projectConfiguration.getBrickConfigurations();
+        BrickConfiguration brickConfiguration = getBrickConfiguration(brickType, brickConfigurations);
+
         if (brickConfiguration == null) {
             throw new IllegalStateException("Unable to find brickConfiguration for " + brickType);
         }
@@ -194,7 +196,7 @@ public class MarathonBrickManager implements BrickManager {
         return Stack.OrchestratorType.MARATHON;
     }
 
-    private String provideStartAppBody(ProjectConfiguration projectConfiguration, StackConfiguration stackConfiguration, BrickConfiguration brickConfiguration, String id) {
+    private String provideStartAppBody(ProjectConfiguration projectConfiguration, BrickConfiguration brickConfiguration, String id) {
         VelocityEngine ve = new VelocityEngine();
         ve.init(VE_PROPERTIES);
 
@@ -205,7 +207,7 @@ public class MarathonBrickManager implements BrickManager {
         context.put("marathonUrl", marathonUrl);
         context.put("project", projectConfiguration);
         context.put("projectName", projectConfiguration.getName().toLowerCase());
-        context.put("stack", stackConfiguration);
+        context.put("stack", projectConfiguration.getStackConfiguration());
         context.put("brick", brickConfiguration);
         context.put("constrainByTypeAttribute", this.constrainByTypeAttribute);
         StringWriter sw = new StringWriter();
