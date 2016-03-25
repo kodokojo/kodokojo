@@ -81,7 +81,7 @@ public class RedisProjectStoreIntTest {
 
         Set<StackConfiguration> stackConfigurations = new HashSet<>();
         Set<BrickConfiguration> brickConfigurations = new HashSet<>();
-        brickConfigurations.add(new BrickConfiguration(new Brick("fake", BrickType.CI, null)));
+        brickConfigurations.add(new BrickConfiguration(new Brick("jenkins", BrickType.CI, null)));
         stackConfigurations.add(new StackConfiguration("build-A", StackType.BUILD, brickConfigurations, "127.0.0.1", 10022));
         ProjectConfiguration projectConfiguration = new ProjectConfiguration("acme-a", owner, stackConfigurations,users);
 

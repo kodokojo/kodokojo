@@ -36,13 +36,22 @@ public class AccessRestWhen<SELF extends AccessRestWhen<?>> extends Stage<SELF> 
     private SELF try_to_access_to_call_$_url_$(@Quoted String methodName, @Quoted String url) {
 
         Request request = new Request.Builder().get().url(getBaseUrl() + url).build();
+        Response response = null;
         try {
-            Response response = httpClient.newCall(request).execute();
+           response = httpClient.newCall(request).execute();
             responseHttpStatusCode = response.code();
             responseHttpStatusBody = response.body().string();
             response.body().close();
         } catch (IOException e) {
             fail(e.getMessage());
+        } finally {
+            if (response != null) {
+                try {
+                    response.body().close();
+                } catch (IOException e) {
+                    fail(e.getMessage());
+                }
+            }
         }
         return self();
     }

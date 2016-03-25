@@ -336,8 +336,9 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         int nbTry = 0;
         while (res == null && nbTry < nbMaxTry) {
             nbTry++;
+            Response response = null;
             try {
-                Response response = httpClient.newCall(request).execute();
+                response = httpClient.newCall(request).execute();
                 if (response.code() == 200) {
                     JsonParser parser = new JsonParser();
                     String body = response.body().string();
@@ -358,6 +359,14 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
                 response.body().close();
             } catch (IOException e) {
                 e.printStackTrace();
+            } finally {
+                if (response != null) {
+                    try {
+                        response.body().close();
+                    } catch (IOException e) {
+                        fail(e.getMessage());
+                    }
+                }
             }
             if (res == null) {
                 try {

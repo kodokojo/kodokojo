@@ -18,6 +18,8 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.LinkedList;
 
+import static org.assertj.core.api.Assertions.fail;
+
 public class MarathonIsPresent implements MethodRule {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MarathonIsPresent.class);
@@ -61,11 +63,20 @@ public class MarathonIsPresent implements MethodRule {
 
     public boolean marathonIsRunning() {
         Request request = new Request.Builder().url(getMarathonUrl() + "/ping").get().build();
+        Response response = null;
         try {
-            Response response = httpClient.newCall(request).execute();
+             response = httpClient.newCall(request).execute();
             return response.code() == 200;
         } catch (IOException e) {
             LOGGER.error("unable to done request {} due to following error", e);
+        } finally {
+            if (response != null) {
+                try {
+                    response.body().close();
+                } catch (IOException e) {
+                    fail(e.getMessage());
+                }
+            }
         }
         return false;
     }
