@@ -81,7 +81,7 @@ public class RedisProjectStoreIntTest {
 
         Set<StackConfiguration> stackConfigurations = new HashSet<>();
         Set<BrickConfiguration> brickConfigurations = new HashSet<>();
-        brickConfigurations.add(new BrickConfiguration(new Brick("jenkins", BrickType.CI, null)));
+        brickConfigurations.add(new BrickConfiguration(new Brick("jenkins", BrickType.CI)));
         stackConfigurations.add(new StackConfiguration("build-A", StackType.BUILD, brickConfigurations, "127.0.0.1", 10022));
         ProjectConfiguration projectConfiguration = new ProjectConfiguration("acme-a", owner, stackConfigurations,users);
 
@@ -100,7 +100,7 @@ public class RedisProjectStoreIntTest {
         Set<BrickDeploymentState> brickEntities = new HashSet<>();
         List<Service> services = new ArrayList<>();
         services.add(new Service("fake-80", "localhost", 80));
-        brickEntities.add(new BrickDeploymentState(new Brick("fake", BrickType.CI, null), services, 1));
+        brickEntities.add(new BrickDeploymentState(new Brick("fake", BrickType.CI), services, 1));
         stacks.add(new Stack("build-A", StackType.BUILD, Stack.OrchestratorType.MARATHON, brickEntities));
         return new Project("Acme", sslKeyPair, new Date(), stacks);
     }

@@ -69,6 +69,14 @@ public class ServiceModule extends AbstractModule {
 
     @Provides
     @Singleton
+    BrickConfigurerProvider provideBrickConfigurerProvider() {
+        return new DefaultBrickConfigurerProvider();
+    }
+
+
+
+    @Provides
+    @Singleton
     BootstrapConfigurationProvider provideBootstrapConfigurationProvider(ApplicationConfig applicationConfig, RedisConfig redisConfig, ApplicationLifeCycleManager applicationLifeCycleManager) {
         RedisBootstrapConfigurationProvider redisBootstrapConfigurationProvider = new RedisBootstrapConfigurationProvider(redisConfig.host(), redisConfig.port(), applicationConfig.defaultLoadbalancerIp(), applicationConfig.initialSshPort());
         applicationLifeCycleManager.addService(redisBootstrapConfigurationProvider);
@@ -83,9 +91,9 @@ public class ServiceModule extends AbstractModule {
 
     @Provides
     @Singleton
-    BrickManager provideBrickManager(MarathonConfig marathonConfig, ApplicationConfig applicationConfig) {
+    BrickManager provideBrickManager(MarathonConfig marathonConfig,BrickConfigurerProvider brickConfigurerProvider,  ApplicationConfig applicationConfig) {
         MarathonServiceLocator marathonServiceLocator = new MarathonServiceLocator(marathonConfig.url());
-        return new MarathonBrickManager(marathonConfig.url(), marathonServiceLocator, applicationConfig.domain());
+        return new MarathonBrickManager(marathonConfig.url(), marathonServiceLocator, brickConfigurerProvider, applicationConfig.domain());
     }
 
     @Provides

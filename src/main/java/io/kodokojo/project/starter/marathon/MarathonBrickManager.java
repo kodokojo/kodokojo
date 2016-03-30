@@ -8,6 +8,7 @@ import io.kodokojo.project.starter.BrickManager;
 import io.kodokojo.project.starter.ConfigurerData;
 import io.kodokojo.project.starter.BrickConfigurer;
 import io.kodokojo.service.BrickAlreadyExist;
+import io.kodokojo.service.BrickConfigurerProvider;
 import org.apache.commons.lang.StringUtils;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
@@ -44,17 +45,22 @@ public class MarathonBrickManager implements BrickManager {
 
     private final MarathonServiceLocator marathonServiceLocator;
 
+    private final BrickConfigurerProvider brickConfigurerProvider;
+
     private final boolean constrainByTypeAttribute;
 
     private final String domain;
 
     @Inject
-    public MarathonBrickManager(String marathonUrl, MarathonServiceLocator marathonServiceLocator, boolean constrainByTypeAttribute, String domain) {
+    public MarathonBrickManager(String marathonUrl, MarathonServiceLocator marathonServiceLocator, BrickConfigurerProvider brickConfigurerProvider, boolean constrainByTypeAttribute, String domain) {
         if (isBlank(marathonUrl)) {
             throw new IllegalArgumentException("marathonUrl must be defined.");
         }
         if (marathonServiceLocator == null) {
             throw new IllegalArgumentException("marathonServiceLocator must be defined.");
+        }
+        if (brickConfigurerProvider == null) {
+            throw new IllegalArgumentException("brickConfigurerProvider must be defined.");
         }
         if (isBlank(domain)) {
             throw new IllegalArgumentException("domain must be defined.");
@@ -63,12 +69,13 @@ public class MarathonBrickManager implements BrickManager {
         RestAdapter adapter = new RestAdapter.Builder().setEndpoint(marathonUrl).build();
         marathonRestApi = adapter.create(MarathonRestApi.class);
         this.marathonServiceLocator = marathonServiceLocator;
+        this.brickConfigurerProvider = brickConfigurerProvider;
         this.constrainByTypeAttribute = constrainByTypeAttribute;
         this.domain = domain;
     }
 
-    public MarathonBrickManager(String marathonUrl, MarathonServiceLocator marathonServiceLocator,String domain) {
-        this(marathonUrl, marathonServiceLocator, true, domain);
+    public MarathonBrickManager(String marathonUrl, MarathonServiceLocator marathonServiceLocator, BrickConfigurerProvider brickConfigurerProvider, String domain) {
+        this(marathonUrl, marathonServiceLocator, brickConfigurerProvider, true, domain);
     }
 
 
@@ -143,7 +150,7 @@ public class MarathonBrickManager implements BrickManager {
         }
         String name = projectConfiguration.getName().toLowerCase();
         String type = brickType.name().toLowerCase();
-        BrickConfigurer configurer = brickConfiguration.getBrick().getConfigurer();
+        BrickConfigurer configurer = brickConfigurerProvider.provideFromBrick(brickConfiguration.getBrick());
         if (configurer != null) {
             Set<Service> services = marathonServiceLocator.getService(type, name);
             List<User> users = projectConfiguration.getUsers();

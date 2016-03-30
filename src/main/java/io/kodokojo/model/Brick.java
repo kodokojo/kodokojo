@@ -35,9 +35,7 @@ public class Brick implements Serializable {
 
     private final BrickType type;
 
-    private final transient BrickConfigurer configurer;
-
-    public Brick(String name, BrickType type, BrickConfigurer configurer) {
+    public Brick(String name, BrickType type) {
         if (isBlank(name)) {
             throw new IllegalArgumentException("name must be defined.");
         }
@@ -46,7 +44,6 @@ public class Brick implements Serializable {
         }
         this.name = name;
         this.type = type;
-        this.configurer = configurer;
     }
 
     public String getName() {
@@ -57,16 +54,11 @@ public class Brick implements Serializable {
         return type;
     }
 
-    public BrickConfigurer getConfigurer() {
-        return configurer;
-    }
-
     @Override
     public String toString() {
         return "Brick{" +
                 "name='" + name + '\'' +
                 ", type=" + type +
-                ", configurer=" + configurer +
                 '}';
     }
 }

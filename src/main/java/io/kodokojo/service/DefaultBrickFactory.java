@@ -30,9 +30,9 @@ public class DefaultBrickFactory implements BrickFactory {
         }
         */
         cache = new HashMap<>();
-        cache.put(JENKINS, new Brick(JENKINS, BrickType.CI, new JenkinsConfigurer()));
-        cache.put(GITLAB, new Brick(GITLAB, BrickType.SCM, new GitlabConfigurer()));
-        cache.put(HAPROXY, new Brick(HAPROXY, BrickType.LOADBALANCER, null));
+        cache.put(JENKINS, new Brick(JENKINS, BrickType.CI));
+        cache.put(GITLAB, new Brick(GITLAB, BrickType.SCM));
+        cache.put(HAPROXY, new Brick(HAPROXY, BrickType.LOADBALANCER));
     }
 
     @Override
