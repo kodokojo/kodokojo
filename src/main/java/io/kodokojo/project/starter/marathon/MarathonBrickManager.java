@@ -88,7 +88,7 @@ public class MarathonBrickManager implements BrickManager {
             throw new IllegalArgumentException("brickType must be defined.");
         }
 
-        Iterator<BrickConfiguration> brickConfigurations = projectConfiguration.getBrickConfigurations();
+        Iterator<BrickConfiguration> brickConfigurations = projectConfiguration.getDefaultBrickConfigurations();
         BrickConfiguration brickConfiguration = getBrickConfiguration(brickType, brickConfigurations);
 
         if (brickConfiguration == null) {
@@ -142,7 +142,7 @@ public class MarathonBrickManager implements BrickManager {
             throw new IllegalArgumentException("brickType must be defined.");
         }
 
-        Iterator<BrickConfiguration> brickConfigurations = projectConfiguration.getBrickConfigurations();
+        Iterator<BrickConfiguration> brickConfigurations = projectConfiguration.getDefaultBrickConfigurations();
         BrickConfiguration brickConfiguration = getBrickConfiguration(brickType, brickConfigurations);
 
         if (brickConfiguration == null) {
@@ -214,7 +214,7 @@ public class MarathonBrickManager implements BrickManager {
         context.put("marathonUrl", marathonUrl);
         context.put("project", projectConfiguration);
         context.put("projectName", projectConfiguration.getName().toLowerCase());
-        context.put("stack", projectConfiguration.getStackConfiguration());
+        context.put("stack", projectConfiguration.getDefaultStackConfiguration());
         context.put("brick", brickConfiguration);
         context.put("constrainByTypeAttribute", this.constrainByTypeAttribute);
         StringWriter sw = new StringWriter();
