@@ -31,7 +31,6 @@
 
     <logger name="io.kodokojo" level="INFO"/>
 
-    <logger name="retrofit" level="TRACE"/>
     <root level="WARN">
         <appender-ref ref="STDOUT" />
     </root>

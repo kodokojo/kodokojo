@@ -25,10 +25,15 @@ package io.kodokojo.model;
 import java.io.Serializable;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
+import static org.apache.commons.lang.StringUtils.isNotBlank;
 
 public class User implements Serializable {
 
     private final String identifier;
+
+    private final String firstName;
+
+    private final String lastName;
 
     private final String name;
 
@@ -40,22 +45,31 @@ public class User implements Serializable {
 
     private final String sshPublicKey;
 
-    public User(String identifier, String name, String username, String email, String password, String sshPublicKey) {
+    public User(String identifier, String firstName, String lastName, String username, String email, String password, String sshPublicKey) {
         if (isBlank(identifier)) {
             throw new IllegalArgumentException("identifier must be defined.");
         }
-        if (isBlank(name)) {
+        if (firstName == null) {
+            throw new IllegalArgumentException("firstName must be defined.");
+        }
+        if (isBlank(lastName)) {
             throw new IllegalArgumentException("name must be defined.");
         }
         if (isBlank(username)) {
             throw new IllegalArgumentException("username must be defined.");
         }
         this.identifier = identifier;
-        this.name = name;
+        this.firstName = firstName.trim();
+        this.lastName = lastName.trim();
+        this.name = this.firstName + (isNotBlank(this.firstName) ? " " : "") + this.lastName;
         this.username = username;
         this.email = email;
         this.password = password;
         this.sshPublicKey = sshPublicKey;
+    }
+
+    public User(String identifier, String name, String username, String email, String password, String sshPublicKey) {
+        this(identifier, (name.contains(" ") ? name.substring(0,name.lastIndexOf(" ")): name), (name.contains(" ") ?name.substring(name.lastIndexOf(" "), name.length()): name), username, email, password, sshPublicKey);
     }
 
     public String getIdentifier() {
@@ -82,15 +96,26 @@ public class User implements Serializable {
         return sshPublicKey;
     }
 
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+
     @Override
     public String toString() {
         return "User{" +
                 "identifier='" + identifier + '\'' +
-                "name='" + name + '\'' +
+                ", firstName='" + firstName + '\'' +
+                ", lastName='" + lastName + '\'' +
+                ", name='" + name + '\'' +
                 ", username='" + username + '\'' +
                 ", email='" + email + '\'' +
                 ", password='" + (password != null ? "DEFINED" : "NOT DEFINED") + '\'' +
-                ", sshPublicKey='" +  (sshPublicKey != null ? "DEFINED" : "NOT DEFINED") + '\'' +
+                ", sshPublicKey='" + (sshPublicKey != null ? "DEFINED" : "NOT DEFINED") + '\'' +
                 '}';
     }
 

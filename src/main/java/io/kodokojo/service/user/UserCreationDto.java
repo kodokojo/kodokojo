@@ -30,7 +30,6 @@ public class UserCreationDto extends User {
 
     private final String privateKey;
 
-
     public UserCreationDto(String identifier, String name, String username, String email, String password, String privateKey, String sshPublicKey) {
         super(identifier, name, username, email, password, sshPublicKey);
         if (isBlank(privateKey)) {

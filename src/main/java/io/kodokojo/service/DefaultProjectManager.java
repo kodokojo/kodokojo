@@ -38,10 +38,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
@@ -133,20 +130,20 @@ public class DefaultProjectManager implements ProjectManager {
         SSLKeyPair projectCaSSL = SSLUtils.createSSLKeyPair(projectDomainName, caKey.getPrivateKey(), caKey.getPublicKey(), caKey.getCertificates(), sslCaDuration, true);
 
         Set<Stack> stacks = new HashSet<>();
-        List<Runnable> tasks = new ArrayList<>();
+        List<Callable<Void>> tasks = new ArrayList<>();
         for (StackConfiguration stackConfiguration : projectConfiguration.getStackConfigurations()) {
             Set<BrickDeploymentState> brickEntities = new HashSet<>();
             String lbIp = stackConfiguration.getLoadBalancerIp();
 
             for (BrickConfiguration brickConfiguration : stackConfiguration.getBrickConfigurations()) {
                 if (brickConfiguration.getType() == BrickType.LOADBALANCER) {
-                    Runnable task = startBrick(projectConfiguration, projectName, projectDomainName, projectCaSSL, lbIp, brickConfiguration);
+                    Callable<Void> task = startBrick(projectConfiguration, projectName, projectDomainName, projectCaSSL, lbIp, brickConfiguration);
                     tasks.add(task);
                 }
             }
             for (BrickConfiguration brickConfiguration : stackConfiguration.getBrickConfigurations()) {
                 if (brickConfiguration.getType() != BrickType.LOADBALANCER) {
-                    Runnable task = startBrick(projectConfiguration, projectName, projectDomainName, projectCaSSL, lbIp, brickConfiguration);
+                    Callable<Void> task = startBrick(projectConfiguration, projectName, projectDomainName, projectCaSSL, lbIp, brickConfiguration);
                     tasks.add(task);
                 }
             }
@@ -155,12 +152,24 @@ public class DefaultProjectManager implements ProjectManager {
             stacks.add(stack);
 
         }
-        tasks.stream().forEach(executorService::submit);
+        try {
+            List<Future<Void>> futures = executorService.invokeAll(tasks);
+            futures.forEach(f -> {
+                try {
+                    f.get();
+                } catch (InterruptedException | ExecutionException e) {
+                    e.printStackTrace();
+                }
+            });
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         Project project = new Project(projectName, projectCaSSL, new Date(), stacks);
         return project;
     }
 
-    private Runnable startBrick(ProjectConfiguration projectConfiguration, String projectName, String projectDomainName, SSLKeyPair projectCaSSL, String lbIp, BrickConfiguration brickConfiguration) throws ProjectAlreadyExistException {
+    private Callable<Void> startBrick(ProjectConfiguration projectConfiguration, String projectName, String projectDomainName, SSLKeyPair projectCaSSL, String lbIp, BrickConfiguration brickConfiguration) throws ProjectAlreadyExistException {
         return () -> {
             BrickType brickType = brickConfiguration.getType();
             if (brickType.isRequiredHttpExposed()) {
@@ -183,6 +192,7 @@ public class DefaultProjectManager implements ProjectManager {
             } catch (BrickAlreadyExist brickAlreadyExist) {
                 LOGGER.error("Brick {} already exist for project {}, not reconfigure it.", brickAlreadyExist.getBrickName(), brickAlreadyExist.getProjectName());
             }
+            return null;
         };
 
     }

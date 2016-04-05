@@ -17,7 +17,14 @@
         }
       ]
     }
-  },
+  },#if( $constrainByTypeAttribute )
+  "constraints": [
+    [
+      "type",
+      "LIKE",
+      "operator"
+    ]
+  ],#end
   "labels": {
     "entity": "kodokojo",
     "component": "redis"

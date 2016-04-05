@@ -172,7 +172,7 @@ public class MarathonBrickManager implements BrickManager {
         while (res == null && iterator.hasNext()) {
             Service service = iterator.next();
             String name = service.getName();
-            if (name.endsWith("-80") || name.endsWith("-8080") || name.endsWith("-443")) {
+            if (!name.endsWith("-22")) {
                 res = "http" + (name.endsWith("-443") ? "s" : "") + "://" + service.getHost() + ":" + service.getPort();
             }
         }
@@ -228,7 +228,7 @@ public class MarathonBrickManager implements BrickManager {
         while (!res && iterator.hasNext()) {
             Service service = iterator.next();
             String name = service.getName();
-            res = name.endsWith("-80") || name.endsWith("-8080") || name.endsWith("-443");
+            res = !name.endsWith("-22");
         }
         return res;
     }

@@ -20,6 +20,8 @@ public class DefaultBrickFactory implements BrickFactory {
 
     public static final String HAPROXY = "haproxy";
 
+    public static final String NEXUS = "nexus";
+
     private final Map<String, Brick> cache ;
 
     @Inject
@@ -33,6 +35,7 @@ public class DefaultBrickFactory implements BrickFactory {
         cache.put(JENKINS, new Brick(JENKINS, BrickType.CI));
         cache.put(GITLAB, new Brick(GITLAB, BrickType.SCM));
         cache.put(HAPROXY, new Brick(HAPROXY, BrickType.LOADBALANCER));
+        cache.put(NEXUS, new Brick(NEXUS, BrickType.REPOSITORY));
     }
 
     @Override
