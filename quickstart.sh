@@ -14,7 +14,6 @@ docker pull redis
 
 git clone git@github.com:kodokojo/commons-tests.git
 git clone git@github.com:kodokojo/commons.git
-git clone git@github.com:kodokojo/kodokojo.git
 git clone git@github.com:kodokojo/kodokojo-ui.git
 git clone git@github.com:kodokojo/kodokojo-haproxy-marathon.git
 
@@ -36,6 +35,4 @@ chmod +x build.sh
 ./build.sh
 popd
 
-pushd kodokojo
 mvn -P docker clean install verify
-popd
