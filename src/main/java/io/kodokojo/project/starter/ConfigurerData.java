@@ -33,6 +33,7 @@ import static org.apache.commons.lang.StringUtils.isBlank;
 public class ConfigurerData {
 
     private final String projectName;
+
     private final String entrypoint;
 
     private final User adminUser;

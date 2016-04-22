@@ -36,7 +36,6 @@ public class NexusConfigurer implements BrickConfigurer {
         return configurerData;
     }
 
-
     @Override
     public ConfigurerData addUsers(ConfigurerData configurerData, List<User> users) {
         if (configurerData == null) {

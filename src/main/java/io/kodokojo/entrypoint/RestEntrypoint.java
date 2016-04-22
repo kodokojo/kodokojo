@@ -207,9 +207,9 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
 
         get(BASE_API + "/user/:id", JSON_CONTENT_TYPE, (request, response) -> {
             SimpleCredential credential = extractCredential(request);
-            if (credential != null) {
-                String identifier = request.params(":id");
-                User user = userManager.getUserByIdentifier(identifier);
+            String identifier = request.params(":id");
+            User user = userManager.getUserByIdentifier(identifier);
+            if (user != null && credential != null) {
                 if (user.getUsername().equals(credential.getUsername())) {
                     return user;
                 } else {
@@ -247,7 +247,7 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
             projectManager.bootstrapStack(projectConfiguration.getName(),projectConfiguration.getDefaultStackConfiguration().getName(), projectConfiguration.getDefaultStackConfiguration().getType());
             projectManager.start(projectConfiguration);
             */
-            
+
             response.status(201);
             response.header("Location", "/projectconfig/" + projectConfigIdentifier);
             return projectConfigIdentifier;

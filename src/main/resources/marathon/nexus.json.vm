@@ -24,7 +24,7 @@
 
         {
           "key": "env",
-          "value": "JAVA_OPTS=-Dnexus.browserdetector.disable=true -DglobalRestApiSettings.baseUrl=https://respository.acme.kodokojo.io"
+          "value": "JAVA_OPTS=-Dnexus.browserdetector.disable=true -DglobalRestApiSettings.baseUrl=https://respository.${projectName}.kodokojo.io"
         },
         {
           "key": "label",

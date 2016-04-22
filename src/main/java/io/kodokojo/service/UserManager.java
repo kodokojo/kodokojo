@@ -25,6 +25,9 @@ package io.kodokojo.service;
 import io.kodokojo.model.User;
 import io.kodokojo.model.UserService;
 
+/**
+ * Allow to manage {@link User} and {@link UserService}.
+ */
 public interface UserManager {
 
     String generateId();

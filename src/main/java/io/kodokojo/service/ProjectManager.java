@@ -24,10 +24,26 @@ package io.kodokojo.service;
 
 import io.kodokojo.model.*;
 
+/**
+ * Allow to manage project.
+ */
 public interface ProjectManager {
 
+    /**
+     * Allow to generate information required to bootstrap a project stack.
+     * @param projectName The name of the project to bootstrap
+     * @param stackName The name of stack to bootstrap
+     * @param stackType The typ of stack
+     * @return The bootstrap information's generated.
+     */
     BootstrapStackData bootstrapStack(String projectName,String stackName, StackType stackType);
 
+    /**
+     * Start all stack and brick for a given ProjectConfiguration.
+     * @param projectConfiguration The project configuration to start.
+     * @return A snapshot state of Project
+     * @throws ProjectAlreadyExistException throw if Project already exist.
+     */
     Project start(ProjectConfiguration projectConfiguration) throws ProjectAlreadyExistException;
 
 }

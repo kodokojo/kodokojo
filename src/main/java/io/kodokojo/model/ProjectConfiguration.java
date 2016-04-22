@@ -80,7 +80,7 @@ public class ProjectConfiguration implements Configuration, Cloneable, Serializa
     }
 
     public Set<StackConfiguration> getStackConfigurations() {
-        return new HashSet<StackConfiguration>(stackConfigurations);
+        return new HashSet<>(stackConfigurations);
     }
 
     public List<User> getUsers() {

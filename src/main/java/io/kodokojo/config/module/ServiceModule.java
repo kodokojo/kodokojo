@@ -115,7 +115,7 @@ public class ServiceModule extends AbstractModule {
     @Provides
     @Singleton
     ProjectManager provideProjectManager(SSLKeyPair caKey, ApplicationConfig applicationConfig, DnsManager dnsManager, BrickManager brickManager, ConfigurationStore configurationStore, ProjectStore projectStore, BootstrapConfigurationProvider bootstrapConfigurationProvider) {
-        return new DefaultProjectManager(caKey, applicationConfig.domain(), dnsManager, brickManager, configurationStore, projectStore, bootstrapConfigurationProvider, Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()+5), applicationConfig.sslCaDuration());
+        return new DefaultProjectManager(caKey, applicationConfig.domain(), dnsManager, brickManager, configurationStore, projectStore, bootstrapConfigurationProvider, Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()+20), applicationConfig.sslCaDuration());
     }
 
 }

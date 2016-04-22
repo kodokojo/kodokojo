@@ -184,7 +184,7 @@ public class MarathonBrickManager implements BrickManager {
         if (brickDeploymentState == null) {
             throw new IllegalArgumentException("brickDeploymentState must be defined.");
         }
-        return false;
+        throw new UnsupportedOperationException("Not yet implemented");
     }
 
     private BrickConfiguration getBrickConfiguration(BrickType brickType, Iterator<BrickConfiguration> iterator) {

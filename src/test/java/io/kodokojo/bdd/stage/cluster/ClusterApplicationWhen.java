@@ -1,4 +1,4 @@
-package io.kodokojo.bdd.stage;
+package io.kodokojo.bdd.stage.cluster;
 
 import com.squareup.okhttp.*;
 import com.tngtech.jgiven.Stage;

@@ -1,4 +1,4 @@
-package io.kodokojo.bdd.stage;
+package io.kodokojo.bdd.stage.cluster;
 
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
@@ -69,6 +69,11 @@ public class ClusterApplicationThen<SELF extends ClusterApplicationThen<?>> exte
 
     public SELF i_have_a_valid_repo() {
         checkHttpService("repo." + projectConfiguration.getName().toLowerCase() + ".kodokojo.io");
+        return self();
+    }
+
+    public SELF i_have_a_valid_repository() {
+        checkHttpService("repository." + projectConfiguration.getName().toLowerCase() + ".kodokojo.io");
         return self();
     }
 

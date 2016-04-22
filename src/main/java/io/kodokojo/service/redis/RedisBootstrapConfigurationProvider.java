@@ -16,7 +16,6 @@ public class RedisBootstrapConfigurationProvider implements BootstrapConfigurati
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RedisBootstrapConfigurationProvider.class);
 
-
     public static final String DEFAULT_LB_IP_KEY = "loadbalancerIp";
 
     public static final String DEFAULT_SSH_PORT = "sshPort";

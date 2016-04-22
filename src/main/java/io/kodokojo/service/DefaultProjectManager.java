@@ -136,16 +136,8 @@ public class DefaultProjectManager implements ProjectManager {
             String lbIp = stackConfiguration.getLoadBalancerIp();
 
             for (BrickConfiguration brickConfiguration : stackConfiguration.getBrickConfigurations()) {
-                if (brickConfiguration.getType() == BrickType.LOADBALANCER) {
                     Callable<Void> task = startBrick(projectConfiguration, projectName, projectDomainName, projectCaSSL, lbIp, brickConfiguration);
                     tasks.add(task);
-                }
-            }
-            for (BrickConfiguration brickConfiguration : stackConfiguration.getBrickConfigurations()) {
-                if (brickConfiguration.getType() != BrickType.LOADBALANCER) {
-                    Callable<Void> task = startBrick(projectConfiguration, projectName, projectDomainName, projectCaSSL, lbIp, brickConfiguration);
-                    tasks.add(task);
-                }
             }
 
             Stack stack = new Stack(stackConfiguration.getName(), stackConfiguration.getType(), brickManager.getOrchestratorType(), brickEntities);

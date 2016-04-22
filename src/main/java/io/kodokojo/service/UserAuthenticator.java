@@ -25,8 +25,17 @@ package io.kodokojo.service;
 import io.kodokojo.model.User;
 import io.kodokojo.service.user.Credential;
 
+/**
+ * Extract {@link User} from a {@link Credential}.
+ * @param <T>
+ */
 public interface UserAuthenticator<T extends Credential> {
 
+    /**
+     * Check if credentials match with a User.
+     * @param credentials The credentials to test.
+     * @return The user which match credentials, <code>null</code> else.
+     */
     User authenticate(T credentials);
 
 }
