@@ -40,7 +40,7 @@ public class RedisProjectStore implements ProjectStore, ApplicationLifeCycleList
 
     public static final String PROJECTCONFIGURATION_PREFIX = "projectConfiguration/";
 
-    private static final Pattern PROJECT_NAME_PATTERN = Pattern.compile("([a-zA-Z0-9\\-_]){0,20}");
+    private static final Pattern PROJECT_NAME_PATTERN = Pattern.compile("([a-zA-Z0-9\\-_]){4,20}");
 
     static {
         SecureRandom secureRandom = new SecureRandom();

@@ -34,10 +34,7 @@ import io.kodokojo.service.user.UserCreationDto;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import spark.Request;
-import spark.Response;
-import spark.ResponseTransformer;
-import spark.Spark;
+import spark.*;
 
 import javax.inject.Inject;
 import java.io.StringWriter;
@@ -222,6 +219,7 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
 
         //  ProjectConfiguration --
 
+        //  Create
         post(BASE_API + "/projectconfig", JSON_CONTENT_TYPE, (request, response) -> {
             String body = request.body();
             if (LOGGER.isDebugEnabled()) {
@@ -244,9 +242,8 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
 
             /*
             //  Starting all bricks, may be done in an other endpoint with websocket...
-            projectManager.bootstrapStack(projectConfiguration.getName(),projectConfiguration.getDefaultStackConfiguration().getName(), projectConfiguration.getDefaultStackConfiguration().getType());
-            projectManager.start(projectConfiguration);
             */
+
 
             response.status(201);
             response.header("Location", "/projectconfig/" + projectConfigIdentifier);
@@ -326,6 +323,35 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
             return "";
         }), jsonResponseTransformer);
 
+        //  -- Project
+
+        //  Start project
+        post(BASE_API + "/project/:id", JSON_CONTENT_TYPE, ((request, response) -> {
+            SimpleCredential credential = extractCredential(request);
+            if (credential != null) {
+                User currentUser = userManager.getUserByUsername(credential.getUsername());
+                String projectConfigurationId = request.params(":id");
+                ProjectConfiguration projectConfiguration = projectStore.getProjectConfigurationById(projectConfigurationId);
+                if (projectConfiguration == null) {
+                    halt(404, "Project configuration not found.");
+                    return "";
+                }
+                if (projectConfiguration.getOwner().getIdentifier().equals(currentUser.getIdentifier())) {
+                    Project project = projectStore.getProjectByName(projectConfiguration.getName());
+                    if (project == null) {
+                        projectManager.bootstrapStack(projectConfiguration.getName(), projectConfiguration.getDefaultStackConfiguration().getName(), projectConfiguration.getDefaultStackConfiguration().getType());
+                        project = projectManager.start(projectConfiguration);
+                        return projectStore.addProject(project);
+                    } else {
+                        halt(409, "Project already exist.");
+                    }
+                } else {
+                    halt(403);
+                }
+            }
+            return "";
+        }), jsonResponseTransformer);
+
         get(BASE_API, JSON_CONTENT_TYPE, (request, response) -> {
             response.type(JSON_CONTENT_TYPE);
             return "{\"version\":\"1.0.0\"}";
@@ -384,5 +410,6 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
         }
         return null;
     }
+
 
 }
