@@ -31,6 +31,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.*;
+import io.kodokojo.Launcher;
 import io.kodokojo.commons.config.DockerConfig;
 import io.kodokojo.model.User;
 import io.kodokojo.commons.utils.DockerTestSupport;
@@ -38,16 +39,15 @@ import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.commons.utils.properties.PropertyResolver;
 import io.kodokojo.commons.utils.properties.provider.*;
 import io.kodokojo.entrypoint.RestEntrypoint;
-import io.kodokojo.service.DefaultBrickFactory;
-import io.kodokojo.service.ProjectManager;
-import io.kodokojo.service.ProjectStore;
+import io.kodokojo.service.*;
 import io.kodokojo.service.redis.RedisBootstrapConfigurationProvider;
 import io.kodokojo.service.redis.RedisProjectStore;
 import io.kodokojo.service.user.SimpleCredential;
 import io.kodokojo.service.user.SimpleUserAuthenticator;
-import io.kodokojo.service.UserAuthenticator;
 import io.kodokojo.service.user.redis.RedisUserManager;
 import org.junit.Rule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -130,6 +130,7 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
                 bind(DockerConfig.class).toInstance(resolver.createProxy(DockerConfig.class));
             }
         });
+        Launcher.INJECTOR = injector;
         DockerConfig dockerConfig = injector.getInstance(DockerConfig.class);
     }
 
@@ -169,6 +170,12 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
             UserAuthenticator<SimpleCredential> userAuthenticator = new SimpleUserAuthenticator(userManager);
             projectManager = mock(ProjectManager.class);
             restEntrypoint = new RestEntrypoint(port, userManager,userAuthenticator,projectStore, projectManager, new DefaultBrickFactory(null));
+            Launcher.INJECTOR = Guice.createInjector(new AbstractModule() {
+                @Override
+                protected void configure() {
+                    bind(UserManager.class).toInstance(userManager);
+                }
+            });
             restEntrypoint.start();
             restEntryPointPort = port;
             restEntryPointHost = "localhost";
@@ -185,6 +192,7 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
         if (createUser) {
             String identifier = userManager.generateId();
             String password = USER_PASSWORD.get(username) == null ? new BigInteger(130, new SecureRandom()).toString(32) : USER_PASSWORD.get(username);
+
             try {
                 KeyPair keyPair = RSAUtils.generateRsaKeyPair();
                 RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();

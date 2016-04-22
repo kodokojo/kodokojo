@@ -6,12 +6,12 @@ import java.io.Serializable;
 
 public class UserDto implements Serializable {
 
-    private String identifer;
+    private String identifier;
 
     private String username;
 
-    public UserDto(String identifer, String username) {
-        this.identifer = identifer;
+    public UserDto(String identifier, String username) {
+        this.identifier = identifier;
         this.username = username;
     }
 
@@ -19,16 +19,16 @@ public class UserDto implements Serializable {
         if (user == null) {
             throw new IllegalArgumentException("user must be defined.");
         }
-        this.identifer = user.getIdentifier();
+        this.identifier = user.getIdentifier();
         this.username = user.getUsername();
     }
 
-    public String getIdentifer() {
-        return identifer;
+    public String getIdentifier() {
+        return identifier;
     }
 
-    public void setIdentifer(String identifer) {
-        this.identifer = identifer;
+    public void setIdentifier(String identifier) {
+        this.identifier = this.identifier;
     }
 
     public String getUsername() {
@@ -42,7 +42,7 @@ public class UserDto implements Serializable {
     @Override
     public String toString() {
         return "UserDto{" +
-                "identifer='" + identifer + '\'' +
+                "identifier='" + identifier + '\'' +
                 ", username='" + username + '\'' +
                 '}';
     }

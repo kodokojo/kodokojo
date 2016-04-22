@@ -36,9 +36,16 @@ public class AccessRestThen<SELF extends AccessRestThen<?>> extends Stage<SELF> 
     @ExpectedScenarioState
     String responseHttpStatusBody;
 
+    @ExpectedScenarioState
+    boolean receiveWebSocketWelcome;
+
     public SELF it_should_return_status_$(int expectedHttpStatus) {
         assertThat(responseHttpStatusCode).isEqualTo(expectedHttpStatus);
         return self();
     }
 
+    public SELF it_receive_a_welcome_message() {
+        assertThat(receiveWebSocketWelcome).isTrue();
+        return self();
+    }
 }

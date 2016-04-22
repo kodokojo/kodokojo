@@ -111,6 +111,8 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
 
         Spark.port(port);
 
+        webSocket(BASE_API + "/event", WebSocketEntrypoint.class);
+
         staticFileLocation("webapp");
 
         before((request, response) -> {
@@ -118,8 +120,10 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
             // White list of url which not require to have an identifier.
             if (requestMatch("POST", BASE_API + "/user", request) ||
                     requestMatch("GET", BASE_API, request) ||
+                    requestMatch("GET", BASE_API + "/event", request) ||
                     requestMatch("GET", BASE_API + "/doc(/)?.*", request) ||
-                    requestMatch("POST", BASE_API + "/user/[^/]*", request)) {
+                    requestMatch("POST", BASE_API + "/user/[^/]*", request)
+                    ) {
                 authenticationRequired = false;
             }
             if (LOGGER.isTraceEnabled()) {
@@ -139,6 +143,7 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
                 }
             }
         });
+
 
         //  User --
 
@@ -352,12 +357,14 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
             return "";
         }), jsonResponseTransformer);
 
+
         get(BASE_API, JSON_CONTENT_TYPE, (request, response) -> {
             response.type(JSON_CONTENT_TYPE);
             return "{\"version\":\"1.0.0\"}";
         });
 
         Spark.awaitInitialization();
+        LOGGER.info("Spark server started on port {}.", port);
 
     }
 

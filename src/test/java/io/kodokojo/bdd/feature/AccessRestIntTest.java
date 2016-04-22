@@ -64,4 +64,13 @@ public class AccessRestIntTest extends ScenarioTest<ApplicationGiven<?>, AccessR
         then().it_should_return_status_$(401);
     }
 
+    @Test
+    @DockerIsRequire
+    public void user_connect_to_websocket_event() {
+        given().kodokojo_is_running()
+                .and().i_am_user_$("jpthiery", true);
+        when().try_to_access_to_events_websocket();
+        then().it_receive_a_welcome_message();
+    }
+
 }
