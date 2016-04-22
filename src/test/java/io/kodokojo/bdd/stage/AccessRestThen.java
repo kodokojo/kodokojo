@@ -39,6 +39,9 @@ public class AccessRestThen<SELF extends AccessRestThen<?>> extends Stage<SELF> 
     @ExpectedScenarioState
     boolean receiveWebSocketWelcome;
 
+    @ExpectedScenarioState
+    boolean failToConnectToWebSocket;
+
     public SELF it_should_return_status_$(int expectedHttpStatus) {
         assertThat(responseHttpStatusCode).isEqualTo(expectedHttpStatus);
         return self();
@@ -46,6 +49,13 @@ public class AccessRestThen<SELF extends AccessRestThen<?>> extends Stage<SELF> 
 
     public SELF it_receive_a_welcome_message() {
         assertThat(receiveWebSocketWelcome).isTrue();
+        assertThat(failToConnectToWebSocket).isFalse();
+        return self();
+    }
+
+    public SELF it_NOT_receive_a_welcome_message() {
+        assertThat(failToConnectToWebSocket).isTrue();
+        assertThat(receiveWebSocketWelcome).isFalse();
         return self();
     }
 }

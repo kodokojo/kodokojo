@@ -56,7 +56,10 @@ public class AccessRestWhen<SELF extends AccessRestWhen<?>> extends Stage<SELF> 
     String responseHttpStatusBody;
 
     @ProvidedScenarioState
-    boolean receiveWebSocketWelcome;
+    boolean receiveWebSocketWelcome = false;
+
+    @ProvidedScenarioState
+    boolean failToConnectToWebSocket = false;
 
     public SELF try_to_access_to_get_url_$(@Quoted String url) {
         return try_to_access_to_call_$_url_$("GET", url);
@@ -92,14 +95,27 @@ public class AccessRestWhen<SELF extends AccessRestWhen<?>> extends Stage<SELF> 
     }
 
     public SELF try_to_access_to_events_websocket() {
-        UserInfo requesterUserInfo = currentUsers.get(whoAmI);
+        UserInfo userInfo = currentUsers.get(whoAmI);
+        connectToWebSocket(userInfo, true);
+        return self();
+    }
+
+    public SELF try_to_access_to_events_websocket_as_anonymous() {
+        connectToWebSocket(null, false);
+        return self();
+    }
+
+    private void connectToWebSocket(UserInfo requesterUserInfo, boolean expectSuccess) {
 
         try {
 
             final ClientEndpointConfig cec = ClientEndpointConfig.Builder.create().build();
 
             ClientManager client = ClientManager.createClient();
-            client.getProperties().put(ClientProperties.CREDENTIALS, new Credentials(requesterUserInfo.getUsername(), requesterUserInfo.getPassword()));
+            if (requesterUserInfo != null) {
+                client.getProperties().put(ClientProperties.CREDENTIALS, new Credentials(requesterUserInfo.getUsername(), requesterUserInfo.getPassword()));
+
+            }
 
             String uriStr = "ws://" + restEntryPointHost + ":" + restEntryPointPort + "/api/v1/event";
             CountDownLatch messageLatch = new CountDownLatch(1);
@@ -131,14 +147,15 @@ public class AccessRestWhen<SELF extends AccessRestWhen<?>> extends Stage<SELF> 
             messageLatch.await(100, TimeUnit.SECONDS);
             session.close();
         } catch (Exception e) {
-            fail(e.getMessage());
+            if (expectSuccess) {
+                fail(e.getMessage());
+            } else {
+                failToConnectToWebSocket = true;
+            }
         }
-
-        return self();
     }
 
     private String getBaseUrl() {
         return "http://" + restEntryPointHost + ":" + restEntryPointPort;
     }
-
 }
