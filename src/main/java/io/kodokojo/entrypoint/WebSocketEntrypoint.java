@@ -56,6 +56,7 @@ public class WebSocketEntrypoint {
 
     @OnWebSocketMessage
     public void message(Session session, String message) throws IOException {
+
         LOGGER.debug("Receive following message: {}", message);
         JsonParser parser = new JsonParser();
         JsonObject json = (JsonObject) parser.parse(message);

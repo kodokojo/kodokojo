@@ -8,12 +8,18 @@ import com.tngtech.jgiven.annotation.ExpectedScenarioState;
 import com.tngtech.jgiven.annotation.ProvidedScenarioState;
 import com.tngtech.jgiven.annotation.Quoted;
 import org.glassfish.tyrus.client.ClientManager;
+import org.glassfish.tyrus.client.ClientProperties;
+import org.glassfish.tyrus.client.auth.AuthConfig;
+import org.glassfish.tyrus.client.auth.AuthenticationException;
+import org.glassfish.tyrus.client.auth.Authenticator;
+import org.glassfish.tyrus.client.auth.Credentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.websocket.*;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Base64;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -86,14 +92,15 @@ public class AccessRestWhen<SELF extends AccessRestWhen<?>> extends Stage<SELF> 
     }
 
     public SELF try_to_access_to_events_websocket() {
+        UserInfo requesterUserInfo = currentUsers.get(whoAmI);
 
         try {
 
             final ClientEndpointConfig cec = ClientEndpointConfig.Builder.create().build();
 
-
             ClientManager client = ClientManager.createClient();
-            UserInfo requesterUserInfo = currentUsers.get(whoAmI);
+            client.getProperties().put(ClientProperties.CREDENTIALS, new Credentials(requesterUserInfo.getUsername(), requesterUserInfo.getPassword()));
+
             String uriStr = "ws://" + restEntryPointHost + ":" + restEntryPointPort + "/api/v1/event";
             CountDownLatch messageLatch = new CountDownLatch(1);
             Session session = client.connectToServer(new Endpoint() {
@@ -124,7 +131,7 @@ public class AccessRestWhen<SELF extends AccessRestWhen<?>> extends Stage<SELF> 
             messageLatch.await(100, TimeUnit.SECONDS);
             session.close();
         } catch (Exception e) {
-           fail(e.getMessage());
+            fail(e.getMessage());
         }
 
         return self();

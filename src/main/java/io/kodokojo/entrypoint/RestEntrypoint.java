@@ -120,7 +120,7 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
             // White list of url which not require to have an identifier.
             if (requestMatch("POST", BASE_API + "/user", request) ||
                     requestMatch("GET", BASE_API, request) ||
-                    requestMatch("GET", BASE_API + "/event", request) ||
+                    //requestMatch("GET", BASE_API + "/event", request) ||
                     requestMatch("GET", BASE_API + "/doc(/)?.*", request) ||
                     requestMatch("POST", BASE_API + "/user/[^/]*", request)
                     ) {
