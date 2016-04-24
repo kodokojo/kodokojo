@@ -15,8 +15,11 @@ import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.util.List;
+import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Matchers.anyString;
@@ -66,7 +69,38 @@ public class ProjectManagerGiven<SELF extends ProjectManagerGiven<?>> extends St
         configProvider = mock(BootstrapConfigurationProvider.class);
         Mockito.when(configProvider.provideLoadBalancerIp(anyString(),anyString())).thenReturn("127.0.0.1");
         Mockito.when(configProvider.provideSshPortEntrypoint(anyString(),anyString())).thenReturn(10022);
-        executorService = mock(ExecutorService.class);
+        executorService = new AbstractExecutorService() {
+            @Override
+            public void shutdown() {
+                //
+            }
+
+            @Override
+            public List<Runnable> shutdownNow() {
+                return null;
+            }
+
+            @Override
+            public boolean isShutdown() {
+                return false;
+            }
+
+            @Override
+            public boolean isTerminated() {
+                return false;
+            }
+
+            @Override
+            public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
+                return false;
+            }
+
+            @Override
+            public void execute(Runnable command) {
+                command.run();
+            }
+        };
+
 
         projectManager = new DefaultProjectManager(caKey, "kodokojo.dev", new NoOpDnsManager(), brickManager, configurationStore, projectStore, configProvider, executorService,300000);
 

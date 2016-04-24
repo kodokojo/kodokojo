@@ -8,6 +8,7 @@ import io.kodokojo.bdd.stage.ExpectedProjectState;
 import io.kodokojo.bdd.stage.ProjectManagerGiven;
 import io.kodokojo.bdd.stage.ProjectManagerThen;
 import io.kodokojo.bdd.stage.ProjectManagerWhen;
+import io.kodokojo.model.BrickType;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -16,7 +17,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-@Ignore // WIP
+
 @RunWith(DataProviderRunner.class)
 public class DefaultProjectManagerIntTest extends ScenarioTest<ProjectManagerGiven<?>, ProjectManagerWhen<?>, ProjectManagerThen<?>> {
 
@@ -24,7 +25,7 @@ public class DefaultProjectManagerIntTest extends ScenarioTest<ProjectManagerGiv
     public static Object[][] projectConfigurationCases() {
         List<String> defaultStackName = Collections.singletonList("build-A");
         return new Object[][]{
-                {"Acme", "Default", new ExpectedProjectState(defaultStackName, Arrays.asList("jenkins", "gitlab", "haproxy"))}
+                {"Acme", "Default", new ExpectedProjectState(defaultStackName, Arrays.asList(BrickType.CI, BrickType.SCM, BrickType.REPOSITORY))}
         };
     }
 

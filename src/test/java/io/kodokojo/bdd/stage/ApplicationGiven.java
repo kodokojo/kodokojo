@@ -48,6 +48,10 @@ import io.kodokojo.service.user.redis.RedisUserManager;
 import org.junit.Rule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.JedisPoolConfig;
+import redis.clients.jedis.exceptions.JedisConnectionException;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -75,7 +79,6 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
         USER_PASSWORD.put("jpthiery", "jpascal");
     }
 
-    @Rule
     @ProvidedScenarioState
     public DockerTestSupport dockerTestSupport = new DockerTestSupport();
 
@@ -135,11 +138,38 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
     }
 
     public SELF redis_is_started() {
-        CreateContainerResponse createContainerResponse = dockerClient.createContainerCmd("redis:latest").withExposedPorts(ExposedPort.tcp(6379)).withPortBindings(new Ports(ExposedPort.tcp(6379), Ports.Binding(null))).exec();
+
+        Ports portBinding = new Ports();
+        ExposedPort exposedPort = ExposedPort.tcp(6379);
+        portBinding.bind(exposedPort, Ports.Binding(null));
+
+        CreateContainerResponse createContainerResponse = dockerClient.createContainerCmd("redis:latest")
+                .withExposedPorts(exposedPort)
+                .withPortBindings(portBinding)
+                .exec();
         dockerClient.startContainerCmd(createContainerResponse.getId()).exec();
         dockerTestSupport.addContainerIdToClean(createContainerResponse.getId());
+
         redisHost = dockerTestSupport.getServerIp();
         redisPort = dockerTestSupport.getExposedPort(createContainerResponse.getId(), 6379);
+
+        long end = System.currentTimeMillis() + 10000;
+        boolean redisIsReady = false;
+        while (!redisIsReady && (end - System.currentTimeMillis()) > 0) {
+            JedisPool jedisPool = new JedisPool(new JedisPoolConfig(), redisHost, redisPort);
+            try (Jedis jedis = jedisPool.getResource()) {
+                String resPing = jedis.ping();
+                redisIsReady = "PONG".equals(resPing);
+            } catch (JedisConnectionException e) {
+                //  Silently ignore, Redis may not be available
+            }
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        assertThat(redisIsReady).isTrue();
         return self();
     }
 
@@ -184,9 +214,11 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
         }
         return self();
     }
+
     public SELF i_will_be_user_$(@Quoted String username) {
         return i_am_user_$(username, false);
     }
+
     public SELF i_am_user_$(@Quoted String username, @Hidden boolean createUser) {
         currentUserLogin = username;
         if (createUser) {

@@ -146,13 +146,13 @@ public class DefaultProjectManager implements ProjectManager {
         }
         try {
             List<Future<Void>> futures = executorService.invokeAll(tasks);
-            futures.forEach(f -> {
+            for (Future<Void> result : futures) {
                 try {
-                    f.get();
-                } catch (InterruptedException | ExecutionException e) {
+                    result.get();
+                } catch (ExecutionException e) {
                     e.printStackTrace();
                 }
-            });
+            }
 
         } catch (InterruptedException e) {
             e.printStackTrace();

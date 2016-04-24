@@ -323,6 +323,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
 
     }
 
+
     private List<Service> waitForAppAvailable(String appId) {
         OkHttpClient httpClient = new OkHttpClient();
         Request request = new Request.Builder().get().url(marathonUrl + "/v2/apps/" + appId).build();

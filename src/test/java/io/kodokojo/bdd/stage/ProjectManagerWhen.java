@@ -2,6 +2,7 @@ package io.kodokojo.bdd.stage;
 
 import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.ExpectedScenarioState;
+import com.tngtech.jgiven.annotation.ProvidedScenarioState;
 import com.tngtech.jgiven.annotation.Quoted;
 import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.model.*;
@@ -23,7 +24,13 @@ public class ProjectManagerWhen<SELF extends ProjectManagerWhen<?>> extends Stag
     DefaultProjectManager projectManager;
 
     @ExpectedScenarioState
-    private String projectName;
+    String projectName;
+
+    @ProvidedScenarioState
+    ProjectConfiguration projectConfiguration;
+
+    @ProvidedScenarioState
+    Project project;
 
     public SELF i_start_project_with_the_project_configuration_$(@Quoted String configurationName) {
         KeyPair keyPair = null;
@@ -39,7 +46,7 @@ public class ProjectManagerWhen<SELF extends ProjectManagerWhen<?>> extends Stag
 
         BootstrapStackData bootstrapStackData = projectManager.bootstrapStack(projectName, stackName, stackType);
 
-        ProjectConfiguration conf = null;
+
         if ("Default".equals(configurationName)) {
             Set<StackConfiguration> stackConfigurations = new HashSet<>();
             Set<BrickConfiguration> brickConfigurations = new HashSet<>();
@@ -48,12 +55,12 @@ public class ProjectManagerWhen<SELF extends ProjectManagerWhen<?>> extends Stag
             brickConfigurations.add(new BrickConfiguration(new Brick("nexus", BrickType.REPOSITORY)));
             StackConfiguration stackConfiguration = new StackConfiguration(stackName, stackType, brickConfigurations, bootstrapStackData.getLoadBalancerIp(), bootstrapStackData.getSshPort());
             stackConfigurations.add(stackConfiguration);
-            conf = new ProjectConfiguration(configurationName, user, stackConfigurations, Arrays.asList(user));
+            projectConfiguration = new ProjectConfiguration(configurationName, user, stackConfigurations, Arrays.asList(user));
         }
 
 
         try {
-            projectManager.start(conf);
+            project = projectManager.start(projectConfiguration);
         } catch (ProjectAlreadyExistException e) {
             fail(e.getMessage());
         }
