@@ -1,5 +1,8 @@
 package io.kodokojo.bdd.stage;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
@@ -7,11 +10,10 @@ import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.ExpectedScenarioState;
 import com.tngtech.jgiven.annotation.ProvidedScenarioState;
 import com.tngtech.jgiven.annotation.Quoted;
+import io.kodokojo.entrypoint.dto.WebSocketMessage;
+import io.kodokojo.entrypoint.dto.WebSocketMessageGsonAdapter;
 import org.glassfish.tyrus.client.ClientManager;
 import org.glassfish.tyrus.client.ClientProperties;
-import org.glassfish.tyrus.client.auth.AuthConfig;
-import org.glassfish.tyrus.client.auth.AuthenticationException;
-import org.glassfish.tyrus.client.auth.Authenticator;
 import org.glassfish.tyrus.client.auth.Credentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -126,25 +128,59 @@ public class AccessRestWhen<SELF extends AccessRestWhen<?>> extends Stage<SELF> 
                     session.addMessageHandler(new MessageHandler.Whole<String>() {
                         @Override
                         public void onMessage(String messsage) {
-                            if (messsage.equals(SUCCESS_REGISTRATION_MESSAGE)) {
+                            GsonBuilder builder = new GsonBuilder();
+                            builder.registerTypeAdapter(WebSocketMessage.class, new WebSocketMessageGsonAdapter());
+                            Gson gson = builder.create();
+                            WebSocketMessage response = gson.fromJson(messsage, WebSocketMessage.class);
+                            LOGGER.info("Receive WebSocket mesage : {}", response);
+                            if ("user".equals(response.getEntity())
+                                    && "authentication".equals(response.getAction())
+                                    && response.getData().has("message") && ((JsonObject) response.getData()).getAsJsonPrimitive("message").getAsString().equals("success")
+                                    ) {
                                 receiveWebSocketWelcome = true;
+                                messageLatch.countDown();
+                            } else {
+                                failToConnectToWebSocket = true;
+                                receiveWebSocketWelcome = false;
                             }
-                            messageLatch.countDown();
                         }
 
-                    });
 
-                    try {
-                        session.getBasicRemote().sendText("{\n" +
-                                "  \"type\": \"userConnection\",\n" +
-                                "  \"userId\": \"" + requesterUserInfo.getIdentifier() + "\"\n" +
-                                "}");
-                    } catch (IOException e) {
-                        fail(e.getMessage());
+                    });
+                    if (requesterUserInfo != null) {
+                        try {
+                            String aggregateCredentials = String.format("%s:%s", requesterUserInfo.getUsername(), requesterUserInfo.getPassword());
+                            String encodedCredentials = Base64.getEncoder().encodeToString(aggregateCredentials.getBytes());
+                            session.getBasicRemote().sendText("{\n" +
+                                    "  \"entity\": \"user\",\n" +
+                                    "  \"action\": \"authentication\",\n" +
+                                    "  \"data\": {\n" +
+                                    "    \"authorization\": \"Basic " + encodedCredentials + "\"\n" +
+                                    "  }\n" +
+                                    "}");
+                        } catch (IOException e) {
+                            fail(e.getMessage());
+                        }
                     }
                 }
+
+                @Override
+                public void onError(Session session, Throwable thr) {
+                    if (!receiveWebSocketWelcome) {
+                        failToConnectToWebSocket = true;
+                    }
+                    super.onError(session, thr);
+                }
+
+                @Override
+                public void onClose(Session session, CloseReason closeReason) {
+                    if (!receiveWebSocketWelcome) {
+                        failToConnectToWebSocket = true;
+                    }
+                    super.onClose(session, closeReason);
+                }
             }, cec, new URI(uriStr));
-            messageLatch.await(100, TimeUnit.SECONDS);
+            messageLatch.await(10, TimeUnit.SECONDS);
             session.close();
         } catch (Exception e) {
             if (expectSuccess) {

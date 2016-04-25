@@ -50,10 +50,12 @@ public class BasicAuthenticator implements Filter {
             String[] split = decoded.split(":");
             username = split[0];
             password = split[1];
-        } else if (LOGGER.isDebugEnabled()) {
+        }  else if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Basic Authorization header not found.");
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace("List of Header of current request {}", StringUtils.join(request.headers(), ","));
+                LOGGER.trace("List of attribute : {}", StringUtils.join(request.attributes(), ","));
+                LOGGER.trace("List of params : {}", StringUtils.join(request.queryParams(), ","));
             }
         }
     }
