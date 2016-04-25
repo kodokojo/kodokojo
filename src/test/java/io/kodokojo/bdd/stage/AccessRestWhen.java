@@ -60,9 +60,6 @@ public class AccessRestWhen<SELF extends AccessRestWhen<?>> extends Stage<SELF> 
     @ProvidedScenarioState
     boolean receiveWebSocketWelcome = false;
 
-    @ProvidedScenarioState
-    boolean failToConnectToWebSocket = false;
-
     public SELF try_to_access_to_get_url_$(@Quoted String url) {
         return try_to_access_to_call_$_url_$("GET", url);
     }
@@ -122,6 +119,21 @@ public class AccessRestWhen<SELF extends AccessRestWhen<?>> extends Stage<SELF> 
             String uriStr = "ws://" + restEntryPointHost + ":" + restEntryPointPort + "/api/v1/event";
             CountDownLatch messageLatch = new CountDownLatch(1);
             Session session = client.connectToServer(new Endpoint() {
+                /*
+                @Override
+                public void onClose(Session session, CloseReason closeReason) {
+                    LOGGER.info("Closing connection.");
+                    messageLatch.countDown();
+                    super.onClose(session, closeReason);
+                }
+
+                @Override
+                public void onError(Session session, Throwable thr) {
+                    LOGGER.error("Error on session", thr);
+                    messageLatch.countDown();
+                    super.onError(session, thr);
+                }
+                */
                 @Override
                 public void onOpen(Session session, EndpointConfig config) {
 
@@ -140,7 +152,6 @@ public class AccessRestWhen<SELF extends AccessRestWhen<?>> extends Stage<SELF> 
                                 receiveWebSocketWelcome = true;
                                 messageLatch.countDown();
                             } else {
-                                failToConnectToWebSocket = true;
                                 receiveWebSocketWelcome = false;
                             }
                         }
@@ -164,21 +175,6 @@ public class AccessRestWhen<SELF extends AccessRestWhen<?>> extends Stage<SELF> 
                     }
                 }
 
-                @Override
-                public void onError(Session session, Throwable thr) {
-                    if (!receiveWebSocketWelcome) {
-                        failToConnectToWebSocket = true;
-                    }
-                    super.onError(session, thr);
-                }
-
-                @Override
-                public void onClose(Session session, CloseReason closeReason) {
-                    if (!receiveWebSocketWelcome) {
-                        failToConnectToWebSocket = true;
-                    }
-                    super.onClose(session, closeReason);
-                }
             }, cec, new URI(uriStr));
             messageLatch.await(10, TimeUnit.SECONDS);
             session.close();
@@ -186,7 +182,7 @@ public class AccessRestWhen<SELF extends AccessRestWhen<?>> extends Stage<SELF> 
             if (expectSuccess) {
                 fail(e.getMessage());
             } else {
-                failToConnectToWebSocket = true;
+                receiveWebSocketWelcome = false;
             }
         }
     }

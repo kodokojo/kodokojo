@@ -102,7 +102,11 @@ public class WebSocketEntrypoint {
                                     dataValidate.addProperty("message", "success");
                                     dataValidate.addProperty("identifier", user.getIdentifier());
                                     WebSocketMessage response = new WebSocketMessage("user", "authentication", dataValidate);
-                                    session.getRemote().sendStringByFuture(gson.toJson(response));
+                                    String responseStr = gson.toJson(response);
+                                    session.getRemote().sendString(responseStr);
+                                    if (LOGGER.isDebugEnabled()) {
+                                        LOGGER.debug("Send following message to user {} : {}", user.getUsername(), responseStr);
+                                    }
                                 } else {
                                     sessions.remove(session);
                                     session.close(401, "Invalid credentials.");
@@ -126,6 +130,9 @@ public class WebSocketEntrypoint {
 
     @OnWebSocketClose
     public void closed(Session session, int statusCode, String reason) {
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Connection closed for reason '{}' with status code {}.", reason, statusCode);
+        }
         sessions.remove(session);
         String identifier = null;
         Iterator<Map.Entry<String, UserSession>> iterator = userConnectedSession.entrySet().iterator();
@@ -133,6 +140,9 @@ public class WebSocketEntrypoint {
             Map.Entry<String, UserSession> sessionEntry = iterator.next();
             if (sessionEntry.getValue().getSession().equals(session)) {
                 identifier = sessionEntry.getKey();
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("Connection closed attach to user {}.", sessionEntry.getValue().getUser().getUsername());
+                }
             }
         }
         if (identifier != null) {

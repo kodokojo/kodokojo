@@ -245,11 +245,6 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
             ProjectConfiguration projectConfiguration = new ProjectConfiguration(dto.getName(), owner, stackConfigurations, users);
             String projectConfigIdentifier = projectStore.addProjectConfiguration(projectConfiguration);
 
-            /*
-            //  Starting all bricks, may be done in an other endpoint with websocket...
-            */
-
-
             response.status(201);
             response.header("Location", "/projectconfig/" + projectConfigIdentifier);
             return projectConfigIdentifier;
