@@ -77,10 +77,11 @@ public class WebSocketEntrypoint {
             } else {
                 Gson gson = localGson.get();
                 WebSocketMessage webSocketMessage = gson.fromJson(message, WebSocketMessage.class);
-                if("user".equals(webSocketMessage.getEntity())
+                JsonObject data = null;
+                if ("user".equals(webSocketMessage.getEntity())
                         && "authentication".equals(webSocketMessage.getAction())
                         && webSocketMessage.getData().has("authorization")) {
-                    JsonObject data = webSocketMessage.getData();
+                    data = webSocketMessage.getData();
                     String encodedAutorization = data.getAsJsonPrimitive("authorization").getAsString();
                     if (encodedAutorization.startsWith("Basic ")) {
                         String encodedCredentials = encodedAutorization.substring("Basic ".length());
@@ -94,7 +95,7 @@ public class WebSocketEntrypoint {
                             if (user == null) {
                                 sessions.remove(session);
                                 session.close(400, "Authentication value in data mal formatted");
-                            } else  {
+                            } else {
                                 if (user.getPassword().equals(credentials[1])) {
                                     userConnectedSession.put(user.getIdentifier(), new UserSession(session, user));
                                     sessions.remove(session);
@@ -113,9 +114,9 @@ public class WebSocketEntrypoint {
                                 }
                             }
                         }
-                    } else  {
+                    } else {
                         sessions.remove(session);
-                        session.close(400, "Authentication value in data mal formatted");
+                        session.close(400, "Authentication value in data attribute mal formatted : " + data.toString());
                     }
                 } else {
                     sessions.remove(session);
@@ -168,7 +169,7 @@ public class WebSocketEntrypoint {
         assert message != null : "message ust be defined";
 
         switch (message.getAction()) {
-            case "authentication" :
+            case "authentication":
 
                 break;
         }
