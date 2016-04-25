@@ -94,7 +94,7 @@ public class WebSocketEntrypoint {
                             User user = userManager.getUserByUsername(credentials[0]);
                             if (user == null) {
                                 sessions.remove(session);
-                                session.close(400, "Authentication value in data mal formatted");
+                                session.close(401, "Invalid credentials for user '" + credentials[0]+"'.");
                             } else {
                                 if (user.getPassword().equals(credentials[1])) {
                                     userConnectedSession.put(user.getIdentifier(), new UserSession(session, user));
