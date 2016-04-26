@@ -33,6 +33,8 @@ import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.*;
 import io.kodokojo.Launcher;
 import io.kodokojo.commons.config.DockerConfig;
+import io.kodokojo.commons.model.Service;
+import io.kodokojo.config.module.ActorModule;
 import io.kodokojo.model.User;
 import io.kodokojo.commons.utils.DockerTestSupport;
 import io.kodokojo.commons.utils.RSAUtils;
@@ -45,6 +47,7 @@ import io.kodokojo.service.redis.RedisProjectStore;
 import io.kodokojo.service.user.SimpleCredential;
 import io.kodokojo.service.user.SimpleUserAuthenticator;
 import io.kodokojo.service.user.redis.RedisUserManager;
+import io.kodokojo.test.utils.TestUtils;
 import org.junit.Rule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -130,7 +133,10 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
                 propertyValueProviders.add(new SystemEnvValueProvider());
                 OrderedMergedValueProvider valueProvider = new OrderedMergedValueProvider(propertyValueProviders);
                 PropertyResolver resolver = new PropertyResolver(new DockerConfigValueProvider(valueProvider));
+
                 bind(DockerConfig.class).toInstance(resolver.createProxy(DockerConfig.class));
+
+
             }
         });
         Launcher.INJECTOR = injector;
@@ -139,49 +145,15 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
 
     public SELF redis_is_started() {
 
-        Ports portBinding = new Ports();
-        ExposedPort exposedPort = ExposedPort.tcp(6379);
-        portBinding.bind(exposedPort, Ports.Binding(null));
+        Service service = StageUtils.startDockerRedis(dockerTestSupport);
+        redisHost = service.getHost();
+        redisPort = service.getPort();
 
-        CreateContainerResponse createContainerResponse = dockerClient.createContainerCmd("redis:latest")
-                .withExposedPorts(exposedPort)
-                .withPortBindings(portBinding)
-                .exec();
-        dockerClient.startContainerCmd(createContainerResponse.getId()).exec();
-        dockerTestSupport.addContainerIdToClean(createContainerResponse.getId());
-
-        redisHost = dockerTestSupport.getServerIp();
-        redisPort = dockerTestSupport.getExposedPort(createContainerResponse.getId(), 6379);
-
-        long end = System.currentTimeMillis() + 10000;
-        boolean redisIsReady = false;
-        while (!redisIsReady && (end - System.currentTimeMillis()) > 0) {
-            JedisPool jedisPool = new JedisPool(new JedisPoolConfig(), redisHost, redisPort);
-            try (Jedis jedis = jedisPool.getResource()) {
-                String resPing = jedis.ping();
-                redisIsReady = "PONG".equals(resPing);
-            } catch (JedisConnectionException e) {
-                //  Silently ignore, Redis may not be available
-            }
-            try {
-                Thread.sleep(10);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
-        assertThat(redisIsReady).isTrue();
         return self();
     }
 
     public SELF kodokojo_restEntrypoint_is_available() {
-        int port = 0;
-        try {
-            ServerSocket serverSocket = new ServerSocket(0);
-            port = ((InetSocketAddress )serverSocket.getLocalSocketAddress()).getPort();
-            serverSocket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        int port = TestUtils.getEphemeralPort();
         return kodokojo_restEntrypoint_is_available_on_port_$(port);
     }
 
@@ -204,6 +176,7 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
                 @Override
                 protected void configure() {
                     bind(UserManager.class).toInstance(userManager);
+                    bind(ProjectStore.class).toInstance(projectStore);
                 }
             });
             restEntrypoint.start();

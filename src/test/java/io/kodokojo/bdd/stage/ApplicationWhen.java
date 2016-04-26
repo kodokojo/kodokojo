@@ -166,7 +166,7 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
             fail(e.getMessage());
         }
         Set<Stack> stacks = new HashSet<>();
-        stacks.add(new Stack("build-A", StackType.BUILD, Stack.OrchestratorType.MARATHON, new HashSet<BrickDeploymentState>()));
+        stacks.add(new Stack("build-A", StackType.BUILD, new HashSet<BrickDeploymentState>()));
         Project project = new Project("1234567890", projectName, SSLUtils.createSelfSignedSSLKeyPair(projectName, (RSAPrivateKey) keyPair.getPrivate(), (RSAPublicKey) keyPair.getPublic()), new Date(), stacks);
         try {
             Mockito.when(projectManager.start(Mockito.any())).thenReturn(project);

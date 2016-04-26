@@ -26,7 +26,7 @@ import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class BrickManagerGiven<SELF extends BrickManagerGiven<?>> extends Stage<SELF> {
+public class BrickConfigurerGiven<SELF extends BrickConfigurerGiven<?>> extends Stage<SELF> {
 
 
     @ProvidedScenarioState
@@ -48,7 +48,7 @@ public class BrickManagerGiven<SELF extends BrickManagerGiven<?>> extends Stage<
     @ProvidedScenarioState
     BrickConfigurerProvider brickConfigurerProvider;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(BrickManagerGiven.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BrickConfigurerGiven.class);
 
 
 

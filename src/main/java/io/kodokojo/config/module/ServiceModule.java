@@ -55,6 +55,12 @@ public class ServiceModule extends AbstractModule {
 
     @Provides
     @Singleton
+    BrickStateMsgDispatcher provideBrickStateMsgDispatcher() {
+        return new BrickStateMsgDispatcher();
+    }
+
+    @Provides
+    @Singleton
     ProjectStore provideProjectStore(@Named("securityKey") SecretKey key, RedisConfig redisConfig, BrickFactory brickFactory, ApplicationLifeCycleManager applicationLifeCycleManager) {
         RedisProjectStore redisProjectStore = new RedisProjectStore(key, redisConfig.host(), redisConfig.port(), brickFactory);
         applicationLifeCycleManager.addService(redisProjectStore);
@@ -114,8 +120,8 @@ public class ServiceModule extends AbstractModule {
 
     @Provides
     @Singleton
-    ProjectManager provideProjectManager(SSLKeyPair caKey, ApplicationConfig applicationConfig, DnsManager dnsManager, BrickManager brickManager, ConfigurationStore configurationStore, ProjectStore projectStore, BootstrapConfigurationProvider bootstrapConfigurationProvider) {
-        return new DefaultProjectManager(caKey, applicationConfig.domain(), dnsManager, brickManager, configurationStore, projectStore, bootstrapConfigurationProvider, Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()+20), applicationConfig.sslCaDuration());
+    ProjectManager provideProjectManager(SSLKeyPair caKey, ApplicationConfig applicationConfig, BrickConfigurationStarter brickConfigurationStarter, ConfigurationStore configurationStore, ProjectStore projectStore, BootstrapConfigurationProvider bootstrapConfigurationProvider) {
+        return new DefaultProjectManager(caKey, applicationConfig.domain(), configurationStore, projectStore, bootstrapConfigurationProvider, brickConfigurationStarter, applicationConfig.sslCaDuration());
     }
 
 }

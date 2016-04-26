@@ -20,7 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.fail;
 
-public class BrickManagerWhen<SELF extends BrickManagerWhen<?>> extends Stage<SELF> {
+public class BrickConfigurerWhen<SELF extends BrickConfigurerWhen<?>> extends Stage<SELF> {
 
     @ExpectedScenarioState
     String brickName;

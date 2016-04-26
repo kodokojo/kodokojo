@@ -4,9 +4,9 @@ import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import com.tngtech.jgiven.junit.ScenarioTest;
-import io.kodokojo.bdd.stage.BrickManagerGiven;
-import io.kodokojo.bdd.stage.BrickManagerThen;
-import io.kodokojo.bdd.stage.BrickManagerWhen;
+import io.kodokojo.bdd.stage.BrickConfigurerGiven;
+import io.kodokojo.bdd.stage.BrickConfigurerThen;
+import io.kodokojo.bdd.stage.BrickConfigurerWhen;
 import io.kodokojo.bdd.stage.brickauthenticator.GitlabUserAuthenticator;
 import io.kodokojo.bdd.stage.brickauthenticator.UserAuthenticator;
 import io.kodokojo.commons.DockerIsRequire;
@@ -17,7 +17,7 @@ import org.junit.runner.RunWith;
 
 
 @RunWith(DataProviderRunner.class)
-public class BrickConfigurerIntTest extends ScenarioTest<BrickManagerGiven<?>, BrickManagerWhen<?>, BrickManagerThen<?>> {
+public class BrickConfigurerIntTest extends ScenarioTest<BrickConfigurerGiven<?>, BrickConfigurerWhen<?>, BrickConfigurerThen<?>> {
 
     @Rule
     public DockerPresentMethodRule dockerPresentMethodRule = new DockerPresentMethodRule();

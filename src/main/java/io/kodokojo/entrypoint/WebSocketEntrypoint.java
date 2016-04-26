@@ -6,8 +6,9 @@ import com.google.gson.JsonObject;
 import io.kodokojo.Launcher;
 import io.kodokojo.entrypoint.dto.WebSocketMessage;
 import io.kodokojo.entrypoint.dto.WebSocketMessageGsonAdapter;
+import io.kodokojo.model.ProjectConfiguration;
 import io.kodokojo.model.User;
-import io.kodokojo.service.UserManager;
+import io.kodokojo.service.*;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
@@ -23,14 +24,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @WebSocket
-public class WebSocketEntrypoint {
+public class WebSocketEntrypoint implements BrickStateMsgListener{
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketEntrypoint.class);
-
-    private static final String SUCCESS_REGISTRATION_MESSAGE = "{\n" +
-            "  \"type\": \"userRegistered\",\n" +
-            "  \"message\": \"You are successfully registered\"\n" +
-            "}";
 
     public static final long USER_VALIDATION_TIMEOUT = 10000;
 
@@ -39,6 +35,8 @@ public class WebSocketEntrypoint {
     private final Map<String, UserSession> userConnectedSession;
 
     private final UserManager userManager;
+
+    private final ProjectStore projectStore;
 
     private final ThreadLocal<Gson> localGson = new ThreadLocal<Gson>() {
         @Override
@@ -56,6 +54,9 @@ public class WebSocketEntrypoint {
         sessions = new ConcurrentHashMap<>();
         userConnectedSession = new ConcurrentHashMap<>();
         userManager = Launcher.INJECTOR.getInstance(UserManager.class);
+        projectStore = Launcher.INJECTOR.getInstance(ProjectStore.class);
+        BrickStateMsgDispatcher msgDispatcher = Launcher.INJECTOR.getInstance(BrickStateMsgDispatcher.class);
+        msgDispatcher.addListener(this);
 
     }
 
@@ -89,7 +90,7 @@ public class WebSocketEntrypoint {
                         String[] credentials = decoded.split(":");
                         if (credentials.length != 2) {
                             sessions.remove(session);
-                            session.close(400, "Authentication value in data mal formatted");
+                            session.close(400, "Authorization value in data mal formatted");
                         } else {
                             User user = userManager.getUserByUsername(credentials[0]);
                             if (user == null) {
@@ -152,6 +153,48 @@ public class WebSocketEntrypoint {
 
     }
 
+    @Override
+    public void receive(BrickStateMsg brickStateMsg) {
+        if (brickStateMsg == null) {
+            throw new IllegalArgumentException("brickStateMsg must be defined.");
+        }
+        WebSocketMessage message = convertToWebSocketMessage(brickStateMsg);
+        String projectConfigurationIdentifier = brickStateMsg.getProjectConfigurationIdentifier();
+        ProjectConfiguration projectConfiguration = projectStore.getProjectConfigurationById(projectConfigurationIdentifier);
+        UserSession ownerSession = userConnectedSession.get(projectConfiguration.getOwner().getIdentifier());
+        if (ownerSession != null) {
+            sendMessageToUser(message, ownerSession);
+            projectConfiguration.getUsers().forEach(user -> {
+                UserSession session = userConnectedSession.get(user.getIdentifier());
+                if (session != null && !ownerSession.getUser().getIdentifier().equals(user.getIdentifier())) {
+                    sendMessageToUser(message, session);
+                }
+            });
+        }
+    }
+
+    private void sendMessageToUser(WebSocketMessage message, UserSession userSession) {
+        Gson gson = localGson.get();
+        String json = gson.toJson(message);
+        try {
+            userSession.getSession().getRemote().sendString(json);
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Following message sent to user {} : {}", userSession.getUser().getUsername(), json);
+            }
+        } catch (IOException e) {
+            LOGGER.error("Unable to notify user {}.", userSession.getUser().getUsername());
+        }
+    }
+
+    private WebSocketMessage convertToWebSocketMessage(BrickStateMsg brickStateMsg) {
+        JsonObject data = new JsonObject();
+        data.addProperty("projectConfiguration", brickStateMsg.getProjectConfigurationIdentifier());
+        data.addProperty("brickType", brickStateMsg.getBrickType());
+        data.addProperty("brickName", brickStateMsg.getBrickName());
+        data.addProperty("state", brickStateMsg.getState().name());
+        return new WebSocketMessage("brick", "updateState", data);
+    }
+
     private UserSession sessionIsValidated(Session session) {
         assert session != null : "session must be defined";
         UserSession res = null;
@@ -163,16 +206,6 @@ public class WebSocketEntrypoint {
             }
         }
         return res;
-    }
-
-    protected final void processUserMessage(WebSocketMessage message) {
-        assert message != null : "message ust be defined";
-
-        switch (message.getAction()) {
-            case "authentication":
-
-                break;
-        }
     }
 
     private class UserSession {

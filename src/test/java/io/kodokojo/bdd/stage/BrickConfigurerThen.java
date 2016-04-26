@@ -7,7 +7,7 @@ import io.kodokojo.bdd.stage.brickauthenticator.UserAuthenticator;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class BrickManagerThen<SELF extends BrickManagerThen<?>> extends Stage<SELF> {
+public class BrickConfigurerThen<SELF extends BrickConfigurerThen<?>> extends Stage<SELF> {
 
     @ExpectedScenarioState
     UserAuthenticator userAuthenticator;

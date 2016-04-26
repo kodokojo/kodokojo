@@ -2,10 +2,7 @@ package io.kodokojo;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import io.kodokojo.config.module.PropertyModule;
-import io.kodokojo.config.module.RedisModule;
-import io.kodokojo.config.module.SecurityModule;
-import io.kodokojo.config.module.ServiceModule;
+import io.kodokojo.config.module.*;
 import io.kodokojo.entrypoint.RestEntrypoint;
 import io.kodokojo.lifecycle.ApplicationLifeCycleManager;
 import org.slf4j.Logger;
@@ -23,7 +20,7 @@ public class Launcher {
 
         LOGGER.info("Starting Kodo Kojo.");
 
-        INJECTOR = Guice.createInjector(new PropertyModule(args), new SecurityModule(), new RedisModule(), new ServiceModule());
+        INJECTOR = Guice.createInjector(new PropertyModule(args), new SecurityModule(), new RedisModule(), new ServiceModule(), new ActorModule());
 
         ApplicationLifeCycleManager applicationLifeCycleManager = INJECTOR.getInstance(ApplicationLifeCycleManager.class);
 

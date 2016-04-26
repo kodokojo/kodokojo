@@ -11,10 +11,6 @@ import java.util.Set;
  */
 public interface BrickManager {
 
-    @Deprecated
-    // Not useful, to remove.
-    Stack.OrchestratorType getOrchestratorType();
-
     /**
      * Start a given {@link BrickType} from the Default StackConfiguration defined in ProjectConfiguration.</br>
      * Start operation may take a while, we may introduce a callback to be more reactive.

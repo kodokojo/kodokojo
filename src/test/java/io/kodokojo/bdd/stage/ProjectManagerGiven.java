@@ -47,7 +47,7 @@ public class ProjectManagerGiven<SELF extends ProjectManagerGiven<?>> extends St
     BootstrapConfigurationProvider configProvider;
 
     @ProvidedScenarioState
-    ExecutorService executorService;
+    BrickConfigurationStarter brickStarter;
 
     public SELF i_bootstrap_project_$(String projectName) {
         KeyPair keyPair = null;
@@ -62,47 +62,16 @@ public class ProjectManagerGiven<SELF extends ProjectManagerGiven<?>> extends St
         SSLKeyPair caKey = SSLUtils.createSelfSignedSSLKeyPair("Fake Root " + projectName, caPrivate, caPublic);
 
         brickManager = mock(BrickManager.class);
-        Mockito.when(brickManager.getOrchestratorType()).thenReturn(Stack.OrchestratorType.MARATHON);
         configurationStore = mock(ConfigurationStore.class);
         projectStore = mock(ProjectStore.class);
         Mockito.when(projectStore.projectNameIsValid(projectName)).thenReturn(true);
         configProvider = mock(BootstrapConfigurationProvider.class);
         Mockito.when(configProvider.provideLoadBalancerIp(anyString(),anyString())).thenReturn("127.0.0.1");
         Mockito.when(configProvider.provideSshPortEntrypoint(anyString(),anyString())).thenReturn(10022);
-        executorService = new AbstractExecutorService() {
-            @Override
-            public void shutdown() {
-                //
-            }
-
-            @Override
-            public List<Runnable> shutdownNow() {
-                return null;
-            }
-
-            @Override
-            public boolean isShutdown() {
-                return false;
-            }
-
-            @Override
-            public boolean isTerminated() {
-                return false;
-            }
-
-            @Override
-            public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
-                return false;
-            }
-
-            @Override
-            public void execute(Runnable command) {
-                command.run();
-            }
-        };
+        brickStarter = mock(BrickConfigurationStarter.class);
 
 
-        projectManager = new DefaultProjectManager(caKey, "kodokojo.dev", new NoOpDnsManager(), brickManager, configurationStore, projectStore, configProvider, executorService,300000);
+        projectManager = new DefaultProjectManager(caKey, "kodokojo.dev", configurationStore, projectStore, configProvider, brickStarter, 300000);
 
         return self();
     }

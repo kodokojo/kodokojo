@@ -245,6 +245,9 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
             ProjectConfiguration projectConfiguration = new ProjectConfiguration(dto.getName(), owner, stackConfigurations, users);
             String projectConfigIdentifier = projectStore.addProjectConfiguration(projectConfiguration);
 
+            Project project = projectManager.start(new ProjectConfiguration(projectConfigIdentifier, projectConfiguration.getName(), projectConfiguration.getOwner(), projectConfiguration.getStackConfigurations(), projectConfiguration.getUsers()));
+            projectStore.addProject(project);
+
             response.status(201);
             response.header("Location", "/projectconfig/" + projectConfigIdentifier);
             return projectConfigIdentifier;

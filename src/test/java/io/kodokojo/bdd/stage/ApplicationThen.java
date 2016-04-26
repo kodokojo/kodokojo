@@ -125,7 +125,7 @@ public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF
 
             JsonParser parser = new JsonParser();
             JsonObject json = (JsonObject) parser.parse(response.body().string());
-            System.out.println(json.toString());
+
             assertThat(json.getAsJsonPrimitive("name").getAsString()).isNotEmpty();
             if (complete) {
                 assertThat(json.getAsJsonPrimitive("password").getAsString()).isNotEmpty();

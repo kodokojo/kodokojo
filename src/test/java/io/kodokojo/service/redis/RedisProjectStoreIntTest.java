@@ -101,7 +101,7 @@ public class RedisProjectStoreIntTest {
         List<Service> services = new ArrayList<>();
         services.add(new Service("fake-80", "localhost", 80));
         brickEntities.add(new BrickDeploymentState(new Brick("fake", BrickType.CI), services, 1));
-        stacks.add(new Stack("build-A", StackType.BUILD, Stack.OrchestratorType.MARATHON, brickEntities));
+        stacks.add(new Stack("build-A", StackType.BUILD, brickEntities));
         return new Project("Acme", sslKeyPair, new Date(), stacks);
     }
 

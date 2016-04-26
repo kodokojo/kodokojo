@@ -198,11 +198,6 @@ public class MarathonBrickManager implements BrickManager {
         return brickConfiguration;
     }
 
-    @Override
-    public Stack.OrchestratorType getOrchestratorType() {
-        return Stack.OrchestratorType.MARATHON;
-    }
-
     private String provideStartAppBody(ProjectConfiguration projectConfiguration, BrickConfiguration brickConfiguration, String id) {
         VelocityEngine ve = new VelocityEngine();
         ve.init(VE_PROPERTIES);

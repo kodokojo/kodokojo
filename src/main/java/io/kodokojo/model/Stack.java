@@ -31,31 +31,20 @@ import static org.apache.commons.lang.StringUtils.isBlank;
 
 public class Stack implements Serializable {
 
-    public enum OrchestratorType {
-        DOCKER,
-        MARATHON
-    }
-
     private final String name;
-
-    private final OrchestratorType orchestratorType;
 
     private final StackType stackType;
 
     private final Set<BrickDeploymentState> brickEntities;
 
-    public Stack(String name, StackType stackType, OrchestratorType orchestratorType, Set<BrickDeploymentState> brickEntities) {
+    public Stack(String name, StackType stackType, Set<BrickDeploymentState> brickEntities) {
         if (isBlank(name)) {
             throw new IllegalArgumentException("name must be defined.");
-        }
-        if (orchestratorType == null) {
-            throw new IllegalArgumentException("orchestratorType must be defined.");
         }
         if (stackType == null) {
             throw new IllegalArgumentException("stackType must be defined.");
         }
         this.name = name;
-        this.orchestratorType = orchestratorType;
         this.stackType = stackType;
         this.brickEntities = brickEntities;
     }
@@ -64,9 +53,6 @@ public class Stack implements Serializable {
         return name;
     }
 
-    public OrchestratorType getOrchestratorType() {
-        return orchestratorType;
-    }
 
     public StackType getStackType() {
         return stackType;
@@ -84,7 +70,6 @@ public class Stack implements Serializable {
         Stack stack = (Stack) o;
 
         if (!name.equals(stack.name)) return false;
-        if (orchestratorType != stack.orchestratorType) return false;
         if (stackType != stack.stackType) return false;
         return brickEntities.equals(stack.brickEntities);
 
@@ -93,7 +78,6 @@ public class Stack implements Serializable {
     @Override
     public int hashCode() {
         int result = name.hashCode();
-        result = 31 * result + orchestratorType.hashCode();
         result = 31 * result + stackType.hashCode();
         result = 31 * result + brickEntities.hashCode();
         return result;
@@ -103,7 +87,6 @@ public class Stack implements Serializable {
     public String toString() {
         return "Stack{" +
                 "name='" + name + '\'' +
-                ", orchestratorType=" + orchestratorType +
                 ", stackType=" + stackType +
                 ", brickEntities=" + brickEntities +
                 '}';

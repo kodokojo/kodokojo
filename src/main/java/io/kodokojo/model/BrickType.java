@@ -57,4 +57,5 @@ public enum BrickType {
     public StackType getStackType() {
         return stackType;
     }
+
 }
