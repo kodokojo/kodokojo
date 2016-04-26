@@ -9,8 +9,6 @@ import com.tngtech.jgiven.attachment.Attachment;
 import io.kodokojo.entrypoint.dto.WebSocketMessage;
 import io.kodokojo.entrypoint.dto.WebSocketMessageGsonAdapter;
 import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -21,8 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 public class BrickStateNotificationThen<SELF extends BrickStateNotificationThen<?>> extends Stage<SELF> {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(BrickStateNotificationThen.class);
 
     @ExpectedScenarioState
     WebSocketEventsListener listener;
@@ -69,9 +65,9 @@ public class BrickStateNotificationThen<SELF extends BrickStateNotificationThen<
             }
         }
 
-        for(Map.Entry<String, List<WebSocketMessage>> entry : messagePerBrick.entrySet()) {
+        for (Map.Entry<String, List<WebSocketMessage>> entry : messagePerBrick.entrySet()) {
             List<WebSocketMessage> messages = entry.getValue();
-            boolean configuring = false , starting = false , running = false;
+            boolean configuring = false, starting = false, running = false;
             for (WebSocketMessage webSocketMessage : messages) {
                 String state = webSocketMessage.getData().get("state").getAsString();
                 switch (state) {
