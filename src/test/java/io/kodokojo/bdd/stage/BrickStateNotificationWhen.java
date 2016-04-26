@@ -45,6 +45,9 @@ public class BrickStateNotificationWhen<SELF extends BrickStateNotificationWhen<
     @ProvidedScenarioState
     CountDownLatch nbMessageExpected;
 
+    @ProvidedScenarioState
+    String projectConfigurationIdentifier;
+
     public SELF i_create_a_project_configuration_with_default_brick() {
         ProjectCreationDto projectCreationDto = new ProjectCreationDto("Acme", currentUser.getIdentifier(), Collections.singletonList(currentUser.getIdentifier()));
 
@@ -101,6 +104,7 @@ public class BrickStateNotificationWhen<SELF extends BrickStateNotificationWhen<
         try {
             response = httpClient.newCall(request).execute();
             assertThat(response.code()).isEqualTo(201);
+            projectConfigurationIdentifier = response.body().string();
 
         } catch (IOException e) {
             fail(e.getMessage());
@@ -111,4 +115,23 @@ public class BrickStateNotificationWhen<SELF extends BrickStateNotificationWhen<
         }
     }
 
+    public SELF i_start_the_project() {
+        OkHttpClient httpClient = new OkHttpClient();
+        RequestBody body = RequestBody.create(null, new byte[0]);
+        Request.Builder builder = new Request.Builder().url("http://" + entryPointUrl + "/api/v1/project/" + projectConfigurationIdentifier).post(body);
+        builder = StageUtils.addBasicAuthentification(currentUser, builder);
+        Request request = builder.build();
+        Response response = null;
+        try {
+            response = httpClient.newCall(request).execute();
+            assertThat(response.code()).isEqualTo(200);
+        } catch (IOException e) {
+            fail(e.getMessage());
+        } finally {
+            if (response != null) {
+                IOUtils.closeQuietly(response.body());
+            }
+        }
+        return self();
+    }
 }

@@ -19,7 +19,8 @@ public class BrickStateNotificationIntTest extends ScenarioTest<BrickStateNotifi
     public void user_receive_all_notification_when_start_a_project() {
         given().kodokojo_is_started()
         .and().i_am_user_$("jpthiery");
-        when().i_create_a_project_configuration_with_default_brick();
+        when().i_create_a_project_configuration_with_default_brick()
+                .and().i_start_the_project();
         then().i_receive_all_notification();
     }
 
