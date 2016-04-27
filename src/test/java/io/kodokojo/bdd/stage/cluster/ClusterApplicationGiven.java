@@ -18,11 +18,16 @@ import com.tngtech.jgiven.annotation.AfterScenario;
 import com.tngtech.jgiven.annotation.Hidden;
 import com.tngtech.jgiven.annotation.ProvidedScenarioState;
 import com.tngtech.jgiven.annotation.Quoted;
+import io.kodokojo.Launcher;
 import io.kodokojo.bdd.MarathonIsPresent;
+import io.kodokojo.bdd.stage.StageUtils;
+import io.kodokojo.bdd.stage.WebSocketConnectionResult;
+import io.kodokojo.bdd.stage.WebSocketEventsListener;
 import io.kodokojo.commons.DockerPresentMethodRule;
 import io.kodokojo.commons.model.Service;
 import io.kodokojo.commons.utils.DockerTestSupport;
 import io.kodokojo.commons.utils.RSAUtils;
+import io.kodokojo.config.module.ActorModule;
 import io.kodokojo.config.module.PropertyModule;
 import io.kodokojo.config.module.SecurityModule;
 import io.kodokojo.config.module.ServiceModule;
@@ -33,6 +38,7 @@ import io.kodokojo.service.*;
 import io.kodokojo.service.user.SimpleUserAuthenticator;
 import io.kodokojo.service.user.redis.RedisUserManager;
 import io.kodokojo.test.utils.TestUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
@@ -43,6 +49,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.crypto.KeyGenerator;
+import javax.websocket.Session;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
@@ -52,6 +59,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.interfaces.RSAPublicKey;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Semaphore;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -118,6 +127,12 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
     KeyPair userKeyPair;
 
     @ProvidedScenarioState
+    Session currentUserWebSocket;
+
+    @ProvidedScenarioState
+    WebSocketEventsListener webSocketEventsListener;
+
+    @ProvidedScenarioState
     List<Service> services = new ArrayList<>();
 
     @ProvidedScenarioState
@@ -162,6 +177,11 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         } catch (NoSuchAlgorithmException e) {
             fail("Unable to generate a new RSA key pair for user " + username, e);
         }
+
+        CountDownLatch nbMessageExpected = new CountDownLatch(1000);
+        WebSocketConnectionResult webSocketConnectionResult = StageUtils.connectToWebSocket(restEntryPointHost + ":" + restEntryPointPort , currentUser, nbMessageExpected);
+        webSocketEventsListener = webSocketConnectionResult.getListener();
+        currentUserWebSocket = webSocketConnectionResult.getSession();
         return self();
     }
 
@@ -210,11 +230,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
             fail("Unable to start Redis", e);
         } finally {
             if (response != null) {
-                try {
-                    response.body().close();
-                } catch (IOException e) {
-                    fail(e.getMessage());
-                }
+                IOUtils.closeQuietly(response.body());
             }
         }
     }
@@ -416,15 +432,31 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
                 System.setProperty("application.dns.domain","kodokojo.dev");
             }
         }
-        injector = Guice.createInjector(new PropertyModule(new String[]{}), new TestModule(),new SecurityModule(), new ServiceModule());
+        injector = Guice.createInjector(new PropertyModule(new String[]{}), new TestModule(),new SecurityModule(), new ServiceModule(), new ActorModule());
+        Launcher.INJECTOR = injector;
         projectManager = injector.getInstance(ProjectManager.class);
         projectStore = injector.getInstance(ProjectStore.class);
         BrickFactory brickFactory = injector.getInstance(BrickFactory.class);
         restEntryPointHost = "localhost";
         restEntryPointPort = TestUtils.getEphemeralPort();
         restEntrypoint = new RestEntrypoint(restEntryPointPort, redisUserManager, new SimpleUserAuthenticator(redisUserManager),projectStore, projectManager, brickFactory);
-        restEntrypoint.start();
+        Semaphore semaphore = new Semaphore(1);
+        try {
+            semaphore.acquire();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
 
+        Thread t = new Thread(() -> {
+            restEntrypoint.start();
+            semaphore.release();
+        });
+        t.start();
+        try {
+            semaphore.acquire();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     private class TestModule extends AbstractModule {

@@ -3,9 +3,13 @@ package io.kodokojo.config.module;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
+import akka.routing.BalancingPool;
+import akka.routing.RoundRobinPool;
+import akka.routing.RouterConfig;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import com.typesafe.config.ConfigFactory;
 import io.kodokojo.project.starter.BrickManager;
 import io.kodokojo.service.BrickConfigurationStarter;
 import io.kodokojo.service.BrickStateMsgDispatcher;
@@ -28,13 +32,14 @@ public class ActorModule extends AbstractModule {
     @Provides
     @Named("brickConfigurationStarter")
     ActorRef provideBrickConfigurationStarterActor(ActorSystem system, BrickManager brickManager, ConfigurationStore configurationStore, DnsManager dnsManager,@Named("brickStateMsgEndpoint")  ActorRef stateListener) {
-        return system.actorOf(Props.create(BrickConfigurationStarterActor.class, brickManager, configurationStore, dnsManager, stateListener));
+        //TODO Put Router configuration in file.
+        return system.actorOf(new RoundRobinPool(4).props(Props.create(BrickConfigurationStarterActor.class, brickManager, configurationStore, dnsManager, stateListener)),"brickConfigurationStarter");
     }
 
     @Provides
     @Named("brickStateMsgEndpoint")
     ActorRef provideBrickStateMsgEndpoint(ActorSystem system, BrickStateMsgDispatcher dispatcher) {
-        return system.actorOf(Props.create(BrickStateMsgEndpoint.class, dispatcher));
+        return system.actorOf(Props.create(BrickStateMsgEndpoint.class, dispatcher), "brickStateMsgEndpoint");
     }
 
     @Provides
@@ -42,10 +47,5 @@ public class ActorModule extends AbstractModule {
     BrickConfigurationStarter provideBrickConfigurationStarter(@Named("brickConfigurationStarter") ActorRef brickConfigurationStarter) {
         return new BrickConfigurationStarterActorAdapter(brickConfigurationStarter);
     }
-/*
-    @Provides
-    ActorRef providePushEventDispatcher(ActorSystem system, @Named("pushEventChecker") ActorRef pushEventChecker, @Named("registryRequestWorker") ActorRef registryRequestWorker) {
-        return system.actorOf(Props.create(PushEventDispatcher.class, pushEventChecker, registryRequestWorker));
-    }
-*/
+
 }

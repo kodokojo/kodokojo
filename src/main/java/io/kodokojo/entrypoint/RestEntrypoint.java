@@ -232,6 +232,10 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
             }
             Gson gson = localGson.get();
             ProjectCreationDto dto = gson.fromJson(body, ProjectCreationDto.class);
+            if (dto == null) {
+                halt(400);
+                return "";
+            }
             User owner = userManager.getUserByIdentifier(dto.getOwnerIdentifier());
             Set<StackConfiguration> stackConfigurations = createDefaultStackConfiguration(dto.getName());
             List<User> users = new ArrayList<>();
@@ -345,6 +349,7 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
                     if (project == null) {
                         projectManager.bootstrapStack(projectConfiguration.getName(), projectConfiguration.getDefaultStackConfiguration().getName(), projectConfiguration.getDefaultStackConfiguration().getType());
                         project = projectManager.start(projectConfiguration);
+                        response.status(201);
                         return projectStore.addProject(project);
                     } else {
                         halt(409, "Project already exist.");

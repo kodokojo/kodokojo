@@ -107,7 +107,7 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
             fail(e.getMessage());
         }
         SSLKeyPair caKey = SSLUtils.createSelfSignedSSLKeyPair("Fake CA", (RSAPrivateKey) keyPair.getPrivate(), (RSAPublicKey) keyPair.getPublic());
-        DefaultProjectManager projectManager = new DefaultProjectManager(caKey, "kodokojo.dev", configurationStore, redisProjectStore, bootstrapProvider, injector.getInstance(BrickConfigurationStarter.class), 10000000);
+        DefaultProjectManager projectManager = new DefaultProjectManager(caKey, "kodokojo.dev", configurationStore, redisProjectStore, bootstrapProvider, dnsManager, injector.getInstance(BrickConfigurationStarter.class), 10000000);
         restEntrypoint = new RestEntrypoint(port, injector.getInstance(UserManager.class), new SimpleUserAuthenticator(redisUserManager),redisProjectStore, projectManager,new DefaultBrickFactory(null));
         restEntrypoint.start();
         return self();

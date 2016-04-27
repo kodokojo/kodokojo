@@ -9,7 +9,12 @@ public class GitlabUserAuthenticator implements UserAuthenticator {
     @Override
     public boolean authenticate(String url, UserInfo userInfo) {
         OkHttpClient httpClient = GitlabConfigurer.provideDefaultOkHttpClient();
-        return GitlabConfigurer.signIn(httpClient, url, userInfo.getUsername(), userInfo.getPassword());
+        return authenticate(httpClient, url, userInfo);
+    }
+
+    @Override
+    public boolean authenticate(OkHttpClient httpClient, String brickDomainUrl, UserInfo userInfo) {
+        return GitlabConfigurer.signIn(httpClient, brickDomainUrl, userInfo.getUsername(), userInfo.getPassword());
     }
 
 }

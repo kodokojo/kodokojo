@@ -480,7 +480,7 @@ schemas:
             description:
               Project configuration not found.
 /project:
-  /{identifier}:
+  /{projectConfigurationIdentifier}:
     post:
       description: Create and Starct a Project with given Project configuration
       securedBy: [basic]
@@ -511,3 +511,25 @@ schemas:
           description: Project configuration not found.
         409:
           description: Project already exist
+  /{projectIdentifier}:
+    get:
+      description: Get project state details
+      securedBy: [basic]
+      body:
+        application/json:
+          schema: identifier
+          example: |
+            c918adf9e28d0bae432b3b89fa7b2f5be682a16e
+      responses:
+        201:
+          description:
+            Return project Detail.
+          body:
+            application/json:
+              schema: identifier
+              example: |
+                59e860b31588a0a1f2ae3fa75764ce133a6985e3
+        403:
+          description: You are not the owner of the project.
+        404:
+          description: Project configuration not found.

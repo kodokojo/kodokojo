@@ -4,11 +4,15 @@ import com.squareup.okhttp.*;
 import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.ExpectedScenarioState;
 import com.tngtech.jgiven.annotation.ProvidedScenarioState;
+import io.kodokojo.bdd.stage.StageUtils;
 import io.kodokojo.model.ProjectConfiguration;
 import io.kodokojo.model.User;
 import io.kodokojo.service.ProjectAlreadyExistException;
 import io.kodokojo.service.ProjectManager;
 import io.kodokojo.service.ProjectStore;
+import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Base64;
@@ -19,6 +23,8 @@ import static org.assertj.core.api.Assertions.fail;
 
 
 public class ClusterApplicationWhen<SELF extends ClusterApplicationWhen<?>> extends Stage<SELF> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClusterApplicationWhen.class);
 
     @ExpectedScenarioState
     User currentUser;
@@ -43,40 +49,25 @@ public class ClusterApplicationWhen<SELF extends ClusterApplicationWhen<?>> exte
     int restEntryPointPort;
 
     public SELF i_start_a_default_project_with_name_$(String projectName) {
-
-        /*
-        BrickFactory brickFactory = new DefaultBrickFactory(null);
-        Set<StackConfiguration> stackConfigurations = new HashSet<>();
-        Set<BrickConfiguration> brickConfigurations = new HashSet<>();
-
-        brickConfigurations.add(new BrickConfiguration(brickFactory.createBrick(DefaultBrickFactory.JENKINS)));
-        brickConfigurations.add(new BrickConfiguration(brickFactory.createBrick(DefaultBrickFactory.GITLAB)));
-        brickConfigurations.add(new BrickConfiguration(brickFactory.createBrick(DefaultBrickFactory.HAPROXY), false));
-
-        loadBalancerIp = "52.19.37.28";    //Ha proxy may be reloadable in a short future.
-        StackConfiguration stackConfiguration = new StackConfiguration("build-A", StackType.BUILD, brickConfigurations, loadBalancerIp, 10022);
-        stackConfigurations.add(stackConfiguration);
-
-        this.projectConfiguration = new ProjectConfiguration(projectName, currentUser.getEmail(), stackConfigurations, Collections.singletonList(currentUser));
-        */
-
         OkHttpClient httpClient = new OkHttpClient();
+        /*
         httpClient.setReadTimeout(10, TimeUnit.MINUTES);
         httpClient.setConnectTimeout(10, TimeUnit.MINUTES);
         httpClient.setWriteTimeout(10, TimeUnit.MINUTES);
+        */
         String url = "http://" + restEntryPointHost + ":" + restEntryPointPort + "/api/v1/projectconfig";
-        String auth = "Basic " + Base64.getEncoder().encodeToString((currentUser.getUsername() + ":" + currentUser.getPassword()).getBytes());
         RequestBody body = RequestBody.create(MediaType.parse("application/json"), "{\n" +
                 "  \"name\": \"" + projectName + "\",\n" +
                 "  \"ownerIdentifier\": \"" + currentUser.getIdentifier() + "\"\n" +
                 "}");
-        Request request = new Request.Builder().post(body).url(url).addHeader("Authorization", auth).build();
+        Request.Builder builder = new Request.Builder().post(body).url(url);
+        Request request = StageUtils.addBasicAuthentification(currentUser, builder).build();
         Response response = null;
         try {
             long begin = System.currentTimeMillis();
             response = httpClient.newCall(request).execute();
             long end = System.currentTimeMillis();
-            System.out.println("Duration " + (end-begin)/1000);
+            LOGGER.trace("Project creation duration " + (end-begin)/1000);
             String identifier = response.body().string();
             assertThat(identifier).isNotEmpty();
             ProjectConfiguration configuration = projectStore.getProjectConfigurationById(identifier);
@@ -89,11 +80,7 @@ public class ClusterApplicationWhen<SELF extends ClusterApplicationWhen<?>> exte
             fail("Unable to request RestEntryPoint", e);
         } finally {
             if (response != null) {
-                try {
-                    response.body().close();
-                } catch (IOException e) {
-                    fail("Fail to close http body response", e);
-                }
+                IOUtils.closeQuietly(response.body());
             }
         }
 
@@ -101,11 +88,27 @@ public class ClusterApplicationWhen<SELF extends ClusterApplicationWhen<?>> exte
     }
 
     public SELF i_start_the_project() {
+
+        OkHttpClient httpClient = new OkHttpClient();
+
+        String url = "http://" + restEntryPointHost + ":" + restEntryPointPort + "/api/v1/project/" + projectConfiguration.getIdentifier();
+        RequestBody body = RequestBody.create(null, new byte[0]);
+        Request.Builder builder = new Request.Builder().url(url).post(body);
+        builder = StageUtils.addBasicAuthentification(currentUser, builder);
+        Response response = null;
+
         try {
-            projectManager.start(projectConfiguration);
-        } catch (ProjectAlreadyExistException e) {
-            fail("Project already running", e);
+            response = httpClient.newCall(builder.build()).execute();
+            assertThat(response.code()).isEqualTo(201);
+            LOGGER.trace("Starting project");
+        } catch (IOException e) {
+            fail(e.getMessage());
+        } finally {
+            if (response != null) {
+                IOUtils.closeQuietly(response.body());
+            }
         }
+
         return self();
     }
 

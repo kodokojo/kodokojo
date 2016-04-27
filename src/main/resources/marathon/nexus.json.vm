@@ -6,7 +6,7 @@
   "type": "DOCKER",
   "container": {
     "docker": {
-      "image": "sonatype/nexus:oss",
+      "image": "sonatype/nexus:2.13.0-01",
       "network": "BRIDGE",
       "portMappings": [
         {

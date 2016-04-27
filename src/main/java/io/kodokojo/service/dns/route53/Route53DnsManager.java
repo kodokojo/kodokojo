@@ -8,15 +8,19 @@ import com.amazonaws.services.route53.AmazonRoute53Client;
 import com.amazonaws.services.route53.model.*;
 import io.kodokojo.service.dns.DnsEntry;
 import io.kodokojo.service.dns.DnsManager;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
 
 public class Route53DnsManager implements DnsManager {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(Route53DnsManager.class);
 
     private final String domainName;
 
@@ -38,43 +42,64 @@ public class Route53DnsManager implements DnsManager {
         if (dnsEntry == null) {
             throw new IllegalArgumentException("dnsEntry must be defined.");
         }
+        createOrUpdateDnsEntries(Collections.singleton(dnsEntry));
+        return true;
+    }
 
-        HostedZone hostedZone = getHostedZone();
-        if (hostedZone != null) {
-            List<ResourceRecord> resourceRecords = new ArrayList<>();
-            ResourceRecord resourceRecord = new ResourceRecord();
-            String value = dnsEntry.getValue();
-            resourceRecord.setValue((dnsEntry.getType().equals(DnsEntry.Type.CNAME) ? valideDnsName(value) : value));
-            resourceRecords.add(resourceRecord);
-
-            ResourceRecordSet resourceRecordSet = new ResourceRecordSet();
-            resourceRecordSet.setName(valideDnsName(dnsEntry.getName()));
-            resourceRecordSet.setType(RRType.valueOf(dnsEntry.getType().toString()));
-            resourceRecordSet.setTTL(300L);
-
-            resourceRecordSet.setResourceRecords(resourceRecords);
-
-            List<Change> changes = new ArrayList<>();
-            Change change = new Change();
-            change.setAction(dnsEntryExist(dnsEntry) ? ChangeAction.UPSERT : ChangeAction.CREATE);
-            change.setResourceRecordSet(resourceRecordSet);
-            changes.add(change);
-
-            ChangeResourceRecordSetsRequest request = new ChangeResourceRecordSetsRequest();
-            ChangeBatch changeBatch = new ChangeBatch();
-            changeBatch.setChanges(changes);
-            request.setChangeBatch(changeBatch);
-            request.setHostedZoneId(getHostedZoneID(hostedZone));
-            //ChangeResourceRecordSetsResult result =
-            client.changeResourceRecordSets(request);
-            return true;
+    @Override
+    public void createOrUpdateDnsEntries(Set<DnsEntry> dnsEntries) {
+        if (dnsEntries == null) {
+            throw new IllegalArgumentException("dnsEntries must be defined.");
         }
 
-        return false;
+        HostedZone hostedZone = getHostedZone();
+        List<Change> changes = new ArrayList<>();
+        if (hostedZone != null) {
+            for (DnsEntry dnsEntry : dnsEntries) {
+                if (!containEntry(dnsEntry, true)) {
+                    List<ResourceRecord> resourceRecords = new ArrayList<>();
+
+                    ResourceRecord resourceRecord = new ResourceRecord();
+                    String value = dnsEntry.getValue();
+                    resourceRecord.setValue((dnsEntry.getType().equals(DnsEntry.Type.CNAME) ? valideDnsName(value) : value));
+                    resourceRecords.add(resourceRecord);
+
+                    ResourceRecordSet resourceRecordSet = new ResourceRecordSet();
+                    resourceRecordSet.setName(valideDnsName(dnsEntry.getName()));
+                    resourceRecordSet.setType(RRType.valueOf(dnsEntry.getType().toString()));
+                    resourceRecordSet.setTTL(300L);
+
+                    resourceRecordSet.setResourceRecords(resourceRecords);
+
+                    Change change = new Change();
+                    change.setAction(dnsEntryExist(dnsEntry) ? ChangeAction.UPSERT : ChangeAction.CREATE);
+                    change.setResourceRecordSet(resourceRecordSet);
+                    changes.add(change);
+                }
+            }
+            if (CollectionUtils.isNotEmpty(changes)) {
+                ChangeResourceRecordSetsRequest request = new ChangeResourceRecordSetsRequest();
+                ChangeBatch changeBatch = new ChangeBatch();
+                changeBatch.setChanges(changes);
+                request.setChangeBatch(changeBatch);
+                request.setHostedZoneId(getHostedZoneID(hostedZone));
+                //ChangeResourceRecordSetsResult result =
+                try {
+                    client.changeResourceRecordSets(request);
+                } catch (PriorRequestNotCompleteException e) {
+                    LOGGER.error("Unable to create or update follwing entry in Route53 {}.", StringUtils.join(dnsEntries, ","));
+                }
+            }
+        }
+
     }
 
     @Override
     public boolean dnsEntryExist(DnsEntry dnsEntry) {
+        return containEntry(dnsEntry, false);
+    }
+
+    private boolean containEntry(DnsEntry dnsEntry, boolean stric) {
         if (dnsEntry == null) {
             throw new IllegalArgumentException("dnsEntry must be defined.");
         }
@@ -87,11 +112,19 @@ public class Route53DnsManager implements DnsManager {
                 ResourceRecordSet recordSet = iterator.next();
                 found = recordSet.getName().equals(dnsEntryName)
                         && DnsEntry.Type.valueOf(recordSet.getType()).equals(dnsEntry.getType());
+                if (found && stric) {
+                    Iterator<ResourceRecord> recordIterator = recordSet.getResourceRecords().iterator();
+                    boolean sameValue = false;
+                    while (!sameValue && recordIterator.hasNext()) {
+                        ResourceRecord record = recordIterator.next();
+                        sameValue = dnsEntry.getValue().equals(record.getValue());
+                    }
+                    found = sameValue;
+                }
             }
         }
         return found;
     }
-
 
     @Override
     public List<DnsEntry> getDnsEntries(String name) {

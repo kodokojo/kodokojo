@@ -25,8 +25,11 @@ public class ProjectManagementIntTest extends ScenarioTest<ClusterApplicationGiv
     public void create_a_simple_project_build_stack() {
         given().kodokojo_is_running(marathonIsPresent)
                 .and().i_am_user_$("jpthiery");
-        when().i_start_a_default_project_with_name_$("Acme");
-        then().i_have_a_valid_repository();
+        when().i_start_a_default_project_with_name_$("Acme")
+        .and().i_start_the_project();
+        then().i_have_a_valid_repository()
+                .and().i_have_a_valid_scm()
+                .and().i_have_a_valid_ci();
     }
 
 }

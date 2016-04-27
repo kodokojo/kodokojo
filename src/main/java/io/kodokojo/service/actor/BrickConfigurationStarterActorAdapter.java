@@ -3,10 +3,14 @@ package io.kodokojo.service.actor;
 import akka.actor.ActorRef;
 import io.kodokojo.service.BrickConfigurationStarter;
 import io.kodokojo.service.BrickStartContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 
 public class BrickConfigurationStarterActorAdapter implements BrickConfigurationStarter {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(BrickConfigurationStarterActorAdapter.class);
 
     private final ActorRef starter;
 
@@ -21,6 +25,10 @@ public class BrickConfigurationStarterActorAdapter implements BrickConfiguration
 
     @Override
     public void start(BrickStartContext brickStartContext) {
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Tell to actor to start brick {} for project {}", brickStartContext.getBrickConfiguration().getBrick().getName(), brickStartContext.getProjectConfiguration().getName());
+        }
         starter.tell(brickStartContext, ActorRef.noSender());
     }
 }
+

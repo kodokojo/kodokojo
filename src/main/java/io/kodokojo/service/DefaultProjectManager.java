@@ -25,15 +25,16 @@ package io.kodokojo.service;
 import io.kodokojo.commons.utils.ssl.SSLKeyPair;
 import io.kodokojo.commons.utils.ssl.SSLUtils;
 import io.kodokojo.model.*;
+import io.kodokojo.model.Stack;
 import io.kodokojo.project.starter.BrickManager;
+import io.kodokojo.service.dns.DnsEntry;
+import io.kodokojo.service.dns.DnsManager;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
@@ -49,6 +50,8 @@ public class DefaultProjectManager implements ProjectManager {
 
     private final ProjectStore projectStore;
 
+    private final DnsManager dnsManager;
+
     private final BootstrapConfigurationProvider bootstrapConfigurationProvider;
 
     private final BrickConfigurationStarter brickConfigurationStarter;
@@ -56,7 +59,7 @@ public class DefaultProjectManager implements ProjectManager {
     private final long sslCaDuration;
 
     @Inject
-    public DefaultProjectManager(SSLKeyPair caKey, String domain, ConfigurationStore configurationStore, ProjectStore projectStore, BootstrapConfigurationProvider bootstrapConfigurationProvider, BrickConfigurationStarter brickConfigurationStarter, long sslCaDuration) {
+    public DefaultProjectManager(SSLKeyPair caKey, String domain, ConfigurationStore configurationStore, ProjectStore projectStore, BootstrapConfigurationProvider bootstrapConfigurationProvider, DnsManager dnsManager, BrickConfigurationStarter brickConfigurationStarter, long sslCaDuration) {
         if (caKey == null) {
             throw new IllegalArgumentException("caKey must be defined.");
         }
@@ -75,12 +78,16 @@ public class DefaultProjectManager implements ProjectManager {
         if (brickConfigurationStarter == null) {
             throw new IllegalArgumentException("brickConfigurationStarter must be defined.");
         }
+        if (dnsManager == null) {
+            throw new IllegalArgumentException("dnsManager must be defined.");
+        }
         this.brickConfigurationStarter = brickConfigurationStarter;
         this.caKey = caKey;
         this.domain = domain;
         this.configurationStore = configurationStore;
         this.projectStore = projectStore;
         this.bootstrapConfigurationProvider = bootstrapConfigurationProvider;
+        this.dnsManager = dnsManager;
         this.sslCaDuration = sslCaDuration;
     }
 
@@ -112,19 +119,30 @@ public class DefaultProjectManager implements ProjectManager {
         String projectDomainName = (projectName + "." + domain).toLowerCase();
         SSLKeyPair projectCaSSL = SSLUtils.createSSLKeyPair(projectDomainName, caKey.getPrivateKey(), caKey.getPublicKey(), caKey.getCertificates(), sslCaDuration, true);
 
+        Set<DnsEntry> dnsEntries = new HashSet<>();
+        List<BrickStartContext> contexts = new ArrayList<>();
         Set<Stack> stacks = new HashSet<>();
         for (StackConfiguration stackConfiguration : projectConfiguration.getStackConfigurations()) {
             String lbIp = stackConfiguration.getLoadBalancerIp();
 
             for (BrickConfiguration brickConfiguration : stackConfiguration.getBrickConfigurations()) {
+                Brick brick = brickConfiguration.getBrick();
+                BrickType brickType = brick.getType();
+                if (brickType.isRequiredHttpExposed()) {
+                    String brickTypeName = brickType.name().toLowerCase();
+                    String brickDomainName = brickTypeName + "." + projectDomainName;
+                    dnsEntries.add(new DnsEntry(brickDomainName, DnsEntry.Type.A, lbIp));
+                }
                 BrickStartContext context = new BrickStartContext(projectConfiguration, brickConfiguration, domain, projectCaSSL, lbIp);
-                brickConfigurationStarter.start(context);
+                contexts.add(context);
             }
 
             Stack stack = new Stack(stackConfiguration.getName(), stackConfiguration.getType(), new HashSet<>());
             stacks.add(stack);
 
         }
+        dnsManager.createOrUpdateDnsEntries(dnsEntries);
+        contexts.forEach(brickConfigurationStarter::start);
         Project project = new Project(projectName, projectCaSSL, new Date(), stacks);
         return project;
     }

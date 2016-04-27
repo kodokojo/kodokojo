@@ -1,6 +1,7 @@
 package io.kodokojo.service.dns;
 
 import java.util.List;
+import java.util.Set;
 
 public interface DnsManager {
 
@@ -10,4 +11,5 @@ public interface DnsManager {
 
     boolean createOrUpdateDnsEntry(DnsEntry dnsEntry);
 
+    void createOrUpdateDnsEntries(Set<DnsEntry> dnsEntries);
 }

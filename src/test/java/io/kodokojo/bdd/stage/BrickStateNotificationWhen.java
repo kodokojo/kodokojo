@@ -57,41 +57,10 @@ public class BrickStateNotificationWhen<SELF extends BrickStateNotificationWhen<
     }
 
     private void startProjectConfiguration(ProjectCreationDto projectCreationDto, String[] expectedBrickStarted) {
-        final ClientEndpointConfig cec = ClientEndpointConfig.Builder.create().build();
-
-        ClientManager client = ClientManager.createClient();
-        client.getProperties().put(ClientProperties.CREDENTIALS, new org.glassfish.tyrus.client.auth.Credentials(currentUser.getUsername(), currentUser.getPassword()));
-        String uriStr = "ws://" + entryPointUrl + "/api/v1/event";
-        CountDownLatch webSocketConnected = new CountDownLatch(1);
-        nbMessageExpected = new CountDownLatch((expectedBrickStarted.length * 3)+1);
-        listener = new WebSocketEventsListener(new WebSocketEventsListener.CallBack() {
-            @Override
-            public void open(Session session) {
-                try {
-                    session.getBasicRemote().sendText(StageUtils.generateHelloWebSocketMessage(currentUser));
-                } catch (IOException e) {
-                    fail(e.getMessage());
-                }
-                webSocketConnected.countDown();
-            }
-
-            @Override
-            public void receive(Session session, String message) {
-                nbMessageExpected.countDown();
-            }
-
-            @Override
-            public void close(Session session) {
-                webSocketConnected.countDown();
-            }
-        });
-        try {
-            session = client.connectToServer(listener, cec, new URI(uriStr));
-            webSocketConnected.await(10, TimeUnit.SECONDS);
-        } catch (DeploymentException | IOException | URISyntaxException | InterruptedException e) {
-            e.printStackTrace();
-            fail(e.getMessage());
-        }
+        nbMessageExpected = new CountDownLatch((expectedBrickStarted.length * 3) + 1);
+        WebSocketConnectionResult webSocketConnectionResult = StageUtils.connectToWebSocket(entryPointUrl, currentUser, nbMessageExpected);
+        listener = webSocketConnectionResult.getListener();
+        session = webSocketConnectionResult.getSession();
         Gson gson = new GsonBuilder().create();
         String json = gson.toJson(projectCreationDto);
 
@@ -115,6 +84,7 @@ public class BrickStateNotificationWhen<SELF extends BrickStateNotificationWhen<
         }
     }
 
+
     public SELF i_start_the_project() {
         OkHttpClient httpClient = new OkHttpClient();
         RequestBody body = RequestBody.create(null, new byte[0]);
@@ -124,7 +94,7 @@ public class BrickStateNotificationWhen<SELF extends BrickStateNotificationWhen<
         Response response = null;
         try {
             response = httpClient.newCall(request).execute();
-            assertThat(response.code()).isEqualTo(200);
+            assertThat(response.code()).isEqualTo(201);
         } catch (IOException e) {
             fail(e.getMessage());
         } finally {

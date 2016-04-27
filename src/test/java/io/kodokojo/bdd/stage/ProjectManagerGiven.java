@@ -71,7 +71,7 @@ public class ProjectManagerGiven<SELF extends ProjectManagerGiven<?>> extends St
         brickStarter = mock(BrickConfigurationStarter.class);
 
 
-        projectManager = new DefaultProjectManager(caKey, "kodokojo.dev", configurationStore, projectStore, configProvider, brickStarter, 300000);
+        projectManager = new DefaultProjectManager(caKey, "kodokojo.dev", configurationStore, projectStore, configProvider, new NoOpDnsManager(), brickStarter, 300000);
 
         return self();
     }

@@ -32,6 +32,7 @@ public class WebSocketEventsListener extends Endpoint{
             @Override
             public void onMessage(String message) {
                 messages.addLast(message);
+                LOGGER.trace("Receive message : {}", message);
                 if (callBack != null) {
                     callBack.receive(session, message);
                 }

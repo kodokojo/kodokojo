@@ -6,7 +6,7 @@
   "type": "DOCKER",
   "container": {
     "docker": {
-      "image": "jenkins",
+      "image": "jenkins:1.651.1-alpine",
       "network": "BRIDGE",
       "portMappings": [
         {

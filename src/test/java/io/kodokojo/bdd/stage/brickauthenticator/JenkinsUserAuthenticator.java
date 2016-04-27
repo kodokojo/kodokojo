@@ -16,6 +16,12 @@ public class JenkinsUserAuthenticator implements UserAuthenticator {
     @Override
     public boolean authenticate(String url, UserInfo userInfo) {
         OkHttpClient httpClient = new OkHttpClient();
+        return authenticate(httpClient, url, userInfo);
+    }
+
+    @Override
+    public boolean authenticate(OkHttpClient httpClient, String url, UserInfo userInfo) {
+
         Request.Builder builder = new Request.Builder().url(url + "/me/configure");
         builder = StageUtils.addBasicAuthentification(userInfo, builder);
         Request request =  builder.build();
