@@ -2,7 +2,7 @@
 
 function build {
   DIRECTORY=$1
-  pushd $DIRECTORY
+  pushd dep/$DIRECTORY
   chmod +x build.sh
   ./build.sh
   popd
@@ -10,12 +10,17 @@ function build {
 
 function createOrUpdateGit {
   PROJECT=$1
-  if [ -d "$PROJECT" ]; then
-    pushd $PROJECT
+  if [ ! -d "dep" ]; then
+    mkdir dep
+  fi
+  if [ -d "dep/$PROJECT" ]; then
+    pushd dep/$PROJECT
     git pull --rebase
     popd
   else
+    pushd dep/$PROJECT
     git clone git@github.com:kodokojo/${PROJECT}.git ${PROJECT}
+    popd
   fi
 }
 
@@ -45,9 +50,11 @@ createOrUpdateGit kodokojo-ui
 createOrUpdateGit kodokojo-haproxy-marathon
 createOrUpdateGit kodokojo
 
-build commons-tests
+build commons-test
 build commons
 build kodokojo-ui
 build kodokojo-haproxy-marathon
-build kodokojo
+
+chmod +x build.sh
+./build.sh
 
