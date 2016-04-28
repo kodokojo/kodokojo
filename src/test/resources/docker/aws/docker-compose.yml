@@ -1,0 +1,16 @@
+
+kodokojo:
+  image: kodokojo/kodokojo
+  entrypoint: java -Dlogback.configurationFile=/logger/logback-docker.xml -Djavax.net.ssl.keyStore=/keystore/mykeystore.jks -Djavax.net.ssl.keyStorePassword=password -Dsecurity.ssl.rootCa.ks.alias=rootcafake -Dsecurity.ssl.rootCa.ks.password=password -Dapplication.dns.domain=kodokojo.io -Dmarathon.url=http:52.16.172.33:8080 -Dlb.defaultIp=52.51.84.57 -jar /project/kodokojo.jar
+  ports:
+    - 9080:80
+  volumes:
+#    - ./logback-docker.xml:/debug-logback.xml
+#    - ./mykeystore.jks:/keystore.jks
+    - ./logger:/logger
+    - ./keystore:/keystore
+  links:
+    - redis
+redis:
+  image: redis
+

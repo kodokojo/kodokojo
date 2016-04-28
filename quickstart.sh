@@ -1,38 +1,53 @@
 #!/bin/bash
 
+function build {
+  DIRECTORY=$1
+  pushd $DIRECTORY
+  chmod +x build.sh
+  ./build.sh
+  popd
+}
+
+function createOrUpdateGit {
+  PROJECT=$1
+  if [ -d "$PROJECT" ]; then
+    pushd $PROJECT
+    git pull --rebase
+    popd
+  else
+    git clone git@github.com:kodokojo/${PROJECT}.git ${PROJECT}
+  fi
+}
+
+DOCKER_BIN_PATH=$(type -a docker | awk '{print $3}')
+if [ ! -x "$DOCKER_BIN_PATH" ]; then
+  echo "Unable to find a docker executable, please install Docker"
+  exit 1
+fi
+
+
 docker pull mesosphere/mesos-slave:0.28.0-2.0.16.ubuntu1404
 docker pull mesosphere/mesos-master:0.28.0-2.0.16.ubuntu1404
 docker pull mesosphere/marathon
 docker pull jplock/zookeeper
 docker pull haproxy
-docker pull jenkins
+docker pull jenkins:1.651-alpine
 docker pull gitlab/gitlab-ce:8.5.8-ce.0
 docker pull nginx:1.9
 docker pull node:5.7
 docker pull java:8-jre
+docker pull maven:3-jdk-8
 docker pull redis
 
-git clone git@github.com:kodokojo/commons-tests.git
-git clone git@github.com:kodokojo/commons.git
-git clone git@github.com:kodokojo/kodokojo-ui.git
-git clone git@github.com:kodokojo/kodokojo-haproxy-marathon.git
+createOrUpdateGit commons-tests
+createOrUpdateGit commons
+createOrUpdateGit kodokojo-ui
+createOrUpdateGit kodokojo-haproxy-marathon
+createOrUpdateGit kodokojo
 
-pushd commons-tests
-mvn clean install
-popd
+build commons-tests
+build commons
+build kodokojo-ui
+build kodokojo-haproxy-marathon
+build kodokojo
 
-pushd commons
-mvn clean install verify
-popd
-
-pushd kodokojo-haproxy-marathon
-chmod +x build.sh
-./build.sh
-popd
-
-pushd kodokojo-ui
-chmod +x build.sh
-./build.sh
-popd
-
-mvn -P docker clean install verify
