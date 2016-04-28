@@ -5,8 +5,6 @@ kodokojo:
   ports:
     - 9080:80
   volumes:
-#    - ./logback-docker.xml:/debug-logback.xml
-#    - ./mykeystore.jks:/keystore.jks
     - ./logger:/logger
     - ./keystore:/keystore
   links:

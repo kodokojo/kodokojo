@@ -55,8 +55,6 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
 
     private static final String JSON_CONTENT_TYPE = "application/json";
 
-    private static final String TEXT_CONTENT_TYPE = "text/plain";
-
     private static final String API_VERSION = "v1";
 
     public static final String BASE_API = "/api/" + API_VERSION;
