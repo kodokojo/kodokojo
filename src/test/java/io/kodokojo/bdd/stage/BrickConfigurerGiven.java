@@ -50,15 +50,15 @@ public class BrickConfigurerGiven<SELF extends BrickConfigurerGiven<?>> extends 
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BrickConfigurerGiven.class);
 
-
-
     public SELF $_is_started(@Quoted String brickName,@Hidden String image, @Hidden int port, @Hidden int timeout, @Hidden UserAuthenticator userAuthenticator) {
         DockerClient dockerClient = dockerTestSupport.getDockerClient();
+        LOGGER.info("Pulling docker image {}", image);
+        dockerTestSupport.pullImage(image);
+
         this.brickName = brickName.toLowerCase();
         this.userAuthenticator = userAuthenticator;
         assertThat(image).isNotNull();
         LOGGER.info("Starting Docker image {} to run brick {}.", image, brickName);
-
 
         Ports portBinding = new Ports();
         ExposedPort exposedPort = ExposedPort.tcp(port);

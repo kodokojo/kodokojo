@@ -45,6 +45,8 @@ import io.kodokojo.service.user.SimpleCredential;
 import io.kodokojo.service.user.SimpleUserAuthenticator;
 import io.kodokojo.service.user.redis.RedisUserManager;
 import io.kodokojo.test.utils.TestUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -63,6 +65,8 @@ import static org.mockito.Mockito.mock;
 
 public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<SELF> {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationGiven.class);
+    
     private static final Map<String, String> USER_PASSWORD = new HashMap<>();
 
     static {
@@ -131,6 +135,8 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
     }
 
     public SELF redis_is_started() {
+        LOGGER.info("Pulling docker image redis:latest");
+        dockerTestSupport.pullImage("redis:latest");
 
         Service service = StageUtils.startDockerRedis(dockerTestSupport);
         redisHost = service.getHost();

@@ -247,6 +247,8 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
 
     private String startZookeeper(DockerClient dockerClient) {
 
+        LOGGER.info("Pulling docker image jplock/zookeeper");
+        dockerTestSupport.pullImage("jplock/zookeeper");
 
         Ports portBinding = new Ports();
         ExposedPort exposedPort = ExposedPort.tcp(2181);
@@ -261,6 +263,9 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
     }
 
     private String startMesosMaster(DockerClient dockerClient, String zookeeperId) {
+
+        LOGGER.info("Pulling docker image mesosphere/mesos-master:0.28.0-2.0.16.ubuntu1404");
+        dockerTestSupport.pullImage("mesosphere/mesos-master:0.28.0-2.0.16.ubuntu1404");
 
         Ports portBinding = new Ports();
         ExposedPort exposedPort = ExposedPort.tcp(5050);
@@ -284,6 +289,9 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
     }
 
     private String startMesosSlave(DockerClient dockerClient, String mesosMasterId) {
+
+        LOGGER.info("Pulling docker image mesosphere/mesos-slave:0.28.0-2.0.16.ubuntu14044");
+        dockerTestSupport.pullImage("mesosphere/mesos-slave:0.28.0-2.0.16.ubuntu1404");
 
         Ports portBinding = new Ports();
         ExposedPort exposedPort = ExposedPort.tcp(5051);
@@ -317,6 +325,9 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
     }
 
     private String startMarathon(DockerClient dockerClient, String zookeeperId) {
+
+        LOGGER.info("Pulling docker image mesosphere/marathon");
+        dockerTestSupport.pullImage("mesosphere/marathon");
 
         Ports portBinding = new Ports();
         ExposedPort exposedPort = ExposedPort.tcp(8080);

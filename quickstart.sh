@@ -3,8 +3,13 @@
 function build {
   DIRECTORY=$1
   pushd dep/$DIRECTORY
+  echo "-- ${DIRECTORY} -----------------------------------------------------------------"
   chmod +x build.sh
   ./build.sh
+  rc=$?
+  if [[ $rc != 0 ]]; then
+    exit $rc
+  fi;
   popd
 }
 
@@ -35,6 +40,7 @@ docker pull mesosphere/mesos-slave:0.28.0-2.0.16.ubuntu1404
 docker pull mesosphere/mesos-master:0.28.0-2.0.16.ubuntu1404
 docker pull mesosphere/marathon
 docker pull jplock/zookeeper
+docker pull gliderlabs/consul:latest
 docker pull haproxy
 docker pull jenkins:1.651-alpine
 docker pull gitlab/gitlab-ce:8.5.8-ce.0
@@ -50,11 +56,29 @@ createOrUpdateGit kodokojo-ui
 createOrUpdateGit kodokojo-haproxy-marathon
 createOrUpdateGit kodokojo
 
-build commons-test
+build commons-tests
+rc=$?
+if [[ $rc != 0 ]]; then
+  exit $rc
+fi
 build commons
+rc=$?
+if [[ $rc != 0 ]]; then
+  exit $rc
+fi
 build kodokojo-ui
+rc=$?
+if [[ $rc != 0 ]]; then
+  exit $rc
+fi
 build kodokojo-haproxy-marathon
-
+rc=$?
+if [[ $rc != 0 ]]; then
+  exit $rc
+fi
 chmod +x build.sh
 ./build.sh
-
+rc=$?
+if [[ $rc != 0 ]]; then
+  exit $rc
+fi

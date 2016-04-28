@@ -77,6 +77,7 @@ public class StageUtils {
 
     public static Service startDockerRedis(DockerTestSupport dockerTestSupport) {
         DockerClient dockerClient = dockerTestSupport.getDockerClient();
+
         Ports portBinding = new Ports();
         ExposedPort exposedPort = ExposedPort.tcp(6379);
         portBinding.bind(exposedPort, Ports.Binding(null));

@@ -27,6 +27,8 @@ import io.kodokojo.service.user.SimpleUserAuthenticator;
 import io.kodokojo.service.user.redis.RedisUserManager;
 import io.kodokojo.test.utils.TestUtils;
 import org.mockito.Mockito;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -41,6 +43,7 @@ import static org.mockito.Mockito.mock;
 
 public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGiven<?>> extends Stage<SELF> {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(BrickStateNotificationGiven.class);
 
     @ProvidedScenarioState
     public DockerTestSupport dockerTestSupport = new DockerTestSupport();
@@ -67,7 +70,8 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
     DnsManager dnsManager;
 
     public SELF kodokojo_is_started() {
-
+        LOGGER.info("Pulling docker image redis:latest");
+        dockerTestSupport.pullImage("redis:latest");
         Service service = StageUtils.startDockerRedis(dockerTestSupport);
 
         brickManager = mock(BrickManager.class);
