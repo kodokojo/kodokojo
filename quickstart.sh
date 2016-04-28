@@ -18,7 +18,7 @@ function createOrUpdateGit {
     git pull --rebase
     popd
   else
-    pushd dep/$PROJECT
+    pushd dep
     git clone git@github.com:kodokojo/${PROJECT}.git ${PROJECT}
     popd
   fi
