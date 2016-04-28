@@ -1,13 +1,20 @@
 # Kodo Kojo
+
+
+![Kodo Kojo Logo](doc/images/logo-kodokojo-baseline-black1.png)
+
+
 Kodo Kojo alow you to bring a full ready to use software factory. 
 
 You don't want spent your time to setup software factory, setup monitoring tools, add and remove user on each component of yours software factories; Kodo Kojo is done for you. 
 
-# License
+Kodo Kojo use the power of [Apache Mesos](http://mesos.apache.org/) and [Marathon](https://mesosphere.github.io/marathon/) via [Docker](https://www.docker.com/) to orchestrate and isolate your software factory tools.
+
+## License
 
 `kodokojo` is a licensed under [GNU General Public License v3](http://www.gnu.org/licenses/gpl-3.0.en.html).
 
-# Quickstart
+## Quickstart
 ### Step 1 : Clone this repository
 ```bash
 git clone git@github.com:kodokojo/kodokojo.git
@@ -19,18 +26,23 @@ cd kodokojo
 ./quickstart.sh
 ```
 
-Go to [Quicstart page](QUICKSTART.md) to get more details.
+Go to [Quicstart page](doc/QUICKSTART.md) to get more details.
 
-# Contribute
+## Sofware factory tool supported
+* [Gitlab 8.5](http://gitlab.com/) 
+* [Jenkins](https://jenkins.io/) now in version 1.651-1-alpine. See Issue #7 to get more detail about Jenkins 2.
+* [Nexus OSS 2.13.0-01](http://www.sonatype.com/nexus-repository-oss) 
+
+## Contribute
 
 You want to contribute, it's very Nice.We try to apply this practice [Contribution page](CONTRIBUTE.md).
 
 You may find help on our Slack channel if needed. Don't be afraid about 
 
-# Go further
+## Go further
 TODO Architecture link.
 
-# Technology inside
+## Technology inside
 
 * [Java 8](http://java.com)
 * [Maven](https://maven.apache.org/)

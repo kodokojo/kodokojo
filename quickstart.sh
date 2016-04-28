@@ -45,7 +45,7 @@ docker pull haproxy
 docker pull jenkins:1.651-1-alpine
 docker pull gitlab/gitlab-ce:8.5.8-ce.0
 docker pull nginx:1.9
-docker pull node:5.7
+docker pull node:5.9.0
 docker pull java:8-jre
 docker pull maven:3-jdk-8
 docker pull redis
