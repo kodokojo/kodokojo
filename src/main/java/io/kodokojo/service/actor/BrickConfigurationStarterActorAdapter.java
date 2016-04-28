@@ -1,8 +1,8 @@
 package io.kodokojo.service.actor;
 
 import akka.actor.ActorRef;
-import io.kodokojo.service.BrickConfigurationStarter;
-import io.kodokojo.service.BrickStartContext;
+import io.kodokojo.brick.BrickConfigurationStarter;
+import io.kodokojo.brick.BrickStartContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

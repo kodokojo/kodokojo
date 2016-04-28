@@ -6,11 +6,11 @@ import com.tngtech.jgiven.annotation.ProvidedScenarioState;
 import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.model.Brick;
 import io.kodokojo.model.User;
-import io.kodokojo.project.gitlab.GitlabConfigurer;
-import io.kodokojo.project.starter.BrickConfigurer;
-import io.kodokojo.project.starter.ConfigurerData;
-import io.kodokojo.service.BrickConfigurerProvider;
-import io.kodokojo.service.BrickFactory;
+import io.kodokojo.brick.gitlab.GitlabConfigurer;
+import io.kodokojo.brick.BrickConfigurer;
+import io.kodokojo.brick.BrickConfigurerData;
+import io.kodokojo.brick.BrickConfigurerProvider;
+import io.kodokojo.brick.BrickFactory;
 
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
@@ -41,7 +41,7 @@ public class BrickConfigurerWhen<SELF extends BrickConfigurerWhen<?>> extends St
     UserInfo defaultUserInfo;
 
     @ProvidedScenarioState
-    ConfigurerData configurerData;
+    BrickConfigurerData brickConfigurerData;
 
     public SELF i_create_a_default_user() {
         defaultUserInfo = new UserInfo("jpthiery", "123456", "jpthiery", "jpthiery@kodokojo.io");
@@ -58,11 +58,11 @@ public class BrickConfigurerWhen<SELF extends BrickConfigurerWhen<?>> extends St
         User defaultUser = new User(defaultUserInfo.getIdentifier(), "Jean-Pascal THIERY", defaultUserInfo.getUsername(), defaultUserInfo.getEmail(), defaultUserInfo.getPassword(), sshPublicKey);
         List<User> users = Collections.singletonList(defaultUser);
 
-        ConfigurerData configurationData = new ConfigurerData("Acme", brickUrl, "kodokojo.dev", defaultUser, users);
+        BrickConfigurerData configurationData = new BrickConfigurerData("Acme", brickUrl, "kodokojo.dev", defaultUser, users);
         configurationData.getContext().put(GitlabConfigurer.GITLAB_FORCE_ENTRYPOINT_KEY, Boolean.TRUE); //Specific config for Gitlab.
 
         configurationData = brickConfigurer.configure(configurationData);
-        this.configurerData = brickConfigurer.addUsers(configurationData, users);
+        this.brickConfigurerData = brickConfigurer.addUsers(configurationData, users);
 
         return self();
     }

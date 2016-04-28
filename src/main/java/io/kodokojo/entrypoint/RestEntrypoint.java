@@ -23,10 +23,12 @@ package io.kodokojo.entrypoint;
  */
 
 import com.google.gson.*;
+import io.kodokojo.brick.BrickFactory;
+import io.kodokojo.brick.DefaultBrickFactory;
 import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.entrypoint.dto.ProjectConfigDto;
 import io.kodokojo.entrypoint.dto.ProjectCreationDto;
-import io.kodokojo.lifecycle.ApplicationLifeCycleListener;
+import io.kodokojo.service.lifecycle.ApplicationLifeCycleListener;
 import io.kodokojo.model.*;
 import io.kodokojo.service.*;
 import io.kodokojo.service.user.SimpleCredential;
@@ -47,9 +49,9 @@ import java.util.*;
 
 import static spark.Spark.*;
 
-public class RestEntrypoint implements ApplicationLifeCycleListener {
+public class RestEntryPoint implements ApplicationLifeCycleListener {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RestEntrypoint.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RestEntryPoint.class);
 
     private static final String JSON_CONTENT_TYPE = "application/json";
 
@@ -81,7 +83,7 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
     private final ResponseTransformer jsonResponseTransformer;
 
     @Inject
-    public RestEntrypoint(int port, UserManager userManager, UserAuthenticator<SimpleCredential> userAuthenticator, ProjectStore projectStore, ProjectManager projectManager, BrickFactory brickFactory) {
+    public RestEntryPoint(int port, UserManager userManager, UserAuthenticator<SimpleCredential> userAuthenticator, ProjectStore projectStore, ProjectManager projectManager, BrickFactory brickFactory) {
         if (userManager == null) {
             throw new IllegalArgumentException("userManager must be defined.");
         }
@@ -111,7 +113,7 @@ public class RestEntrypoint implements ApplicationLifeCycleListener {
 
         Spark.port(port);
 
-        webSocket(BASE_API + "/event", WebSocketEntrypoint.class);
+        webSocket(BASE_API + "/event", WebSocketEntryPoint.class);
 
         staticFileLocation("webapp");
 

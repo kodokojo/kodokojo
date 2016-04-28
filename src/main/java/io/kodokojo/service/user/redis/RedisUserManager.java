@@ -22,7 +22,7 @@ package io.kodokojo.service.user.redis;
  * #L%
  */
 
-import io.kodokojo.lifecycle.ApplicationLifeCycleListener;
+import io.kodokojo.service.lifecycle.ApplicationLifeCycleListener;
 import io.kodokojo.model.User;
 import io.kodokojo.model.UserService;
 import io.kodokojo.commons.utils.RSAUtils;

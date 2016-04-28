@@ -5,8 +5,8 @@ import com.tngtech.jgiven.annotation.ExpectedScenarioState;
 import io.kodokojo.model.Project;
 import io.kodokojo.model.ProjectConfiguration;
 import io.kodokojo.model.Stack;
-import io.kodokojo.service.BrickConfigurationStarter;
-import io.kodokojo.service.BrickStartContext;
+import io.kodokojo.brick.BrickConfigurationStarter;
+import io.kodokojo.brick.BrickStartContext;
 import org.mockito.ArgumentCaptor;
 
 import java.util.List;

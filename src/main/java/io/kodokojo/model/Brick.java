@@ -22,9 +22,6 @@ package io.kodokojo.model;
  * #L%
  */
 
-import io.kodokojo.project.starter.BrickConfigurer;
-
-import java.beans.Transient;
 import java.io.Serializable;
 
 import static org.apache.commons.lang.StringUtils.isBlank;

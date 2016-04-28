@@ -4,6 +4,9 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import io.kodokojo.Launcher;
+import io.kodokojo.brick.BrickStateMsg;
+import io.kodokojo.brick.BrickStateMsgDispatcher;
+import io.kodokojo.brick.BrickStateMsgListener;
 import io.kodokojo.entrypoint.dto.WebSocketMessage;
 import io.kodokojo.entrypoint.dto.WebSocketMessageGsonAdapter;
 import io.kodokojo.model.ProjectConfiguration;
@@ -24,9 +27,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @WebSocket
-public class WebSocketEntrypoint implements BrickStateMsgListener{
+public class WebSocketEntryPoint implements BrickStateMsgListener {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketEntrypoint.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketEntryPoint.class);
 
     public static final long USER_VALIDATION_TIMEOUT = 10000;
 
@@ -49,7 +52,7 @@ public class WebSocketEntrypoint implements BrickStateMsgListener{
 
     //  WebSocket is built by Spark but we are not able to get the instance :/ .
     //  See : https://github.com/perwendel/spark/pull/383
-    public WebSocketEntrypoint() {
+    public WebSocketEntryPoint() {
         super();
         sessions = new ConcurrentHashMap<>();
         userConnectedSession = new ConcurrentHashMap<>();

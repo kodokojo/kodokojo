@@ -1,12 +1,12 @@
 package io.kodokojo.service.redis;
 
 import io.kodokojo.commons.utils.RSAUtils;
-import io.kodokojo.lifecycle.ApplicationLifeCycleListener;
+import io.kodokojo.service.lifecycle.ApplicationLifeCycleListener;
 import io.kodokojo.model.BrickConfiguration;
 import io.kodokojo.model.Project;
 import io.kodokojo.model.ProjectConfiguration;
 import io.kodokojo.model.StackConfiguration;
-import io.kodokojo.service.BrickFactory;
+import io.kodokojo.brick.BrickFactory;
 import io.kodokojo.service.ProjectStore;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;

@@ -22,11 +22,12 @@ package io.kodokojo.service;
  * #L%
  */
 
+import io.kodokojo.brick.BrickConfigurationStarter;
+import io.kodokojo.brick.BrickStartContext;
 import io.kodokojo.commons.utils.ssl.SSLKeyPair;
 import io.kodokojo.commons.utils.ssl.SSLUtils;
 import io.kodokojo.model.*;
 import io.kodokojo.model.Stack;
-import io.kodokojo.project.starter.BrickManager;
 import io.kodokojo.service.dns.DnsEntry;
 import io.kodokojo.service.dns.DnsManager;
 import org.apache.commons.collections4.CollectionUtils;

@@ -9,9 +9,7 @@ import com.github.dockerjava.api.model.Volume;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
+import com.google.inject.*;
 import com.squareup.okhttp.*;
 import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.AfterScenario;
@@ -23,18 +21,20 @@ import io.kodokojo.bdd.MarathonIsPresent;
 import io.kodokojo.bdd.stage.StageUtils;
 import io.kodokojo.bdd.stage.WebSocketConnectionResult;
 import io.kodokojo.bdd.stage.WebSocketEventsListener;
+import io.kodokojo.brick.BrickFactory;
 import io.kodokojo.commons.DockerPresentMethodRule;
 import io.kodokojo.commons.model.Service;
 import io.kodokojo.commons.utils.DockerTestSupport;
 import io.kodokojo.commons.utils.RSAUtils;
-import io.kodokojo.config.module.ActorModule;
-import io.kodokojo.config.module.PropertyModule;
-import io.kodokojo.config.module.SecurityModule;
-import io.kodokojo.config.module.ServiceModule;
-import io.kodokojo.entrypoint.RestEntrypoint;
-import io.kodokojo.lifecycle.ApplicationLifeCycleManager;
+import io.kodokojo.config.ApplicationConfig;
+import io.kodokojo.config.RedisConfig;
+import io.kodokojo.config.module.*;
+import io.kodokojo.entrypoint.RestEntryPoint;
+import io.kodokojo.service.lifecycle.ApplicationLifeCycleManager;
 import io.kodokojo.model.User;
 import io.kodokojo.service.*;
+import io.kodokojo.service.redis.RedisBootstrapConfigurationProvider;
+import io.kodokojo.service.redis.RedisProjectStore;
 import io.kodokojo.service.user.SimpleUserAuthenticator;
 import io.kodokojo.service.user.redis.RedisUserManager;
 import io.kodokojo.test.utils.TestUtils;
@@ -49,6 +49,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import javax.inject.Named;
 import javax.websocket.Session;
 import java.io.File;
 import java.io.IOException;
@@ -91,7 +93,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
     DockerTestSupport dockerTestSupport = new DockerTestSupport();
 
     @ProvidedScenarioState
-    RestEntrypoint restEntrypoint;
+    RestEntryPoint restEntryPoint;
 
     @ProvidedScenarioState
     String restEntryPointHost;
@@ -432,14 +434,14 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
                 System.setProperty("application.dns.domain","kodokojo.dev");
             }
         }
-        injector = Guice.createInjector(new PropertyModule(new String[]{}), new TestModule(),new SecurityModule(), new ServiceModule(), new ActorModule());
+        injector = Guice.createInjector(new PropertyModule(new String[]{}), new RedisTestModule(),new SecurityModule(), new ServiceModule(), new ActorModule(), new AwsModule(), new MarathonModule());
         Launcher.INJECTOR = injector;
         projectManager = injector.getInstance(ProjectManager.class);
         projectStore = injector.getInstance(ProjectStore.class);
         BrickFactory brickFactory = injector.getInstance(BrickFactory.class);
         restEntryPointHost = "localhost";
         restEntryPointPort = TestUtils.getEphemeralPort();
-        restEntrypoint = new RestEntrypoint(restEntryPointPort, redisUserManager, new SimpleUserAuthenticator(redisUserManager),projectStore, projectManager, brickFactory);
+        restEntryPoint = new RestEntryPoint(restEntryPointPort, redisUserManager, new SimpleUserAuthenticator(redisUserManager),projectStore, projectManager, brickFactory);
         Semaphore semaphore = new Semaphore(1);
         try {
             semaphore.acquire();
@@ -448,7 +450,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         }
 
         Thread t = new Thread(() -> {
-            restEntrypoint.start();
+            restEntryPoint.start();
             semaphore.release();
         });
         t.start();
@@ -459,10 +461,26 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         }
     }
 
-    private class TestModule extends AbstractModule {
+    private class RedisTestModule extends AbstractModule {
         @Override
         protected void configure() {
             bind(UserManager.class).toInstance(redisUserManager);
+        }
+
+        @Provides
+        @Singleton
+        BootstrapConfigurationProvider provideBootstrapConfigurationProvider(ApplicationConfig applicationConfig, RedisConfig redisConfig, ApplicationLifeCycleManager applicationLifeCycleManager) {
+            RedisBootstrapConfigurationProvider redisBootstrapConfigurationProvider = new RedisBootstrapConfigurationProvider(redisConfig.host(), redisConfig.port(), applicationConfig.defaultLoadbalancerIp(), applicationConfig.initialSshPort());
+            applicationLifeCycleManager.addService(redisBootstrapConfigurationProvider);
+            return redisBootstrapConfigurationProvider;
+        }
+
+        @Provides
+        @Singleton
+        ProjectStore provideProjectStore(@Named("securityKey") SecretKey key, RedisConfig redisConfig, BrickFactory brickFactory, ApplicationLifeCycleManager applicationLifeCycleManager) {
+            RedisProjectStore redisProjectStore = new RedisProjectStore(key, redisConfig.host(), redisConfig.port(), brickFactory);
+            applicationLifeCycleManager.addService(redisProjectStore);
+            return redisProjectStore;
         }
     }
 

@@ -1,11 +1,11 @@
 package io.kodokojo.service;
 
+import io.kodokojo.brick.*;
 import io.kodokojo.model.Brick;
 import io.kodokojo.model.BrickType;
-import io.kodokojo.project.gitlab.GitlabConfigurer;
-import io.kodokojo.project.jenkins.JenkinsConfigurer;
-import io.kodokojo.project.nexus.NexusConfigurer;
-import io.kodokojo.project.starter.BrickConfigurer;
+import io.kodokojo.brick.gitlab.GitlabConfigurer;
+import io.kodokojo.brick.jenkins.JenkinsConfigurer;
+import io.kodokojo.brick.nexus.NexusConfigurer;
 import org.junit.Before;
 import org.junit.Test;
 

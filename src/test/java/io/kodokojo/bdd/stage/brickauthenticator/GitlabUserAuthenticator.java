@@ -2,7 +2,7 @@ package io.kodokojo.bdd.stage.brickauthenticator;
 
 import com.squareup.okhttp.OkHttpClient;
 import io.kodokojo.bdd.stage.UserInfo;
-import io.kodokojo.project.gitlab.GitlabConfigurer;
+import io.kodokojo.brick.gitlab.GitlabConfigurer;
 
 public class GitlabUserAuthenticator implements UserAuthenticator {
 

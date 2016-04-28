@@ -1,7 +1,7 @@
 package io.kodokojo.service.user;
 
 import io.kodokojo.model.User;
-import io.kodokojo.service.UserAuthenticator;
+import io.kodokojo.entrypoint.UserAuthenticator;
 import io.kodokojo.service.UserManager;
 
 import javax.inject.Inject;

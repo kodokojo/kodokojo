@@ -1,6 +1,6 @@
 package io.kodokojo.service.redis;
 
-import io.kodokojo.service.DefaultBrickFactory;
+import io.kodokojo.brick.DefaultBrickFactory;
 import org.junit.Before;
 import org.junit.Test;
 import redis.clients.jedis.Jedis;

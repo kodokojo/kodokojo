@@ -30,7 +30,7 @@ import io.kodokojo.commons.model.Service;
 import io.kodokojo.commons.utils.docker.DockerSupport;
 import io.kodokojo.model.BrickConfiguration;
 import io.kodokojo.model.BrickDeploymentState;
-import io.kodokojo.project.starter.ConfigurationApplier;
+import io.kodokojo.brick.starter.ConfigurationApplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

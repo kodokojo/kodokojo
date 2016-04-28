@@ -3,7 +3,7 @@ package io.kodokojo.config.module;
 import com.google.inject.Provider;
 import io.kodokojo.service.user.SimpleCredential;
 import io.kodokojo.service.user.SimpleUserAuthenticator;
-import io.kodokojo.service.UserAuthenticator;
+import io.kodokojo.entrypoint.UserAuthenticator;
 import io.kodokojo.service.UserManager;
 
 import javax.inject.Inject;

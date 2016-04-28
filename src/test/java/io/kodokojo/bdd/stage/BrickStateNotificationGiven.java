@@ -8,15 +8,18 @@ import com.tngtech.jgiven.annotation.AfterScenario;
 import com.tngtech.jgiven.annotation.ProvidedScenarioState;
 import com.tngtech.jgiven.annotation.Quoted;
 import io.kodokojo.Launcher;
+import io.kodokojo.brick.BrickConfigurationStarter;
+import io.kodokojo.brick.BrickStateMsgDispatcher;
+import io.kodokojo.brick.DefaultBrickFactory;
 import io.kodokojo.commons.model.Service;
 import io.kodokojo.commons.utils.DockerTestSupport;
 import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.commons.utils.ssl.SSLKeyPair;
 import io.kodokojo.commons.utils.ssl.SSLUtils;
 import io.kodokojo.config.module.ActorModule;
-import io.kodokojo.entrypoint.RestEntrypoint;
+import io.kodokojo.entrypoint.RestEntryPoint;
 import io.kodokojo.model.User;
-import io.kodokojo.project.starter.BrickManager;
+import io.kodokojo.service.BrickManager;
 import io.kodokojo.service.*;
 import io.kodokojo.service.dns.DnsManager;
 import io.kodokojo.service.redis.RedisProjectStore;
@@ -43,7 +46,7 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
     public DockerTestSupport dockerTestSupport = new DockerTestSupport();
 
     @ProvidedScenarioState
-    RestEntrypoint restEntrypoint;
+    RestEntryPoint restEntryPoint;
 
     @ProvidedScenarioState
     ConfigurationStore configurationStore;
@@ -108,8 +111,8 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
         }
         SSLKeyPair caKey = SSLUtils.createSelfSignedSSLKeyPair("Fake CA", (RSAPrivateKey) keyPair.getPrivate(), (RSAPublicKey) keyPair.getPublic());
         DefaultProjectManager projectManager = new DefaultProjectManager(caKey, "kodokojo.dev", configurationStore, redisProjectStore, bootstrapProvider, dnsManager, injector.getInstance(BrickConfigurationStarter.class), 10000000);
-        restEntrypoint = new RestEntrypoint(port, injector.getInstance(UserManager.class), new SimpleUserAuthenticator(redisUserManager),redisProjectStore, projectManager,new DefaultBrickFactory(null));
-        restEntrypoint.start();
+        restEntryPoint = new RestEntryPoint(port, injector.getInstance(UserManager.class), new SimpleUserAuthenticator(redisUserManager),redisProjectStore, projectManager,new DefaultBrickFactory(null));
+        restEntryPoint.start();
         return self();
     }
 
@@ -121,9 +124,9 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
     @AfterScenario
     public void tear_down() {
         dockerTestSupport.stopAndRemoveContainer();
-        if (restEntrypoint != null) {
-            restEntrypoint.stop();
-            restEntrypoint = null;
+        if (restEntryPoint != null) {
+            restEntryPoint.stop();
+            restEntryPoint = null;
         }
     }
 }

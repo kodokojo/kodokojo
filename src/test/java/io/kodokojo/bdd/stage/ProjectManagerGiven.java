@@ -2,11 +2,11 @@ package io.kodokojo.bdd.stage;
 
 import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.ProvidedScenarioState;
+import io.kodokojo.brick.BrickConfigurationStarter;
 import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.commons.utils.ssl.SSLKeyPair;
 import io.kodokojo.commons.utils.ssl.SSLUtils;
-import io.kodokojo.model.Stack;
-import io.kodokojo.project.starter.BrickManager;
+import io.kodokojo.service.BrickManager;
 import io.kodokojo.service.*;
 import io.kodokojo.service.dns.NoOpDnsManager;
 import org.mockito.Mockito;
@@ -15,16 +15,10 @@ import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.util.List;
-import java.util.concurrent.AbstractExecutorService;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class ProjectManagerGiven<SELF extends ProjectManagerGiven<?>> extends Stage<SELF> {
 

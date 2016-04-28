@@ -23,45 +23,32 @@ package io.kodokojo.bdd.stage;
  */
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.CreateContainerResponse;
-import com.github.dockerjava.api.model.ExposedPort;
-import com.github.dockerjava.api.model.Ports;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.*;
 import io.kodokojo.Launcher;
+import io.kodokojo.brick.DefaultBrickFactory;
 import io.kodokojo.commons.config.DockerConfig;
 import io.kodokojo.commons.model.Service;
-import io.kodokojo.config.module.ActorModule;
+import io.kodokojo.entrypoint.RestEntryPoint;
+import io.kodokojo.entrypoint.UserAuthenticator;
 import io.kodokojo.model.User;
 import io.kodokojo.commons.utils.DockerTestSupport;
 import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.commons.utils.properties.PropertyResolver;
 import io.kodokojo.commons.utils.properties.provider.*;
-import io.kodokojo.entrypoint.RestEntrypoint;
 import io.kodokojo.service.*;
-import io.kodokojo.service.redis.RedisBootstrapConfigurationProvider;
 import io.kodokojo.service.redis.RedisProjectStore;
 import io.kodokojo.service.user.SimpleCredential;
 import io.kodokojo.service.user.SimpleUserAuthenticator;
 import io.kodokojo.service.user.redis.RedisUserManager;
 import io.kodokojo.test.utils.TestUtils;
-import org.junit.Rule;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.JedisPoolConfig;
-import redis.clients.jedis.exceptions.JedisConnectionException;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
-import java.io.IOException;
 import java.math.BigInteger;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -95,7 +82,7 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
     int redisPort;
 
     @ProvidedScenarioState
-    RestEntrypoint restEntrypoint;
+    RestEntryPoint restEntryPoint;
 
     @ProvidedScenarioState
     String restEntryPointHost;
@@ -171,7 +158,7 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
             projectStore = new RedisProjectStore(aesKey, redisHost, redisPort, new DefaultBrickFactory(null));
             UserAuthenticator<SimpleCredential> userAuthenticator = new SimpleUserAuthenticator(userManager);
             projectManager = mock(ProjectManager.class);
-            restEntrypoint = new RestEntrypoint(port, userManager,userAuthenticator,projectStore, projectManager, new DefaultBrickFactory(null));
+            restEntryPoint = new RestEntryPoint(port, userManager,userAuthenticator,projectStore, projectManager, new DefaultBrickFactory(null));
             Launcher.INJECTOR = Guice.createInjector(new AbstractModule() {
                 @Override
                 protected void configure() {
@@ -179,7 +166,7 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
                     bind(ProjectStore.class).toInstance(projectStore);
                 }
             });
-            restEntrypoint.start();
+            restEntryPoint.start();
             restEntryPointPort = port;
             restEntryPointHost = "localhost";
         } catch (NoSuchAlgorithmException e) {
@@ -216,9 +203,9 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
     @AfterScenario
     public void tear_down() {
         dockerTestSupport.stopAndRemoveContainer();
-        if (restEntrypoint != null) {
-            restEntrypoint.stop();
-            restEntrypoint = null;
+        if (restEntryPoint != null) {
+            restEntryPoint.stop();
+            restEntryPoint = null;
         }
     }
 

@@ -5,7 +5,6 @@ import com.google.gson.GsonBuilder;
 import com.squareup.okhttp.*;
 import io.kodokojo.commons.utils.ssl.SSLKeyPair;
 import io.kodokojo.commons.utils.ssl.SSLUtils;
-import io.kodokojo.lifecycle.ApplicationLifeCycleListener;
 import io.kodokojo.model.BootstrapStackData;
 import io.kodokojo.service.ConfigurationStore;
 import org.apache.commons.io.IOUtils;

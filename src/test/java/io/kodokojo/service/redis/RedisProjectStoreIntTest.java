@@ -13,7 +13,7 @@ import io.kodokojo.commons.utils.ssl.SSLKeyPair;
 import io.kodokojo.commons.utils.ssl.SSLUtils;
 import io.kodokojo.model.*;
 import io.kodokojo.model.Stack;
-import io.kodokojo.service.DefaultBrickFactory;
+import io.kodokojo.brick.DefaultBrickFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
