@@ -1,5 +1,3 @@
-# Kodo Kojo
-
 
 ![Kodo Kojo Logo](doc/images/logo-kodokojo-baseline-black1.png)
 
@@ -40,7 +38,15 @@ You want to contribute, it's very Nice.We try to apply this practice [Contributi
 You may find help on our Slack channel if needed. Don't be afraid about 
 
 ## Go further
+
 TODO Architecture link.
+
+## Stay tuned
+
+You can stay tuned following us on :
+* Our Website http://kodokojo.io
+* Twitter : [@kodokojo](http://twitter.com/kodokojo)
+
 
 ## Technology inside
 
