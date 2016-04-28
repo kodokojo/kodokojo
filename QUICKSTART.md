@@ -17,6 +17,7 @@ cd kodokojo
 ```bash
 ./quickstart.sh
 ```
+
 This script will take a while since he :
 * Pull all images that you may need when testing Kodo Kojo (like Gitlab, Mesos, ...).
 * Clone some project dependencies not yet deployed in Maven central
@@ -32,6 +33,7 @@ This script will take a while since he :
 ```bash
 docker-compose -f src/test/resources/docker/full/docker-compose.yml up -d
 ```
+
 You may access to the Kodo Kojo UI on following adresse :
  * http://localhost if you have the chance to run docker natively on your workstation
  * http://192.168.99.100 if you use the first docker-machine used throw a virtual machine
@@ -46,12 +48,13 @@ This `docker-compose.yml` file run severals containers :
   * marathon via http://localhost:8080 or http://192.168.99.100:8080
   
 If you want to get some logs, you may have use following command :
-bash```
+
+```bash
 docker-compose -f src/test/resources/docker/full/docker-compose.yml log kodokojo     
 ```
 
 To clean all those containers :
-bash```
+```bash
 docker-compose -f src/test/resources/docker/full/docker-compose.yml kill && \
     docker-compose -f src/test/resources/docker/full/docker-compose.yml rm --force
 ```
