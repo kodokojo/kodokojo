@@ -24,9 +24,9 @@ This script will take a while since he :
 * Test, Build and install those dependencies
 * Test and Build a Docker image for the `kodokojo-ui`
 * Test and Build a Docker image for `kodokojo`. This imply :
-** Get all Maven dependencies
-** Running unit test
-** Running all Integration tests which may run some Docker container, like redis, gitlab, jenkins, ...
+  * Get all Maven dependencies
+  * Running unit test
+  * Running all Integration tests which may run some Docker container, like redis, gitlab, jenkins, ...
 
 
 ### Step 3 : Run
