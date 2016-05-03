@@ -32,6 +32,7 @@ import io.kodokojo.Launcher;
 import io.kodokojo.brick.DefaultBrickFactory;
 import io.kodokojo.commons.config.DockerConfig;
 import io.kodokojo.commons.model.Service;
+import io.kodokojo.config.ApplicationConfig;
 import io.kodokojo.entrypoint.RestEntryPoint;
 import io.kodokojo.entrypoint.UserAuthenticator;
 import io.kodokojo.model.User;
@@ -170,6 +171,32 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
                 protected void configure() {
                     bind(UserManager.class).toInstance(userManager);
                     bind(ProjectStore.class).toInstance(projectStore);
+                    bind(ApplicationConfig.class).toInstance(new ApplicationConfig() {
+                        @Override
+                        public int port() {
+                            return 80;
+                        }
+
+                        @Override
+                        public String domain() {
+                            return "kodokojo.dev";
+                        }
+
+                        @Override
+                        public String defaultLoadbalancerIp() {
+                            return "192.168.99.100";
+                        }
+
+                        @Override
+                        public int initialSshPort() {
+                            return 1022;
+                        }
+
+                        @Override
+                        public long sslCaDuration() {
+                            return -1;
+                        }
+                    });
                 }
             });
             restEntryPoint.start();

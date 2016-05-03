@@ -77,27 +77,33 @@ public class BrickConfigurationStarterActor extends AbstractActor {
         }
 
         try {
-            BrickStateMsg message = new BrickStateMsg(projectConfiguration.getIdentifier(), brickType.name(), brickConfiguration.getName(), BrickStateMsg.State.STARTING);
-            stateListener.tell(message, self());
+            generateMsgAndSend(brickConfiguration, projectConfiguration, brickType, BrickStateMsg.State.STARTING);
+
 
             Set<Service> services = brickManager.start(projectConfiguration, brickType);
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("{} for project {} started : {}", brickType, projectName, StringUtils.join(services, ","));
             }
 
-            message = new BrickStateMsg(projectConfiguration.getIdentifier(), brickType.name(), brickConfiguration.getName(), BrickStateMsg.State.CONFIGURING);
-            stateListener.tell(message, self());
+            generateMsgAndSend(brickConfiguration, projectConfiguration, brickType, BrickStateMsg.State.CONFIGURING);
 
             brickManager.configure(projectConfiguration, brickType);
-            message = new BrickStateMsg(projectConfiguration.getIdentifier(), brickType.name(), brickConfiguration.getName(), BrickStateMsg.State.RUNNING);
-            stateListener.tell(message, self());
+
+            generateMsgAndSend(brickConfiguration, projectConfiguration, brickType, BrickStateMsg.State.RUNNING);
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("{} for project {} configured", brickType, projectName);
             }
         } catch (BrickAlreadyExist brickAlreadyExist) {
             LOGGER.error("Brick {} already exist for project {}, not reconfigure it.", brickAlreadyExist.getBrickName(), brickAlreadyExist.getProjectName());
-            BrickStateMsg message = new BrickStateMsg(projectConfiguration.getIdentifier(), brickType.name(), brickConfiguration.getName(), BrickStateMsg.State.ALREADYEXIST);
-            stateListener.tell(message, self());
+            generateMsgAndSend(brickConfiguration, projectConfiguration, brickType, BrickStateMsg.State.ALREADYEXIST);
+        } catch (RuntimeException e) {
+            LOGGER.error("An error occurred while trying to start brick {} for project {}.", brickType, projectName, e);
+            generateMsgAndSend(brickConfiguration, projectConfiguration, brickType, BrickStateMsg.State.ONFAILURE);
         }
+    }
+
+    private void generateMsgAndSend(BrickConfiguration brickConfiguration, ProjectConfiguration projectConfiguration, BrickType brickType, BrickStateMsg.State state) {
+        BrickStateMsg message = new BrickStateMsg(projectConfiguration.getIdentifier(), brickType.name(), brickConfiguration.getName(), state);
+        stateListener.tell(message, self());
     }
 }

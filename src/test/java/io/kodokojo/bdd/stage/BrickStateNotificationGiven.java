@@ -16,6 +16,7 @@ import io.kodokojo.commons.utils.DockerTestSupport;
 import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.commons.utils.ssl.SSLKeyPair;
 import io.kodokojo.commons.utils.ssl.SSLUtils;
+import io.kodokojo.config.ApplicationConfig;
 import io.kodokojo.config.module.ActorModule;
 import io.kodokojo.entrypoint.RestEntryPoint;
 import io.kodokojo.model.User;
@@ -90,6 +91,9 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
             fail(e.getMessage());
         }
         final SecretKey secreteKey = tmpKey;
+
+        int port = TestUtils.getEphemeralPort();
+
         RedisUserManager redisUserManager = new RedisUserManager(secreteKey, service.getHost(), service.getPort());
         RedisProjectStore redisProjectStore = new RedisProjectStore(secreteKey, service.getHost(), service.getPort(), new DefaultBrickFactory(null));
         Injector injector = Guice.createInjector(new ActorModule(), new AbstractModule() {
@@ -101,11 +105,36 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
                 bind(BrickManager.class).toInstance(brickManager);
                 bind(DnsManager.class).toInstance(dnsManager);
                 bind(ConfigurationStore.class).toInstance(configurationStore);
+                bind(ApplicationConfig.class).toInstance(new ApplicationConfig() {
+                    @Override
+                    public int port() {
+                        return port;
+                    }
+
+                    @Override
+                    public String domain() {
+                        return "kodokojo.dev";
+                    }
+
+                    @Override
+                    public String defaultLoadbalancerIp() {
+                        return "192.168.22.3";
+                    }
+
+                    @Override
+                    public int initialSshPort() {
+                        return 10022;
+                    }
+
+                    @Override
+                    public long sslCaDuration() {
+                        return -1;
+                    }
+                });
             }
         });
         Launcher.INJECTOR = injector;
 
-        int port = TestUtils.getEphemeralPort();
         entryPointUrl = "localhost:" + port;
         KeyPair keyPair = null;
         try {
