@@ -1,5 +1,6 @@
 package io.kodokojo.brick;
 
+import io.kodokojo.brick.dockerregistry.DockerRegistryConfigurer;
 import io.kodokojo.model.Brick;
 import io.kodokojo.brick.gitlab.GitlabConfigurer;
 import io.kodokojo.brick.jenkins.JenkinsConfigurer;
@@ -31,6 +32,8 @@ public class DefaultBrickConfigurerProvider implements BrickConfigurerProvider {
                 return new JenkinsConfigurer();
             case DefaultBrickFactory.NEXUS:
                 return new NexusConfigurer();
+            case DefaultBrickFactory.DOCKER_REGISTRY:
+                return new DockerRegistryConfigurer();
             default:
                 return null;
         }

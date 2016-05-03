@@ -7,6 +7,7 @@ import com.tngtech.jgiven.junit.ScenarioTest;
 import io.kodokojo.bdd.stage.BrickConfigurerGiven;
 import io.kodokojo.bdd.stage.BrickConfigurerThen;
 import io.kodokojo.bdd.stage.BrickConfigurerWhen;
+import io.kodokojo.bdd.stage.brickauthenticator.DockerRegistryUserAuthenticator;
 import io.kodokojo.bdd.stage.brickauthenticator.GitlabUserAuthenticator;
 import io.kodokojo.bdd.stage.brickauthenticator.JenkinsUserAuthenticator;
 import io.kodokojo.bdd.stage.brickauthenticator.UserAuthenticator;
@@ -27,8 +28,10 @@ public class BrickConfigurerIntTest extends ScenarioTest<BrickConfigurerGiven<?>
     public static Object[][] brickData() {
         return new Object[][]{
                 //  Name, Docker imagen name, containerPort, Timeout in seconde unit, User Logger
+                
                 {"Gitlab", "gitlab/gitlab-ce:8.5.8-ce.0", 80, 180, new GitlabUserAuthenticator()},
-                {"Jenkins", "jenkins:1.651.1-alpine", 8080, 120, new JenkinsUserAuthenticator()}
+                {"Jenkins", "jenkins:1.651.1-alpine", 8080, 120, new JenkinsUserAuthenticator()},
+                {"DockerRegistry", "registry:2", 5000, 10, new DockerRegistryUserAuthenticator()}
                 //{"Jenkins", "jenkins:2.0-alpine", 8080, 120, new JenkinsUserAuthenticator()}
         };
     }

@@ -21,6 +21,8 @@ public class DefaultBrickFactory implements BrickFactory {
 
     public static final String NEXUS = "nexus";
 
+    public static final String DOCKER_REGISTRY = "dockerregistry";
+
     private final Map<String, Brick> cache ;
 
     @Inject
@@ -35,6 +37,7 @@ public class DefaultBrickFactory implements BrickFactory {
         cache.put(GITLAB, new Brick(GITLAB, BrickType.SCM));
         cache.put(HAPROXY, new Brick(HAPROXY, BrickType.LOADBALANCER));
         cache.put(NEXUS, new Brick(NEXUS, BrickType.REPOSITORY));
+        cache.put(DOCKER_REGISTRY, new Brick(DOCKER_REGISTRY, BrickType.REPOSITORY));
     }
 
     @Override
