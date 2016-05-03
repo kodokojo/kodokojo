@@ -6,6 +6,7 @@ import io.kodokojo.commons.utils.servicelocator.marathon.MarathonServiceLocator;
 import io.kodokojo.model.*;
 import io.kodokojo.brick.BrickConfigurerData;
 import io.kodokojo.service.BrickManager;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
@@ -150,12 +151,20 @@ public class MarathonBrickManager implements BrickManager {
         BrickConfigurer configurer = brickConfigurerProvider.provideFromBrick(brickConfiguration.getBrick());
         if (configurer != null) {
             Set<Service> services = marathonServiceLocator.getService(type, name);
-            List<User> users = projectConfiguration.getUsers();
-            String entrypoint = getEntryPoint(services);
-            BrickConfigurerData brickConfigurerData = configurer.configure(new BrickConfigurerData(projectConfiguration.getName(),entrypoint,domain, projectConfiguration.getOwner()  , users));
-            configurer.addUsers(brickConfigurerData, users);
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Adding users {} to brick {}", StringUtils.join(users, ","), brickType);
+            if (CollectionUtils.isNotEmpty(services)) {
+                String entrypoint = getEntryPoint(services);
+                if (StringUtils.isBlank(entrypoint)) {
+                    LOGGER.error("Unable to find a valid entrypoint for brick '{}' on project {}", type, name);
+                } else {
+                    List<User> users = projectConfiguration.getUsers();
+                    BrickConfigurerData brickConfigurerData = configurer.configure(new BrickConfigurerData(projectConfiguration.getName(), entrypoint, domain, projectConfiguration.getOwner(), users));
+                    configurer.addUsers(brickConfigurerData, users);
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug("Adding users {} to brick {}", StringUtils.join(users, ","), brickType);
+                    }
+                }
+            } else {
+                LOGGER.error("Unable to find http service for brick '{}' on project {}.", type, name);
             }
         } else if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Configurer Not defined for brick {}", brickType);
