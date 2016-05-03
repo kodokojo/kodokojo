@@ -7,11 +7,13 @@ import io.kodokojo.Launcher;
 import io.kodokojo.brick.BrickStateMsg;
 import io.kodokojo.brick.BrickStateMsgDispatcher;
 import io.kodokojo.brick.BrickStateMsgListener;
+import io.kodokojo.config.ApplicationConfig;
 import io.kodokojo.entrypoint.dto.WebSocketMessage;
 import io.kodokojo.entrypoint.dto.WebSocketMessageGsonAdapter;
 import io.kodokojo.model.ProjectConfiguration;
 import io.kodokojo.model.User;
-import io.kodokojo.service.*;
+import io.kodokojo.service.ProjectStore;
+import io.kodokojo.service.UserManager;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
@@ -26,6 +28,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+//  WebSocket colse event code https://developer.mozilla.org/fr/docs/Web/API/CloseEvent
 @WebSocket
 public class WebSocketEntryPoint implements BrickStateMsgListener {
 
@@ -49,6 +52,7 @@ public class WebSocketEntryPoint implements BrickStateMsgListener {
             return builder.create();
         }
     };
+    private final String domain;
 
     //  WebSocket is built by Spark but we are not able to get the instance :/ .
     //  See : https://github.com/perwendel/spark/pull/383
@@ -58,6 +62,8 @@ public class WebSocketEntryPoint implements BrickStateMsgListener {
         userConnectedSession = new ConcurrentHashMap<>();
         userManager = Launcher.INJECTOR.getInstance(UserManager.class);
         projectStore = Launcher.INJECTOR.getInstance(ProjectStore.class);
+        ApplicationConfig applicationConfig = Launcher.INJECTOR.getInstance(ApplicationConfig.class);
+        domain = applicationConfig.domain();
         BrickStateMsgDispatcher msgDispatcher = Launcher.INJECTOR.getInstance(BrickStateMsgDispatcher.class);
         msgDispatcher.addListener(this);
 
@@ -93,12 +99,12 @@ public class WebSocketEntryPoint implements BrickStateMsgListener {
                         String[] credentials = decoded.split(":");
                         if (credentials.length != 2) {
                             sessions.remove(session);
-                            session.close(400, "Authorization value in data mal formatted");
+                            session.close(1008, "Authorization value in data mal formatted");
                         } else {
                             User user = userManager.getUserByUsername(credentials[0]);
                             if (user == null) {
                                 sessions.remove(session);
-                                session.close(401, "Invalid credentials for user '" + credentials[0]+"'.");
+                                session.close(4401, "Invalid credentials for user '" + credentials[0] + "'.");
                             } else {
                                 if (user.getPassword().equals(credentials[1])) {
                                     userConnectedSession.put(user.getIdentifier(), new UserSession(session, user));
@@ -114,13 +120,13 @@ public class WebSocketEntryPoint implements BrickStateMsgListener {
                                     }
                                 } else {
                                     sessions.remove(session);
-                                    session.close(401, "Invalid credentials.");
+                                    session.close(4401, "Invalid credentials.");
                                 }
                             }
                         }
                     } else {
                         sessions.remove(session);
-                        session.close(400, "Authentication value in data attribute mal formatted : " + data.toString());
+                        session.close(1008, "Authentication value in data attribute mal formatted : " + data.toString());
                     }
                 } else {
                     sessions.remove(session);
@@ -195,6 +201,11 @@ public class WebSocketEntryPoint implements BrickStateMsgListener {
         data.addProperty("brickType", brickStateMsg.getBrickType());
         data.addProperty("brickName", brickStateMsg.getBrickName());
         data.addProperty("state", brickStateMsg.getState().name());
+        if (brickStateMsg.state == BrickStateMsg.State.RUNNING) {
+            ProjectConfiguration projectConfiguration = projectStore.getProjectConfigurationById(brickStateMsg.getProjectConfigurationIdentifier());
+            data.addProperty("url", "https://" + brickStateMsg.getBrickType() + "." + projectConfiguration.getName() + "." + domain);
+        }
+
         return new WebSocketMessage("brick", "updateState", data);
     }
 
