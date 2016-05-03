@@ -42,14 +42,20 @@ public class ServiceModule extends AbstractModule {
 
     @Provides
     @Singleton
-    BrickConfigurerProvider provideBrickConfigurerProvider() {
-        return new DefaultBrickConfigurerProvider();
+    BrickConfigurerProvider provideBrickConfigurerProvider(BrickUrlFactory brickUrlFactory) {
+        return new DefaultBrickConfigurerProvider(brickUrlFactory);
     }
 
     @Provides
     @Singleton
-    ProjectManager provideProjectManager(SSLKeyPair caKey, ApplicationConfig applicationConfig, BrickConfigurationStarter brickConfigurationStarter, ConfigurationStore configurationStore, ProjectStore projectStore, BootstrapConfigurationProvider bootstrapConfigurationProvider, DnsManager dnsManager) {
-        return new DefaultProjectManager(caKey, applicationConfig.domain(), configurationStore, projectStore, bootstrapConfigurationProvider,dnsManager, brickConfigurationStarter, applicationConfig.sslCaDuration());
+    ProjectManager provideProjectManager(SSLKeyPair caKey, ApplicationConfig applicationConfig, BrickConfigurationStarter brickConfigurationStarter, ConfigurationStore configurationStore, ProjectStore projectStore, BootstrapConfigurationProvider bootstrapConfigurationProvider, DnsManager dnsManager, BrickUrlFactory brickUrlFactory) {
+        return new DefaultProjectManager(caKey, applicationConfig.domain(), configurationStore, projectStore, bootstrapConfigurationProvider,dnsManager, brickConfigurationStarter, brickUrlFactory, applicationConfig.sslCaDuration());
+    }
+
+    @Provides
+    @Singleton
+    BrickUrlFactory provideBrickUrlFactory(ApplicationConfig applicationConfig) {
+        return new DefaultBrickUrlFactory(applicationConfig.domain());
     }
 
 }

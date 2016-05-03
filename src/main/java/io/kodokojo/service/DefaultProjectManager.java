@@ -24,6 +24,7 @@ package io.kodokojo.service;
 
 import io.kodokojo.brick.BrickConfigurationStarter;
 import io.kodokojo.brick.BrickStartContext;
+import io.kodokojo.brick.BrickUrlFactory;
 import io.kodokojo.commons.utils.ssl.SSLKeyPair;
 import io.kodokojo.commons.utils.ssl.SSLUtils;
 import io.kodokojo.model.*;
@@ -57,10 +58,12 @@ public class DefaultProjectManager implements ProjectManager {
 
     private final BrickConfigurationStarter brickConfigurationStarter;
 
+    private final BrickUrlFactory brickUrlFactory;
+
     private final long sslCaDuration;
 
     @Inject
-    public DefaultProjectManager(SSLKeyPair caKey, String domain, ConfigurationStore configurationStore, ProjectStore projectStore, BootstrapConfigurationProvider bootstrapConfigurationProvider, DnsManager dnsManager, BrickConfigurationStarter brickConfigurationStarter, long sslCaDuration) {
+    public DefaultProjectManager(SSLKeyPair caKey, String domain, ConfigurationStore configurationStore, ProjectStore projectStore, BootstrapConfigurationProvider bootstrapConfigurationProvider, DnsManager dnsManager, BrickConfigurationStarter brickConfigurationStarter, BrickUrlFactory brickUrlFactory, long sslCaDuration) {
         if (caKey == null) {
             throw new IllegalArgumentException("caKey must be defined.");
         }
@@ -82,6 +85,9 @@ public class DefaultProjectManager implements ProjectManager {
         if (dnsManager == null) {
             throw new IllegalArgumentException("dnsManager must be defined.");
         }
+        if (brickUrlFactory == null) {
+            throw new IllegalArgumentException("brickUrlFactory must be defined.");
+        }
         this.brickConfigurationStarter = brickConfigurationStarter;
         this.caKey = caKey;
         this.domain = domain;
@@ -89,6 +95,7 @@ public class DefaultProjectManager implements ProjectManager {
         this.projectStore = projectStore;
         this.bootstrapConfigurationProvider = bootstrapConfigurationProvider;
         this.dnsManager = dnsManager;
+        this.brickUrlFactory = brickUrlFactory;
         this.sslCaDuration = sslCaDuration;
     }
 
@@ -130,8 +137,7 @@ public class DefaultProjectManager implements ProjectManager {
                 Brick brick = brickConfiguration.getBrick();
                 BrickType brickType = brick.getType();
                 if (brickType.isRequiredHttpExposed()) {
-                    String brickTypeName = brickType.name().toLowerCase();
-                    String brickDomainName = brickTypeName + "." + projectDomainName;
+                    String brickDomainName = brickUrlFactory.forgeUrl(projectConfiguration, brickConfiguration);
                     dnsEntries.add(new DnsEntry(brickDomainName, DnsEntry.Type.A, lbIp));
                 }
                 BrickStartContext context = new BrickStartContext(projectConfiguration, brickConfiguration, domain, projectCaSSL, lbIp);

@@ -3,6 +3,7 @@ package io.kodokojo.bdd.stage;
 import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.ProvidedScenarioState;
 import io.kodokojo.brick.BrickConfigurationStarter;
+import io.kodokojo.brick.DefaultBrickUrlFactory;
 import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.commons.utils.ssl.SSLKeyPair;
 import io.kodokojo.commons.utils.ssl.SSLUtils;
@@ -65,7 +66,7 @@ public class ProjectManagerGiven<SELF extends ProjectManagerGiven<?>> extends St
         brickStarter = mock(BrickConfigurationStarter.class);
 
 
-        projectManager = new DefaultProjectManager(caKey, "kodokojo.dev", configurationStore, projectStore, configProvider, new NoOpDnsManager(), brickStarter, 300000);
+        projectManager = new DefaultProjectManager(caKey, "kodokojo.dev", configurationStore, projectStore, configProvider, new NoOpDnsManager(), brickStarter, new DefaultBrickUrlFactory("kodokojo.dev"),  300000);
 
         return self();
     }

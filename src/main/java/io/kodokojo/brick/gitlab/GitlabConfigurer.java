@@ -25,7 +25,9 @@ package io.kodokojo.brick.gitlab;
 import com.google.gson.JsonObject;
 import com.squareup.okhttp.*;
 import io.kodokojo.brick.BrickConfigurerData;
+import io.kodokojo.brick.BrickUrlFactory;
 import io.kodokojo.commons.utils.RSAUtils;
+import io.kodokojo.model.ProjectConfiguration;
 import io.kodokojo.model.User;
 import io.kodokojo.brick.BrickConfigurer;
 import org.apache.commons.io.IOUtils;
@@ -35,6 +37,7 @@ import retrofit.RestAdapter;
 import retrofit.RetrofitError;
 import retrofit.client.OkClient;
 
+import javax.inject.Inject;
 import javax.net.ssl.*;
 import java.io.IOException;
 import java.io.InputStream;
@@ -75,8 +78,18 @@ public class GitlabConfigurer implements BrickConfigurer {
     private static final String OLD_PASSWORD = "5iveL!fe";
 
     private static final String ROOT_LOGIN = "root";
+
     public static final String GITLAB_CHANGE_FAIL_MESSAGE = "After a successful password update you will be redirected to login screen.";
 
+    private final BrickUrlFactory brickUrlFactory;
+
+    @Inject
+    public GitlabConfigurer(BrickUrlFactory brickUrlFactory) {
+        if (brickUrlFactory == null) {
+            throw new IllegalArgumentException("brickUrlFactory must be defined.");
+        }
+        this.brickUrlFactory = brickUrlFactory;
+    }
 
     @Override
     public BrickConfigurerData configure(BrickConfigurerData brickConfigurerData) {
@@ -140,12 +153,12 @@ public class GitlabConfigurer implements BrickConfigurer {
         return brickConfigurerData;
     }
 
-    private String getGitlabEntryPoint(BrickConfigurerData brickConfigurerData) {
+    private String getGitlabEntryPoint( BrickConfigurerData brickConfigurerData) {
         Boolean forceDefault = (Boolean) brickConfigurerData.getContext().get(GITLAB_FORCE_ENTRYPOINT_KEY);
         if (forceDefault != null && forceDefault) {
             return brickConfigurerData.getEntrypoint();
         }
-        return "https://scm." + brickConfigurerData.getProjectName().toLowerCase() + "." + brickConfigurerData.getDomaine();
+        return "https://" + brickUrlFactory.forgeUrl(brickConfigurerData.getProjectName(), "ci");
     }
 
     private static boolean changePassword(OkHttpClient httpClient, String gitlabUrl, String token, String oldPassword, String newPassword) {
@@ -351,18 +364,6 @@ public class GitlabConfigurer implements BrickConfigurer {
         public boolean removeAll() {
             return false;
         }
-    }
-
-
-    public static void main(String[] args) throws NoSuchAlgorithmException {
-        GitlabConfigurer gitlabConfigurer = new GitlabConfigurer();
-        KeyPair keyPair = RSAUtils.generateRsaKeyPair();
-        User user = new User("123456", "jpthiery", "jpthiery", "jpthiery@kodokojo.io", "jpthiery", RSAUtils.encodePublicKey((RSAPublicKey) keyPair.getPublic(), "jpthiery@kodokojo.io"));
-        List<User> users = Collections.singletonList(user);
-        //BrickConfigurerData brickConfigurerData = new BrickConfigurerData("http://52.50.9.72:41440", user, users);
-        BrickConfigurerData brickConfigurerData = new BrickConfigurerData("acme", "", "kodokojo.io", user, users);
-        brickConfigurerData = gitlabConfigurer.configure(brickConfigurerData);
-        gitlabConfigurer.addUsers(brickConfigurerData, users);
     }
 
 }

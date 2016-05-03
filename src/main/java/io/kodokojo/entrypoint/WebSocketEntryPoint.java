@@ -7,7 +7,7 @@ import io.kodokojo.Launcher;
 import io.kodokojo.brick.BrickStateMsg;
 import io.kodokojo.brick.BrickStateMsgDispatcher;
 import io.kodokojo.brick.BrickStateMsgListener;
-import io.kodokojo.config.ApplicationConfig;
+import io.kodokojo.brick.BrickUrlFactory;
 import io.kodokojo.entrypoint.dto.WebSocketMessage;
 import io.kodokojo.entrypoint.dto.WebSocketMessageGsonAdapter;
 import io.kodokojo.model.ProjectConfiguration;
@@ -44,6 +44,8 @@ public class WebSocketEntryPoint implements BrickStateMsgListener {
 
     private final ProjectStore projectStore;
 
+    private final BrickUrlFactory brickUrlFactory;
+
     private final ThreadLocal<Gson> localGson = new ThreadLocal<Gson>() {
         @Override
         protected Gson initialValue() {
@@ -52,7 +54,6 @@ public class WebSocketEntryPoint implements BrickStateMsgListener {
             return builder.create();
         }
     };
-    private final String domain;
 
     //  WebSocket is built by Spark but we are not able to get the instance :/ .
     //  See : https://github.com/perwendel/spark/pull/383
@@ -62,8 +63,7 @@ public class WebSocketEntryPoint implements BrickStateMsgListener {
         userConnectedSession = new ConcurrentHashMap<>();
         userManager = Launcher.INJECTOR.getInstance(UserManager.class);
         projectStore = Launcher.INJECTOR.getInstance(ProjectStore.class);
-        ApplicationConfig applicationConfig = Launcher.INJECTOR.getInstance(ApplicationConfig.class);
-        domain = applicationConfig.domain();
+        brickUrlFactory = Launcher.INJECTOR.getInstance(BrickUrlFactory.class);
         BrickStateMsgDispatcher msgDispatcher = Launcher.INJECTOR.getInstance(BrickStateMsgDispatcher.class);
         msgDispatcher.addListener(this);
 
@@ -203,13 +203,13 @@ public class WebSocketEntryPoint implements BrickStateMsgListener {
         data.addProperty("state", brickStateMsg.getState().name());
         if (brickStateMsg.state == BrickStateMsg.State.RUNNING) {
             ProjectConfiguration projectConfiguration = projectStore.getProjectConfigurationById(brickStateMsg.getProjectConfigurationIdentifier());
-            data.addProperty("url", "https://" + brickStateMsg.getBrickType() + "." + projectConfiguration.getName() + "." + domain);
+            data.addProperty("url", "https://" + brickUrlFactory.forgeUrl(projectConfiguration.getName(), brickStateMsg.getBrickName()));
         }
 
         return new WebSocketMessage("brick", "updateState", data);
     }
 
-    private UserSession sessionIsValidated(Session session) {
+    private UserSession sessionIsValidated(Session session){
         assert session != null : "session must be defined";
         UserSession res = null;
         Iterator<UserSession> iterator = userConnectedSession.values().iterator();

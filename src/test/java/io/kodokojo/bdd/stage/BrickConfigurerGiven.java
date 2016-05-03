@@ -13,11 +13,8 @@ import com.tngtech.jgiven.annotation.Hidden;
 import com.tngtech.jgiven.annotation.ProvidedScenarioState;
 import com.tngtech.jgiven.annotation.Quoted;
 import io.kodokojo.bdd.stage.brickauthenticator.UserAuthenticator;
+import io.kodokojo.brick.*;
 import io.kodokojo.commons.utils.DockerTestSupport;
-import io.kodokojo.brick.BrickConfigurerProvider;
-import io.kodokojo.brick.BrickFactory;
-import io.kodokojo.brick.DefaultBrickConfigurerProvider;
-import io.kodokojo.brick.DefaultBrickFactory;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,7 +74,7 @@ public class BrickConfigurerGiven<SELF extends BrickConfigurerGiven<?>> extends 
         assertThat(brickStarted).isTrue();
         LOGGER.info("Brick {} successfully started.", brickName);
         brickFactory = new DefaultBrickFactory(null);
-        brickConfigurerProvider = new DefaultBrickConfigurerProvider();
+        brickConfigurerProvider = new DefaultBrickConfigurerProvider(new DefaultBrickUrlFactory("kodokojo.dev"));
         return self();
     }
 

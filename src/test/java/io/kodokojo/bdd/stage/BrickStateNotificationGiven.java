@@ -8,9 +8,7 @@ import com.tngtech.jgiven.annotation.AfterScenario;
 import com.tngtech.jgiven.annotation.ProvidedScenarioState;
 import com.tngtech.jgiven.annotation.Quoted;
 import io.kodokojo.Launcher;
-import io.kodokojo.brick.BrickConfigurationStarter;
-import io.kodokojo.brick.BrickStateMsgDispatcher;
-import io.kodokojo.brick.DefaultBrickFactory;
+import io.kodokojo.brick.*;
 import io.kodokojo.commons.model.Service;
 import io.kodokojo.commons.utils.DockerTestSupport;
 import io.kodokojo.commons.utils.RSAUtils;
@@ -131,6 +129,7 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
                         return -1;
                     }
                 });
+                bind(BrickUrlFactory.class).toInstance(new DefaultBrickUrlFactory("kodokojo.dev"));
             }
         });
         Launcher.INJECTOR = injector;
@@ -143,7 +142,7 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
             fail(e.getMessage());
         }
         SSLKeyPair caKey = SSLUtils.createSelfSignedSSLKeyPair("Fake CA", (RSAPrivateKey) keyPair.getPrivate(), (RSAPublicKey) keyPair.getPublic());
-        DefaultProjectManager projectManager = new DefaultProjectManager(caKey, "kodokojo.dev", configurationStore, redisProjectStore, bootstrapProvider, dnsManager, injector.getInstance(BrickConfigurationStarter.class), 10000000);
+        DefaultProjectManager projectManager = new DefaultProjectManager(caKey, "kodokojo.dev", configurationStore, redisProjectStore, bootstrapProvider, dnsManager, injector.getInstance(BrickConfigurationStarter.class), new DefaultBrickUrlFactory("kodokojo.dev"), 10000000);
         restEntryPoint = new RestEntryPoint(port, injector.getInstance(UserManager.class), new SimpleUserAuthenticator(redisUserManager),redisProjectStore, projectManager,new DefaultBrickFactory(null));
         restEntryPoint.start();
         return self();

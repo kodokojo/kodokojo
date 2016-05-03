@@ -5,7 +5,19 @@ import io.kodokojo.brick.gitlab.GitlabConfigurer;
 import io.kodokojo.brick.jenkins.JenkinsConfigurer;
 import io.kodokojo.brick.nexus.NexusConfigurer;
 
+import javax.inject.Inject;
+
 public class DefaultBrickConfigurerProvider implements BrickConfigurerProvider {
+
+    private final BrickUrlFactory brickUrlFactory;
+
+    @Inject
+    public DefaultBrickConfigurerProvider(BrickUrlFactory brickUrlFactory) {
+        if (brickUrlFactory == null) {
+            throw new IllegalArgumentException("brickUrlFactory must be defined.");
+        }
+        this.brickUrlFactory = brickUrlFactory;
+    }
 
     @Override
     public BrickConfigurer provideFromBrick(Brick brick) {
@@ -14,7 +26,7 @@ public class DefaultBrickConfigurerProvider implements BrickConfigurerProvider {
         }
         switch (brick.getName()) {
             case DefaultBrickFactory.GITLAB:
-                return new GitlabConfigurer();
+                return new GitlabConfigurer(brickUrlFactory);
             case DefaultBrickFactory.JENKINS:
                 return new JenkinsConfigurer();
             case DefaultBrickFactory.NEXUS:

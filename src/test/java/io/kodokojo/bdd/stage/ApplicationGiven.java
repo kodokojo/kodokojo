@@ -29,7 +29,9 @@ import com.google.inject.Injector;
 import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.*;
 import io.kodokojo.Launcher;
+import io.kodokojo.brick.BrickUrlFactory;
 import io.kodokojo.brick.DefaultBrickFactory;
+import io.kodokojo.brick.DefaultBrickUrlFactory;
 import io.kodokojo.commons.config.DockerConfig;
 import io.kodokojo.commons.model.Service;
 import io.kodokojo.config.ApplicationConfig;
@@ -197,6 +199,7 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
                             return -1;
                         }
                     });
+                    bind(BrickUrlFactory.class).toInstance(new DefaultBrickUrlFactory("kodokojo.dev"));
                 }
             });
             restEntryPoint.start();
