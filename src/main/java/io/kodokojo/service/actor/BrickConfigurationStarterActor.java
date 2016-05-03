@@ -14,6 +14,7 @@ import io.kodokojo.brick.BrickAlreadyExist;
 import io.kodokojo.brick.BrickStartContext;
 import io.kodokojo.brick.BrickStateMsg;
 import io.kodokojo.service.ConfigurationStore;
+import io.kodokojo.service.ProjectConfigurationException;
 import io.kodokojo.service.dns.DnsEntry;
 import io.kodokojo.service.dns.DnsManager;
 import org.apache.commons.lang.StringUtils;
@@ -87,23 +88,37 @@ public class BrickConfigurationStarterActor extends AbstractActor {
 
             generateMsgAndSend(brickConfiguration, projectConfiguration, brickType, BrickStateMsg.State.CONFIGURING);
 
-            brickManager.configure(projectConfiguration, brickType);
+            boolean configured = false;
+            try {
+                brickManager.configure(projectConfiguration, brickType);
+                configured = true;
+            } catch (ProjectConfigurationException e) {
+                LOGGER.error("An error occure while trying to configure project {}", projectName, e);
+                generateMsgAndSend(brickConfiguration, projectConfiguration, brickType, BrickStateMsg.State.ONFAILURE, e.getMessage());
+            }
 
-            generateMsgAndSend(brickConfiguration, projectConfiguration, brickType, BrickStateMsg.State.RUNNING);
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("{} for project {} configured", brickType, projectName);
+            if (configured) {
+                generateMsgAndSend(brickConfiguration, projectConfiguration, brickType, BrickStateMsg.State.RUNNING);
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("{} for project {} configured", brickType, projectName);
+                }
             }
         } catch (BrickAlreadyExist brickAlreadyExist) {
             LOGGER.error("Brick {} already exist for project {}, not reconfigure it.", brickAlreadyExist.getBrickName(), brickAlreadyExist.getProjectName());
             generateMsgAndSend(brickConfiguration, projectConfiguration, brickType, BrickStateMsg.State.ALREADYEXIST);
         } catch (RuntimeException e) {
             LOGGER.error("An error occurred while trying to start brick {} for project {}.", brickType, projectName, e);
-            generateMsgAndSend(brickConfiguration, projectConfiguration, brickType, BrickStateMsg.State.ONFAILURE);
+            generateMsgAndSend(brickConfiguration, projectConfiguration, brickType, BrickStateMsg.State.ONFAILURE, e.getMessage());
         }
     }
 
-    private void generateMsgAndSend(BrickConfiguration brickConfiguration, ProjectConfiguration projectConfiguration, BrickType brickType, BrickStateMsg.State state) {
-        BrickStateMsg message = new BrickStateMsg(projectConfiguration.getIdentifier(), brickType.name(), brickConfiguration.getName(), state);
+
+    private void generateMsgAndSend(BrickConfiguration brickConfiguration, ProjectConfiguration projectConfiguration, BrickType brickType, BrickStateMsg.State state, String messageStr) {
+        BrickStateMsg message = new BrickStateMsg(projectConfiguration.getIdentifier(), brickType.name(), brickConfiguration.getName(), state, messageStr);
         stateListener.tell(message, self());
+    }
+
+    private void generateMsgAndSend(BrickConfiguration brickConfiguration, ProjectConfiguration projectConfiguration, BrickType brickType, BrickStateMsg.State state) {
+        generateMsgAndSend(brickConfiguration, projectConfiguration, brickType, state, null);
     }
 }

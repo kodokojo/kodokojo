@@ -1,16 +1,16 @@
 package io.kodokojo.brick.nexus;
 
 import com.squareup.okhttp.*;
+import io.kodokojo.brick.BrickConfigurationException;
+import io.kodokojo.brick.BrickConfigurer;
 import io.kodokojo.brick.BrickConfigurerData;
 import io.kodokojo.model.User;
-import io.kodokojo.brick.BrickConfigurer;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Base64;
-import java.util.Collections;
 import java.util.List;
 
 public class NexusConfigurer implements BrickConfigurer {
@@ -24,20 +24,22 @@ public class NexusConfigurer implements BrickConfigurer {
     public static final String DEPLOYMENT_ACCOUNT_NAME = "deployment";
 
     @Override
-    public BrickConfigurerData configure(BrickConfigurerData brickConfigurerData) {
+    public BrickConfigurerData configure(BrickConfigurerData brickConfigurerData) throws BrickConfigurationException {
 
         OkHttpClient httpClient = provideHttpClient();
 
         String adminPassword = brickConfigurerData.getAdminUser().getPassword();
         String xmlBody = getChangePasswordXmlBody(ADMIN_ACCOUNT_NAME, OLD_ADMIN_PASSWORD, adminPassword);
 
-        changePassword(httpClient, brickConfigurerData.getEntrypoint(), xmlBody, ADMIN_ACCOUNT_NAME, OLD_ADMIN_PASSWORD);
+        if (changePassword(httpClient, brickConfigurerData.getEntrypoint(), xmlBody, ADMIN_ACCOUNT_NAME, OLD_ADMIN_PASSWORD)) {
 
-        return brickConfigurerData;
+            return brickConfigurerData;
+        }
+        throw new BrickConfigurationException("Unable to configure nexus " + brickConfigurerData.getEntrypoint());
     }
 
     @Override
-    public BrickConfigurerData addUsers(BrickConfigurerData brickConfigurerData, List<User> users) {
+    public BrickConfigurerData addUsers(BrickConfigurerData brickConfigurerData, List<User> users) throws BrickConfigurationException {
         if (brickConfigurerData == null) {
             throw new IllegalArgumentException("brickConfigurerData must be defined.");
         }
@@ -48,7 +50,9 @@ public class NexusConfigurer implements BrickConfigurer {
         String adminPassword = brickConfigurerData.getAdminUser().getPassword();
         for (User user : users) {
             String xmlBody = getCreatUserXmlBody(user);
-            createUser(httpClient, brickConfigurerData.getEntrypoint(), xmlBody, ADMIN_ACCOUNT_NAME, adminPassword);
+            if (!createUser(httpClient, brickConfigurerData.getEntrypoint(), xmlBody, ADMIN_ACCOUNT_NAME, adminPassword)) {
+                throw new BrickConfigurationException("Unable to add user '" + user.getUsername() + "' on nexus " + brickConfigurerData.getEntrypoint());
+            }
         }
         return brickConfigurerData;
     }
@@ -66,7 +70,7 @@ public class NexusConfigurer implements BrickConfigurer {
         Response response = null;
         try {
             response = httpClient.newCall(request).execute();
-            return response.code() == 202;
+            return response.code() >= 200 && response.code() < 300;
         } catch (IOException e) {
             LOGGER.error("Unable to complete request on Nexus url {}", url, e);
         } finally {
@@ -116,16 +120,6 @@ public class NexusConfigurer implements BrickConfigurer {
 
     private String encodeBasicAuth(String login, String password) {
         return "Basic " + Base64.getEncoder().encodeToString(String.format("%s:%s", login, password).getBytes());
-    }
-
-    public static void main(String[] args) {
-        NexusConfigurer nexusConfigurer = new NexusConfigurer();
-        User admin = new User("1234", "Jean-Pascal THIERY", "jpthiery", "jpthiery@kodokojo.io", "jpthiery", "an SSH public key");
-        List<User> users = Collections.singletonList(admin);
-        BrickConfigurerData brickConfigurerData = new BrickConfigurerData("Acme", "http://52.16.137.170:49598", "kodokojo.io", admin, users);
-
-        brickConfigurerData = nexusConfigurer.configure(brickConfigurerData);
-        nexusConfigurer.addUsers(brickConfigurerData, users);
     }
 
 }

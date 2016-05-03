@@ -85,7 +85,7 @@ public class ClusterApplicationThen<SELF extends ClusterApplicationThen<?>> exte
         Gson gson = builder.setPrettyPrinting().create();
 
         String projectDomaineName = projectConfiguration.getName().toLowerCase();
-        String brickDomainUrl = "https://" + brickType + "." + projectDomaineName + ".kodokojo.io";
+        String brickDomainUrl = "https://" + brickType + "-" + projectDomaineName + ".kodokojo.io";
 
         Callable<Boolean> inspectWebSocket = new Callable<Boolean>() {
             @Override
@@ -114,7 +114,9 @@ public class ClusterApplicationThen<SELF extends ClusterApplicationThen<?>> exte
                                 if (projectConfigurationId.equals(projectConfiguration.getIdentifier())
                                         && data.getAsJsonPrimitive("brickName").getAsString().equals(brickName)) {
                                     String state = data.getAsJsonPrimitive("state").getAsString();
-
+                                    if (state.equals("ONFAILURE")) {
+                                        throw new Exception("On Failure");
+                                    }
                                     brickNameFound = state.equals("RUNNING");
                                 }
                             }
@@ -147,7 +149,7 @@ public class ClusterApplicationThen<SELF extends ClusterApplicationThen<?>> exte
             LOGGER.debug("Brick {} is {} found as RUNNING", brickName, foundRunning ? "" : "NOT");
             assertThat(foundRunning).overridingErrorMessage("brick %s not found as RUNNING", brickName).isTrue();
         } catch (TimeoutException | InterruptedException | ExecutionException e) {
-            e.printStackTrace();
+            fail(e.getMessage(), e);
         }
 
         OkHttpClient httpClient = provideDefaultOkHttpClient();

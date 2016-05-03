@@ -26,6 +26,7 @@ import com.squareup.okhttp.*;
 import io.kodokojo.brick.BrickConfigurerData;
 import io.kodokojo.model.User;
 import io.kodokojo.brick.BrickConfigurer;
+import org.apache.commons.io.IOUtils;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
@@ -82,16 +83,15 @@ public class JenkinsConfigurer implements BrickConfigurer {
 
             Request request = new Request.Builder().url(url).post(body).build();
             response = httpClient.newCall(request).execute();
-            return brickConfigurerData;
+            if (response.code() >= 200 && response.code() < 300) {
+                return brickConfigurerData;
+            }
+            throw new RuntimeException("Unable to configure Jenkins " + brickConfigurerData.getEntrypoint());//Create a dedicate Exception instead.
         } catch (IOException e) {
             throw new RuntimeException("Unable to configure Jenkins " + brickConfigurerData.getEntrypoint(), e);
         } finally {
             if (response != null) {
-                try {
-                    response.body().close();
-                } catch (IOException e) {
-                    throw new RuntimeException("Unable to close http response", e);
-                }
+                IOUtils.closeQuietly(response.body());
             }
         }
     }

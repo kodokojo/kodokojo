@@ -30,7 +30,7 @@ public interface BrickManager {
      * @param projectConfiguration The projectConfiguration which contain all data required to configure Brick.
      * @param brickType The BrickType to start.
      */
-    void configure(ProjectConfiguration projectConfiguration, BrickType brickType);
+    void configure(ProjectConfiguration projectConfiguration, BrickType brickType) throws ProjectConfigurationException;
 
     /**
      * Stop a given Brick

@@ -4,6 +4,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import io.kodokojo.brick.BrickConfigurerProvider;
+import io.kodokojo.brick.BrickUrlFactory;
 import io.kodokojo.commons.utils.servicelocator.ServiceLocator;
 import io.kodokojo.commons.utils.servicelocator.marathon.MarathonServiceLocator;
 import io.kodokojo.config.ApplicationConfig;
@@ -27,9 +28,9 @@ public class MarathonModule extends AbstractModule {
 
     @Provides
     @Singleton
-    BrickManager provideBrickManager(MarathonConfig marathonConfig, BrickConfigurerProvider brickConfigurerProvider, ApplicationConfig applicationConfig) {
+    BrickManager provideBrickManager(MarathonConfig marathonConfig, BrickConfigurerProvider brickConfigurerProvider, ApplicationConfig applicationConfig, BrickUrlFactory brickUrlFactory) {
         MarathonServiceLocator marathonServiceLocator = new MarathonServiceLocator(marathonConfig.url());
-        return new MarathonBrickManager(marathonConfig.url(), marathonServiceLocator, brickConfigurerProvider, applicationConfig.domain());
+        return new MarathonBrickManager(marathonConfig.url(), marathonServiceLocator, brickConfigurerProvider, applicationConfig.domain(), brickUrlFactory);
     }
 
     @Provides

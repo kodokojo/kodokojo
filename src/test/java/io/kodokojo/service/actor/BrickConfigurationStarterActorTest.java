@@ -14,6 +14,7 @@ import io.kodokojo.brick.BrickAlreadyExist;
 import io.kodokojo.brick.BrickStartContext;
 import io.kodokojo.brick.BrickStateMsg;
 import io.kodokojo.service.ConfigurationStore;
+import io.kodokojo.service.ProjectConfigurationException;
 import io.kodokojo.service.dns.DnsEntry;
 import io.kodokojo.service.dns.DnsManager;
 import org.assertj.core.api.Assertions;
@@ -101,7 +102,11 @@ public class BrickConfigurationStarterActorTest {
                     assertThat(dnsEntry.getValue()).isEqualTo("127.0.0.1");
 
                     verify(configurationStore).storeSSLKeys(eq("Acme"), eq("ci"), any(SSLKeyPair.class));
-                    verify(brickManager).configure(any(ProjectConfiguration.class), eq(BrickType.CI));
+                    try {
+                        verify(brickManager).configure(any(ProjectConfiguration.class), eq(BrickType.CI));
+                    } catch (ProjectConfigurationException e) {
+                        fail(e.getMessage());
+                    }
                 }
 
             };

@@ -6,6 +6,8 @@ import io.kodokojo.commons.utils.servicelocator.marathon.MarathonServiceLocator;
 import io.kodokojo.model.*;
 import io.kodokojo.brick.BrickConfigurerData;
 import io.kodokojo.service.BrickManager;
+import io.kodokojo.service.ProjectAlreadyExistException;
+import io.kodokojo.service.ProjectConfigurationException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.velocity.Template;
@@ -49,8 +51,10 @@ public class MarathonBrickManager implements BrickManager {
 
     private final String domain;
 
+    private final BrickUrlFactory brickUrlFactory;
+
     @Inject
-    public MarathonBrickManager(String marathonUrl, MarathonServiceLocator marathonServiceLocator, BrickConfigurerProvider brickConfigurerProvider, boolean constrainByTypeAttribute, String domain) {
+    public MarathonBrickManager(String marathonUrl, MarathonServiceLocator marathonServiceLocator, BrickConfigurerProvider brickConfigurerProvider, boolean constrainByTypeAttribute, String domain, BrickUrlFactory brickUrlFactory) {
         if (isBlank(marathonUrl)) {
             throw new IllegalArgumentException("marathonUrl must be defined.");
         }
@@ -63,6 +67,9 @@ public class MarathonBrickManager implements BrickManager {
         if (isBlank(domain)) {
             throw new IllegalArgumentException("domain must be defined.");
         }
+        if (brickUrlFactory == null) {
+            throw new IllegalArgumentException("brickUrlFactory must be defined.");
+        }
         this.marathonUrl = marathonUrl;
         RestAdapter adapter = new RestAdapter.Builder().setEndpoint(marathonUrl).build();
         marathonRestApi = adapter.create(MarathonRestApi.class);
@@ -70,10 +77,11 @@ public class MarathonBrickManager implements BrickManager {
         this.brickConfigurerProvider = brickConfigurerProvider;
         this.constrainByTypeAttribute = constrainByTypeAttribute;
         this.domain = domain;
+        this.brickUrlFactory = brickUrlFactory;
     }
 
-    public MarathonBrickManager(String marathonUrl, MarathonServiceLocator marathonServiceLocator, BrickConfigurerProvider brickConfigurerProvider, String domain) {
-        this(marathonUrl, marathonServiceLocator, brickConfigurerProvider, true, domain);
+    public MarathonBrickManager(String marathonUrl, MarathonServiceLocator marathonServiceLocator, BrickConfigurerProvider brickConfigurerProvider, String domain, BrickUrlFactory brickUrlFactory) {
+        this(marathonUrl, marathonServiceLocator, brickConfigurerProvider, true, domain, brickUrlFactory);
     }
 
 
@@ -132,7 +140,7 @@ public class MarathonBrickManager implements BrickManager {
     }
 
     @Override
-    public void configure(ProjectConfiguration projectConfiguration, BrickType brickType) {
+    public void configure(ProjectConfiguration projectConfiguration, BrickType brickType) throws ProjectConfigurationException {
         if (projectConfiguration == null) {
             throw new IllegalArgumentException("projectConfiguration must be defined.");
         }
@@ -157,10 +165,14 @@ public class MarathonBrickManager implements BrickManager {
                     LOGGER.error("Unable to find a valid entrypoint for brick '{}' on project {}", type, name);
                 } else {
                     List<User> users = projectConfiguration.getUsers();
-                    BrickConfigurerData brickConfigurerData = configurer.configure(new BrickConfigurerData(projectConfiguration.getName(), entrypoint, domain, projectConfiguration.getOwner(), users));
-                    configurer.addUsers(brickConfigurerData, users);
-                    if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug("Adding users {} to brick {}", StringUtils.join(users, ","), brickType);
+                    try {
+                        BrickConfigurerData brickConfigurerData = configurer.configure(new BrickConfigurerData(projectConfiguration.getName(), entrypoint, domain, projectConfiguration.getOwner(), users));
+                        configurer.addUsers(brickConfigurerData, users);
+                        if (LOGGER.isDebugEnabled()) {
+                            LOGGER.debug("Adding users {} to brick {}", StringUtils.join(users, ","), brickType);
+                        }
+                    } catch (BrickConfigurationException e) {
+                        throw  new ProjectConfigurationException("En error occur while trying to configure brick " + brickType.name() + " on project " +projectConfiguration.getName(), e);
                     }
                 }
             } else {
@@ -217,6 +229,7 @@ public class MarathonBrickManager implements BrickManager {
         context.put("projectName", projectConfiguration.getName().toLowerCase());
         context.put("stack", projectConfiguration.getDefaultStackConfiguration());
         context.put("brick", brickConfiguration);
+        context.put("brickUrl", brickUrlFactory.forgeUrl(projectConfiguration.getName(), brickConfiguration.getType().name()));
         context.put("constrainByTypeAttribute", this.constrainByTypeAttribute);
         StringWriter sw = new StringWriter();
         template.merge(context, sw);

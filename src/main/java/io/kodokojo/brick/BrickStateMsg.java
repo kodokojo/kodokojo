@@ -21,7 +21,9 @@ public class BrickStateMsg {
 
     public final State state;
 
-    public BrickStateMsg(String projectConfigurationIdentifier, String brickType, String brickName, State state) {
+    public final String message;
+
+    public BrickStateMsg(String projectConfigurationIdentifier, String brickType, String brickName, State state, String message) {
         if (isBlank(projectConfigurationIdentifier)) {
             throw new IllegalArgumentException("projectConfigurationIdentifier must be defined.");
         }
@@ -38,6 +40,11 @@ public class BrickStateMsg {
         this.brickType = brickType;
         this.brickName = brickName;
         this.state = state;
+        this.message = message;
+    }
+
+    public BrickStateMsg(String projectConfigurationIdentifier, String brickType, String brickName, State state) {
+        this(projectConfigurationIdentifier, brickType, brickName, state, null);
     }
 
     public String getProjectConfigurationIdentifier() {
@@ -56,12 +63,17 @@ public class BrickStateMsg {
         return state;
     }
 
+    public String getMessage() {
+        return message;
+    }
+
     @Override
     public String toString() {
         return "BrickStateMsg{" +
                 "projectConfigurationIdentifier='" + projectConfigurationIdentifier + '\'' +
                 ", brickType='" + brickType + '\'' +
                 ", brickName='" + brickName + '\'' +
+                ", message=" + message +
                 ", state=" + state +
                 '}';
     }

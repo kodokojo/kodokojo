@@ -3,14 +3,11 @@ package io.kodokojo.bdd.stage;
 import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.ExpectedScenarioState;
 import com.tngtech.jgiven.annotation.ProvidedScenarioState;
+import io.kodokojo.brick.*;
 import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.model.Brick;
 import io.kodokojo.model.User;
 import io.kodokojo.brick.gitlab.GitlabConfigurer;
-import io.kodokojo.brick.BrickConfigurer;
-import io.kodokojo.brick.BrickConfigurerData;
-import io.kodokojo.brick.BrickConfigurerProvider;
-import io.kodokojo.brick.BrickFactory;
 
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
@@ -60,10 +57,12 @@ public class BrickConfigurerWhen<SELF extends BrickConfigurerWhen<?>> extends St
 
         BrickConfigurerData configurationData = new BrickConfigurerData("Acme", brickUrl, "kodokojo.dev", defaultUser, users);
         configurationData.getContext().put(GitlabConfigurer.GITLAB_FORCE_ENTRYPOINT_KEY, Boolean.TRUE); //Specific config for Gitlab.
-
-        configurationData = brickConfigurer.configure(configurationData);
-        this.brickConfigurerData = brickConfigurer.addUsers(configurationData, users);
-
+        try {
+            configurationData = brickConfigurer.configure(configurationData);
+            this.brickConfigurerData = brickConfigurer.addUsers(configurationData, users);
+        } catch (BrickConfigurationException e) {
+            fail(e.getMessage());
+        }
         return self();
     }
 

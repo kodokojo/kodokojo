@@ -36,7 +36,7 @@ public interface BrickConfigurer {
      * @param brickConfigurerData All data which may useful to configure the Brick, like th admin configuration or Brick endpoint.
      * @return The configurationData which may be modify when configuring the Brick.
      */
-    BrickConfigurerData configure(BrickConfigurerData brickConfigurerData);
+    BrickConfigurerData configure(BrickConfigurerData brickConfigurerData) throws BrickConfigurationException;
 
     /**
      * Add users with informations defined in ConfigurationData on the given Brick.
@@ -44,6 +44,6 @@ public interface BrickConfigurer {
      * @param users The list of users to add.
      * @return The configurationData which may be modify when adding users.
      */
-    BrickConfigurerData addUsers(BrickConfigurerData brickConfigurerData, List<User> users);
+    BrickConfigurerData addUsers(BrickConfigurerData brickConfigurerData, List<User> users) throws BrickConfigurationException;
 
 }
