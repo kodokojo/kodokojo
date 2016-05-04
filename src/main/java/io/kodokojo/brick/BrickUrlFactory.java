@@ -7,16 +7,16 @@ import static org.apache.commons.lang.StringUtils.isBlank;
 
 public interface BrickUrlFactory {
 
-    String forgeUrl(String entity, String projectName, String brickName);
+    String forgeUrl(String entity, String projectName, String brickType);
 
-    default String forgeUrl(String projectName, String brickName) {
+    default String forgeUrl(String projectName, String brickType) {
         if (isBlank(projectName)) {
             throw new IllegalArgumentException("projectName must be defined.");
         }
-        if (isBlank(brickName)) {
-            throw new IllegalArgumentException("brickName must be defined.");
+        if (isBlank(brickType)) {
+            throw new IllegalArgumentException("brickType must be defined.");
         }
-        return forgeUrl(null, projectName.toLowerCase(), brickName.toLowerCase());
+        return forgeUrl(null, projectName.toLowerCase(), brickType.toLowerCase());
     }
 
     default String forgeUrl(ProjectConfiguration projectConfiguration, BrickConfiguration brickConfiguration) {
