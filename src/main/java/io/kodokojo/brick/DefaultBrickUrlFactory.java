@@ -20,17 +20,17 @@ public class DefaultBrickUrlFactory implements BrickUrlFactory {
     }
 
     @Override
-    public String forgeUrl(String entity, String projectName, String brickName) {
+    public String forgeUrl(String entity, String projectName, String brickType) {
         if (isBlank(projectName)) {
             throw new IllegalArgumentException("projectName must be defined.");
         }
-        if (isBlank(brickName)) {
+        if (isBlank(brickType)) {
             throw new IllegalArgumentException("brickName must be defined.");
         }
         if (StringUtils.isBlank(entity)) {
-            return String.format(DOMAIN_FORMAT_WITHOUT_ENTITY, brickName.toLowerCase(), projectName.toLowerCase(), baseDomainename);
+            return String.format(DOMAIN_FORMAT_WITHOUT_ENTITY, brickType.toLowerCase(), projectName.toLowerCase(), baseDomainename);
         } else {
-            return String.format(DOMAIN_FORMAT_WITH_ENTITY, brickName.toLowerCase(), projectName.toLowerCase(), entity.toLowerCase(), baseDomainename);
+            return String.format(DOMAIN_FORMAT_WITH_ENTITY, brickType.toLowerCase(), projectName.toLowerCase(), entity.toLowerCase(), baseDomainename);
         }
     }
 }
