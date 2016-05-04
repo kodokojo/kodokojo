@@ -8,7 +8,10 @@ import com.squareup.okhttp.Request;
 import io.kodokojo.commons.model.Service;
 import io.kodokojo.commons.utils.DockerTestSupport;
 import io.kodokojo.commons.utils.RSAUtils;
+import io.kodokojo.model.Entity;
 import io.kodokojo.model.User;
+import io.kodokojo.service.ProjectManager;
+import io.kodokojo.service.ProjectStore;
 import io.kodokojo.service.UserManager;
 import org.apache.commons.lang.StringUtils;
 import org.glassfish.tyrus.client.ClientManager;
@@ -112,7 +115,7 @@ public class StageUtils {
         return new Service("redis", redisHost, redisPort);
     }
 
-    public static User createUser(String username, UserManager userManager) {
+    public static User createUser(String username, UserManager userManager, ProjectStore projectStore) {
         String identifier = userManager.generateId();
         String password = new BigInteger(130, new SecureRandom()).toString(32);
         User user = null;
@@ -121,8 +124,10 @@ public class StageUtils {
             KeyPair keyPair = RSAUtils.generateRsaKeyPair();
             RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
             String email = username + "@kodokojo.io";
-            user = new User(identifier, username, username, email, password, RSAUtils.encodePublicKey(publicKey, email));
-            boolean userAdded = userManager.addUser(user);
+            String sshPublicKey = RSAUtils.encodePublicKey(publicKey, email);
+            user = new User(identifier, username, username, email, password, sshPublicKey);
+            String entityId = projectStore.addEntity(new Entity(username, user));
+            boolean userAdded = userManager.addUser(new User(user.getIdentifier(), entityId, username, username, email, password, sshPublicKey));
             assertThat(userAdded).isTrue();
 
         } catch (NoSuchAlgorithmException e) {

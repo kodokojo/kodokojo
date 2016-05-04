@@ -36,7 +36,7 @@ public class BrickConfigurerData {
 
     private final String entrypoint;
 
-    private final User adminUser;
+    private final List<User> admins;
 
     private final List<User> users;
 
@@ -44,7 +44,7 @@ public class BrickConfigurerData {
 
     private final Map<String, Object> context;
 
-    public BrickConfigurerData(String projectName, String entrypoint, String domaine, User adminUser, List<User> users) {
+    public BrickConfigurerData(String projectName, String entrypoint, String domaine, List<User> admins, List<User> users) {
         if (isBlank(projectName)) {
             throw new IllegalArgumentException("projectName must be defined.");
         }
@@ -54,8 +54,8 @@ public class BrickConfigurerData {
         if (isBlank(domaine)) {
             throw new IllegalArgumentException("domaine must be defined.");
         }
-        if (adminUser == null) {
-            throw new IllegalArgumentException("adminUser must be defined.");
+        if (admins == null || admins.size() < 1) {
+            throw new IllegalArgumentException("admins must be defined.");
         }
         if (users == null) {
             throw new IllegalArgumentException("users must be defined.");
@@ -63,10 +63,12 @@ public class BrickConfigurerData {
         this.projectName = projectName;
         this.entrypoint = entrypoint;
         this.domaine = domaine;
-        this.adminUser = adminUser;
+        this.admins = admins;
         this.users = users;
         this.context = new HashMap<>();
     }
+
+
 
     public String getProjectName() {
         return projectName;
@@ -80,8 +82,12 @@ public class BrickConfigurerData {
         return domaine;
     }
 
-    public User getAdminUser() {
-        return adminUser;
+    public User getDefaultAdmin() {
+        return admins.get(0);
+    }
+
+    public List<User> getAdmins() {
+        return admins;
     }
 
     public List<User> getUsers() {
@@ -105,7 +111,7 @@ public class BrickConfigurerData {
                 "projectName='" + projectName + '\'' +
                 ",domaine='" + domaine + '\'' +
                 ",entrypoint='" + entrypoint + '\'' +
-                ", adminUser=" + adminUser +
+                ", admins=" + admins +
                 ", users=" + users +
                 ", context=" + context +
                 '}';

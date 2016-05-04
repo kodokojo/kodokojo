@@ -6,9 +6,9 @@ import io.kodokojo.commons.utils.servicelocator.marathon.MarathonServiceLocator;
 import io.kodokojo.model.*;
 import io.kodokojo.brick.BrickConfigurerData;
 import io.kodokojo.service.BrickManager;
-import io.kodokojo.service.ProjectAlreadyExistException;
 import io.kodokojo.service.ProjectConfigurationException;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
@@ -164,9 +164,9 @@ public class MarathonBrickManager implements BrickManager {
                 if (StringUtils.isBlank(entrypoint)) {
                     LOGGER.error("Unable to find a valid entrypoint for brick '{}' on project {}", type, name);
                 } else {
-                    List<User> users = projectConfiguration.getUsers();
+                    List<User> users = IteratorUtils.toList(projectConfiguration.getUsers());
                     try {
-                        BrickConfigurerData brickConfigurerData = configurer.configure(new BrickConfigurerData(projectConfiguration.getName(), entrypoint, domain, projectConfiguration.getOwner(), users));
+                        BrickConfigurerData brickConfigurerData = configurer.configure(new BrickConfigurerData(projectConfiguration.getName(), entrypoint, domain, IteratorUtils.toList(projectConfiguration.getAdmins()), users));
                         configurer.addUsers(brickConfigurerData, users);
                         if (LOGGER.isDebugEnabled()) {
                             LOGGER.debug("Adding users {} to brick {}", StringUtils.join(users, ","), brickType);

@@ -38,7 +38,7 @@ import com.tngtech.jgiven.attachment.Attachment;
 import io.kodokojo.entrypoint.dto.ProjectConfigDto;
 import io.kodokojo.entrypoint.dto.UserDto;
 import io.kodokojo.model.User;
-import io.kodokojo.service.user.redis.RedisUserManager;
+import io.kodokojo.service.redis.RedisUserManager;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
@@ -162,7 +162,7 @@ public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF
             Gson gson = new GsonBuilder().create();
             projectConfigDto = gson.fromJson(bodyResponse, ProjectConfigDto.class);
             assertThat(projectConfigDto).isNotNull();
-            assertThat(projectConfigDto.getOwner().getUsername()).isEqualTo(requesterUserInfo.getUsername());
+            assertThat(projectConfigDto.getAdmins().get(0).getUsername()).isEqualTo(requesterUserInfo.getUsername());
             assertThat(projectConfigDto.getUsers()).isNotEmpty();
             assertThat(projectConfigDto.getStackConfigs()).isNotEmpty();
             currentStep.addAttachment(Attachment.plainText(bodyResponse).withTitle("Project configuration").withFileName("projectConfiguration_" + projectConfigurationId + ".json"));

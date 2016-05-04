@@ -36,7 +36,7 @@ import io.kodokojo.service.*;
 import io.kodokojo.service.redis.RedisBootstrapConfigurationProvider;
 import io.kodokojo.service.redis.RedisProjectStore;
 import io.kodokojo.service.user.SimpleUserAuthenticator;
-import io.kodokojo.service.user.redis.RedisUserManager;
+import io.kodokojo.service.redis.RedisUserManager;
 import io.kodokojo.test.utils.TestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;

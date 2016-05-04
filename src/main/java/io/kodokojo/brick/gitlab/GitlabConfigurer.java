@@ -40,7 +40,6 @@ import retrofit.client.OkClient;
 import javax.inject.Inject;
 import javax.net.ssl.*;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.*;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
@@ -94,7 +93,7 @@ public class GitlabConfigurer implements BrickConfigurer {
         OkHttpClient httpClient = provideDefaultOkHttpClient();
         if (signIn(httpClient, gitlabUrl, ROOT_LOGIN, OLD_PASSWORD)) {
             String token = getAuthenticityToken(httpClient, gitlabUrl + PASSWORD_FORM_URL, META_TOKEN_PATTERN);
-            String newPassword = brickConfigurerData.getAdminUser().getPassword();
+            String newPassword = brickConfigurerData.getDefaultAdmin().getPassword();
             if (changePassword(httpClient, gitlabUrl, token, OLD_PASSWORD, newPassword)) {
                 if (signIn(httpClient, gitlabUrl, ROOT_LOGIN, newPassword)) {
                     Request request = new Request.Builder().get().url(gitlabUrl + ACCOUNT_URL).build();

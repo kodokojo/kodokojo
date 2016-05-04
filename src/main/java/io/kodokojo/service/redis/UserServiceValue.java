@@ -1,4 +1,4 @@
-package io.kodokojo.service.user;
+package io.kodokojo.service.redis;
 
 /*
  * #%L

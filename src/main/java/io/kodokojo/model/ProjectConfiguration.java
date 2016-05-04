@@ -33,9 +33,11 @@ public class ProjectConfiguration implements Configuration, Cloneable, Serializa
 
     private final String identifier;
 
+    private final String entityIdentifier;
+
     private final String name;
 
-    private final User owner;
+    private final List<User> admins;
 
     private final Set<StackConfiguration> stackConfigurations;
 
@@ -45,34 +47,42 @@ public class ProjectConfiguration implements Configuration, Cloneable, Serializa
 
     private  Date versionDate;
 
-    public ProjectConfiguration(String identifier, String name, User owner, Set<StackConfiguration> stackConfigurations, List<User> users) {
+    public ProjectConfiguration(String entityIdentifier, String identifier, String name, List<User> admins, Set<StackConfiguration> stackConfigurations, List<User> users) {
+        if (isBlank(entityIdentifier)) {
+            throw new IllegalArgumentException("entityIdentifier must be defined.");
+        }
         if (isBlank(name)) {
             throw new IllegalArgumentException("name must be defined.");
         }
-        if (owner == null) {
-            throw new IllegalArgumentException("owner must be defined.");
+        if (CollectionUtils.isEmpty(admins)) {
+            throw new IllegalArgumentException("admins must be defined.");
         }
         if (CollectionUtils.isEmpty(stackConfigurations)) {
             throw new IllegalArgumentException("stackConfigurations must be defined and contain some values.");
         }
 
         this.identifier = identifier;
+        this.entityIdentifier = entityIdentifier;
         this.name = name;
-        this.owner = owner;
+        this.admins = admins;
         this.stackConfigurations = stackConfigurations;
         this.users = users;
     }
 
-    public ProjectConfiguration( String name, User owner, Set<StackConfiguration> stackConfigurations, List<User> users) {
-        this(null,name,owner, stackConfigurations, users);
+    public ProjectConfiguration(String entityIdentifier, String name, List<User> admins, Set<StackConfiguration> stackConfigurations, List<User> users) {
+        this(entityIdentifier, null,name, admins, stackConfigurations, users);
     }
 
     public String getIdentifier() {
         return identifier;
     }
 
-    public User getOwner() {
-        return owner;
+    public String getEntityIdentifier() {
+        return entityIdentifier;
+    }
+
+    public Iterator<User> getAdmins() {
+        return admins.iterator();
     }
 
     public String getName() {
@@ -83,8 +93,13 @@ public class ProjectConfiguration implements Configuration, Cloneable, Serializa
         return new HashSet<>(stackConfigurations);
     }
 
-    public List<User> getUsers() {
-        return users;
+    public Iterator<User> getUsers() {
+        return users.iterator();
+    }
+
+    public void setUsers(List<User> users) {
+        this.users.clear();
+        this.users.addAll(users);
     }
 
     @Override
@@ -120,19 +135,24 @@ public class ProjectConfiguration implements Configuration, Cloneable, Serializa
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        ProjectConfiguration projectConfiguration = (ProjectConfiguration) o;
+        ProjectConfiguration that = (ProjectConfiguration) o;
 
-        if (!name.equals(projectConfiguration.name)) return false;
-        if (!owner.equals(projectConfiguration.owner)) return false;
-        if (!stackConfigurations.equals(projectConfiguration.stackConfigurations)) return false;
-        return users.equals(projectConfiguration.users);
+        if (!identifier.equals(that.identifier)) return false;
+        if (entityIdentifier != null ? !entityIdentifier.equals(that.entityIdentifier) : that.entityIdentifier != null)
+            return false;
+        if (!name.equals(that.name)) return false;
+        if (!admins.equals(that.admins)) return false;
+        if (!stackConfigurations.equals(that.stackConfigurations)) return false;
+        return users.equals(that.users);
 
     }
 
     @Override
     public int hashCode() {
-        int result = name.hashCode();
-        result = 31 * result + owner.hashCode();
+        int result = identifier.hashCode();
+        result = 31 * result + (entityIdentifier != null ? entityIdentifier.hashCode() : 0);
+        result = 31 * result + name.hashCode();
+        result = 31 * result + admins.hashCode();
         result = 31 * result + stackConfigurations.hashCode();
         result = 31 * result + users.hashCode();
         return result;
@@ -140,7 +160,7 @@ public class ProjectConfiguration implements Configuration, Cloneable, Serializa
 
     @Override
     protected Object clone() throws CloneNotSupportedException {
-        return new ProjectConfiguration(name, owner, new HashSet<StackConfiguration>(stackConfigurations), new ArrayList<User>(users));
+        return new ProjectConfiguration(entityIdentifier, name, admins, new HashSet<>(stackConfigurations), new ArrayList<>(users));
     }
 
 

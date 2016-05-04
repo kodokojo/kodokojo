@@ -31,6 +31,8 @@ public class User implements Serializable {
 
     private final String identifier;
 
+    private final String entityIdentifier;
+
     private final String firstName;
 
     private final String lastName;
@@ -45,7 +47,7 @@ public class User implements Serializable {
 
     private final String sshPublicKey;
 
-    public User(String identifier, String firstName, String lastName, String username, String email, String password, String sshPublicKey) {
+    public User(String identifier, String entityIdentifier, String firstName, String lastName, String username, String email, String password, String sshPublicKey) {
         if (isBlank(identifier)) {
             throw new IllegalArgumentException("identifier must be defined.");
         }
@@ -59,6 +61,7 @@ public class User implements Serializable {
             throw new IllegalArgumentException("username must be defined.");
         }
         this.identifier = identifier;
+        this.entityIdentifier = entityIdentifier;
         this.firstName = firstName.trim();
         this.lastName = lastName.trim();
         this.name = this.firstName + (isNotBlank(this.firstName) ? " " : "") + this.lastName;
@@ -68,12 +71,20 @@ public class User implements Serializable {
         this.sshPublicKey = sshPublicKey;
     }
 
+    public User(String identifier, String entityIdentifier, String name, String username, String email, String password, String sshPublicKey) {
+        this(identifier, entityIdentifier, (name.contains(" ") ? name.substring(0,name.lastIndexOf(" ")): name), (name.contains(" ") ?name.substring(name.lastIndexOf(" "), name.length()): name), username, email, password, sshPublicKey);
+    }
+
     public User(String identifier, String name, String username, String email, String password, String sshPublicKey) {
-        this(identifier, (name.contains(" ") ? name.substring(0,name.lastIndexOf(" ")): name), (name.contains(" ") ?name.substring(name.lastIndexOf(" "), name.length()): name), username, email, password, sshPublicKey);
+        this(identifier, null, name, username, email, password, sshPublicKey);
     }
 
     public String getIdentifier() {
         return identifier;
+    }
+
+    public String getEntityIdentifier() {
+        return entityIdentifier;
     }
 
     public String getName() {

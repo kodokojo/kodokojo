@@ -2,7 +2,7 @@ package io.kodokojo.config.module;
 
 import com.google.inject.Provider;
 import io.kodokojo.config.RedisConfig;
-import io.kodokojo.service.user.redis.RedisUserManager;
+import io.kodokojo.service.redis.RedisUserManager;
 
 import javax.crypto.SecretKey;
 

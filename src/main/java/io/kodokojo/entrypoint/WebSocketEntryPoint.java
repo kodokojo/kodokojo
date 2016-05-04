@@ -23,9 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Base64;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 //  WebSocket colse event code https://developer.mozilla.org/fr/docs/Web/API/CloseEvent
@@ -170,16 +168,21 @@ public class WebSocketEntryPoint implements BrickStateMsgListener {
         WebSocketMessage message = convertToWebSocketMessage(brickStateMsg);
         String projectConfigurationIdentifier = brickStateMsg.getProjectConfigurationIdentifier();
         ProjectConfiguration projectConfiguration = projectStore.getProjectConfigurationById(projectConfigurationIdentifier);
-        UserSession ownerSession = userConnectedSession.get(projectConfiguration.getOwner().getIdentifier());
-        if (ownerSession != null) {
-            sendMessageToUser(message, ownerSession);
-            projectConfiguration.getUsers().forEach(user -> {
-                UserSession session = userConnectedSession.get(user.getIdentifier());
-                if (session != null && !ownerSession.getUser().getIdentifier().equals(user.getIdentifier())) {
-                    sendMessageToUser(message, session);
-                }
-            });
-        }
+        Iterator<User> admins = projectConfiguration.getAdmins();
+        List<String> adminIds = new ArrayList<>();
+        admins.forEachRemaining(admin -> adminIds.add(admin.getIdentifier()));
+        adminIds.stream().forEach(adminId -> {
+            UserSession ownerSession = userConnectedSession.get(adminId);
+            if (ownerSession != null) {
+                sendMessageToUser(message, ownerSession);
+                projectConfiguration.getUsers().forEachRemaining(user -> {
+                    UserSession session = userConnectedSession.get(user.getIdentifier());
+                    if (session != null && !ownerSession.getUser().getIdentifier().equals(user.getIdentifier())) {
+                        sendMessageToUser(message, session);
+                    }
+                });
+            }
+        });
     }
 
     private void sendMessageToUser(WebSocketMessage message, UserSession userSession) {

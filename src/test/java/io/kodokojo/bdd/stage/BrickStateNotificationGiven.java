@@ -23,7 +23,7 @@ import io.kodokojo.service.*;
 import io.kodokojo.service.dns.DnsManager;
 import io.kodokojo.service.redis.RedisProjectStore;
 import io.kodokojo.service.user.SimpleUserAuthenticator;
-import io.kodokojo.service.user.redis.RedisUserManager;
+import io.kodokojo.service.redis.RedisUserManager;
 import io.kodokojo.test.utils.TestUtils;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
@@ -93,7 +93,7 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
         int port = TestUtils.getEphemeralPort();
 
         RedisUserManager redisUserManager = new RedisUserManager(secreteKey, service.getHost(), service.getPort());
-        RedisProjectStore redisProjectStore = new RedisProjectStore(secreteKey, service.getHost(), service.getPort(), new DefaultBrickFactory(null));
+        RedisProjectStore redisProjectStore = new RedisProjectStore(secreteKey, service.getHost(), service.getPort(), new DefaultBrickFactory());
         Injector injector = Guice.createInjector(new ActorModule(), new AbstractModule() {
             @Override
             protected void configure() {
@@ -143,13 +143,13 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
         }
         SSLKeyPair caKey = SSLUtils.createSelfSignedSSLKeyPair("Fake CA", (RSAPrivateKey) keyPair.getPrivate(), (RSAPublicKey) keyPair.getPublic());
         DefaultProjectManager projectManager = new DefaultProjectManager(caKey, "kodokojo.dev", configurationStore, redisProjectStore, bootstrapProvider, dnsManager, injector.getInstance(BrickConfigurationStarter.class), new DefaultBrickUrlFactory("kodokojo.dev"), 10000000);
-        restEntryPoint = new RestEntryPoint(port, injector.getInstance(UserManager.class), new SimpleUserAuthenticator(redisUserManager),redisProjectStore, projectManager,new DefaultBrickFactory(null));
+        restEntryPoint = new RestEntryPoint(port, injector.getInstance(UserManager.class), new SimpleUserAuthenticator(redisUserManager),redisProjectStore, projectManager,new DefaultBrickFactory());
         restEntryPoint.start();
         return self();
     }
 
     public SELF i_am_user_$(@Quoted String username) {
-        currentUser = StageUtils.createUser(username, Launcher.INJECTOR.getInstance(UserManager.class));
+        currentUser = StageUtils.createUser(username, Launcher.INJECTOR.getInstance(UserManager.class), Launcher.INJECTOR.getInstance(ProjectStore.class));
         return self();
     }
 

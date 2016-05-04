@@ -1,4 +1,4 @@
-package io.kodokojo.service.user;
+package io.kodokojo.service.redis;
 
 /*
  * #%L
@@ -28,7 +28,7 @@ import java.io.Serializable;
 
 public class UserValue implements Serializable {
 
-    private String id;
+    private String entityId;
 
     private String name;
 
@@ -40,8 +40,9 @@ public class UserValue implements Serializable {
 
     private String sshPublicKey;
 
-    public UserValue(String name, String username, String email, byte[] password, String sshPublicKey) {
+    public UserValue(String name, String username,String entityId, String email, byte[] password, String sshPublicKey) {
         this.name = name;
+        this.entityId = entityId;
         this.username = username;
         this.email = email;
         this.password = password;
@@ -49,7 +50,7 @@ public class UserValue implements Serializable {
     }
 
     public UserValue(User user, byte[] password) {
-        this(user.getName(), user.getUsername(), user.getEmail(), password, user.getSshPublicKey());
+        this(user.getName(), user.getUsername(), user.getEntityIdentifier(), user.getEmail(), password, user.getSshPublicKey());
     }
 
     public void setName(String name) {
@@ -58,6 +59,10 @@ public class UserValue implements Serializable {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public String getEntityId() {
+        return entityId;
     }
 
     public void setEmail(String email) {
@@ -97,6 +102,7 @@ public class UserValue implements Serializable {
         return "UserValue{" +
                 "name='" + name + '\'' +
                 ", username='" + username + '\'' +
+                ", entityId='" + entityId + '\'' +
                 ", email='" + email + '\'' +
                 ", sshPublicKey='" + sshPublicKey + '\'' +
                 '}';

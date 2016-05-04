@@ -19,7 +19,7 @@ public class DefaultBrickConfigurerProviderTest {
 
     @Before
     public void setup() {
-        brickFactory = new DefaultBrickFactory(null);
+        brickFactory = new DefaultBrickFactory();
         brickConfigurerProvider = new DefaultBrickConfigurerProvider(new DefaultBrickUrlFactory("kodokojo.dev"));
     }
 

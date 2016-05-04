@@ -12,16 +12,16 @@ public class ProjectConfigDto implements Serializable {
 
     private String identifier;
 
-    private UserDto owner;
+    private List<UserDto> admins;
 
     private List<UserDto> users;
 
     private List<StackConfigDto> stackConfigs;
 
-    public ProjectConfigDto(String name, String identifier, UserDto owner, List<UserDto> users) {
+    public ProjectConfigDto(String name, String identifier, List<UserDto> admins, List<UserDto> users) {
         this.name = name;
         this.identifier = identifier;
-        this.owner = owner;
+        this.admins = admins;
         this.users = users;
     }
 
@@ -31,10 +31,11 @@ public class ProjectConfigDto implements Serializable {
         }
         this.name = projectConfiguration.getName();
         this.identifier = projectConfiguration.getIdentifier();
-        this.owner = new UserDto(projectConfiguration.getOwner());
-        this.users = new ArrayList<>(projectConfiguration.getUsers().size());
+        this.admins = new ArrayList<>();
+        projectConfiguration.getAdmins().forEachRemaining(admin -> admins.add(new UserDto(admin)));
+        this.users = new ArrayList<>();
         this.stackConfigs = new ArrayList<>(projectConfiguration.getStackConfigurations().size());
-        projectConfiguration.getUsers().forEach(user -> users.add(new UserDto(user)));
+        projectConfiguration.getUsers().forEachRemaining(user -> users.add(new UserDto(user)));
         projectConfiguration.getStackConfigurations().forEach(stackConfiguration -> stackConfigs.add(new StackConfigDto(stackConfiguration)));
     }
 
@@ -46,12 +47,12 @@ public class ProjectConfigDto implements Serializable {
         this.name = name;
     }
 
-    public UserDto getOwner() {
-        return owner;
+    public List<UserDto> getAdmins() {
+        return admins;
     }
 
-    public void setOwner(UserDto owner) {
-        this.owner = owner;
+    public void setAdmins(List<UserDto> admins) {
+        this.admins = admins;
     }
 
     public List<UserDto> getUsers() {
@@ -83,7 +84,7 @@ public class ProjectConfigDto implements Serializable {
         return "ProjectConfigDto{" +
                 "identifier='" + identifier + '\'' +
                 ", name='" + name + '\'' +
-                ", owner=" + owner +
+                ", admins=" + admins +
                 ", users=" + users +
                 ", stackConfigs=" + stackConfigs +
                 '}';

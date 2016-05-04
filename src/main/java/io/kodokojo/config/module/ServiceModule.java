@@ -36,8 +36,8 @@ public class ServiceModule extends AbstractModule {
 
     @Provides
     @Singleton
-    BrickFactory provideBrickFactory(PropertyValueProvider propertyValueProvider) {
-        return new DefaultBrickFactory(propertyValueProvider);
+    BrickFactory provideBrickFactory() {
+        return new DefaultBrickFactory();
     }
 
     @Provides

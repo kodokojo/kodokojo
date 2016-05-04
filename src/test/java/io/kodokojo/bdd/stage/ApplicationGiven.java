@@ -37,6 +37,7 @@ import io.kodokojo.commons.model.Service;
 import io.kodokojo.config.ApplicationConfig;
 import io.kodokojo.entrypoint.RestEntryPoint;
 import io.kodokojo.entrypoint.UserAuthenticator;
+import io.kodokojo.model.Entity;
 import io.kodokojo.model.User;
 import io.kodokojo.commons.utils.DockerTestSupport;
 import io.kodokojo.commons.utils.RSAUtils;
@@ -46,7 +47,7 @@ import io.kodokojo.service.*;
 import io.kodokojo.service.redis.RedisProjectStore;
 import io.kodokojo.service.user.SimpleCredential;
 import io.kodokojo.service.user.SimpleUserAuthenticator;
-import io.kodokojo.service.user.redis.RedisUserManager;
+import io.kodokojo.service.redis.RedisUserManager;
 import io.kodokojo.test.utils.TestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -164,10 +165,10 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
             generator.init(128);
             SecretKey aesKey = generator.generateKey();
             userManager = new RedisUserManager(aesKey, redisHost, redisPort);
-            projectStore = new RedisProjectStore(aesKey, redisHost, redisPort, new DefaultBrickFactory(null));
+            projectStore = new RedisProjectStore(aesKey, redisHost, redisPort, new DefaultBrickFactory());
             UserAuthenticator<SimpleCredential> userAuthenticator = new SimpleUserAuthenticator(userManager);
             projectManager = mock(ProjectManager.class);
-            restEntryPoint = new RestEntryPoint(port, userManager,userAuthenticator,projectStore, projectManager, new DefaultBrickFactory(null));
+            restEntryPoint = new RestEntryPoint(port, userManager,userAuthenticator,projectStore, projectManager, new DefaultBrickFactory());
             Launcher.INJECTOR = Guice.createInjector(new AbstractModule() {
                 @Override
                 protected void configure() {
@@ -225,7 +226,13 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
                 KeyPair keyPair = RSAUtils.generateRsaKeyPair();
                 RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
                 String email = username + "@kodokojo.io";
-                boolean userAdded = userManager.addUser(new User(identifier, username, username, email, password, RSAUtils.encodePublicKey(publicKey, email)));
+
+                User user = new User(identifier, username, username, email, password, RSAUtils.encodePublicKey(publicKey, email));
+
+                Entity entity = new Entity(user.getUsername(), user);
+                String entityId = projectStore.addEntity(entity);
+                user = new User(user.getIdentifier(), entityId, user.getFirstName(), user.getLastName(), username, email, password, user.getSshPublicKey());
+                boolean userAdded = userManager.addUser(user);
                 assertThat(userAdded).isTrue();
                 whoAmI = username;
                 currentUsers.put(currentUserLogin, new UserInfo(currentUserLogin, identifier, password, email));

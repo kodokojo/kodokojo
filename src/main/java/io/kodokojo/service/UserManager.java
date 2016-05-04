@@ -22,6 +22,7 @@ package io.kodokojo.service;
  * #L%
  */
 
+import io.kodokojo.model.ProjectConfiguration;
 import io.kodokojo.model.User;
 import io.kodokojo.model.UserService;
 
@@ -44,4 +45,5 @@ public interface UserManager {
 
     UserService getUserServiceByName(String name);
 
+    boolean userIsAdminOfProjectConfiguration(String username, ProjectConfiguration projectConfiguration);
 }

@@ -1,7 +1,5 @@
 package io.kodokojo.entrypoint.dto;
 
-import io.kodokojo.model.ProjectConfiguration;
-
 import java.io.Serializable;
 import java.util.List;
 
@@ -9,11 +7,14 @@ public class ProjectCreationDto implements Serializable {
 
     private String name;
 
+    private String entityIdentifier;
+
     private String ownerIdentifier;
 
     private List<String> userIdentifiers;
 
-    public ProjectCreationDto(String name, String ownerIdentifier, List<String> userIdentifiers) {
+    public ProjectCreationDto(String entityIdentifier, String name, String ownerIdentifier, List<String> userIdentifiers) {
+        this.entityIdentifier = entityIdentifier;
         this.name = name;
         this.ownerIdentifier = ownerIdentifier;
         this.userIdentifiers = userIdentifiers;
@@ -43,10 +44,15 @@ public class ProjectCreationDto implements Serializable {
         this.userIdentifiers = userIdentifiers;
     }
 
+    public String getEntityIdentifier() {
+        return entityIdentifier;
+    }
+
     @Override
     public String toString() {
         return "ProjectCreationDto{" +
                 "name='" + name + '\'' +
+                ", entityIdentifier='" + entityIdentifier + '\'' +
                 ", ownerIdentifier='" + ownerIdentifier + '\'' +
                 ", userIdentifiers=" + userIdentifiers +
                 '}';

@@ -12,7 +12,7 @@ import io.kodokojo.service.lifecycle.ApplicationLifeCycleManager;
 import io.kodokojo.service.UserManager;
 import io.kodokojo.service.redis.RedisBootstrapConfigurationProvider;
 import io.kodokojo.service.redis.RedisProjectStore;
-import io.kodokojo.service.user.redis.RedisUserManager;
+import io.kodokojo.service.redis.RedisUserManager;
 
 import javax.crypto.SecretKey;
 import javax.inject.Named;

@@ -14,6 +14,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.fail;
@@ -55,7 +56,8 @@ public class ProjectManagerWhen<SELF extends ProjectManagerWhen<?>> extends Stag
             brickConfigurations.add(new BrickConfiguration(new Brick("nexus", BrickType.REPOSITORY)));
             StackConfiguration stackConfiguration = new StackConfiguration(stackName, stackType, brickConfigurations, bootstrapStackData.getLoadBalancerIp(), bootstrapStackData.getSshPort());
             stackConfigurations.add(stackConfiguration);
-            projectConfiguration = new ProjectConfiguration(configurationName, user, stackConfigurations, Arrays.asList(user));
+            List<User> users = Arrays.asList(user);
+            projectConfiguration = new ProjectConfiguration("123456",configurationName, users, stackConfigurations, users);
         }
 
 

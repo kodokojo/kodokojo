@@ -55,7 +55,7 @@ public class BrickConfigurerWhen<SELF extends BrickConfigurerWhen<?>> extends St
         User defaultUser = new User(defaultUserInfo.getIdentifier(), "Jean-Pascal THIERY", defaultUserInfo.getUsername(), defaultUserInfo.getEmail(), defaultUserInfo.getPassword(), sshPublicKey);
         List<User> users = Collections.singletonList(defaultUser);
 
-        BrickConfigurerData configurationData = new BrickConfigurerData("Acme", brickUrl, "kodokojo.dev", defaultUser, users);
+        BrickConfigurerData configurationData = new BrickConfigurerData("Acme", brickUrl, "kodokojo.dev", users, users);
         configurationData.getContext().put(GitlabConfigurer.GITLAB_FORCE_ENTRYPOINT_KEY, Boolean.TRUE); //Specific config for Gitlab.
         try {
             configurationData = brickConfigurer.configure(configurationData);

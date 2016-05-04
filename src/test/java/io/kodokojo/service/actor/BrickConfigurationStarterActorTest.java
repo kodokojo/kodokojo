@@ -169,7 +169,8 @@ public class BrickConfigurationStarterActorTest {
         Set<BrickConfiguration> brickConfigurations = new HashSet<>();
         brickConfigurations.add(brickConfiguration);
         stackConfigurations.add(new StackConfiguration("build-A", StackType.BUILD, brickConfigurations, "127.0.0.1", 10022));
-        ProjectConfiguration prokectConfiguration = new ProjectConfiguration("123456", "Acme", owner, stackConfigurations, Collections.singletonList(owner));
+        List<User> users = Collections.singletonList(owner);
+        ProjectConfiguration prokectConfiguration = new ProjectConfiguration("123456","7890", "Acme", users, stackConfigurations, users);
         return new BrickStartContext(prokectConfiguration, brickConfiguration, "kodokojo.dev", sslKeyPair, "127.0.0.1");
     }
 

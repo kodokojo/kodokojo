@@ -1,4 +1,4 @@
-package io.kodokojo.service.user;
+package io.kodokojo.service.redis;
 
 /*
  * #%L
@@ -34,7 +34,7 @@ import io.kodokojo.model.UserService;
 import io.kodokojo.commons.utils.DockerTestSupport;
 import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.service.UserManager;
-import io.kodokojo.service.user.redis.RedisUserManager;
+import io.kodokojo.service.redis.RedisUserManager;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;

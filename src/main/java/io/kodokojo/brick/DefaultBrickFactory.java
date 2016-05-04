@@ -26,12 +26,7 @@ public class DefaultBrickFactory implements BrickFactory {
     private final Map<String, Brick> cache ;
 
     @Inject
-    public DefaultBrickFactory(PropertyValueProvider propertyValueProvider) {
-        /*
-        if (propertyValueProvider == null) {
-            throw new IllegalArgumentException("propertyValueProvider must be defined.");
-        }
-        */
+    public DefaultBrickFactory() {
         cache = new HashMap<>();
         cache.put(JENKINS, new Brick(JENKINS, BrickType.CI));
         cache.put(GITLAB, new Brick(GITLAB, BrickType.SCM));

@@ -28,7 +28,7 @@ public class NexusConfigurer implements BrickConfigurer {
 
         OkHttpClient httpClient = provideHttpClient();
 
-        String adminPassword = brickConfigurerData.getAdminUser().getPassword();
+        String adminPassword = brickConfigurerData.getDefaultAdmin().getPassword();
         String xmlBody = getChangePasswordXmlBody(ADMIN_ACCOUNT_NAME, OLD_ADMIN_PASSWORD, adminPassword);
 
         if (changePassword(httpClient, brickConfigurerData.getEntrypoint(), xmlBody, ADMIN_ACCOUNT_NAME, OLD_ADMIN_PASSWORD)) {
@@ -47,7 +47,7 @@ public class NexusConfigurer implements BrickConfigurer {
             throw new IllegalArgumentException("users must be defined.");
         }
         OkHttpClient httpClient = provideHttpClient();
-        String adminPassword = brickConfigurerData.getAdminUser().getPassword();
+        String adminPassword = brickConfigurerData.getDefaultAdmin().getPassword();
         for (User user : users) {
             String xmlBody = getCreatUserXmlBody(user);
             if (!createUser(httpClient, brickConfigurerData.getEntrypoint(), xmlBody, ADMIN_ACCOUNT_NAME, adminPassword)) {

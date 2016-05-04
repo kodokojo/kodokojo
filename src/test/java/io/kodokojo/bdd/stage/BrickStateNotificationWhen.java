@@ -49,7 +49,7 @@ public class BrickStateNotificationWhen<SELF extends BrickStateNotificationWhen<
     String projectConfigurationIdentifier;
 
     public SELF i_create_a_project_configuration_with_default_brick() {
-        ProjectCreationDto projectCreationDto = new ProjectCreationDto("Acme", currentUser.getIdentifier(), Collections.singletonList(currentUser.getIdentifier()));
+        ProjectCreationDto projectCreationDto = new ProjectCreationDto("123456", "Acme", currentUser.getIdentifier(), Collections.singletonList(currentUser.getIdentifier()));
 
         expectedBrickStarted = new String[]{"haproxy", "jenkins", "nexus", "gitlab"};
         startProjectConfiguration(projectCreationDto, expectedBrickStarted);

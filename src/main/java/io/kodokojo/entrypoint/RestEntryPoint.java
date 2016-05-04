@@ -28,15 +28,22 @@ import io.kodokojo.brick.DefaultBrickFactory;
 import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.entrypoint.dto.ProjectConfigDto;
 import io.kodokojo.entrypoint.dto.ProjectCreationDto;
-import io.kodokojo.service.lifecycle.ApplicationLifeCycleListener;
 import io.kodokojo.model.*;
-import io.kodokojo.service.*;
+import io.kodokojo.service.ProjectManager;
+import io.kodokojo.service.ProjectStore;
+import io.kodokojo.service.UserManager;
+import io.kodokojo.service.lifecycle.ApplicationLifeCycleListener;
 import io.kodokojo.service.user.SimpleCredential;
 import io.kodokojo.service.user.UserCreationDto;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.IteratorUtils;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import spark.*;
+import spark.Request;
+import spark.Response;
+import spark.ResponseTransformer;
+import spark.Spark;
 
 import javax.inject.Inject;
 import java.io.StringWriter;
@@ -169,8 +176,15 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
                 String password = new BigInteger(130, new SecureRandom()).toString(32);
                 KeyPair keyPair = RSAUtils.generateRsaKeyPair();
                 RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
+
                 User user = new User(identifier, username, username, email, password, RSAUtils.encodePublicKey((RSAPublicKey) keyPair.getPublic(), email));
+
+                //  Create a default Entity
+                Entity entity = new Entity(user.getUsername(), user);
+                String entityId = projectStore.addEntity(entity);
+
                 if (userManager.addUser(user)) {
+
                     response.status(201);
                     StringWriter sw = new StringWriter();
                     RSAUtils.writeRsaPrivateKey(privateKey, sw);
@@ -237,6 +251,12 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
                 return "";
             }
             User owner = userManager.getUserByIdentifier(dto.getOwnerIdentifier());
+            String entityId = owner.getEntityIdentifier();
+            if (StringUtils.isBlank(entityId)) {
+                halt(400);
+                return "";
+            }
+
             Set<StackConfiguration> stackConfigurations = createDefaultStackConfiguration(dto.getName());
             List<User> users = new ArrayList<>();
             users.add(owner);
@@ -246,11 +266,11 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
                     users.add(user);
                 }
             }
-            ProjectConfiguration projectConfiguration = new ProjectConfiguration(dto.getName(), owner, stackConfigurations, users);
+            ProjectConfiguration projectConfiguration = new ProjectConfiguration(entityId, dto.getName(), Collections.singletonList(owner), stackConfigurations, users);
             String projectConfigIdentifier = projectStore.addProjectConfiguration(projectConfiguration);
 
             /*
-            Project project = projectManager.start(new ProjectConfiguration(projectConfigIdentifier, projectConfiguration.getName(), projectConfiguration.getOwner(), projectConfiguration.getStackConfigurations(), projectConfiguration.getUsers()));
+            Project project = projectManager.start(new ProjectConfiguration(projectConfigIdentifier, projectConfiguration.getName(), projectConfiguration.getAdmins(), projectConfiguration.getStackConfigurations(), projectConfiguration.getUsers()));
             projectStore.addProject(project);
             */
             response.status(201);
@@ -267,8 +287,7 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
                 return "";
             }
             SimpleCredential credential = extractCredential(request);
-            User user = userManager.getUserByUsername(credential.getUsername());
-            if (user.getIdentifier().equals(projectConfiguration.getOwner().getIdentifier())) {
+            if (userManager.userIsAdminOfProjectConfiguration(credential.getUsername(), projectConfiguration)) {
                 return new ProjectConfigDto(projectConfiguration);
             }
             halt(403);
@@ -284,17 +303,18 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
                 halt(404);
                 return "";
             }
-            User user = userManager.getUserByUsername(credential.getUsername());
-            if (user.getIdentifier().equals(projectConfiguration.getOwner().getIdentifier())) {
+            if (userManager.userIsAdminOfProjectConfiguration(credential.getUsername(), projectConfiguration)) {
                 JsonParser parser = new JsonParser();
                 JsonArray root = (JsonArray) parser.parse(request.body());
+                List<User> users = IteratorUtils.toList(projectConfiguration.getUsers());
                 for (JsonElement el : root) {
                     String userToAddId = el.getAsJsonPrimitive().getAsString();
                     User userToAdd = userManager.getUserByIdentifier(userToAddId);
                     if (userToAdd != null) {
-                        projectConfiguration.getUsers().add(userToAdd);
+                        users.add(userToAdd);
                     }
                 }
+                projectConfiguration.setUsers(users);
                 projectStore.updateProjectConfiguration(projectConfiguration);
             } else {
                 halt(403);
@@ -312,17 +332,18 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
                     halt(404);
                     return "";
                 }
-                User user = userManager.getUserByUsername(credential.getUsername());
-                if (user.getIdentifier().equals(projectConfiguration.getOwner().getIdentifier())) {
+                if (userManager.userIsAdminOfProjectConfiguration(credential.getUsername(), projectConfiguration)) {
                     JsonParser parser = new JsonParser();
                     JsonArray root = (JsonArray) parser.parse(request.body());
+                    List<User> users = IteratorUtils.toList(projectConfiguration.getUsers());
                     for (JsonElement el : root) {
                         String userToDeleteId = el.getAsJsonPrimitive().getAsString();
                         User userToDelete = userManager.getUserByIdentifier(userToDeleteId);
                         if (userToDelete != null) {
-                            projectConfiguration.getUsers().remove(userToDelete);
+                            users.remove(userToDelete);
                         }
                     }
+                    projectConfiguration.setUsers(users);
                     projectStore.updateProjectConfiguration(projectConfiguration);
                 } else {
                     halt(403);
@@ -344,7 +365,7 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
                     halt(404, "Project configuration not found.");
                     return "";
                 }
-                if (projectConfiguration.getOwner().getIdentifier().equals(currentUser.getIdentifier())) {
+                if (userManager.userIsAdminOfProjectConfiguration(credential.getUsername(), projectConfiguration)) {
                     Project project = projectStore.getProjectByName(projectConfiguration.getName());
                     if (project == null) {
                         projectManager.bootstrapStack(projectConfiguration.getName(), projectConfiguration.getDefaultStackConfiguration().getName(), projectConfiguration.getDefaultStackConfiguration().getType());

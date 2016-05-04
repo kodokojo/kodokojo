@@ -49,7 +49,7 @@ public class RedisProjectStoreIntTest {
         dockerTestSupport.addContainerIdToClean(createContainerResponse.getId());
         String redisHost = dockerTestSupport.getServerIp();
         int redisPort = dockerTestSupport.getExposedPort(createContainerResponse.getId(), 6379);
-        redisProjectStore = new RedisProjectStore(aesKey, redisHost, redisPort, new DefaultBrickFactory(null));
+        redisProjectStore = new RedisProjectStore(aesKey, redisHost, redisPort, new DefaultBrickFactory());
     }
 
     @After
@@ -57,6 +57,24 @@ public class RedisProjectStoreIntTest {
         dockerTestSupport.stopAndRemoveContainer();
         redisProjectStore.stop();
     }
+
+    @Test
+    @DockerIsRequire
+    public void add_valid_entity() throws NoSuchAlgorithmException {
+        Entity entity = new Entity("MaBoite", true, new User("12345", "Jean-Pascal THIERY", "jpthiery", "jpthiery@xebia.fr", "jpthiery", "an SSH key"));
+
+        String identifier = redisProjectStore.addEntity(entity);
+
+        assertThat(identifier).isNotEmpty();
+
+        Entity result = redisProjectStore.getEntityById(identifier);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getIdentifier()).isEqualTo(identifier);
+        String entityOfUserId = redisProjectStore.getEntityOfUserId("12345");
+        assertThat(entityOfUserId).isEqualTo(identifier);
+    }
+
 
     @Test
     @DockerIsRequire
@@ -78,12 +96,13 @@ public class RedisProjectStoreIntTest {
     public void add_valid_project_configuration() {
         List<User> users = new ArrayList<>();
         User owner = new User("1234", "Jpascal", "jpthiery", "jpthiery@kodokojo.io", "mysecretpassword", "ssh public key");
+        users.add(owner);
 
         Set<StackConfiguration> stackConfigurations = new HashSet<>();
         Set<BrickConfiguration> brickConfigurations = new HashSet<>();
         brickConfigurations.add(new BrickConfiguration(new Brick("jenkins", BrickType.CI)));
         stackConfigurations.add(new StackConfiguration("build-A", StackType.BUILD, brickConfigurations, "127.0.0.1", 10022));
-        ProjectConfiguration projectConfiguration = new ProjectConfiguration("acme-a", owner, stackConfigurations,users);
+        ProjectConfiguration projectConfiguration = new ProjectConfiguration("123456","acme-a", users, stackConfigurations,users);
 
         String identifier = redisProjectStore.addProjectConfiguration(projectConfiguration);
         assertThat(identifier).isNotEmpty();
@@ -91,6 +110,7 @@ public class RedisProjectStoreIntTest {
         ProjectConfiguration result = redisProjectStore.getProjectConfigurationById(identifier);
         assertThat(result).isNotNull();
         assertThat(result.getIdentifier()).isEqualTo(identifier);
+        assertThat(result.getEntityIdentifier()).isNotNull();
     }
 
     Project createProject() throws NoSuchAlgorithmException {

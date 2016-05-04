@@ -1,4 +1,4 @@
-package io.kodokojo.service.user.redis;
+package io.kodokojo.service.redis;
 
 /*
  * #%L
@@ -22,13 +22,12 @@ package io.kodokojo.service.user.redis;
  * #L%
  */
 
+import io.kodokojo.model.ProjectConfiguration;
 import io.kodokojo.service.lifecycle.ApplicationLifeCycleListener;
 import io.kodokojo.model.User;
 import io.kodokojo.model.UserService;
 import io.kodokojo.commons.utils.RSAUtils;
-import io.kodokojo.service.redis.RedisUtils;
 import io.kodokojo.service.UserManager;
-import io.kodokojo.service.user.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
@@ -41,6 +40,7 @@ import java.security.*;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Arrays;
+import java.util.Iterator;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
@@ -230,6 +230,19 @@ public class RedisUserManager implements UserManager, ApplicationLifeCycleListen
     }
 
     @Override
+    public boolean userIsAdminOfProjectConfiguration(String username, ProjectConfiguration projectConfiguration) {
+        boolean res = false;
+        User current = getUserByUsername(username);
+        String userIdentifier = current.getIdentifier();
+        Iterator<User> admins = projectConfiguration.getAdmins();
+        while (!res && admins.hasNext()) {
+            User user = admins.next();
+            res = userIdentifier.equals(user.getIdentifier());
+        }
+        return res;
+    }
+
+    @Override
     public User getUserByIdentifier(String identifier) {
         if (isBlank(identifier)) {
             throw new IllegalArgumentException("identifier must be defined.");
@@ -239,7 +252,7 @@ public class RedisUserManager implements UserManager, ApplicationLifeCycleListen
             return null;
         }
         String password = RSAUtils.decryptWithAES(key, userValue.getPassword());
-        return new User(identifier, userValue.getName(), userValue.getUsername(), userValue.getEmail(), password, userValue.getSshPublicKey());
+        return new User(identifier,userValue.getEntityId() , userValue.getName(), userValue.getUsername(), userValue.getEmail(), password, userValue.getSshPublicKey());
     }
 
 
