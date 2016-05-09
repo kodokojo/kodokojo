@@ -30,8 +30,9 @@ import io.kodokojo.entrypoint.dto.ProjectConfigDto;
 import io.kodokojo.entrypoint.dto.ProjectCreationDto;
 import io.kodokojo.model.*;
 import io.kodokojo.service.ProjectManager;
-import io.kodokojo.service.ProjectStore;
-import io.kodokojo.service.UserManager;
+import io.kodokojo.service.store.EntityStore;
+import io.kodokojo.service.store.ProjectStore;
+import io.kodokojo.service.store.UserStore;
 import io.kodokojo.service.lifecycle.ApplicationLifeCycleListener;
 import io.kodokojo.service.user.SimpleCredential;
 import io.kodokojo.service.user.UserCreationDto;
@@ -68,13 +69,15 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
 
     private final int port;
 
-    private final UserManager userManager;
+    private final UserStore userStore;
 
     private final UserAuthenticator<SimpleCredential> userAuthenticator;
 
     private final ProjectManager projectManager;
 
     private final ProjectStore projectStore;
+
+    private final EntityStore entityStore;
 
     private final BrickFactory brickFactory;
 
@@ -88,12 +91,15 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
     private final ResponseTransformer jsonResponseTransformer;
 
     @Inject
-    public RestEntryPoint(int port, UserManager userManager, UserAuthenticator<SimpleCredential> userAuthenticator, ProjectStore projectStore, ProjectManager projectManager, BrickFactory brickFactory) {
-        if (userManager == null) {
-            throw new IllegalArgumentException("userManager must be defined.");
+    public RestEntryPoint(int port, UserStore userStore, UserAuthenticator<SimpleCredential> userAuthenticator,EntityStore entityStore,  ProjectStore projectStore, ProjectManager projectManager, BrickFactory brickFactory) {
+        if (userStore == null) {
+            throw new IllegalArgumentException("userStore must be defined.");
         }
         if (userAuthenticator == null) {
             throw new IllegalArgumentException("userAuthenticator must be defined.");
+        }
+        if (entityStore == null) {
+            throw new IllegalArgumentException("entityStore must be defined.");
         }
         if (projectStore == null) {
             throw new IllegalArgumentException("projectStore must be defined.");
@@ -105,8 +111,9 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
             throw new IllegalArgumentException("brickFactory must be defined.");
         }
         this.port = port;
-        this.userManager = userManager;
+        this.userStore = userStore;
         this.userAuthenticator = userAuthenticator;
+        this.entityStore = entityStore;
         this.projectStore = projectStore;
         this.projectManager = projectManager;
         this.brickFactory = brickFactory;
@@ -159,12 +166,12 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Try to create user with id {}", identifier);
             }
-            if (userManager.identifierExpectedNewUser(identifier)) {
+            if (userStore.identifierExpectedNewUser(identifier)) {
                 JsonParser parser = new JsonParser();
                 JsonObject json = (JsonObject) parser.parse(request.body());
                 String email = json.getAsJsonPrimitive("email").getAsString();
                 String username = email.substring(0, email.lastIndexOf("@"));
-                User userByUsername = userManager.getUserByUsername(username);
+                User userByUsername = userStore.getUserByUsername(username);
                 if (userByUsername != null) {
                     if (LOGGER.isDebugEnabled()) {
                         LOGGER.debug("Trying to create user {} from email '{}' who already exist.", username, email);
@@ -181,9 +188,9 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
 
                 //  Create a default Entity
                 Entity entity = new Entity(user.getUsername(), user);
-                String entityId = projectStore.addEntity(entity);
+                String entityId = entityStore.addEntity(entity);
 
-                if (userManager.addUser(user)) {
+                if (userStore.addUser(user)) {
 
                     response.status(201);
                     StringWriter sw = new StringWriter();
@@ -193,7 +200,7 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
                 }
 
                 if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("The UserManager not abel to add following user {}.", user.toString());
+                    LOGGER.debug("The UserStore not abel to add following user {}.", user.toString());
                 }
                 halt(428);
                 return "";
@@ -204,7 +211,7 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
         }), jsonResponseTransformer);
 
         post(BASE_API + "/user", JSON_CONTENT_TYPE, (request, response) -> {
-            String res = userManager.generateId();
+            String res = userStore.generateId();
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Generate id : {}", res);
             }
@@ -214,7 +221,7 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
         get(BASE_API + "/user", JSON_CONTENT_TYPE, (request, response) -> {
             SimpleCredential credential = extractCredential(request);
             if (credential != null) {
-                User user = userManager.getUserByUsername(credential.getUsername());
+                User user = userStore.getUserByUsername(credential.getUsername());
                 return user;
             }
             halt(401);
@@ -224,7 +231,7 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
         get(BASE_API + "/user/:id", JSON_CONTENT_TYPE, (request, response) -> {
             SimpleCredential credential = extractCredential(request);
             String identifier = request.params(":id");
-            User user = userManager.getUserByIdentifier(identifier);
+            User user = userStore.getUserByIdentifier(identifier);
             if (user != null && credential != null) {
                 if (user.getUsername().equals(credential.getUsername())) {
                     return user;
@@ -250,7 +257,7 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
                 halt(400);
                 return "";
             }
-            User owner = userManager.getUserByIdentifier(dto.getOwnerIdentifier());
+            User owner = userStore.getUserByIdentifier(dto.getOwnerIdentifier());
             String entityId = owner.getEntityIdentifier();
             if (StringUtils.isBlank(entityId)) {
                 halt(400);
@@ -262,7 +269,7 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
             users.add(owner);
             if (CollectionUtils.isNotEmpty(dto.getUserIdentifiers())) {
                 for (String userId : dto.getUserIdentifiers()) {
-                    User user = userManager.getUserByIdentifier(userId);
+                    User user = userStore.getUserByIdentifier(userId);
                     users.add(user);
                 }
             }
@@ -287,7 +294,7 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
                 return "";
             }
             SimpleCredential credential = extractCredential(request);
-            if (userManager.userIsAdminOfProjectConfiguration(credential.getUsername(), projectConfiguration)) {
+            if (userStore.userIsAdminOfProjectConfiguration(credential.getUsername(), projectConfiguration)) {
                 return new ProjectConfigDto(projectConfiguration);
             }
             halt(403);
@@ -303,13 +310,13 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
                 halt(404);
                 return "";
             }
-            if (userManager.userIsAdminOfProjectConfiguration(credential.getUsername(), projectConfiguration)) {
+            if (userStore.userIsAdminOfProjectConfiguration(credential.getUsername(), projectConfiguration)) {
                 JsonParser parser = new JsonParser();
                 JsonArray root = (JsonArray) parser.parse(request.body());
                 List<User> users = IteratorUtils.toList(projectConfiguration.getUsers());
                 for (JsonElement el : root) {
                     String userToAddId = el.getAsJsonPrimitive().getAsString();
-                    User userToAdd = userManager.getUserByIdentifier(userToAddId);
+                    User userToAdd = userStore.getUserByIdentifier(userToAddId);
                     if (userToAdd != null) {
                         users.add(userToAdd);
                     }
@@ -332,13 +339,13 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
                     halt(404);
                     return "";
                 }
-                if (userManager.userIsAdminOfProjectConfiguration(credential.getUsername(), projectConfiguration)) {
+                if (userStore.userIsAdminOfProjectConfiguration(credential.getUsername(), projectConfiguration)) {
                     JsonParser parser = new JsonParser();
                     JsonArray root = (JsonArray) parser.parse(request.body());
                     List<User> users = IteratorUtils.toList(projectConfiguration.getUsers());
                     for (JsonElement el : root) {
                         String userToDeleteId = el.getAsJsonPrimitive().getAsString();
-                        User userToDelete = userManager.getUserByIdentifier(userToDeleteId);
+                        User userToDelete = userStore.getUserByIdentifier(userToDeleteId);
                         if (userToDelete != null) {
                             users.remove(userToDelete);
                         }
@@ -358,14 +365,14 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
         post(BASE_API + "/project/:id", JSON_CONTENT_TYPE, ((request, response) -> {
             SimpleCredential credential = extractCredential(request);
             if (credential != null) {
-                User currentUser = userManager.getUserByUsername(credential.getUsername());
+                User currentUser = userStore.getUserByUsername(credential.getUsername());
                 String projectConfigurationId = request.params(":id");
                 ProjectConfiguration projectConfiguration = projectStore.getProjectConfigurationById(projectConfigurationId);
                 if (projectConfiguration == null) {
                     halt(404, "Project configuration not found.");
                     return "";
                 }
-                if (userManager.userIsAdminOfProjectConfiguration(credential.getUsername(), projectConfiguration)) {
+                if (userStore.userIsAdminOfProjectConfiguration(credential.getUsername(), projectConfiguration)) {
                     Project project = projectStore.getProjectByName(projectConfiguration.getName());
                     if (project == null) {
                         projectManager.bootstrapStack(projectConfiguration.getName(), projectConfiguration.getDefaultStackConfiguration().getName(), projectConfiguration.getDefaultStackConfiguration().getType());

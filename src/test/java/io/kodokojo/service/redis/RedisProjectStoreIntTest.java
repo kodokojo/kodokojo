@@ -57,7 +57,7 @@ public class RedisProjectStoreIntTest {
         dockerTestSupport.stopAndRemoveContainer();
         redisProjectStore.stop();
     }
-
+/*
     @Test
     @DockerIsRequire
     public void add_valid_entity() throws NoSuchAlgorithmException {
@@ -74,7 +74,7 @@ public class RedisProjectStoreIntTest {
         String entityOfUserId = redisProjectStore.getEntityOfUserId("12345");
         assertThat(entityOfUserId).isEqualTo(identifier);
     }
-
+*/
 
     @Test
     @DockerIsRequire

@@ -27,7 +27,7 @@ import io.kodokojo.service.lifecycle.ApplicationLifeCycleListener;
 import io.kodokojo.model.User;
 import io.kodokojo.model.UserService;
 import io.kodokojo.commons.utils.RSAUtils;
-import io.kodokojo.service.UserManager;
+import io.kodokojo.service.store.UserStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
@@ -44,13 +44,11 @@ import java.util.Iterator;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
-public class RedisUserManager implements UserManager, ApplicationLifeCycleListener {
+public class RedisUserStore extends AbstractRedisStore implements UserStore, ApplicationLifeCycleListener {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RedisUserManager.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RedisUserStore.class);
 
     private static final String ID_KEY = "kodokojo-userId";
-
-    private static final String SALT_KEY = "kodokojo-salt-key";
 
     private static final byte[] NEW_USER_CONTENT = new byte[]{0, 1, 1, 0};
 
@@ -66,64 +64,40 @@ public class RedisUserManager implements UserManager, ApplicationLifeCycleListen
 
     public static final String USERSERVICENAME_PREFIX = "userservicename/";
 
-    private final Key key;
-
-    private final JedisPool pool;
-
-    private final String salt;
-
     private final MessageDigest messageDigest;
 
     private final int newIdExpirationTime;
 
-    public RedisUserManager(Key key, String host, int port, int newIdExpirationTime) {
-        if (key == null) {
-            throw new IllegalArgumentException("key must be defined.");
-        }
-        if (isBlank(host)) {
-            throw new IllegalArgumentException("host must be defined.");
-        }
+    public RedisUserStore(Key key, String host, int port, int newIdExpirationTime) {
+        super(key, host, port);
 
-        this.key = key;
-        pool = createJedisPool(host, port);
-
-        try (Jedis jedis = pool.getResource()) {
-            String salt = jedis.get(SALT_KEY);
-            if (isBlank(salt)) {
-                try {
-                    SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
-                    this.salt = new BigInteger(130, secureRandom).toString(32);
-                    jedis.set(SALT_KEY, this.salt);
-                } catch (NoSuchAlgorithmException e) {
-                    throw new RuntimeException("Unable to get a valid SecureRandom instance", e);
-                }
-            } else {
-                this.salt = salt;
-            }
-        }
-
+        this.newIdExpirationTime = newIdExpirationTime;
         try {
             messageDigest = MessageDigest.getInstance("SHA-1");
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("Unable to get instance of SHA-1 digest");
         }
-        this.newIdExpirationTime = newIdExpirationTime;
+
     }
 
-
-    public RedisUserManager(Key key, String host, int port) {
+    public RedisUserStore(Key key, String host, int port) {
         this(key, host, port, DEFAULT_NEW_ID_TTL);
     }
 
-    //  For testing
-    protected JedisPool createJedisPool(String host, int port) {
-        return new JedisPool(new JedisPoolConfig(), host, port);
+    @Override
+    protected String getStoreName() {
+        return "RedisUserStore";
+    }
+
+    @Override
+    protected String getGenerateIdKey() {
+        return NEW_ID_PREFIX;
     }
 
     @Override
     public String generateId() {
         try (Jedis jedis = pool.getResource()) {
-            String id = salt + jedis.incr(ID_KEY).toString();
+            String id = SALT_KEY + jedis.incr(ID_KEY).toString();
             String newId = RedisUtils.hexEncode(messageDigest.digest(id.getBytes()));
             byte[] prefixedKey = RedisUtils.aggregateKey(NEW_ID_PREFIX, newId);
             jedis.set(prefixedKey, NEW_USER_CONTENT);
@@ -254,21 +228,5 @@ public class RedisUserManager implements UserManager, ApplicationLifeCycleListen
         String password = RSAUtils.decryptWithAES(key, userValue.getPassword());
         return new User(identifier,userValue.getEntityId() , userValue.getName(), userValue.getUsername(), userValue.getEmail(), password, userValue.getSshPublicKey());
     }
-
-
-    @Override
-    public void start() {
-        // Nothing to do
-    }
-
-    @Override
-    public void stop() {
-        LOGGER.info("Stopping RedisUserManager.");
-        if (pool != null) {
-            pool.destroy();
-        }
-    }
-
-
 
 }

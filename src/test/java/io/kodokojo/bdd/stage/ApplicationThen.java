@@ -38,7 +38,7 @@ import com.tngtech.jgiven.attachment.Attachment;
 import io.kodokojo.entrypoint.dto.ProjectConfigDto;
 import io.kodokojo.entrypoint.dto.UserDto;
 import io.kodokojo.model.User;
-import io.kodokojo.service.redis.RedisUserManager;
+import io.kodokojo.service.redis.RedisUserStore;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
@@ -52,7 +52,7 @@ import static org.assertj.core.api.Assertions.fail;
 public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF> {
 
     @ExpectedScenarioState
-    RedisUserManager userManager;
+    RedisUserStore userManager;
 
     @ExpectedScenarioState
     CurrentStep currentStep;
@@ -105,6 +105,10 @@ public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF
 
     public SELF it_is_NOT_possible_to_get_complete_details_for_user_$(@Quoted String username) {
         getUserDetails(username, false);
+        return self();
+    }
+
+    public SELF user_$_belong_to_entity_$(String username, String entityName) {
         return self();
     }
 

@@ -1,27 +1,27 @@
 package io.kodokojo.config.module;
 
 import com.google.inject.Provider;
+import io.kodokojo.service.store.UserStore;
 import io.kodokojo.service.user.SimpleCredential;
 import io.kodokojo.service.user.SimpleUserAuthenticator;
 import io.kodokojo.entrypoint.UserAuthenticator;
-import io.kodokojo.service.UserManager;
 
 import javax.inject.Inject;
 
 public class SimpleUserAuthenticatorProvider implements Provider<UserAuthenticator<SimpleCredential>> {
 
-    private final UserManager userManager;
+    private final UserStore userStore;
 
     @Inject
-    public SimpleUserAuthenticatorProvider(UserManager userManager) {
-        if (userManager == null) {
-            throw new IllegalArgumentException("userManager must be defined.");
+    public SimpleUserAuthenticatorProvider(UserStore userStore) {
+        if (userStore == null) {
+            throw new IllegalArgumentException("userStore must be defined.");
         }
-        this.userManager = userManager;
+        this.userStore = userStore;
     }
 
     @Override
     public UserAuthenticator<SimpleCredential> get() {
-        return new SimpleUserAuthenticator(userManager);
+        return new SimpleUserAuthenticator(userStore);
     }
 }

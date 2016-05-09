@@ -4,7 +4,7 @@ import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.model.*;
 import io.kodokojo.service.lifecycle.ApplicationLifeCycleListener;
 import io.kodokojo.brick.BrickFactory;
-import io.kodokojo.service.ProjectStore;
+import io.kodokojo.service.store.ProjectStore;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang.StringUtils;
@@ -26,13 +26,11 @@ import java.util.stream.Collectors;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
-public class RedisProjectStore implements ProjectStore, ApplicationLifeCycleListener {
+public class RedisProjectStore  extends  AbstractRedisStore implements ProjectStore {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RedisProjectStore.class);
 
     public static final String PROJECT_PREFIX = "project/";
-
-    private static final String SALT_KEY;
 
     private static final String PROJECTCONFIGURATION_ID_KEY = "projectConfigurationId";
 
@@ -46,98 +44,24 @@ public class RedisProjectStore implements ProjectStore, ApplicationLifeCycleList
 
     private static final Pattern PROJECT_NAME_PATTERN = Pattern.compile("([a-zA-Z0-9\\-_]){4,20}");
 
-    static {
-        SecureRandom secureRandom = new SecureRandom();
-        SALT_KEY = new BigInteger(128, secureRandom).toString(10);
-    }
-
-    private final Key key;
-
-    private final JedisPool pool;
-
     private final BrickFactory brickFactory;
 
-    private final MessageDigest messageDigest;
-
     public RedisProjectStore(Key key, String host, int port, BrickFactory brickFactory) {
-        if (key == null) {
-            throw new IllegalArgumentException("key must be defined.");
-        }
-        if (isBlank(host)) {
-            throw new IllegalArgumentException("host must be defined.");
-        }
+        super(key, host, port);
         if (brickFactory == null) {
             throw new IllegalArgumentException("brickFactory must be defined.");
         }
-        this.key = key;
         this.brickFactory = brickFactory;
-        pool = createJedisPool(host, port);
-        try {
-            messageDigest = MessageDigest.getInstance("SHA-1");
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Unable to get instance of SHA-1 digest");
-        }
     }
 
     @Override
-    public String addEntity(Entity entity) {
-        if (entity == null) {
-            throw new IllegalArgumentException("entity must be defined.");
-        }
-        if (StringUtils.isNotBlank(entity.getIdentifier())) {
-            throw  new IllegalArgumentException("entity had already an id.");
-        }
-        try (Jedis jedis = pool.getResource()) {
-            String id = generateId();
-            List<User> admins = IteratorUtils.toList(entity.getAdmins());
-            List<User> users = IteratorUtils.toList(entity.getUsers());
-            Entity entityToWrite = new Entity(id, entity.getName(), entity.isConcrete(),
-                    IteratorUtils.toList(entity.getProjectConfigurations()),
-                    admins,
-                    users);
-
-            List<User> allUsers = new ArrayList<>(users);
-            allUsers.addAll(admins);
-            Set<String> userIds = allUsers.stream().map(User::getIdentifier).collect(Collectors.toSet());
-
-            userIds.stream().forEach(userId -> {
-                jedis.set(RedisUtils.aggregateKey(ENTITY_USER_PREFIX, userId), id.getBytes());
-            });
-
-            byte[] encryptedObject = RSAUtils.encryptObjectWithAES(key, entityToWrite);
-            jedis.set(RedisUtils.aggregateKey(ENTITY_PREFIX, id), encryptedObject);
-            return id;
-        }
+    protected String getStoreName() {
+        return "ProjectRedisStore";
     }
 
     @Override
-    public Entity getEntityById(String entityIdentifier) {
-        if (isBlank(entityIdentifier)) {
-            throw new IllegalArgumentException("entityIdentifier must be defined.");
-        }
-        try (Jedis jedis = pool.getResource()) {
-            byte[] entityKey = RedisUtils.aggregateKey(ENTITY_PREFIX, entityIdentifier);
-            if (jedis.exists(entityKey)) {
-                byte[] encrypted = jedis.get(entityKey);
-                Entity entity = (Entity) RSAUtils.decryptObjectWithAES(key, encrypted);
-                return entity;
-            }
-        }
-        return null;
-    }
-
-    @Override
-    public String getEntityOfUserId(String userIdentifier) {
-        if (isBlank(userIdentifier)) {
-            throw new IllegalArgumentException("userIdentifier must be defined.");
-        }
-        try (Jedis jedis = pool.getResource()) {
-            byte[] key = RedisUtils.aggregateKey(ENTITY_USER_PREFIX, userIdentifier);
-            if (jedis.exists(key)) {
-                return new String(jedis.get(key));
-            }
-        }
-        return null;
+    protected String getGenerateIdKey() {
+        return PROJECTCONFIGURATION_ID_KEY;
     }
 
     @Override
@@ -248,29 +172,4 @@ public class RedisProjectStore implements ProjectStore, ApplicationLifeCycleList
         return null;
     }
 
-
-    protected JedisPool createJedisPool(String host, int port) {
-        return new JedisPool(new JedisPoolConfig(), host, port);
-    }
-
-    @Override
-    public void start() {
-        //  Nothing to do
-    }
-
-    @Override
-    public void stop() {
-        LOGGER.info("Stopping RedisProjectStore.");
-        if (pool != null) {
-            pool.destroy();
-        }
-    }
-
-    private String generateId() {
-        try (Jedis jedis = pool.getResource()) {
-            String id = SALT_KEY + jedis.incr(PROJECTCONFIGURATION_ID_KEY).toString();
-            String newId = RedisUtils.hexEncode(messageDigest.digest(id.getBytes()));
-            return newId;
-        }
-    }
 }

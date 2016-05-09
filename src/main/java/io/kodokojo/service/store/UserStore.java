@@ -1,4 +1,4 @@
-package io.kodokojo.service;
+package io.kodokojo.service.store;
 
 /*
  * #%L
@@ -29,7 +29,7 @@ import io.kodokojo.model.UserService;
 /**
  * Allow to manage {@link User} and {@link UserService}.
  */
-public interface UserManager {
+public interface UserStore {
 
     String generateId();
 

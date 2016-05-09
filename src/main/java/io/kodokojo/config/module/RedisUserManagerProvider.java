@@ -2,11 +2,11 @@ package io.kodokojo.config.module;
 
 import com.google.inject.Provider;
 import io.kodokojo.config.RedisConfig;
-import io.kodokojo.service.redis.RedisUserManager;
+import io.kodokojo.service.redis.RedisUserStore;
 
 import javax.crypto.SecretKey;
 
-public class RedisUserManagerProvider implements Provider<RedisUserManager> {
+public class RedisUserManagerProvider implements Provider<RedisUserStore> {
 
     private final Provider<SecretKey> secretKeyProvider;
 
@@ -24,9 +24,9 @@ public class RedisUserManagerProvider implements Provider<RedisUserManager> {
     }
 
     @Override
-    public RedisUserManager get() {
+    public RedisUserStore get() {
         SecretKey secretKey = secretKeyProvider.get();
         RedisConfig redisConfig = redisConfigProvider.get();
-        return new RedisUserManager(secretKey, redisConfig.host(), redisConfig.port());
+        return new RedisUserStore(secretKey, redisConfig.host(), redisConfig.port());
     }
 }

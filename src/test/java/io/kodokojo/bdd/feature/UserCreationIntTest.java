@@ -50,8 +50,11 @@ public class UserCreationIntTest extends ScenarioTest<ApplicationGiven<?>, Appli
         when().retrive_a_new_id()
                 .and().create_user_with_email_$("jpthiery@xebia.fr");
         then().it_exist_a_valid_user_with_username_$("jpthiery")
-                .and().it_is_possible_to_get_complete_details_for_user_$("jpthiery");
+                .and().it_is_possible_to_get_complete_details_for_user_$("jpthiery")
+                .and().user_$_belong_to_entity_$("jpthiery", "jpthiery@xebia.fr");
     }
+
+
 
     @Test
     @DockerIsRequire

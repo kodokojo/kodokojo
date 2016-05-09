@@ -35,8 +35,11 @@ import io.kodokojo.model.User;
 import io.kodokojo.service.*;
 import io.kodokojo.service.redis.RedisBootstrapConfigurationProvider;
 import io.kodokojo.service.redis.RedisProjectStore;
+import io.kodokojo.service.store.EntityStore;
+import io.kodokojo.service.store.ProjectStore;
+import io.kodokojo.service.store.UserStore;
 import io.kodokojo.service.user.SimpleUserAuthenticator;
-import io.kodokojo.service.redis.RedisUserManager;
+import io.kodokojo.service.redis.RedisUserStore;
 import io.kodokojo.test.utils.TestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -105,6 +108,9 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
     ProjectManager projectManager;
 
     @ProvidedScenarioState
+    EntityStore entityStore;
+
+    @ProvidedScenarioState
     ProjectStore projectStore;
 
     @ProvidedScenarioState
@@ -117,7 +123,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
     String domain;
 
     @ProvidedScenarioState
-    RedisUserManager redisUserManager;
+    RedisUserStore redisUserManager;
 
     @ProvidedScenarioState
     String testId;
@@ -227,7 +233,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
             services.addAll(servicesResponse);
             redisService = servicesResponse.get(0);
             KeyGenerator kg = KeyGenerator.getInstance("AES");
-            redisUserManager = new RedisUserManager(kg.generateKey(), redisService.getHost(), redisService.getPort());
+            redisUserManager = new RedisUserStore(kg.generateKey(), redisService.getHost(), redisService.getPort());
         } catch (NoSuchAlgorithmException | IOException e) {
             fail("Unable to start Redis", e);
         } finally {
@@ -449,10 +455,11 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         Launcher.INJECTOR = injector;
         projectManager = injector.getInstance(ProjectManager.class);
         projectStore = injector.getInstance(ProjectStore.class);
+        entityStore = injector.getInstance(EntityStore.class);
         BrickFactory brickFactory = injector.getInstance(BrickFactory.class);
         restEntryPointHost = "localhost";
         restEntryPointPort = TestUtils.getEphemeralPort();
-        restEntryPoint = new RestEntryPoint(restEntryPointPort, redisUserManager, new SimpleUserAuthenticator(redisUserManager),projectStore, projectManager, brickFactory);
+        restEntryPoint = new RestEntryPoint(restEntryPointPort, redisUserManager, new SimpleUserAuthenticator(redisUserManager),entityStore, projectStore, projectManager, brickFactory);
         Semaphore semaphore = new Semaphore(1);
         try {
             semaphore.acquire();
@@ -475,7 +482,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
     private class RedisTestModule extends AbstractModule {
         @Override
         protected void configure() {
-            bind(UserManager.class).toInstance(redisUserManager);
+            bind(UserStore.class).toInstance(redisUserManager);
         }
 
         @Provides

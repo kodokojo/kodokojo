@@ -44,10 +44,14 @@ import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.commons.utils.properties.PropertyResolver;
 import io.kodokojo.commons.utils.properties.provider.*;
 import io.kodokojo.service.*;
+import io.kodokojo.service.redis.RedisEntityStore;
 import io.kodokojo.service.redis.RedisProjectStore;
+import io.kodokojo.service.redis.RedisUserStore;
+import io.kodokojo.service.store.EntityStore;
+import io.kodokojo.service.store.ProjectStore;
+import io.kodokojo.service.store.UserStore;
 import io.kodokojo.service.user.SimpleCredential;
 import io.kodokojo.service.user.SimpleUserAuthenticator;
-import io.kodokojo.service.redis.RedisUserManager;
 import io.kodokojo.test.utils.TestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,7 +103,7 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
     int restEntryPointPort;
 
     @ProvidedScenarioState
-    RedisUserManager userManager;
+    RedisUserStore userManager;
 
     @ProvidedScenarioState
     String currentUserLogin;
@@ -115,6 +119,9 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
 
     @ProvidedScenarioState
     ProjectStore projectStore;
+
+    @ProvidedScenarioState
+    EntityStore entityStore;
 
     @BeforeScenario
     public void create_a_docker_client() {
@@ -164,16 +171,18 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
             KeyGenerator generator = KeyGenerator.getInstance("AES");
             generator.init(128);
             SecretKey aesKey = generator.generateKey();
-            userManager = new RedisUserManager(aesKey, redisHost, redisPort);
+            userManager = new RedisUserStore(aesKey, redisHost, redisPort);
             projectStore = new RedisProjectStore(aesKey, redisHost, redisPort, new DefaultBrickFactory());
+            entityStore = new RedisEntityStore(aesKey, redisHost, redisPort);
             UserAuthenticator<SimpleCredential> userAuthenticator = new SimpleUserAuthenticator(userManager);
             projectManager = mock(ProjectManager.class);
-            restEntryPoint = new RestEntryPoint(port, userManager,userAuthenticator,projectStore, projectManager, new DefaultBrickFactory());
+            restEntryPoint = new RestEntryPoint(port, userManager,userAuthenticator,entityStore, projectStore, projectManager, new DefaultBrickFactory());
             Launcher.INJECTOR = Guice.createInjector(new AbstractModule() {
                 @Override
                 protected void configure() {
-                    bind(UserManager.class).toInstance(userManager);
+                    bind(UserStore.class).toInstance(userManager);
                     bind(ProjectStore.class).toInstance(projectStore);
+                    bind(EntityStore.class).toInstance(entityStore);
                     bind(ApplicationConfig.class).toInstance(new ApplicationConfig() {
                         @Override
                         public int port() {
@@ -230,7 +239,7 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
                 User user = new User(identifier, username, username, email, password, RSAUtils.encodePublicKey(publicKey, email));
 
                 Entity entity = new Entity(user.getUsername(), user);
-                String entityId = projectStore.addEntity(entity);
+                String entityId = entityStore.addEntity(entity);
                 user = new User(user.getIdentifier(), entityId, user.getFirstName(), user.getLastName(), username, email, password, user.getSshPublicKey());
                 boolean userAdded = userManager.addUser(user);
                 assertThat(userAdded).isTrue();

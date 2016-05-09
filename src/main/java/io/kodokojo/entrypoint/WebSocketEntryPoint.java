@@ -12,8 +12,8 @@ import io.kodokojo.entrypoint.dto.WebSocketMessage;
 import io.kodokojo.entrypoint.dto.WebSocketMessageGsonAdapter;
 import io.kodokojo.model.ProjectConfiguration;
 import io.kodokojo.model.User;
-import io.kodokojo.service.ProjectStore;
-import io.kodokojo.service.UserManager;
+import io.kodokojo.service.store.ProjectStore;
+import io.kodokojo.service.store.UserStore;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
@@ -38,7 +38,7 @@ public class WebSocketEntryPoint implements BrickStateMsgListener {
 
     private final Map<String, UserSession> userConnectedSession;
 
-    private final UserManager userManager;
+    private final UserStore userStore;
 
     private final ProjectStore projectStore;
 
@@ -59,7 +59,7 @@ public class WebSocketEntryPoint implements BrickStateMsgListener {
         super();
         sessions = new ConcurrentHashMap<>();
         userConnectedSession = new ConcurrentHashMap<>();
-        userManager = Launcher.INJECTOR.getInstance(UserManager.class);
+        userStore = Launcher.INJECTOR.getInstance(UserStore.class);
         projectStore = Launcher.INJECTOR.getInstance(ProjectStore.class);
         brickUrlFactory = Launcher.INJECTOR.getInstance(BrickUrlFactory.class);
         BrickStateMsgDispatcher msgDispatcher = Launcher.INJECTOR.getInstance(BrickStateMsgDispatcher.class);
@@ -99,7 +99,7 @@ public class WebSocketEntryPoint implements BrickStateMsgListener {
                             sessions.remove(session);
                             session.close(1008, "Authorization value in data mal formatted");
                         } else {
-                            User user = userManager.getUserByUsername(credentials[0]);
+                            User user = userStore.getUserByUsername(credentials[0]);
                             if (user == null) {
                                 sessions.remove(session);
                                 session.close(4401, "Invalid credentials for user '" + credentials[0] + "'.");

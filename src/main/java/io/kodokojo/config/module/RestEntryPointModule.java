@@ -7,9 +7,10 @@ import io.kodokojo.brick.BrickFactory;
 import io.kodokojo.config.ApplicationConfig;
 import io.kodokojo.entrypoint.RestEntryPoint;
 import io.kodokojo.service.ProjectManager;
-import io.kodokojo.service.ProjectStore;
+import io.kodokojo.service.store.EntityStore;
+import io.kodokojo.service.store.ProjectStore;
 import io.kodokojo.entrypoint.UserAuthenticator;
-import io.kodokojo.service.UserManager;
+import io.kodokojo.service.store.UserStore;
 import io.kodokojo.service.lifecycle.ApplicationLifeCycleManager;
 import io.kodokojo.service.user.SimpleCredential;
 
@@ -21,8 +22,8 @@ public class RestEntryPointModule extends AbstractModule {
 
     @Provides
     @Singleton
-    RestEntryPoint provideRestEntrypoint(ApplicationConfig applicationConfig, UserManager userManager, UserAuthenticator<SimpleCredential> userAuthenticator, ProjectStore projectStore, ProjectManager projectManager, BrickFactory brickFactory, ApplicationLifeCycleManager applicationLifeCycleManager) {
-        RestEntryPoint restEntryPoint = new RestEntryPoint(applicationConfig.port(), userManager, userAuthenticator, projectStore, projectManager, brickFactory);
+    RestEntryPoint provideRestEntrypoint(ApplicationConfig applicationConfig, UserStore userStore, UserAuthenticator<SimpleCredential> userAuthenticator, EntityStore entityStore, ProjectStore projectStore, ProjectManager projectManager, BrickFactory brickFactory, ApplicationLifeCycleManager applicationLifeCycleManager) {
+        RestEntryPoint restEntryPoint = new RestEntryPoint(applicationConfig.port(), userStore, userAuthenticator, entityStore, projectStore, projectManager, brickFactory);
         applicationLifeCycleManager.addService(restEntryPoint);
         return restEntryPoint;
     }

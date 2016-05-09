@@ -7,16 +7,13 @@ import com.tngtech.jgiven.annotation.ProvidedScenarioState;
 import io.kodokojo.bdd.stage.StageUtils;
 import io.kodokojo.model.ProjectConfiguration;
 import io.kodokojo.model.User;
-import io.kodokojo.service.ProjectAlreadyExistException;
 import io.kodokojo.service.ProjectManager;
-import io.kodokojo.service.ProjectStore;
+import io.kodokojo.service.store.ProjectStore;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Base64;
-import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;

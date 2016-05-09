@@ -5,13 +5,13 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import io.kodokojo.brick.*;
-import io.kodokojo.commons.utils.properties.provider.PropertyValueProvider;
 import io.kodokojo.commons.utils.ssl.SSLKeyPair;
 import io.kodokojo.config.ApplicationConfig;
 import io.kodokojo.entrypoint.UserAuthenticator;
 import io.kodokojo.service.lifecycle.ApplicationLifeCycleManager;
 import io.kodokojo.service.*;
 import io.kodokojo.service.dns.DnsManager;
+import io.kodokojo.service.store.ProjectStore;
 import io.kodokojo.service.user.SimpleCredential;
 
 public class ServiceModule extends AbstractModule {
