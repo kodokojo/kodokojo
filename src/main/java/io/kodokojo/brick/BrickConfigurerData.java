@@ -42,11 +42,16 @@ public class BrickConfigurerData {
 
     private final String domaine;
 
+    private final  String stackName;
+
     private final Map<String, Object> context;
 
-    public BrickConfigurerData(String projectName, String entrypoint, String domaine, List<User> admins, List<User> users) {
+    public BrickConfigurerData(String projectName, String stackName, String entrypoint, String domaine, List<User> admins, List<User> users) {
         if (isBlank(projectName)) {
             throw new IllegalArgumentException("projectName must be defined.");
+        }
+        if (isBlank(stackName)) {
+            throw new IllegalArgumentException("stackName must be defined.");
         }
         if (isBlank(entrypoint)) {
             throw new IllegalArgumentException("entrypoint must be defined.");
@@ -61,6 +66,7 @@ public class BrickConfigurerData {
             throw new IllegalArgumentException("users must be defined.");
         }
         this.projectName = projectName;
+        this.stackName = stackName;
         this.entrypoint = entrypoint;
         this.domaine = domaine;
         this.admins = admins;
@@ -72,6 +78,10 @@ public class BrickConfigurerData {
 
     public String getProjectName() {
         return projectName;
+    }
+
+    public String getStackName() {
+        return stackName;
     }
 
     public String getEntrypoint() {
@@ -109,10 +119,11 @@ public class BrickConfigurerData {
     public String toString() {
         return "BrickConfigurerData{" +
                 "projectName='" + projectName + '\'' +
-                ",domaine='" + domaine + '\'' +
-                ",entrypoint='" + entrypoint + '\'' +
+                ", entrypoint='" + entrypoint + '\'' +
                 ", admins=" + admins +
                 ", users=" + users +
+                ", domaine='" + domaine + '\'' +
+                ", stackName='" + stackName + '\'' +
                 ", context=" + context +
                 '}';
     }

@@ -104,7 +104,7 @@ public class MarathonBrickManager implements BrickManager {
         String type = brickType.name().toLowerCase();
 
         String id = "/" + name.toLowerCase() + "/" + brickConfiguration.getType().name().toLowerCase();
-        String body = provideStartAppBody(projectConfiguration, brickConfiguration, id);
+        String body = provideStartAppBody(projectConfiguration, projectConfiguration.getDefaultStackConfiguration().getName(), brickConfiguration, id);
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace("Push new Application configuration to Marathon :\n{}", body);
         }
@@ -166,7 +166,7 @@ public class MarathonBrickManager implements BrickManager {
                 } else {
                     List<User> users = IteratorUtils.toList(projectConfiguration.getUsers());
                     try {
-                        BrickConfigurerData brickConfigurerData = configurer.configure(new BrickConfigurerData(projectConfiguration.getName(), entrypoint, domain, IteratorUtils.toList(projectConfiguration.getAdmins()), users));
+                        BrickConfigurerData brickConfigurerData = configurer.configure(new BrickConfigurerData(projectConfiguration.getName(), projectConfiguration.getDefaultStackConfiguration().getName(), entrypoint, domain, IteratorUtils.toList(projectConfiguration.getAdmins()), users));
                         configurer.addUsers(brickConfigurerData, users);
                         if (LOGGER.isDebugEnabled()) {
                             LOGGER.debug("Adding users {} to brick {}", StringUtils.join(users, ","), brickType);
@@ -216,7 +216,7 @@ public class MarathonBrickManager implements BrickManager {
         return brickConfiguration;
     }
 
-    private String provideStartAppBody(ProjectConfiguration projectConfiguration, BrickConfiguration brickConfiguration, String id) {
+    private String provideStartAppBody(ProjectConfiguration projectConfiguration, String stackName, BrickConfiguration brickConfiguration, String id) {
         VelocityEngine ve = new VelocityEngine();
         ve.init(VE_PROPERTIES);
 
@@ -229,7 +229,7 @@ public class MarathonBrickManager implements BrickManager {
         context.put("projectName", projectConfiguration.getName().toLowerCase());
         context.put("stack", projectConfiguration.getDefaultStackConfiguration());
         context.put("brick", brickConfiguration);
-        context.put("brickUrl", brickUrlFactory.forgeUrl(projectConfiguration.getName(), brickConfiguration.getType().name()));
+        context.put("brickUrl", brickUrlFactory.forgeUrl(projectConfiguration.getName(),stackName, brickConfiguration.getType().name()));
         context.put("constrainByTypeAttribute", this.constrainByTypeAttribute);
         StringWriter sw = new StringWriter();
         template.merge(context, sw);

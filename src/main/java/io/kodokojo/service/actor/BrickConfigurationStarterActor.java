@@ -6,9 +6,11 @@ import akka.japi.pf.ReceiveBuilder;
 import io.kodokojo.commons.model.Service;
 import io.kodokojo.commons.utils.ssl.SSLKeyPair;
 import io.kodokojo.commons.utils.ssl.SSLUtils;
+import io.kodokojo.entrypoint.dto.ProjectConfigDto;
 import io.kodokojo.model.BrickConfiguration;
 import io.kodokojo.model.BrickType;
 import io.kodokojo.model.ProjectConfiguration;
+import io.kodokojo.model.StackConfiguration;
 import io.kodokojo.service.BrickManager;
 import io.kodokojo.brick.BrickAlreadyExist;
 import io.kodokojo.brick.BrickStartContext;
@@ -63,6 +65,7 @@ public class BrickConfigurationStarterActor extends AbstractActor {
 
     protected final void start(BrickStartContext brickStartContext) {
         BrickConfiguration brickConfiguration = brickStartContext.getBrickConfiguration();
+        StackConfiguration stackConfiguration = brickStartContext.getStackConfiguration();
         ProjectConfiguration projectConfiguration = brickStartContext.getProjectConfiguration();
         BrickType brickType = brickConfiguration.getType();
         String projectName = projectConfiguration.getName();
@@ -78,7 +81,7 @@ public class BrickConfigurationStarterActor extends AbstractActor {
         }
 
         try {
-            generateMsgAndSend(brickConfiguration, projectConfiguration, brickType, BrickStateMsg.State.STARTING);
+            generateMsgAndSend(brickStartContext, BrickStateMsg.State.STARTING);
 
 
             Set<Service> services = brickManager.start(projectConfiguration, brickType);
@@ -86,7 +89,7 @@ public class BrickConfigurationStarterActor extends AbstractActor {
                 LOGGER.debug("{} for project {} started : {}", brickType, projectName, StringUtils.join(services, ","));
             }
 
-            generateMsgAndSend(brickConfiguration, projectConfiguration, brickType, BrickStateMsg.State.CONFIGURING);
+            generateMsgAndSend(brickStartContext, BrickStateMsg.State.CONFIGURING);
 
             boolean configured = false;
             try {
@@ -94,31 +97,36 @@ public class BrickConfigurationStarterActor extends AbstractActor {
                 configured = true;
             } catch (ProjectConfigurationException e) {
                 LOGGER.error("An error occure while trying to configure project {}", projectName, e);
-                generateMsgAndSend(brickConfiguration, projectConfiguration, brickType, BrickStateMsg.State.ONFAILURE, e.getMessage());
+                generateMsgAndSend(brickStartContext, BrickStateMsg.State.ONFAILURE, e.getMessage());
             }
 
             if (configured) {
-                generateMsgAndSend(brickConfiguration, projectConfiguration, brickType, BrickStateMsg.State.RUNNING);
+                generateMsgAndSend(brickStartContext, BrickStateMsg.State.RUNNING);
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("{} for project {} configured", brickType, projectName);
                 }
             }
         } catch (BrickAlreadyExist brickAlreadyExist) {
             LOGGER.error("Brick {} already exist for project {}, not reconfigure it.", brickAlreadyExist.getBrickName(), brickAlreadyExist.getProjectName());
-            generateMsgAndSend(brickConfiguration, projectConfiguration, brickType, BrickStateMsg.State.ALREADYEXIST);
+            generateMsgAndSend(brickStartContext, BrickStateMsg.State.ALREADYEXIST);
         } catch (RuntimeException e) {
             LOGGER.error("An error occurred while trying to start brick {} for project {}.", brickType, projectName, e);
-            generateMsgAndSend(brickConfiguration, projectConfiguration, brickType, BrickStateMsg.State.ONFAILURE, e.getMessage());
+            generateMsgAndSend(brickStartContext, BrickStateMsg.State.ONFAILURE, e.getMessage());
         }
     }
 
 
-    private void generateMsgAndSend(BrickConfiguration brickConfiguration, ProjectConfiguration projectConfiguration, BrickType brickType, BrickStateMsg.State state, String messageStr) {
-        BrickStateMsg message = new BrickStateMsg(projectConfiguration.getIdentifier(), brickType.name(), brickConfiguration.getName(), state, messageStr);
+    private <E extends Enum<E>> void generateMsgAndSend(BrickStartContext context, BrickStateMsg.State state, String messageStr) {
+        ProjectConfiguration projectConfiguration = context.getProjectConfiguration();
+        StackConfiguration stackConfiguration = context.getStackConfiguration();
+        BrickConfiguration brickConfiguration = context.getBrickConfiguration();
+        BrickType brickType = brickConfiguration.getType();
+        String brickName = brickConfiguration.getName();
+        BrickStateMsg message = new BrickStateMsg(projectConfiguration.getIdentifier(),stackConfiguration.getName(),  brickType.name(), brickName, state, messageStr);
         stateListener.tell(message, self());
     }
 
-    private void generateMsgAndSend(BrickConfiguration brickConfiguration, ProjectConfiguration projectConfiguration, BrickType brickType, BrickStateMsg.State state) {
-        generateMsgAndSend(brickConfiguration, projectConfiguration, brickType, state, null);
+    private void generateMsgAndSend(BrickStartContext context, BrickStateMsg.State state) {
+        generateMsgAndSend(context, state, null);
     }
 }

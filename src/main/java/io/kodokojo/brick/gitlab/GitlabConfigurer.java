@@ -169,7 +169,7 @@ public class GitlabConfigurer implements BrickConfigurer {
         if (forceDefault != null && forceDefault) {
             return brickConfigurerData.getEntrypoint();
         }
-        return "https://" + brickUrlFactory.forgeUrl(brickConfigurerData.getProjectName(), "scm");
+        return "https://" + brickUrlFactory.forgeUrl(brickConfigurerData.getProjectName(), brickConfigurerData.getStackName(), "scm");
     }
 
     private static boolean changePassword(OkHttpClient httpClient, String gitlabUrl, String token, String oldPassword, String newPassword) {

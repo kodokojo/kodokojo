@@ -138,10 +138,10 @@ public class DefaultProjectManager implements ProjectManager {
                 Brick brick = brickConfiguration.getBrick();
                 BrickType brickType = brick.getType();
                 if (brickType.isRequiredHttpExposed()) {
-                    String brickDomainName = brickUrlFactory.forgeUrl(projectConfiguration, brickConfiguration);
+                    String brickDomainName = brickUrlFactory.forgeUrl(projectConfiguration, stackConfiguration.getName(), brickConfiguration);
                     dnsEntries.add(new DnsEntry(brickDomainName, DnsEntry.Type.A, lbIp));
                 }
-                BrickStartContext context = new BrickStartContext(projectConfiguration, brickConfiguration, domain, projectCaSSL, lbIp);
+                BrickStartContext context = new BrickStartContext(projectConfiguration,stackConfiguration,  brickConfiguration, domain, projectCaSSL, lbIp);
                 contexts.add(context);
             }
 
