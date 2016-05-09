@@ -265,16 +265,18 @@ public class GitlabConfigurer implements BrickConfigurer {
             id = jsonObject.getAsJsonPrimitive("id").getAsInt();
         } catch (RetrofitError e) {
             LOGGER.error("unable to complete creation of user : ", e);
-        } finally {
-            if (response != null) {
-                IOUtils.closeQuietly(response.body());
-            }
         }
+
         if (id != -1) {
             try {
+                try {
+                    Thread.sleep(500); // We encount some cases where Gitlab throw a 500 internal error while post the SSH key. Test if let some time to Gitlab to add user will resolv this issue ?
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
                 response = gitlabRest.addSshKey(privateToken, Integer.toString(id), "SSH Key", user.getSshPublicKey());
                 return true;
-                //return response.code() >= 200 && response.code() < 300; return a non 20X HTTP code when sucess to push the SSH key...
+                //return response.code() >= 200 && response.code() < 300; return a non 20X HTTP code when success to push the SSH key...
                 //  Have a look on the HAproxy timeout ?
 
             } catch (RetrofitError e) {
