@@ -203,7 +203,8 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
                     StringWriter sw = new StringWriter();
                     RSAUtils.writeRsaPrivateKey(privateKey, sw);
                     response.header("Location", "/user/" + user.getIdentifier());
-                    return new UserCreationDto(user, sw.toString());
+                    UserCreationDto userCreationDto = new UserCreationDto(user, sw.toString());
+                    return userCreationDto;
                 }
 
                 if (LOGGER.isDebugEnabled()) {

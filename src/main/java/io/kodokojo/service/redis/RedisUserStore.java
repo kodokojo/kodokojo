@@ -31,11 +31,8 @@ import io.kodokojo.service.store.UserStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.JedisPoolConfig;
 
 import java.io.*;
-import java.math.BigInteger;
 import java.security.*;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
@@ -97,7 +94,7 @@ public class RedisUserStore extends AbstractRedisStore implements UserStore, App
     @Override
     public String generateId() {
         try (Jedis jedis = pool.getResource()) {
-            String id = SALT_KEY + jedis.incr(ID_KEY).toString();
+            String id = saltKey + jedis.incr(ID_KEY).toString();
             String newId = RedisUtils.hexEncode(messageDigest.digest(id.getBytes()));
             byte[] prefixedKey = RedisUtils.aggregateKey(NEW_ID_PREFIX, newId);
             jedis.set(prefixedKey, NEW_USER_CONTENT);

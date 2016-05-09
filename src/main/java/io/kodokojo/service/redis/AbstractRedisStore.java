@@ -1,6 +1,5 @@
 package io.kodokojo.service.redis;
 
-import io.kodokojo.brick.BrickFactory;
 import io.kodokojo.service.lifecycle.ApplicationLifeCycleListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,12 +19,7 @@ public abstract class AbstractRedisStore implements ApplicationLifeCycleListener
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractRedisStore.class);
 
-    protected static final String SALT_KEY;
-
-    static {
-        SecureRandom secureRandom = new SecureRandom();
-        SALT_KEY = new BigInteger(128, secureRandom).toString(10);
-    }
+    protected final String saltKey;
 
     protected final Key key;
 
@@ -47,6 +41,9 @@ public abstract class AbstractRedisStore implements ApplicationLifeCycleListener
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("Unable to get instance of SHA-1 digest");
         }
+
+        SecureRandom secureRandom = new SecureRandom();
+        saltKey = new BigInteger(128, secureRandom).toString(10);
     }
 
     protected abstract String getStoreName();
@@ -72,7 +69,10 @@ public abstract class AbstractRedisStore implements ApplicationLifeCycleListener
 
     protected String generateId() {
         try (Jedis jedis = pool.getResource()) {
-            String id = SALT_KEY + jedis.incr(getGenerateIdKey()).toString();
+
+            SecureRandom secureRandom = new SecureRandom();
+            String rand = new BigInteger(128, secureRandom).toString(10);
+            String id = saltKey + rand +  jedis.incr(getGenerateIdKey()).toString();
             String newId = RedisUtils.hexEncode(messageDigest.digest(id.getBytes()));
             return newId;
         }
