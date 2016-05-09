@@ -170,6 +170,7 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
                 JsonParser parser = new JsonParser();
                 JsonObject json = (JsonObject) parser.parse(request.body());
                 String email = json.getAsJsonPrimitive("email").getAsString();
+
                 String username = email.substring(0, email.lastIndexOf("@"));
                 User userByUsername = userStore.getUserByUsername(username);
                 if (userByUsername != null) {
@@ -180,14 +181,18 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
                     return "";
                 }
 
+                String entityName = email;
+                if (json.has("entity") && StringUtils.isNotBlank(json.getAsJsonPrimitive("entity").getAsString())) {
+                    entityName = json.getAsJsonPrimitive("entity").getAsString();
+                }
+
                 String password = new BigInteger(130, new SecureRandom()).toString(32);
                 KeyPair keyPair = RSAUtils.generateRsaKeyPair();
                 RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
 
                 User user = new User(identifier, username, username, email, password, RSAUtils.encodePublicKey((RSAPublicKey) keyPair.getPublic(), email));
 
-                //  Create a default Entity
-                Entity entity = new Entity(user.getUsername(), user);
+                Entity entity = new Entity(entityName, user);
                 String entityId = entityStore.addEntity(entity);
 
                 if (userStore.addUser(user)) {
