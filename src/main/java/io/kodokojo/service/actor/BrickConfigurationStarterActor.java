@@ -116,7 +116,7 @@ public class BrickConfigurationStarterActor extends AbstractActor {
     }
 
 
-    private <E extends Enum<E>> void generateMsgAndSend(BrickStartContext context, BrickStateMsg.State state, String messageStr) {
+    private void generateMsgAndSend(BrickStartContext context, BrickStateMsg.State state, String messageStr) {
         ProjectConfiguration projectConfiguration = context.getProjectConfiguration();
         StackConfiguration stackConfiguration = context.getStackConfiguration();
         BrickConfiguration brickConfiguration = context.getBrickConfiguration();

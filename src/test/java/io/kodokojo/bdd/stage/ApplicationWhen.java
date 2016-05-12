@@ -51,6 +51,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
+import static org.apache.commons.lang.StringUtils.isNotBlank;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
@@ -117,7 +118,14 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
         RequestBody body = RequestBody.create(MediaType.parse("application/json"), ("{\"email\": \"" + email + "\"}").getBytes());
         String baseUrl = getBaseUrl();
 
-        Request request = new Request.Builder().post(body).url(baseUrl + "/api/v1/user" + (newUserId != null ? "/" + newUserId : "")).build();
+        Request.Builder builder = new Request.Builder().post(body).url(baseUrl + "/api/v1/user" + (newUserId != null ? "/" + newUserId : ""));
+        if (isNotBlank(currentUserLogin)) {
+            UserInfo currentUser = currentUsers.get(currentUserLogin);
+            if (currentUser != null) {
+                builder = StageUtils.addBasicAuthentification(currentUser, builder);
+            }
+        }
+        Request request = builder.build();
         Response response = null;
         try {
             response = httpClient.newCall(request).execute();
@@ -156,7 +164,7 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
         if (isBlank(projectName)) {
             throw new IllegalArgumentException("projectName must be defined.");
         }
-
+        //  Mock behavior
         BootstrapStackData boostrapData = new BootstrapStackData(projectName, "build-A", "127.0.0.1", 10022);
         Mockito.when(projectManager.bootstrapStack(projectName, "build-A", StackType.BUILD)).thenReturn(boostrapData);
         KeyPair keyPair = null;
@@ -174,6 +182,7 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
             fail(e.getMessage());
         }
 
+        //  Send project configuration configuration
         UserInfo currentUser = currentUsers.get(currentUserLogin);
 
         String json = "{\n" +

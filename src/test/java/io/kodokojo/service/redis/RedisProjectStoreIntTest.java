@@ -71,7 +71,7 @@ public class RedisProjectStoreIntTest {
 
         assertThat(result).isNotNull();
         assertThat(result.getIdentifier()).isEqualTo(identifier);
-        String entityOfUserId = redisProjectStore.getEntityOfUserId("12345");
+        String entityOfUserId = redisProjectStore.getEntityIdOfUserId("12345");
         assertThat(entityOfUserId).isEqualTo(identifier);
     }
 */

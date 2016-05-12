@@ -8,6 +8,8 @@ public interface EntityStore  {
 
     Entity getEntityById(String entityIdentifier);
 
-    String getEntityOfUserId(String userIdentifier);
+    String getEntityIdOfUserId(String userIdentifier);
+
+    void addUserToEntity(String userIdentifier, String entityIdentifier);
 
 }

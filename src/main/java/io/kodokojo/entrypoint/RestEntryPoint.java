@@ -192,8 +192,19 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
 
                 User user = new User(identifier, username, username, email, password, RSAUtils.encodePublicKey((RSAPublicKey) keyPair.getPublic(), email));
 
-                Entity entity = new Entity(entityName, user);
-                String entityId = entityStore.addEntity(entity);
+                String entityId = null;
+                SimpleCredential credential = extractCredential(request);
+                if (credential != null) {
+                    User userRequester = userAuthenticator.authenticate(credential);
+                    if (userRequester != null) {
+                        entityId = entityStore.getEntityIdOfUserId(userRequester.getIdentifier());
+                    }
+                }
+                if (entityId == null) {
+                    Entity entity = new Entity(entityName, user);
+                    entityId = entityStore.addEntity(entity);
+                }
+                entityStore.addUserToEntity(identifier, entityId);
 
                 user = new User(identifier, entityId, username, username, email, password, user.getSshPublicKey());
 

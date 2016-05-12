@@ -60,7 +60,8 @@ public class ProjectConfigurationIntTest extends ScenarioTest<ApplicationGiven<?
         when().create_a_new_project_configuration_with_name_$("Acme")
         .and().create_user_with_email_$("aletaxin@kodokojo.io")
         .and().add_user_$_to_project_configuration("aletaxin");
-        then().it_exist_a_valid_project_configuration_in_store_which_contain_user("aletaxin");
+        then().it_exist_a_valid_project_configuration_in_store_which_contain_user("aletaxin")
+                .and().user_$_belong_to_entity_of_project_configuration("aletaxin");
     }
 
     @Test

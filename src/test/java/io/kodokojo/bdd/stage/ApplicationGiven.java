@@ -23,6 +23,7 @@ package io.kodokojo.bdd.stage;
  */
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.model.Image;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -34,16 +35,16 @@ import io.kodokojo.brick.DefaultBrickFactory;
 import io.kodokojo.brick.DefaultBrickUrlFactory;
 import io.kodokojo.commons.config.DockerConfig;
 import io.kodokojo.commons.model.Service;
+import io.kodokojo.commons.utils.DockerTestSupport;
+import io.kodokojo.commons.utils.RSAUtils;
+import io.kodokojo.commons.utils.properties.PropertyResolver;
+import io.kodokojo.commons.utils.properties.provider.*;
 import io.kodokojo.config.ApplicationConfig;
 import io.kodokojo.entrypoint.RestEntryPoint;
 import io.kodokojo.entrypoint.UserAuthenticator;
 import io.kodokojo.model.Entity;
 import io.kodokojo.model.User;
-import io.kodokojo.commons.utils.DockerTestSupport;
-import io.kodokojo.commons.utils.RSAUtils;
-import io.kodokojo.commons.utils.properties.PropertyResolver;
-import io.kodokojo.commons.utils.properties.provider.*;
-import io.kodokojo.service.*;
+import io.kodokojo.service.ProjectManager;
 import io.kodokojo.service.redis.RedisEntityStore;
 import io.kodokojo.service.redis.RedisProjectStore;
 import io.kodokojo.service.redis.RedisUserStore;
@@ -63,18 +64,16 @@ import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.interfaces.RSAPublicKey;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 
-public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<SELF> {
+public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SELF> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationGiven.class);
-    
+
     private static final Map<String, String> USER_PASSWORD = new HashMap<>();
 
     static {
@@ -146,8 +145,17 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
     }
 
     public SELF redis_is_started() {
-        LOGGER.info("Pulling docker image redis:latest");
-        dockerTestSupport.pullImage("redis:latest");
+        List<Image> images = dockerClient.listImagesCmd().exec();
+        boolean foundRedis = false;
+        Iterator<Image> iterator = images.iterator();
+        while (iterator.hasNext() && !foundRedis) {
+            Image image = iterator.next();
+            foundRedis = image.getId().equals("redis") && Arrays.asList(image.getRepoTags()).contains("latest");
+        }
+        if (!foundRedis) {
+            LOGGER.info("Pulling docker image redis:latest");
+            dockerTestSupport.pullImage("redis:latest");
+        }
 
         Service service = StageUtils.startDockerRedis(dockerTestSupport);
         redisHost = service.getHost();
@@ -176,7 +184,7 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
             entityStore = new RedisEntityStore(aesKey, redisHost, redisPort);
             UserAuthenticator<SimpleCredential> userAuthenticator = new SimpleUserAuthenticator(userManager);
             projectManager = mock(ProjectManager.class);
-            restEntryPoint = new RestEntryPoint(port, userManager,userAuthenticator,entityStore, projectStore, projectManager, new DefaultBrickFactory());
+            restEntryPoint = new RestEntryPoint(port, userManager, userAuthenticator, entityStore, projectStore, projectManager, new DefaultBrickFactory());
             Launcher.INJECTOR = Guice.createInjector(new AbstractModule() {
                 @Override
                 protected void configure() {
@@ -240,6 +248,7 @@ public class ApplicationGiven <SELF extends ApplicationGiven<?>> extends Stage<S
 
                 Entity entity = new Entity(user.getUsername(), user);
                 String entityId = entityStore.addEntity(entity);
+                entityStore.addUserToEntity(user.getIdentifier(), entityId);
                 user = new User(user.getIdentifier(), entityId, user.getFirstName(), user.getLastName(), username, email, password, user.getSshPublicKey());
                 boolean userAdded = userManager.addUser(user);
                 assertThat(userAdded).isTrue();

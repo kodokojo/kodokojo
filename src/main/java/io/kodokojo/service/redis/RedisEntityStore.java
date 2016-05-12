@@ -73,7 +73,7 @@ public class RedisEntityStore extends AbstractRedisStore implements EntityStore 
             Set<String> userIds = allUsers.stream().map(User::getIdentifier).collect(Collectors.toSet());
 
             userIds.stream().forEach(userId -> {
-                jedis.set(RedisUtils.aggregateKey(ENTITY_USER_PREFIX, userId), id.getBytes());
+                addUserToEntity(userId, id);
             });
 
             byte[] encryptedObject = RSAUtils.encryptObjectWithAES(key, entityToWrite);
@@ -99,7 +99,7 @@ public class RedisEntityStore extends AbstractRedisStore implements EntityStore 
     }
 
     @Override
-    public String getEntityOfUserId(String userIdentifier) {
+    public String getEntityIdOfUserId(String userIdentifier) {
         if (isBlank(userIdentifier)) {
             throw new IllegalArgumentException("userIdentifier must be defined.");
         }
@@ -110,5 +110,20 @@ public class RedisEntityStore extends AbstractRedisStore implements EntityStore 
             }
         }
         return null;
+    }
+
+    @Override
+    public void addUserToEntity(String userIdentifier, String entityIdentifier) {
+        if (isBlank(userIdentifier)) {
+            throw new IllegalArgumentException("userIdentifier must be defined.");
+        }
+        if (isBlank(entityIdentifier)) {
+            throw new IllegalArgumentException("entityIdentifier must be defined.");
+        }
+        try (Jedis jedis = pool.getResource()){
+            if (jedis.exists(RedisUtils.aggregateKey(ENTITY_PREFIX, entityIdentifier))) {
+                jedis.set(RedisUtils.aggregateKey(ENTITY_USER_PREFIX, userIdentifier), entityIdentifier.getBytes());
+            }
+        }
     }
 }

@@ -45,8 +45,7 @@ public class UserCreationIntTest extends ScenarioTest<ApplicationGiven<?>, Appli
     @DockerIsRequire
     public void create_a_simple_user() {
         given().redis_is_started()
-                .and().kodokojo_restEntrypoint_is_available()
-                .and().i_will_be_user_$("jpthiery");
+                .and().kodokojo_restEntrypoint_is_available();
         when().retrive_a_new_id()
                 .and().create_user_with_email_$("jpthiery@xebia.fr");
         then().it_exist_a_valid_user_with_username_$("jpthiery")

@@ -37,8 +37,11 @@ import com.tngtech.jgiven.annotation.Quoted;
 import com.tngtech.jgiven.attachment.Attachment;
 import io.kodokojo.entrypoint.dto.ProjectConfigDto;
 import io.kodokojo.entrypoint.dto.UserDto;
+import io.kodokojo.model.Entity;
 import io.kodokojo.model.User;
+import io.kodokojo.service.redis.RedisEntityStore;
 import io.kodokojo.service.redis.RedisUserStore;
+import io.kodokojo.service.store.EntityStore;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
@@ -47,12 +50,16 @@ import java.util.Map;
 
 import static org.apache.commons.io.IOUtils.closeQuietly;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 
 public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF> {
 
     @ExpectedScenarioState
     RedisUserStore userManager;
+
+    @ExpectedScenarioState
+    EntityStore entityStore;
 
     @ExpectedScenarioState
     CurrentStep currentStep;
@@ -108,75 +115,22 @@ public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF
         return self();
     }
 
-    public SELF user_$_belong_to_entity_$(String username, String entityName) {
+    public SELF user_$_belong_to_entity_of_project_configuration(@Quoted  String username) {
+        UserInfo requesterUserInfo = currentUsers.get(currentUserLogin);
+        String entityIdOfCurrentUser = entityStore.getEntityIdOfUserId(requesterUserInfo.getIdentifier());
+        assertThat(entityIdOfCurrentUser).isNotNull();
+        UserInfo userToValidate = currentUsers.get(username);
+        String entityIdOfUserToValidate = entityStore.getEntityIdOfUserId(userToValidate.getIdentifier());
+        assertThat(entityIdOfUserToValidate).isEqualTo(entityIdOfCurrentUser);
         return self();
     }
 
-    private void getUserDetails(String username, boolean complete) {
-        OkHttpClient httpClient = new OkHttpClient();
-        UserInfo requesterUserInfo = currentUsers.get(currentUserLogin);
-        UserInfo targetUserInfo = currentUsers.get(username);
-        String url = getApiBaseUrl() + "/user";
-        if (!requesterUserInfo.getIdentifier().equals(targetUserInfo.getIdentifier())) {
-            url += "/" + targetUserInfo.getIdentifier();
-        }
-        Request.Builder builder = new Request.Builder().get().url(url);
-        Request request = StageUtils.addBasicAuthentification(requesterUserInfo, builder).build();
-        Response response = null;
-        try {
-            response = httpClient.newCall(request).execute();
-            assertThat(response.code()).isEqualTo(200);
 
-            JsonParser parser = new JsonParser();
-            JsonObject json = (JsonObject) parser.parse(response.body().string());
-
-            assertThat(json.getAsJsonPrimitive("name").getAsString()).isNotEmpty();
-            if (complete) {
-                assertThat(json.getAsJsonPrimitive("password").getAsString()).isNotEmpty();
-                assertThat(json.getAsJsonPrimitive("email").getAsString()).isNotEmpty();
-                assertThat(json.getAsJsonPrimitive("sshPublicKey").getAsString()).isNotEmpty();
-            } else {
-                assertThat(json.getAsJsonPrimitive("password").getAsString()).isEmpty();
-                assertThat(json.getAsJsonPrimitive("email").getAsString()).isEmpty();
-                assertThat(json.getAsJsonPrimitive("sshPublicKey").getAsString()).isEmpty();
-            }
-        } catch (IOException e) {
-            fail("Unable to get User details on Url " + url, e);
-        } finally {
-            if (response != null) {
-                try {
-                    response.body().close();
-                } catch (IOException e) {
-                    fail("Fail to close Http response.", e);
-                }
-            }
-        }
-    }
 
     public SELF it_exist_a_valid_project_configuration_in_store() {
-        OkHttpClient httpClient = new OkHttpClient();
-        UserInfo requesterUserInfo = currentUsers.get(currentUserLogin);
-        Request.Builder builder = new Request.Builder().url(getApiBaseUrl() + "/projectconfig/" + projectConfigurationId).get();
-        Request request = StageUtils.addBasicAuthentification(requesterUserInfo, builder).build();
-        Response response = null;
-        try {
-            response = httpClient.newCall(request).execute();
-            assertThat(response.code()).isEqualTo(200);
-            String bodyResponse = response.body().string();
-            Gson gson = new GsonBuilder().create();
-            projectConfigDto = gson.fromJson(bodyResponse, ProjectConfigDto.class);
-            assertThat(projectConfigDto).isNotNull();
-            assertThat(projectConfigDto.getAdmins().get(0).getUsername()).isEqualTo(requesterUserInfo.getUsername());
-            assertThat(projectConfigDto.getUsers()).isNotEmpty();
-            assertThat(projectConfigDto.getStackConfigs()).isNotEmpty();
-            currentStep.addAttachment(Attachment.plainText(bodyResponse).withTitle("Project configuration").withFileName("projectConfiguration_" + projectConfigurationId + ".json"));
-        } catch (IOException e) {
-            fail(e.getMessage());
-        } finally {
-            if (response != null) {
-                closeQuietly(response.body());
-            }
-        }
+        projectConfigDto = getProjectConfigurationFromCurrentProjectConfigId();
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        currentStep.addAttachment(Attachment.plainText(gson.toJson(projectConfigDto)).withTitle("Project configuration").withFileName("projectConfiguration_" + projectConfigurationId + ".json"));
         return self();
     }
 
@@ -220,6 +174,16 @@ public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF
         return self();
     }
 
+
+    public SELF user_$_belong_to_entity_$(String username, String entityName) {
+        UserInfo userInfo = currentUsers.get(username);
+        String entityIdOfUserId = entityStore.getEntityIdOfUserId(userInfo.getIdentifier());
+        Entity entity = entityStore.getEntityById(entityIdOfUserId);
+        assertThat(entity).isNotNull();
+        assertThat(entity.getName()).isEqualTo(entityName);
+        return self();
+    }
+
     private boolean lookupUsernameInProjectConfiguration(@Quoted String username) {
         it_exist_a_valid_project_configuration_in_store();
         boolean found = false;
@@ -229,6 +193,75 @@ public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF
             found = userDto.getUsername().equals(username);
         }
         return found;
+    }
+
+    private void getUserDetails(String username, boolean complete) {
+        OkHttpClient httpClient = new OkHttpClient();
+        UserInfo requesterUserInfo = currentUsers.get(currentUserLogin);
+        UserInfo targetUserInfo = currentUsers.get(username);
+        String url = getApiBaseUrl() + "/user";
+        if (!requesterUserInfo.getIdentifier().equals(targetUserInfo.getIdentifier())) {
+            url += "/" + targetUserInfo.getIdentifier();
+        }
+        Request.Builder builder = new Request.Builder().get().url(url);
+        Request request = StageUtils.addBasicAuthentification(requesterUserInfo, builder).build();
+        Response response = null;
+        try {
+            response = httpClient.newCall(request).execute();
+            assertThat(response.code()).isEqualTo(200);
+
+            JsonParser parser = new JsonParser();
+            JsonObject json = (JsonObject) parser.parse(response.body().string());
+
+            assertThat(json.getAsJsonPrimitive("name").getAsString()).isNotEmpty();
+            if (complete) {
+                assertThat(json.getAsJsonPrimitive("password").getAsString()).isNotEmpty();
+                assertThat(json.getAsJsonPrimitive("email").getAsString()).isNotEmpty();
+                assertThat(json.getAsJsonPrimitive("sshPublicKey").getAsString()).isNotEmpty();
+            } else {
+                assertThat(json.getAsJsonPrimitive("password").getAsString()).isEmpty();
+                assertThat(json.getAsJsonPrimitive("email").getAsString()).isEmpty();
+                assertThat(json.getAsJsonPrimitive("sshPublicKey").getAsString()).isEmpty();
+            }
+        } catch (IOException e) {
+            fail("Unable to get User details on Url " + url, e);
+        } finally {
+            if (response != null) {
+                try {
+                    response.body().close();
+                } catch (IOException e) {
+                    fail("Fail to close Http response.", e);
+                }
+            }
+        }
+    }
+
+
+    private ProjectConfigDto getProjectConfigurationFromCurrentProjectConfigId() {
+        OkHttpClient httpClient = new OkHttpClient();
+        UserInfo requesterUserInfo = currentUsers.get(currentUserLogin);
+        Request.Builder builder = new Request.Builder().url(getApiBaseUrl() + "/projectconfig/" + projectConfigurationId).get();
+        Request request = StageUtils.addBasicAuthentification(requesterUserInfo, builder).build();
+        Response response = null;
+        try {
+            response = httpClient.newCall(request).execute();
+            assertThat(response.code()).isEqualTo(200);
+            String bodyResponse = response.body().string();
+            Gson gson = new GsonBuilder().create();
+            ProjectConfigDto projectConfigDto = gson.fromJson(bodyResponse, ProjectConfigDto.class);
+            assertThat(projectConfigDto).isNotNull();
+            assertThat(projectConfigDto.getAdmins().get(0).getUsername()).isEqualTo(requesterUserInfo.getUsername());
+            assertThat(projectConfigDto.getUsers()).isNotEmpty();
+            assertThat(projectConfigDto.getStackConfigs()).isNotEmpty();
+            return projectConfigDto;
+        } catch (IOException e) {
+            fail(e.getMessage());
+        } finally {
+            if (response != null) {
+                closeQuietly(response.body());
+            }
+        }
+        return null;
     }
 
     private String getBaseUrl() {

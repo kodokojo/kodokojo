@@ -30,11 +30,13 @@ public class BrickConfigurerGiven<SELF extends BrickConfigurerGiven<?>> extends 
     public DockerTestSupport dockerTestSupport = new DockerTestSupport();
 
     @ProvidedScenarioState
+    String containerId;
+
+    @ProvidedScenarioState
     String brickName;
 
     @ProvidedScenarioState
     String brickUrl;
-
 
     @ProvidedScenarioState
     UserAuthenticator userAuthenticator;
@@ -47,7 +49,7 @@ public class BrickConfigurerGiven<SELF extends BrickConfigurerGiven<?>> extends 
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BrickConfigurerGiven.class);
 
-    public SELF $_is_started(@Quoted String brickName,@Hidden String image, @Hidden int port, @Hidden int timeout, @Hidden UserAuthenticator userAuthenticator) {
+    public SELF $_is_started(@Quoted String brickName, @Hidden String image, @Hidden int port, @Hidden int timeout, @Hidden UserAuthenticator userAuthenticator) {
         DockerClient dockerClient = dockerTestSupport.getDockerClient();
         LOGGER.info("Pulling docker image {}", image);
         dockerTestSupport.pullImage(image);
@@ -65,10 +67,11 @@ public class BrickConfigurerGiven<SELF extends BrickConfigurerGiven<?>> extends 
                 .withPortBindings(portBinding)
                 .withExposedPorts(exposedPort)
                 .exec();
-        dockerTestSupport.addContainerIdToClean(containerResponse.getId());
-        dockerClient.startContainerCmd(containerResponse.getId()).exec();
+        containerId = containerResponse.getId();
+        dockerTestSupport.addContainerIdToClean(containerId);
+        dockerClient.startContainerCmd(containerId).exec();
 
-        brickUrl = dockerTestSupport.getHttpContainerUrl(containerResponse.getId(),port);
+        brickUrl = dockerTestSupport.getHttpContainerUrl(containerId, port);
 
         boolean brickStarted = waitBrickStarted(brickUrl, timeout);
         assertThat(brickStarted).isTrue();
@@ -81,11 +84,11 @@ public class BrickConfigurerGiven<SELF extends BrickConfigurerGiven<?>> extends 
     private boolean waitBrickStarted(String brickUrl, int timeout) {
         boolean started = false;
         long now = System.currentTimeMillis();
-        long end = now + (timeout*1000);
+        long end = now + (timeout * 1000);
 
         OkHttpClient httpClient = new OkHttpClient();
         Request request = new Request.Builder().get().url(brickUrl).build();
-        while(!started && (end - System.currentTimeMillis()) > 0) {
+        while (!started && (end - System.currentTimeMillis()) > 0) {
             Response response = null;
             try {
                 response = httpClient.newCall(request).execute();
