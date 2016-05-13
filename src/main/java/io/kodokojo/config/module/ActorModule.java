@@ -27,9 +27,9 @@ public class ActorModule extends AbstractModule {
 
     @Provides
     @Named("brickConfigurationStarter")
-    ActorRef provideBrickConfigurationStarterActor(ActorSystem system, BrickManager brickManager, ConfigurationStore configurationStore, DnsManager dnsManager,@Named("brickStateMsgEndpoint")  ActorRef stateListener) {
+    ActorRef provideBrickConfigurationStarterActor(ActorSystem system, BrickManager brickManager, ConfigurationStore configurationStore,@Named("brickStateMsgEndpoint")  ActorRef stateListener) {
         //TODO Put Router configuration in file.
-        return system.actorOf(new RoundRobinPool(4).props(Props.create(BrickConfigurationStarterActor.class, brickManager, configurationStore, dnsManager, stateListener)),"brickConfigurationStarter");
+        return system.actorOf(new RoundRobinPool(4).props(Props.create(BrickConfigurationStarterActor.class, brickManager, configurationStore, stateListener)),"brickConfigurationStarter");
     }
 
     @Provides

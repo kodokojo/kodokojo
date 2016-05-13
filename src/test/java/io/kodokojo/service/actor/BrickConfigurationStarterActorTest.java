@@ -45,7 +45,6 @@ public class BrickConfigurationStarterActorTest {
 
     private ConfigurationStore configurationStore = mock(ConfigurationStore.class);
 
-    private DnsManager dnsManager = mock(DnsManager.class);
 
     @BeforeClass
     public static void setup() {
@@ -62,7 +61,6 @@ public class BrickConfigurationStarterActorTest {
     public void setupMock() {
         brickManager = mock(BrickManager.class);
         configurationStore = mock(ConfigurationStore.class);
-        dnsManager = mock(DnsManager.class);
     }
 
     @Test
@@ -79,7 +77,7 @@ public class BrickConfigurationStarterActorTest {
 
             JavaTestKit probe = new JavaTestKit(system);
 
-            final Props props = Props.create(BrickConfigurationStarterActor.class, brickManager, configurationStore, dnsManager, probe.getRef());
+            final Props props = Props.create(BrickConfigurationStarterActor.class, brickManager, configurationStore, probe.getRef());
 
 
             ActorRef ref = system.actorOf(props);
@@ -93,13 +91,6 @@ public class BrickConfigurationStarterActorTest {
                     assertThat(objects.length).isEqualTo(3);
                     List<BrickStateMsg> brickStateMsgs = Arrays.asList(objects).stream().map(o -> (BrickStateMsg) o).collect(Collectors.toList());
                     assertThat(brickStateMsgs).extracting("state.name").contains(BrickStateMsg.State.CONFIGURING.name(), BrickStateMsg.State.STARTING.name(), BrickStateMsg.State.RUNNING.name());
-
-                    ArgumentCaptor<DnsEntry> captor = ArgumentCaptor.forClass(DnsEntry.class);
-                    verify(dnsManager).createOrUpdateDnsEntry(captor.capture());
-                    DnsEntry dnsEntry = captor.getValue();
-                    assertThat(dnsEntry.getType()).isEqualTo(DnsEntry.Type.A);
-                    assertThat(dnsEntry.getName()).isEqualTo("ci.acme.kodokojo.dev");
-                    assertThat(dnsEntry.getValue()).isEqualTo("127.0.0.1");
 
                     verify(configurationStore).storeSSLKeys(eq("Acme"), eq("ci"), any(SSLKeyPair.class));
                     try {
@@ -125,7 +116,7 @@ public class BrickConfigurationStarterActorTest {
 
             JavaTestKit probe = new JavaTestKit(system);
 
-            final Props props = Props.create(BrickConfigurationStarterActor.class, brickManager, configurationStore, dnsManager, probe.getRef());
+            final Props props = Props.create(BrickConfigurationStarterActor.class, brickManager, configurationStore, probe.getRef());
 
             ActorRef ref = system.actorOf(props);
             BrickStartContext context = createBrickStartContext(new BrickConfiguration(new Brick("test", BrickType.CI)));
@@ -139,12 +130,6 @@ public class BrickConfigurationStarterActorTest {
                     assertThat(objects.length).isEqualTo(2);
                     List<BrickStateMsg> brickStateMsgs = Arrays.asList(objects).stream().map(o -> (BrickStateMsg) o).collect(Collectors.toList());
                     assertThat(brickStateMsgs).extracting("state.name").contains( states);
-                    ArgumentCaptor<DnsEntry> captor = ArgumentCaptor.forClass(DnsEntry.class);
-                    verify(dnsManager).createOrUpdateDnsEntry(captor.capture());
-                    DnsEntry dnsEntry = captor.getValue();
-                    assertThat(dnsEntry.getType()).isEqualTo(DnsEntry.Type.A);
-                    assertThat(dnsEntry.getName()).isEqualTo("ci.acme.kodokojo.dev");
-                    assertThat(dnsEntry.getValue()).isEqualTo("127.0.0.1");
 
                     verify(configurationStore).storeSSLKeys(eq("Acme"), eq("ci"), any(SSLKeyPair.class));
                 }

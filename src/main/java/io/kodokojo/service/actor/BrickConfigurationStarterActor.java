@@ -34,27 +34,21 @@ public class BrickConfigurationStarterActor extends AbstractActor {
 
     private final ConfigurationStore configurationStore;
 
-    private final DnsManager dnsManager;
-
     private final ActorRef stateListener;
 
     @Inject
-    public BrickConfigurationStarterActor(BrickManager brickManager, ConfigurationStore configurationStore, DnsManager dnsManager, ActorRef stateListener) {
+    public BrickConfigurationStarterActor(BrickManager brickManager, ConfigurationStore configurationStore, ActorRef stateListener) {
         if (brickManager == null) {
             throw new IllegalArgumentException("brickManager must be defined.");
         }
         if (configurationStore == null) {
             throw new IllegalArgumentException("configurationStore must be defined.");
         }
-        if (dnsManager == null) {
-            throw new IllegalArgumentException("dnsManager must be defined.");
-        }
         if (stateListener == null) {
             throw new IllegalArgumentException("stateMsgEndpointCreator must be defined.");
         }
         this.brickManager = brickManager;
         this.configurationStore = configurationStore;
-        this.dnsManager = dnsManager;
         this.stateListener = stateListener;
 
         receive(ReceiveBuilder.match(BrickStartContext.class, this::start)
@@ -65,7 +59,6 @@ public class BrickConfigurationStarterActor extends AbstractActor {
 
     protected final void start(BrickStartContext brickStartContext) {
         BrickConfiguration brickConfiguration = brickStartContext.getBrickConfiguration();
-        StackConfiguration stackConfiguration = brickStartContext.getStackConfiguration();
         ProjectConfiguration projectConfiguration = brickStartContext.getProjectConfiguration();
         BrickType brickType = brickConfiguration.getType();
         String projectName = projectConfiguration.getName();
@@ -73,8 +66,6 @@ public class BrickConfigurationStarterActor extends AbstractActor {
         if (brickType.isRequiredHttpExposed()) {
             String brickTypeName = brickType.name().toLowerCase();
             String brickDomainName = brickTypeName + "." + projectDomain;
-            String lbIp = brickStartContext.getLbIp();
-            dnsManager.createOrUpdateDnsEntry(new DnsEntry(brickDomainName, DnsEntry.Type.A, lbIp));
             SSLKeyPair projectCaSSL = brickStartContext.getProjectCaSSL();
             SSLKeyPair brickSslKeyPair = SSLUtils.createSSLKeyPair(brickDomainName, projectCaSSL.getPrivateKey(), projectCaSSL.getPublicKey(), projectCaSSL.getCertificates());
             configurationStore.storeSSLKeys(projectName, brickTypeName, brickSslKeyPair);
