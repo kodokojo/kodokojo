@@ -22,10 +22,7 @@ package io.kodokojo.bdd.stage;
  * #L%
  */
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
@@ -253,7 +250,27 @@ public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF
             assertThat(projectConfigDto.getAdmins().get(0).getUsername()).isEqualTo(requesterUserInfo.getUsername());
             assertThat(projectConfigDto.getUsers()).isNotEmpty();
             assertThat(projectConfigDto.getStackConfigs()).isNotEmpty();
-            return projectConfigDto;
+
+            JsonParser parser = new JsonParser();
+            JsonObject json = (JsonObject) parser.parse(bodyResponse);
+            assertThat(json.has("name")).isTrue();
+            assertThat(json.has("identifier")).isTrue();
+            assertThat(json.has("admins")).isTrue();
+            JsonArray admins = json.getAsJsonArray("admins");
+            assertThat(admins).isNotEmpty();
+            jsonUserAreValid(admins.iterator());
+            JsonArray users = json.getAsJsonArray("users");
+            jsonUserAreValid(users.iterator());
+            assertThat(users).isNotEmpty();
+            JsonArray stackConfigs = json.getAsJsonArray("stackConfigs");
+            assertThat(stackConfigs).isNotEmpty();
+            Iterator<JsonElement> stackConfigurationIt = stackConfigs.iterator();
+            while (stackConfigurationIt.hasNext()) {
+                JsonObject stackConf = (JsonObject) stackConfigurationIt.next();
+                jsonStackConfigIsValid(stackConf);
+            }
+
+                return projectConfigDto;
         } catch (IOException e) {
             fail(e.getMessage());
         } finally {
@@ -262,6 +279,31 @@ public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF
             }
         }
         return null;
+    }
+
+    private void jsonStackConfigIsValid(JsonObject stackConf) {
+        assertThat(stackConf.has("name")).isTrue();
+        assertThat(stackConf.has("type")).isTrue();
+        JsonArray brickConfigs = stackConf.getAsJsonArray("brickConfigs");
+        assertThat(brickConfigs).isNotEmpty();
+        Iterator<JsonElement> brickConfigIt = brickConfigs.iterator();
+        while (brickConfigIt.hasNext()) {
+            JsonObject brickConfig = (JsonObject) brickConfigIt.next();
+            jsonBrickIsValid(brickConfig);
+        }
+    }
+
+    private void jsonBrickIsValid(JsonObject brickConfig) {
+        assertThat(brickConfig.has("name")).isTrue();
+        assertThat(brickConfig.has("type")).isTrue();
+    }
+
+    private void jsonUserAreValid(Iterator<JsonElement> userIterator) {
+        while(userIterator.hasNext()) {
+            JsonObject user = (JsonObject) userIterator.next();
+            assertThat(user.has("identifier"));
+            assertThat(user.has("username"));
+        }
     }
 
     private String getBaseUrl() {
