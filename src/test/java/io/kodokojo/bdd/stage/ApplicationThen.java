@@ -33,13 +33,13 @@ import com.tngtech.jgiven.annotation.ExpectedScenarioState;
 import com.tngtech.jgiven.annotation.Quoted;
 import com.tngtech.jgiven.attachment.Attachment;
 import io.kodokojo.entrypoint.dto.ProjectConfigDto;
-import io.kodokojo.entrypoint.dto.UserDto;
+import io.kodokojo.entrypoint.dto.UserLightDto;
 import io.kodokojo.model.Entity;
 import io.kodokojo.model.User;
-import io.kodokojo.service.redis.RedisEntityStore;
 import io.kodokojo.service.redis.RedisUserStore;
 import io.kodokojo.service.store.EntityStore;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -47,7 +47,6 @@ import java.util.Map;
 
 import static org.apache.commons.io.IOUtils.closeQuietly;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 
 public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF> {
@@ -184,10 +183,10 @@ public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF
     private boolean lookupUsernameInProjectConfiguration(@Quoted String username) {
         it_exist_a_valid_project_configuration_in_store();
         boolean found = false;
-        Iterator<UserDto> iterator = projectConfigDto.getUsers().iterator();
+        Iterator<UserLightDto> iterator = projectConfigDto.getUsers().iterator();
         while (!found && iterator.hasNext()) {
-            UserDto userDto = iterator.next();
-            found = userDto.getUsername().equals(username);
+            UserLightDto userLightDto = iterator.next();
+            found = userLightDto.getUsername().equals(username);
         }
         return found;
     }
@@ -208,17 +207,35 @@ public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF
             assertThat(response.code()).isEqualTo(200);
 
             JsonParser parser = new JsonParser();
-            JsonObject json = (JsonObject) parser.parse(response.body().string());
+            String body = response.body().string();
+            JsonObject json = (JsonObject) parser.parse(body);
 
             assertThat(json.getAsJsonPrimitive("name").getAsString()).isNotEmpty();
             if (complete) {
                 assertThat(json.getAsJsonPrimitive("password").getAsString()).isNotEmpty();
                 assertThat(json.getAsJsonPrimitive("email").getAsString()).isNotEmpty();
                 assertThat(json.getAsJsonPrimitive("sshPublicKey").getAsString()).isNotEmpty();
+
+
+
             } else {
                 assertThat(json.getAsJsonPrimitive("password").getAsString()).isEmpty();
                 assertThat(json.getAsJsonPrimitive("email").getAsString()).isEmpty();
                 assertThat(json.getAsJsonPrimitive("sshPublicKey").getAsString()).isEmpty();
+            }
+            if (StringUtils.isNotBlank(projectConfigurationId)) {
+                assertThat(json.has("projectConfigurationIds"));
+                JsonArray projectConfigurationIds = json.getAsJsonArray("projectConfigurationIds");
+                assertThat(projectConfigurationIds).isNotEmpty();
+                boolean foundCurrentProjectConfigurationId = false;
+                Iterator<JsonElement> projectConfigIt = projectConfigurationIds.iterator();
+
+                while (projectConfigIt.hasNext()) {
+                    JsonObject projectConfig = (JsonObject) projectConfigIt.next();
+                    assertThat(projectConfig.has("projectConfigurationId"));
+                    foundCurrentProjectConfigurationId = projectConfigurationId.equals(projectConfig.getAsJsonPrimitive("projectConfigurationId").getAsString());
+                }
+                assertThat(foundCurrentProjectConfigurationId).isTrue();
             }
         } catch (IOException e) {
             fail("Unable to get User details on Url " + url, e);

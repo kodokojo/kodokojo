@@ -12,13 +12,13 @@ public class ProjectConfigDto implements Serializable {
 
     private String identifier;
 
-    private List<UserDto> admins;
+    private List<UserLightDto> admins;
 
-    private List<UserDto> users;
+    private List<UserLightDto> users;
 
     private List<StackConfigDto> stackConfigs;
 
-    public ProjectConfigDto(String name, String identifier, List<UserDto> admins, List<UserDto> users) {
+    public ProjectConfigDto(String name, String identifier, List<UserLightDto> admins, List<UserLightDto> users) {
         this.name = name;
         this.identifier = identifier;
         this.admins = admins;
@@ -32,10 +32,10 @@ public class ProjectConfigDto implements Serializable {
         this.name = projectConfiguration.getName();
         this.identifier = projectConfiguration.getIdentifier();
         this.admins = new ArrayList<>();
-        projectConfiguration.getAdmins().forEachRemaining(admin -> admins.add(new UserDto(admin)));
+        projectConfiguration.getAdmins().forEachRemaining(admin -> admins.add(new UserLightDto(admin)));
         this.users = new ArrayList<>();
         this.stackConfigs = new ArrayList<>(projectConfiguration.getStackConfigurations().size());
-        projectConfiguration.getUsers().forEachRemaining(user -> users.add(new UserDto(user)));
+        projectConfiguration.getUsers().forEachRemaining(user -> users.add(new UserLightDto(user)));
         projectConfiguration.getStackConfigurations().forEach(stackConfiguration -> stackConfigs.add(new StackConfigDto(stackConfiguration)));
     }
 
@@ -47,19 +47,19 @@ public class ProjectConfigDto implements Serializable {
         this.name = name;
     }
 
-    public List<UserDto> getAdmins() {
+    public List<UserLightDto> getAdmins() {
         return admins;
     }
 
-    public void setAdmins(List<UserDto> admins) {
+    public void setAdmins(List<UserLightDto> admins) {
         this.admins = admins;
     }
 
-    public List<UserDto> getUsers() {
+    public List<UserLightDto> getUsers() {
         return users;
     }
 
-    public void setUsers(List<UserDto> users) {
+    public void setUsers(List<UserLightDto> users) {
         this.users = users;
     }
 

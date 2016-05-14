@@ -2,7 +2,6 @@ package io.kodokojo.service.redis;
 
 import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.model.*;
-import io.kodokojo.service.lifecycle.ApplicationLifeCycleListener;
 import io.kodokojo.brick.BrickFactory;
 import io.kodokojo.service.store.ProjectStore;
 import org.apache.commons.collections4.CollectionUtils;
@@ -11,14 +10,8 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.JedisPoolConfig;
 
-import java.math.BigInteger;
 import java.security.Key;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -36,11 +29,9 @@ public class RedisProjectStore  extends  AbstractRedisStore implements ProjectSt
 
     public static final String PROJECTCONFIGURATION_PREFIX = "projectConfiguration/";
 
-    public static final String ENTITY_PREFIX = "entity/";
+    public static final String PROJECTCONFIG_TO_PROJECT_PREFIX = "projectConfigurationToConfig/";
 
-    public static final String ENTITY_USER_PREFIX = "entityUsers/";
-
-    private static final String ENTITY_ID_KEY = "entityId";
+    public static final String USER_TO_PROJECTCONFIGS_PREFIX = "userToprojectConfigurations/";
 
     private static final Pattern PROJECT_NAME_PATTERN = Pattern.compile("([a-zA-Z0-9\\-_]){4,20}");
 
@@ -84,7 +75,7 @@ public class RedisProjectStore  extends  AbstractRedisStore implements ProjectSt
         if (projectConfiguration == null) {
             throw new IllegalArgumentException("projectConfiguration must be defined.");
         }
-        if (StringUtils.isBlank(projectConfiguration.getEntityIdentifier())) {
+        if (isBlank(projectConfiguration.getEntityIdentifier())) {
             throw new IllegalArgumentException("EntityIdentifier must be defined.");
         }
         if (StringUtils.isNotBlank(projectConfiguration.getIdentifier())) {
@@ -102,17 +93,7 @@ public class RedisProjectStore  extends  AbstractRedisStore implements ProjectSt
         writeProjectConfiguration(projectConfiguration);
     }
 
-    private String writeProjectConfiguration(ProjectConfiguration projectConfiguration) {
-        try (Jedis jedis = pool.getResource()) {
-            String identifier = projectConfiguration.getIdentifier();
-            Date versionDate = new Date();
-            ProjectConfiguration toInsert = new ProjectConfiguration(projectConfiguration.getEntityIdentifier(), identifier, projectConfiguration.getName(), IteratorUtils.toList(projectConfiguration.getAdmins()), projectConfiguration.getStackConfigurations(), IteratorUtils.toList(projectConfiguration.getUsers()));
-            toInsert.setVersionDate(versionDate);
-            byte[] encryptedObject = RSAUtils.encryptObjectWithAES(key, toInsert);
-            jedis.set(RedisUtils.aggregateKey(PROJECTCONFIGURATION_PREFIX, identifier), encryptedObject);
-            return identifier;
-        }
-    }
+
 
     @Override
     public ProjectConfiguration getProjectConfigurationById(String identifier) {
@@ -141,9 +122,12 @@ public class RedisProjectStore  extends  AbstractRedisStore implements ProjectSt
     }
 
     @Override
-    public String addProject(Project project) {
+    public String addProject(Project project, String projectConfigurationIdentifier) {
         if (project == null) {
             throw new IllegalArgumentException("project must be defined.");
+        }
+        if (isBlank(projectConfigurationIdentifier)) {
+            throw new IllegalArgumentException("projectConfigurationIdentifier must be defined.");
         }
         if (projectNameIsValid(project.getName())) {
             try (Jedis jedis = pool.getResource()) {
@@ -151,7 +135,38 @@ public class RedisProjectStore  extends  AbstractRedisStore implements ProjectSt
                 Project toAdd = new Project(identifier, project.getName(), project.getSslRootCaKey(), project.getSnapshotDate(), project.getStacks());
                 byte[] encryptedObject = RSAUtils.encryptObjectWithAES(key, toAdd);
                 jedis.set(RedisUtils.aggregateKey(PROJECT_PREFIX, project.getName()), encryptedObject);
+                jedis.set(RedisUtils.aggregateKey(PROJECTCONFIG_TO_PROJECT_PREFIX, projectConfigurationIdentifier), identifier.getBytes());
                 return identifier;
+            }
+        }
+        return null;
+    }
+
+
+    @Override
+    public Set<String> getProjectConfigIdsByUserIdentifier(String userIdentifier) {
+        if (isBlank(userIdentifier)) {
+            throw new IllegalArgumentException("userIdentifier must be defined.");
+        }
+                Set<String> res = new HashSet<>();
+        try (Jedis jedis = pool.getResource()) {
+            byte[] projectConfigKey = RedisUtils.aggregateKey(USER_TO_PROJECTCONFIGS_PREFIX, userIdentifier);
+            if (jedis.exists(projectConfigKey)) {
+                res.addAll(jedis.smembers(projectConfigKey).stream().map(String::new).collect(Collectors.toSet()));
+            }
+        }
+        return res;
+    }
+
+    @Override
+    public String getProjectByProjectConfigurationId(String projectConfigurationId) {
+        if (isBlank(projectConfigurationId)) {
+            throw new IllegalArgumentException("projectConfigurationId must be defined.");
+        }
+        try (Jedis jedis = pool.getResource()) {
+            byte[] projectConfigKey = RedisUtils.aggregateKey(PROJECTCONFIG_TO_PROJECT_PREFIX, projectConfigurationId);
+            if (jedis.exists(projectConfigKey)) {
+                return new String(jedis.get(projectConfigKey));
             }
         }
         return null;
@@ -170,6 +185,30 @@ public class RedisProjectStore  extends  AbstractRedisStore implements ProjectSt
             }
         }
         return null;
+    }
+
+
+    private String writeProjectConfiguration(ProjectConfiguration projectConfiguration) {
+        try (Jedis jedis = pool.getResource()) {
+            String identifier = projectConfiguration.getIdentifier();
+            Date versionDate = new Date();
+            ProjectConfiguration toInsert = new ProjectConfiguration(projectConfiguration.getEntityIdentifier(), identifier, projectConfiguration.getName(), IteratorUtils.toList(projectConfiguration.getAdmins()), projectConfiguration.getStackConfigurations(), IteratorUtils.toList(projectConfiguration.getUsers()));
+            toInsert.setVersionDate(versionDate);
+            byte[] encryptedObject = RSAUtils.encryptObjectWithAES(key, toInsert);
+            jedis.set(RedisUtils.aggregateKey(PROJECTCONFIGURATION_PREFIX, identifier), encryptedObject);
+            writeUserToProjectConfigurationId(jedis, toInsert.getAdmins(), toInsert.getIdentifier());
+            writeUserToProjectConfigurationId(jedis, toInsert.getUsers(), toInsert.getIdentifier());
+            return identifier;
+        }
+    }
+
+    private void writeUserToProjectConfigurationId(Jedis jedis, Iterator<User> users, String projectConfigurationId) {
+        byte[] projectConfId = projectConfigurationId.getBytes();
+        while(users.hasNext()) {
+            User user = users.next();
+            byte[] key = RedisUtils.aggregateKey(USER_TO_PROJECTCONFIGS_PREFIX, user.getIdentifier());
+            jedis.sadd(key, projectConfId);
+        }
     }
 
 }

@@ -130,9 +130,26 @@ schemas:
           "sshPublicKey": {
             "type": "string",
             "required": false
+          },
+          "projectConfigurationIds": {
+           "type": "array",
+            "items": {
+              "id": "http://kodokojo.io/userProjectConfig",
+              "type": "object",
+              "properties": {
+                "projectConfigurationId": {
+                  "id": "http://kodokojo.io/admins/identifier",
+                  "type": "string"
+                },
+                "projectId": {
+                  "id": "http://kodokojo.io/admins/identifier",
+                  "type": "string"
+                }
+              }
+            }
           }
         }
-      }
+
   - projectCreation: |
       {
         "$schema": "http://json-schema.org/draft-04/schema#",

@@ -79,38 +79,49 @@ public class RedisProjectStoreIntTest {
     @Test
     @DockerIsRequire
     public void add_valid_project() throws NoSuchAlgorithmException {
-        Project project = createProject();
 
-        String identifier = redisProjectStore.addProject(project);
-
-        assertThat(identifier).isNotEmpty();
-
-        Project result = redisProjectStore.getProjectByName(project.getName());
-
-        assertThat(result).isNotNull();
-        assertThat(result.getIdentifier()).isEqualTo(identifier);
-    }
-
-    @Test
-    @DockerIsRequire
-    public void add_valid_project_configuration() {
         List<User> users = new ArrayList<>();
         User owner = new User("1234", "Jpascal", "jpthiery", "jpthiery@kodokojo.io", "mysecretpassword", "ssh public key");
         users.add(owner);
 
-        Set<StackConfiguration> stackConfigurations = new HashSet<>();
-        Set<BrickConfiguration> brickConfigurations = new HashSet<>();
-        brickConfigurations.add(new BrickConfiguration(new Brick("jenkins", BrickType.CI)));
-        stackConfigurations.add(new StackConfiguration("build-A", StackType.BUILD, brickConfigurations, "127.0.0.1", 10022));
-        ProjectConfiguration projectConfiguration = new ProjectConfiguration("123456","acme-a", users, stackConfigurations,users);
+        ProjectConfiguration projectConfiguration = createProjectConfiguration(users);
 
         String identifier = redisProjectStore.addProjectConfiguration(projectConfiguration);
+
         assertThat(identifier).isNotEmpty();
+        Project project = createProject();
+
+        String projectIdentifier = redisProjectStore.addProject(project, identifier);
+
 
         ProjectConfiguration result = redisProjectStore.getProjectConfigurationById(identifier);
         assertThat(result).isNotNull();
         assertThat(result.getIdentifier()).isEqualTo(identifier);
         assertThat(result.getEntityIdentifier()).isNotNull();
+
+        Set<String> projectConfigIdsByUserIdentifier = redisProjectStore.getProjectConfigIdsByUserIdentifier("1234");
+        assertThat(projectConfigIdsByUserIdentifier).isNotNull();
+        assertThat(projectConfigIdsByUserIdentifier).contains(result.getIdentifier());
+
+
+        assertThat(projectIdentifier).isNotEmpty();
+
+        Project projectResult = redisProjectStore.getProjectByName(project.getName());
+
+        assertThat(projectResult).isNotNull();
+        assertThat(projectResult.getIdentifier()).isEqualTo(projectIdentifier);
+
+
+    }
+
+
+
+    private ProjectConfiguration createProjectConfiguration(List<User> users) {
+        Set<StackConfiguration> stackConfigurations = new HashSet<>();
+        Set<BrickConfiguration> brickConfigurations = new HashSet<>();
+        brickConfigurations.add(new BrickConfiguration(new Brick("jenkins", BrickType.CI)));
+        stackConfigurations.add(new StackConfiguration("build-A", StackType.BUILD, brickConfigurations, "127.0.0.1", 10022));
+        return new ProjectConfiguration("123456","acme-a", users, stackConfigurations,users);
     }
 
     Project createProject() throws NoSuchAlgorithmException {

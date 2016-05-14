@@ -48,7 +48,8 @@ public class ProjectConfigurationIntTest extends ScenarioTest<ApplicationGiven<?
                 .and().kodokojo_restEntrypoint_is_available()
                 .and().i_am_user_$("jpthiery", true);
         when().create_a_new_project_configuration_with_name_$("Acme");
-        then().it_exist_a_valid_project_configuration_in_store();
+        then().it_exist_a_valid_project_configuration_in_store()
+        .and().it_is_possible_to_get_complete_details_for_user_$("jpthiery");
     }
 
     @Test
@@ -61,6 +62,7 @@ public class ProjectConfigurationIntTest extends ScenarioTest<ApplicationGiven<?
         .and().create_user_with_email_$("aletaxin@kodokojo.io")
         .and().add_user_$_to_project_configuration("aletaxin");
         then().it_exist_a_valid_project_configuration_in_store_which_contain_user("aletaxin")
+                .and().it_is_possible_to_get_details_for_user_$("aletaxin")
                 .and().user_$_belong_to_entity_of_project_configuration("aletaxin");
     }
 

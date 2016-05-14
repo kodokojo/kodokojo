@@ -28,6 +28,8 @@ import io.kodokojo.brick.DefaultBrickFactory;
 import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.entrypoint.dto.ProjectConfigDto;
 import io.kodokojo.entrypoint.dto.ProjectCreationDto;
+import io.kodokojo.entrypoint.dto.UserDto;
+import io.kodokojo.entrypoint.dto.UserProjectConfigIdDto;
 import io.kodokojo.model.*;
 import io.kodokojo.service.ProjectManager;
 import io.kodokojo.service.store.EntityStore;
@@ -241,7 +243,11 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
             SimpleCredential credential = extractCredential(request);
             if (credential != null) {
                 User user = userStore.getUserByUsername(credential.getUsername());
-                return user;
+                if (user == null) {
+                    halt(404);
+                    return "";
+                }
+                return getUserDto(user);
             }
             halt(401);
             return "";
@@ -252,11 +258,10 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
             String identifier = request.params(":id");
             User user = userStore.getUserByIdentifier(identifier);
             if (user != null && credential != null) {
-                if (user.getUsername().equals(credential.getUsername())) {
-                    return user;
-                } else {
-                    return new User(user.getIdentifier(), user.getName(), user.getUsername(), "", "", "");
+                if (!user.getUsername().equals(credential.getUsername())) {
+                    user = new User(user.getIdentifier(), user.getName(), user.getUsername(), "", "", "");
                 }
+                return getUserDto(user);
             }
             halt(404);
             return "";
@@ -397,7 +402,7 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
                         projectManager.bootstrapStack(projectConfiguration.getName(), projectConfiguration.getDefaultStackConfiguration().getName(), projectConfiguration.getDefaultStackConfiguration().getType());
                         project = projectManager.start(projectConfiguration);
                         response.status(201);
-                        return projectStore.addProject(project);
+                        return projectStore.addProject(project, projectConfigurationId);
                     } else {
                         halt(409, "Project already exist.");
                     }
@@ -417,6 +422,20 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
         Spark.awaitInitialization();
         LOGGER.info("Spark server started on port {}.", port);
 
+    }
+
+    private UserDto getUserDto(User user) {
+        UserDto res = new UserDto(user);
+        Set<String> projectConfigIds = projectStore.getProjectConfigIdsByUserIdentifier(user.getIdentifier());
+        List<UserProjectConfigIdDto> userProjectConfigIdDtos = new ArrayList<>();
+        projectConfigIds.forEach(id -> {
+            String projectId = projectStore.getProjectByProjectConfigurationId(id);
+            UserProjectConfigIdDto userProjectConfigIdDto = new UserProjectConfigIdDto(id);
+            userProjectConfigIdDto.setProjectId(projectId);
+            userProjectConfigIdDtos.add(userProjectConfigIdDto);
+        });
+        res.setProjectConfigurationIds(userProjectConfigIdDtos);
+        return res;
     }
 
     private Set<StackConfiguration> createDefaultStackConfiguration(String projectName) {

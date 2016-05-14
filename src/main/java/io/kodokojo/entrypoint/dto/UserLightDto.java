@@ -4,18 +4,18 @@ import io.kodokojo.model.User;
 
 import java.io.Serializable;
 
-public class UserDto implements Serializable {
+public class UserLightDto implements Serializable {
 
     private String identifier;
 
     private String username;
 
-    public UserDto(String identifier, String username) {
+    public UserLightDto(String identifier, String username) {
         this.identifier = identifier;
         this.username = username;
     }
 
-    public UserDto(User user) {
+    public UserLightDto(User user) {
         if (user == null) {
             throw new IllegalArgumentException("user must be defined.");
         }
@@ -41,7 +41,7 @@ public class UserDto implements Serializable {
 
     @Override
     public String toString() {
-        return "UserDto{" +
+        return "UserLightDto{" +
                 "identifier='" + identifier + '\'' +
                 ", username='" + username + '\'' +
                 '}';
