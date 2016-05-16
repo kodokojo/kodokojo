@@ -223,7 +223,7 @@ public class WebSocketEntryPoint implements BrickStateMsgListener {
         data.addProperty("state", brickState.getState().name());
         if (brickState.state == BrickState.State.RUNNING) {
             ProjectConfiguration projectConfiguration = projectStore.getProjectConfigurationById(brickState.getProjectConfigurationIdentifier());
-            data.addProperty("url", "https://" + brickUrlFactory.forgeUrl(projectConfiguration.getName(), brickState.stackName , brickState.getBrickType()));
+            data.addProperty("url", "https://" + brickUrlFactory.forgeUrl(projectConfiguration.getName(), brickState.stackName , brickState.getBrickType(), brickState.getBrickName()));
         }
         if (brickState.state == BrickState.State.ONFAILURE) {
             data.addProperty("message", brickState.message);

@@ -24,16 +24,19 @@ import static org.apache.commons.lang.StringUtils.isBlank;
 
 public interface BrickUrlFactory {
 
-    String forgeUrl(String entity, String projectName, String stackName, String brickType);
+    String forgeUrl(String entity, String projectName, String stackName, String brickType, String brickName);
 
-    default String forgeUrl(String projectName, String stackName, String brickType) {
+    default String forgeUrl(String projectName, String stackName, String brickType, String brickName) {
         if (isBlank(projectName)) {
             throw new IllegalArgumentException("projectName must be defined.");
         }
         if (isBlank(brickType)) {
             throw new IllegalArgumentException("brickType must be defined.");
         }
-        return forgeUrl(null, projectName.toLowerCase(), null, brickType.toLowerCase());
+        if (isBlank(brickName)) {
+            throw new IllegalArgumentException("brickName must be defined.");
+        }
+        return forgeUrl(null, projectName.toLowerCase(), null, brickType.toLowerCase(), brickName);
     }
 
     default String forgeUrl(ProjectConfiguration projectConfiguration,  String stackName, BrickConfiguration brickConfiguration) {
@@ -43,7 +46,7 @@ public interface BrickUrlFactory {
         if (brickConfiguration == null) {
             throw new IllegalArgumentException("brickConfiguration must be defined.");
         }
-        return forgeUrl(projectConfiguration.getName().toLowerCase(),stackName, brickConfiguration.getType().name().toLowerCase());
+        return forgeUrl(projectConfiguration.getName().toLowerCase(),stackName, brickConfiguration.getType().name().toLowerCase(), brickConfiguration.getBrick().getName().toLowerCase());
     }
 
 }

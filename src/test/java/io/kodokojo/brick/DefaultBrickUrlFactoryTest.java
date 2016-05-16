@@ -17,10 +17,7 @@
  */
 package io.kodokojo.brick;
 
-import io.kodokojo.model.BrickConfiguration;
-import io.kodokojo.model.BrickType;
-import io.kodokojo.model.ProjectConfiguration;
-import io.kodokojo.model.StackConfiguration;
+import io.kodokojo.model.*;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -40,16 +37,17 @@ public class DefaultBrickUrlFactoryTest {
 
         when(projectConfiguration.getName()).thenReturn("ACME");
         when(brickConfiguration.getType()).thenReturn(BrickType.CI);
+        when(brickConfiguration.getBrick()).thenReturn(new Brick("jenkins", BrickType.CI));
 
         String forgedUrl = brickUrlFactory.forgeUrl(projectConfiguration, "build-A", brickConfiguration);
-        assertThat(forgedUrl).isEqualTo("ci-acme.kodokojo.dev");
+        assertThat(forgedUrl).isEqualTo("jenkins-acme.kodokojo.dev");
     }
 
     @Test
     public void object_with_entity_upper_case() {
         BrickUrlFactory brickUrlFactory = new DefaultBrickUrlFactory("kodokojo.dev");
-        String forgedUrl = brickUrlFactory.forgeUrl("cqfd","ACME","build-A", "CI");
-        assertThat(forgedUrl).isEqualTo("ci-acme-cqfd.kodokojo.dev");
+        String forgedUrl = brickUrlFactory.forgeUrl("cqfd","ACME","build-A", "CI", "jenkins");
+        assertThat(forgedUrl).isEqualTo("jenkins-acme-cqfd.kodokojo.dev");
     }
 
     @Test
@@ -61,16 +59,17 @@ public class DefaultBrickUrlFactoryTest {
 
         when(projectConfiguration.getName()).thenReturn("acme");
         when(brickConfiguration.getType()).thenReturn(BrickType.CI);
+        when(brickConfiguration.getBrick()).thenReturn(new Brick("jenkins", BrickType.CI));
 
         String forgedUrl = brickUrlFactory.forgeUrl(projectConfiguration, "build-A", brickConfiguration);
-        assertThat(forgedUrl).isEqualTo("ci-acme.kodokojo.dev");
+        assertThat(forgedUrl).isEqualTo("jenkins-acme.kodokojo.dev");
     }
 
     @Test
     public void string_with_entity_upper_case() {
         BrickUrlFactory brickUrlFactory = new DefaultBrickUrlFactory("kodokojo.dev");
-        String forgedUrl = brickUrlFactory.forgeUrl("cqfd","ACME","build-A", "CI");
-        assertThat(forgedUrl).isEqualTo("ci-acme-cqfd.kodokojo.dev");
+        String forgedUrl = brickUrlFactory.forgeUrl("cqfd","ACME","build-A", "CI", "jenkins");
+        assertThat(forgedUrl).isEqualTo("jenkins-acme-cqfd.kodokojo.dev");
     }
 
 }

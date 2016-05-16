@@ -246,7 +246,7 @@ public class MarathonBrickManager implements BrickManager {
         context.put("projectName", projectConfiguration.getName().toLowerCase());
         context.put("stack", projectConfiguration.getDefaultStackConfiguration());
         context.put("brick", brickConfiguration);
-        context.put("brickUrl", brickUrlFactory.forgeUrl(projectConfiguration.getName(),stackName, brickConfiguration.getType().name()));
+        context.put("brickUrl", brickUrlFactory.forgeUrl(projectConfiguration.getName(),stackName, brickConfiguration.getType().name(), brickConfiguration.getBrick().getName()));
         context.put("constrainByTypeAttribute", this.constrainByTypeAttribute);
         StringWriter sw = new StringWriter();
         template.merge(context, sw);
