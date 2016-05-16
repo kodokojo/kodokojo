@@ -151,7 +151,7 @@ public class DefaultProjectManager implements ProjectManager {
         }
         dnsManager.createOrUpdateDnsEntries(dnsEntries);
         contexts.forEach(brickConfigurationStarter::start);
-        Project project = new Project(projectName, projectCaSSL, new Date(), stacks);
+        Project project = new Project(projectConfiguration.getIdentifier(), projectName, projectCaSSL, new Date(), stacks);
         return project;
     }
 }

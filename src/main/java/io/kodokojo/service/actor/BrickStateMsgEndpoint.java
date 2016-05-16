@@ -2,7 +2,7 @@ package io.kodokojo.service.actor;
 
 import akka.actor.AbstractActor;
 import akka.japi.pf.ReceiveBuilder;
-import io.kodokojo.brick.BrickStateMsg;
+import io.kodokojo.model.BrickState;
 import io.kodokojo.brick.BrickStateMsgListener;
 
 public class BrickStateMsgEndpoint extends AbstractActor {
@@ -12,7 +12,7 @@ public class BrickStateMsgEndpoint extends AbstractActor {
             throw new IllegalArgumentException("listener must be defined.");
         }
         receive(ReceiveBuilder
-                .match(BrickStateMsg.class, listener::receive)
+                .match(BrickState.class, listener::receive)
                 .build());
     }
 }

@@ -22,8 +22,6 @@ package io.kodokojo.model;
  * #L%
  */
 
-import org.apache.commons.collections4.CollectionUtils;
-
 import java.io.Serializable;
 import java.util.Set;
 
@@ -35,9 +33,9 @@ public class Stack implements Serializable {
 
     private final StackType stackType;
 
-    private final Set<BrickDeploymentState> brickEntities;
+    private final Set<BrickState> brickStates;
 
-    public Stack(String name, StackType stackType, Set<BrickDeploymentState> brickEntities) {
+    public Stack(String name, StackType stackType, Set<BrickState> brickStates) {
         if (isBlank(name)) {
             throw new IllegalArgumentException("name must be defined.");
         }
@@ -46,7 +44,7 @@ public class Stack implements Serializable {
         }
         this.name = name;
         this.stackType = stackType;
-        this.brickEntities = brickEntities;
+        this.brickStates = brickStates;
     }
 
     public String getName() {
@@ -58,8 +56,8 @@ public class Stack implements Serializable {
         return stackType;
     }
 
-    public Set<BrickDeploymentState> getBrickEntities() {
-        return brickEntities;
+    public Set<BrickState> getBrickStates() {
+        return brickStates;
     }
 
     @Override
@@ -71,7 +69,7 @@ public class Stack implements Serializable {
 
         if (!name.equals(stack.name)) return false;
         if (stackType != stack.stackType) return false;
-        return brickEntities.equals(stack.brickEntities);
+        return brickStates.equals(stack.brickStates);
 
     }
 
@@ -79,7 +77,7 @@ public class Stack implements Serializable {
     public int hashCode() {
         int result = name.hashCode();
         result = 31 * result + stackType.hashCode();
-        result = 31 * result + brickEntities.hashCode();
+        result = 31 * result + brickStates.hashCode();
         return result;
     }
 
@@ -88,7 +86,7 @@ public class Stack implements Serializable {
         return "Stack{" +
                 "name='" + name + '\'' +
                 ", stackType=" + stackType +
-                ", brickEntities=" + brickEntities +
+                ", brickStates=" + brickStates +
                 '}';
     }
 }

@@ -1,0 +1,44 @@
+{
+  "type": "string",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "id": "http://kodokojo.io/userCreated",
+  "required": true,
+  "properties": {
+    "identifier": {
+      "type": "string",
+      "required": true
+    },
+    "firstName": {
+      "type": "string",
+      "required": false
+    },
+    "lastName": {
+      "type": "string",
+      "required": false
+    },
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "username": {
+      "type": "string",
+      "required": true
+    },
+    "email": {
+      "type": "string",
+      "required": true
+    },
+    "password": {
+      "type": "string",
+      "required": true
+    },
+    "privateKey": {
+      "type": "string",
+      "required": true
+    },
+    "sshPublicKey": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

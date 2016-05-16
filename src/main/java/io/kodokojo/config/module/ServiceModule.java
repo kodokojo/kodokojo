@@ -5,6 +5,7 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import io.kodokojo.brick.*;
+import io.kodokojo.commons.utils.servicelocator.ServiceLocator;
 import io.kodokojo.commons.utils.ssl.SSLKeyPair;
 import io.kodokojo.config.ApplicationConfig;
 import io.kodokojo.entrypoint.UserAuthenticator;
@@ -30,8 +31,11 @@ public class ServiceModule extends AbstractModule {
 
     @Provides
     @Singleton
-    BrickStateMsgDispatcher provideBrickStateMsgDispatcher() {
-        return new BrickStateMsgDispatcher();
+    BrickStateMsgDispatcher provideBrickStateMsgDispatcher(ProjectStore projectStore) {
+        BrickStateMsgDispatcher dispatcher = new BrickStateMsgDispatcher();
+        StoreBrickStateListener storeBrickStateListener = new StoreBrickStateListener(projectStore);
+        dispatcher.addListener(storeBrickStateListener);
+        return dispatcher;
     }
 
     @Provides

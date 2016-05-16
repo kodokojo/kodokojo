@@ -4,6 +4,9 @@ import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
 import akka.testkit.JavaTestKit;
+import io.kodokojo.brick.BrickUrlFactory;
+import io.kodokojo.brick.DefaultBrickUrlFactory;
+import io.kodokojo.model.BrickState;
 import io.kodokojo.commons.model.Service;
 import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.commons.utils.ssl.SSLKeyPair;
@@ -12,17 +15,13 @@ import io.kodokojo.model.*;
 import io.kodokojo.service.BrickManager;
 import io.kodokojo.brick.BrickAlreadyExist;
 import io.kodokojo.brick.BrickStartContext;
-import io.kodokojo.brick.BrickStateMsg;
 import io.kodokojo.service.ConfigurationStore;
 import io.kodokojo.service.ProjectConfigurationException;
-import io.kodokojo.service.dns.DnsEntry;
-import io.kodokojo.service.dns.DnsManager;
 import org.assertj.core.api.Assertions;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
 
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
@@ -44,6 +43,8 @@ public class BrickConfigurationStarterActorTest {
     private BrickManager brickManager = mock(BrickManager.class);
 
     private ConfigurationStore configurationStore = mock(ConfigurationStore.class);
+
+    private BrickUrlFactory brickUrlFactory = new DefaultBrickUrlFactory("kodokojo.dev");
 
 
     @BeforeClass
@@ -77,7 +78,7 @@ public class BrickConfigurationStarterActorTest {
 
             JavaTestKit probe = new JavaTestKit(system);
 
-            final Props props = Props.create(BrickConfigurationStarterActor.class, brickManager, configurationStore, probe.getRef());
+            final Props props = Props.create(BrickConfigurationStarterActor.class, brickManager, configurationStore, brickUrlFactory,  probe.getRef());
 
 
             ActorRef ref = system.actorOf(props);
@@ -89,8 +90,8 @@ public class BrickConfigurationStarterActorTest {
                 protected void check() {
                     Object[] objects = probe.receiveN(3);
                     assertThat(objects.length).isEqualTo(3);
-                    List<BrickStateMsg> brickStateMsgs = Arrays.asList(objects).stream().map(o -> (BrickStateMsg) o).collect(Collectors.toList());
-                    assertThat(brickStateMsgs).extracting("state.name").contains(BrickStateMsg.State.CONFIGURING.name(), BrickStateMsg.State.STARTING.name(), BrickStateMsg.State.RUNNING.name());
+                    List<BrickState> brickStates = Arrays.asList(objects).stream().map(o -> (BrickState) o).collect(Collectors.toList());
+                    assertThat(brickStates).extracting("state.name").contains(BrickState.State.CONFIGURING.name(), BrickState.State.STARTING.name(), BrickState.State.RUNNING.name());
 
                     verify(configurationStore).storeSSLKeys(eq("Acme"), eq("ci"), any(SSLKeyPair.class));
                     try {
@@ -116,7 +117,7 @@ public class BrickConfigurationStarterActorTest {
 
             JavaTestKit probe = new JavaTestKit(system);
 
-            final Props props = Props.create(BrickConfigurationStarterActor.class, brickManager, configurationStore, probe.getRef());
+            final Props props = Props.create(BrickConfigurationStarterActor.class, brickManager, configurationStore, brickUrlFactory, probe.getRef());
 
             ActorRef ref = system.actorOf(props);
             BrickStartContext context = createBrickStartContext(new BrickConfiguration(new Brick("test", BrickType.CI)));
@@ -125,11 +126,11 @@ public class BrickConfigurationStarterActorTest {
             new AwaitAssert(duration("10 second")) {
                 @Override
                 protected void check() {
-                    String[] states = new String[] {BrickStateMsg.State.STARTING.name(), BrickStateMsg.State.ALREADYEXIST.name()};
+                    String[] states = new String[] {BrickState.State.STARTING.name(), BrickState.State.ALREADYEXIST.name()};
                     Object[] objects = probe.receiveN(2);
                     assertThat(objects.length).isEqualTo(2);
-                    List<BrickStateMsg> brickStateMsgs = Arrays.asList(objects).stream().map(o -> (BrickStateMsg) o).collect(Collectors.toList());
-                    assertThat(brickStateMsgs).extracting("state.name").contains( states);
+                    List<BrickState> brickStates = Arrays.asList(objects).stream().map(o -> (BrickState) o).collect(Collectors.toList());
+                    assertThat(brickStates).extracting("state.name").contains( states);
 
                     verify(configurationStore).storeSSLKeys(eq("Acme"), eq("ci"), any(SSLKeyPair.class));
                 }

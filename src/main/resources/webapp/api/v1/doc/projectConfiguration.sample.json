@@ -1,0 +1,36 @@
+{
+  "identifier":"4ae84a999e553e4a85778c3229cc67fe4d4888d1",
+  "name":"Acme",
+  "admins": [
+    {
+      "identifier":"61e8209320eb5c1257e992db84bffe7e14cc7eb1",
+      "username":"jpthiery"
+    }
+  ],
+  "users": [
+    {
+      "identifier":"61e8209320eb5c1257e992db84bffe7e14cc7eb1",
+      "username":"jpthiery"
+    }
+  ],
+  "stackConfigs": [
+    {
+      "name":"build-A",
+      "type":"BUILD",
+      "brickConfigs": [
+        {
+          "name":"jenkins",
+          "type":"CI"
+        },
+        {
+          "name":"gitlab",
+          "type":"SCM"
+        },
+        {
+          "name":"haproxy",
+          "type":"LOADBALANCER"
+        }
+      ]
+    }
+  ]
+}

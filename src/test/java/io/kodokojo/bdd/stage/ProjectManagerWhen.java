@@ -57,7 +57,7 @@ public class ProjectManagerWhen<SELF extends ProjectManagerWhen<?>> extends Stag
             StackConfiguration stackConfiguration = new StackConfiguration(stackName, stackType, brickConfigurations, bootstrapStackData.getLoadBalancerIp(), bootstrapStackData.getSshPort());
             stackConfigurations.add(stackConfiguration);
             List<User> users = Arrays.asList(user);
-            projectConfiguration = new ProjectConfiguration("123456",configurationName, users, stackConfigurations, users);
+            projectConfiguration = new ProjectConfiguration("123456", "7890",configurationName, users, stackConfigurations, users);
         }
 
 

@@ -1,7 +1,9 @@
 package io.kodokojo.brick;
 
+import io.kodokojo.model.BrickState;
+
 public interface BrickStateMsgListener {
 
-    void receive(BrickStateMsg brickStateMsg);
+    void receive(BrickState brickState);
 
 }

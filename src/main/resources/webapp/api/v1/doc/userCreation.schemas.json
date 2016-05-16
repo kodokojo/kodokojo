@@ -1,0 +1,16 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "id": "http://kodokojo.io/email",
+  "required": true,
+  "properties": {
+    "email": {
+      "type": "string",
+      "required": true
+    },
+    "entity": {
+      "type": "string",
+      "required": false
+    }
+  }
+}

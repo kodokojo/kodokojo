@@ -1,8 +1,10 @@
-package io.kodokojo.brick;
+package io.kodokojo.model;
+
+import java.io.Serializable;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
-public class BrickStateMsg {
+public class BrickState implements Serializable {
 
     public enum State {
         STARTING,
@@ -23,9 +25,11 @@ public class BrickStateMsg {
 
     public final State state;
 
+    public final String url;
+
     public final String message;
 
-    public BrickStateMsg(String projectConfigurationIdentifier,  String stackName, String brickType, String brickName, State state, String message) {
+    public BrickState(String projectConfigurationIdentifier, String stackName, String brickType, String brickName, State state, String url, String message) {
         if (isBlank(projectConfigurationIdentifier)) {
             throw new IllegalArgumentException("projectConfigurationIdentifier must be defined.");
         }
@@ -46,15 +50,24 @@ public class BrickStateMsg {
         this.stackName = stackName;
         this.brickName = brickName;
         this.state = state;
+        this.url = url;
         this.message = message;
     }
 
-    public BrickStateMsg(String projectConfigurationIdentifier,  String stackName, String brickType, String brickName, State state) {
-        this(projectConfigurationIdentifier,stackName,  brickType, brickName, state, null);
+    public BrickState(String projectConfigurationIdentifier, String stackName, String brickType, String brickName, State state, String url) {
+        this(projectConfigurationIdentifier,stackName,  brickType, brickName, state, url, null);
+    }
+
+    public BrickState(String projectConfigurationIdentifier, String stackName, String brickType, String brickName, State state) {
+        this(projectConfigurationIdentifier,stackName,  brickType, brickName, state, null, null);
     }
 
     public String getProjectConfigurationIdentifier() {
         return projectConfigurationIdentifier;
+    }
+
+    public String getStackName() {
+        return stackName;
     }
 
     public String getBrickType() {
@@ -69,18 +82,23 @@ public class BrickStateMsg {
         return state;
     }
 
+    public String getUrl() {
+        return url;
+    }
+
     public String getMessage() {
         return message;
     }
 
     @Override
     public String toString() {
-        return "BrickStateMsg{" +
+        return "BrickState{" +
                 "projectConfigurationIdentifier='" + projectConfigurationIdentifier + '\'' +
                 ", stackName='" + stackName + '\'' +
                 ", brickType='" + brickType + '\'' +
                 ", brickName='" + brickName + '\'' +
                 ", message=" + message +
+                ", url=" + url +
                 ", state=" + state +
                 '}';
     }
@@ -90,7 +108,7 @@ public class BrickStateMsg {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        BrickStateMsg that = (BrickStateMsg) o;
+        BrickState that = (BrickState) o;
 
         if (!projectConfigurationIdentifier.equals(that.projectConfigurationIdentifier)) return false;
         if (!brickType.equals(that.brickType)) return false;

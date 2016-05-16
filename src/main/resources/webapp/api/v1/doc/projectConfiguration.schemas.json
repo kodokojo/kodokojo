@@ -1,0 +1,93 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://kodokojo.io",
+  "type": "object",
+  "properties": {
+    "entityIdentifier": {
+      "id": "http://kodokojo.io/identifier",
+      "type": "string"
+    },
+    "identifier": {
+      "id": "http://kodokojo.io/identifier",
+      "type": "string"
+    },
+    "name": {
+      "id": "http://kodokojo.io/name",
+      "type": "string"
+    },
+    "admins": {
+      "id": "http://kodokojo.io/admins",
+      "type": "array",
+      "items": {
+        "id": "http://kodokojo.io/user",
+        "type": "object",
+        "properties": {
+          "identifier": {
+            "id": "http://kodokojo.io/admins/identifier",
+            "type": "string"
+          },
+          "username": {
+            "id": "http://kodokojo.io/admins/username",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "users": {
+      "id": "http://kodokojo.io/users",
+      "type": "array",
+      "items": {
+        "id": "http://kodokojo.io/user",
+        "type": "object",
+        "properties": {
+          "identifier": {
+            "id": "http://kodokojo.io/user/identifier",
+            "type": "string"
+          },
+          "username": {
+            "id": "http://kodokojo.io/user/username",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "stackConfigs": {
+      "id": "http://kodokojo.io/stackConfigs",
+      "type": "array",
+      "items": {
+        "id": "http://kodokojo.io/stackConfig",
+        "type": "object",
+        "properties": {
+          "name": {
+            "id": "http://kodokojo.io/stackConfig/name",
+            "type": "string"
+          },
+          "type": {
+            "id": "http://kodokojo.io/stackConfig/type",
+            "type": "string"
+          },
+          "brickConfigs": {
+            "id": "http://kodokojo.io/stackConfigs/brickConfigs",
+            "type": "array",
+            "items": [
+              {
+                "id": "http://kodokojo.io/stackConfigs/brickConfig",
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "id": "http://kodokojo.io/stackConfigs/brickConfig/name",
+                    "type": "string"
+                  },
+                  "type": {
+                    "id": "http://kodokojo.io/stackConfigs/brickConfig/type",
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

@@ -106,7 +106,7 @@ public class RedisProjectStoreIntTest {
 
         assertThat(projectIdentifier).isNotEmpty();
 
-        Project projectResult = redisProjectStore.getProjectByName(project.getName());
+        Project projectResult = redisProjectStore.getProjectByIdentifier(projectIdentifier);
 
         assertThat(projectResult).isNotNull();
         assertThat(projectResult.getIdentifier()).isEqualTo(projectIdentifier);
@@ -128,12 +128,10 @@ public class RedisProjectStoreIntTest {
         KeyPair keyPair = RSAUtils.generateRsaKeyPair();
         SSLKeyPair sslKeyPair = SSLUtils.createSelfSignedSSLKeyPair("Acme", (RSAPrivateKey) keyPair.getPrivate(), (RSAPublicKey) keyPair.getPublic());
         Set<Stack> stacks = new HashSet<>();
-        Set<BrickDeploymentState> brickEntities = new HashSet<>();
-        List<Service> services = new ArrayList<>();
-        services.add(new Service("fake-80", "localhost", 80));
-        brickEntities.add(new BrickDeploymentState(new Brick("fake", BrickType.CI), services, 1));
-        stacks.add(new Stack("build-A", StackType.BUILD, brickEntities));
-        return new Project("Acme", sslKeyPair, new Date(), stacks);
+        Set<BrickState> brickStates = new HashSet<>();
+        brickStates.add(new BrickState("123456", "build-A", BrickType.CI.name(), "jenkins", BrickState.State.RUNNING));
+        stacks.add(new Stack("build-A", StackType.BUILD, brickStates));
+        return new Project("123456", "Acme", sslKeyPair, new Date(), stacks);
     }
 
 }

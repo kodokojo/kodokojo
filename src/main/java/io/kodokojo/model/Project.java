@@ -23,7 +23,6 @@ package io.kodokojo.model;
  */
 
 import io.kodokojo.commons.utils.ssl.SSLKeyPair;
-import io.kodokojo.commons.utils.ssl.SSLRootCaKey;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.io.Serializable;
@@ -36,6 +35,8 @@ public class Project implements Serializable {
 
     private final String identifier;
 
+    private final String projectConfigurationIdentifier;
+
     private final String name;
 
     private final SSLKeyPair sslRootCaKey;
@@ -44,9 +45,12 @@ public class Project implements Serializable {
 
     private final Set<Stack> stacks;
 
-    public Project(String identifier, String name, SSLKeyPair sslRootCaKey, Date snapshotDate, Set<Stack> stacks) {
+    public Project(String identifier, String projectConfigurationIdentifier, String name, SSLKeyPair sslRootCaKey, Date snapshotDate, Set<Stack> stacks) {
         if (isBlank(name)) {
             throw new IllegalArgumentException("name must be defined.");
+        }
+        if (isBlank(projectConfigurationIdentifier)) {
+            throw new IllegalArgumentException("projectConfigurationIdentifier must be defined.");
         }
         if (sslRootCaKey == null) {
             throw new IllegalArgumentException("sslRootCaKey must be defined.");
@@ -58,18 +62,23 @@ public class Project implements Serializable {
             throw new IllegalArgumentException("stacks must be defined.");
         }
         this.identifier = identifier;
+        this.projectConfigurationIdentifier = projectConfigurationIdentifier;
         this.name = name;
         this.sslRootCaKey = sslRootCaKey;
         this.snapshotDate = snapshotDate;
         this.stacks = stacks;
     }
 
-    public Project( String name, SSLKeyPair sslRootCaKey, Date snapshotDate, Set<Stack> stacks) {
-        this(null, name, sslRootCaKey, snapshotDate, stacks);
+    public Project(String projectConfigurationIdentifier, String name, SSLKeyPair sslRootCaKey, Date snapshotDate, Set<Stack> stacks) {
+        this(null, projectConfigurationIdentifier,  name, sslRootCaKey, snapshotDate, stacks);
     }
 
     public String getIdentifier() {
         return identifier;
+    }
+
+    public String getProjectConfigurationIdentifier() {
+        return projectConfigurationIdentifier;
     }
 
     public SSLKeyPair getSslRootCaKey() {
@@ -96,6 +105,7 @@ public class Project implements Serializable {
         Project project = (Project) o;
 
         if (!name.equals(project.name)) return false;
+        if (!projectConfigurationIdentifier.equals(project.projectConfigurationIdentifier)) return false;
         if (!snapshotDate.equals(project.snapshotDate)) return false;
         return stacks.equals(project.stacks);
 
@@ -104,6 +114,7 @@ public class Project implements Serializable {
     @Override
     public int hashCode() {
         int result = name.hashCode();
+        result = 31 * result + projectConfigurationIdentifier.hashCode();
         result = 31 * result + snapshotDate.hashCode();
         result = 31 * result + stacks.hashCode();
         return result;
@@ -113,6 +124,7 @@ public class Project implements Serializable {
     public String toString() {
         return "Project{" +
                 "name='" + name + '\'' +
+                "projectConfigurationIdentifier='" + projectConfigurationIdentifier + '\'' +
                 ",identifier='" + identifier + '\'' +
                 ", snapshotDate=" + snapshotDate +
                 ", stacks=" + stacks +

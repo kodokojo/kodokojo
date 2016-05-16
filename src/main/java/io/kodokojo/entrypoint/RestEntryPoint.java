@@ -26,10 +26,7 @@ import com.google.gson.*;
 import io.kodokojo.brick.BrickFactory;
 import io.kodokojo.brick.DefaultBrickFactory;
 import io.kodokojo.commons.utils.RSAUtils;
-import io.kodokojo.entrypoint.dto.ProjectConfigDto;
-import io.kodokojo.entrypoint.dto.ProjectCreationDto;
-import io.kodokojo.entrypoint.dto.UserDto;
-import io.kodokojo.entrypoint.dto.UserProjectConfigIdDto;
+import io.kodokojo.entrypoint.dto.*;
 import io.kodokojo.model.*;
 import io.kodokojo.service.ProjectManager;
 import io.kodokojo.service.store.EntityStore;
@@ -397,15 +394,31 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
                     return "";
                 }
                 if (userStore.userIsAdminOfProjectConfiguration(credential.getUsername(), projectConfiguration)) {
-                    Project project = projectStore.getProjectByName(projectConfiguration.getName());
-                    if (project == null) {
+                    String projectId = projectStore.getProjectIdByProjectConfigurationId(projectConfigurationId);
+                    if (StringUtils.isBlank(projectId)) {
                         projectManager.bootstrapStack(projectConfiguration.getName(), projectConfiguration.getDefaultStackConfiguration().getName(), projectConfiguration.getDefaultStackConfiguration().getType());
-                        project = projectManager.start(projectConfiguration);
+                        Project project = projectManager.start(projectConfiguration);
                         response.status(201);
                         return projectStore.addProject(project, projectConfigurationId);
                     } else {
                         halt(409, "Project already exist.");
                     }
+                } else {
+                    halt(403);
+                }
+            }
+            return "";
+        }), jsonResponseTransformer);
+
+        get(BASE_API + "/project/:id", JSON_CONTENT_TYPE, ((request, response) -> {
+            SimpleCredential credential = extractCredential(request);
+            if (credential != null) {
+                User currentUser = userStore.getUserByUsername(credential.getUsername());
+                String projectId = request.params(":id");
+                Project project = projectStore.getProjectByIdentifier(projectId);
+                ProjectConfiguration projectConfiguration = projectStore.getProjectConfigurationById(project.getProjectConfigurationIdentifier());
+                if (userStore.userIsAdminOfProjectConfiguration(currentUser.getUsername(), projectConfiguration)) {
+                    return new ProjectDto(project);
                 } else {
                     halt(403);
                 }
@@ -429,7 +442,7 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
         Set<String> projectConfigIds = projectStore.getProjectConfigIdsByUserIdentifier(user.getIdentifier());
         List<UserProjectConfigIdDto> userProjectConfigIdDtos = new ArrayList<>();
         projectConfigIds.forEach(id -> {
-            String projectId = projectStore.getProjectByProjectConfigurationId(id);
+            String projectId = projectStore.getProjectIdByProjectConfigurationId(id);
             UserProjectConfigIdDto userProjectConfigIdDto = new UserProjectConfigIdDto(id);
             userProjectConfigIdDto.setProjectId(projectId);
             userProjectConfigIdDtos.add(userProjectConfigIdDto);

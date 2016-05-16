@@ -7,6 +7,7 @@ import akka.routing.RoundRobinPool;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import io.kodokojo.brick.BrickUrlFactory;
 import io.kodokojo.service.BrickManager;
 import io.kodokojo.brick.BrickConfigurationStarter;
 import io.kodokojo.brick.BrickStateMsgDispatcher;
@@ -27,9 +28,9 @@ public class ActorModule extends AbstractModule {
 
     @Provides
     @Named("brickConfigurationStarter")
-    ActorRef provideBrickConfigurationStarterActor(ActorSystem system, BrickManager brickManager, ConfigurationStore configurationStore,@Named("brickStateMsgEndpoint")  ActorRef stateListener) {
+    ActorRef provideBrickConfigurationStarterActor(ActorSystem system, BrickManager brickManager, ConfigurationStore configurationStore, BrickUrlFactory brickUrlFactory, @Named("brickStateMsgEndpoint")  ActorRef stateListener) {
         //TODO Put Router configuration in file.
-        return system.actorOf(new RoundRobinPool(4).props(Props.create(BrickConfigurationStarterActor.class, brickManager, configurationStore, stateListener)),"brickConfigurationStarter");
+        return system.actorOf(new RoundRobinPool(4).props(Props.create(BrickConfigurationStarterActor.class, brickManager, configurationStore, brickUrlFactory, stateListener)),"brickConfigurationStarter");
     }
 
     @Provides

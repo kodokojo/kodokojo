@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import io.kodokojo.Launcher;
-import io.kodokojo.brick.BrickStateMsg;
+import io.kodokojo.model.BrickState;
 import io.kodokojo.brick.BrickStateMsgDispatcher;
 import io.kodokojo.brick.BrickStateMsgListener;
 import io.kodokojo.brick.BrickUrlFactory;
@@ -161,12 +161,12 @@ public class WebSocketEntryPoint implements BrickStateMsgListener {
     }
 
     @Override
-    public void receive(BrickStateMsg brickStateMsg) {
-        if (brickStateMsg == null) {
-            throw new IllegalArgumentException("brickStateMsg must be defined.");
+    public void receive(BrickState brickState) {
+        if (brickState == null) {
+            throw new IllegalArgumentException("brickState must be defined.");
         }
-        WebSocketMessage message = convertToWebSocketMessage(brickStateMsg);
-        String projectConfigurationIdentifier = brickStateMsg.getProjectConfigurationIdentifier();
+        WebSocketMessage message = convertToWebSocketMessage(brickState);
+        String projectConfigurationIdentifier = brickState.getProjectConfigurationIdentifier();
         ProjectConfiguration projectConfiguration = projectStore.getProjectConfigurationById(projectConfigurationIdentifier);
         Iterator<User> admins = projectConfiguration.getAdmins();
         List<String> adminIds = new ArrayList<>();
@@ -198,18 +198,18 @@ public class WebSocketEntryPoint implements BrickStateMsgListener {
         }
     }
 
-    private WebSocketMessage convertToWebSocketMessage(BrickStateMsg brickStateMsg) {
+    private WebSocketMessage convertToWebSocketMessage(BrickState brickState) {
         JsonObject data = new JsonObject();
-        data.addProperty("projectConfiguration", brickStateMsg.getProjectConfigurationIdentifier());
-        data.addProperty("brickType", brickStateMsg.getBrickType());
-        data.addProperty("brickName", brickStateMsg.getBrickName());
-        data.addProperty("state", brickStateMsg.getState().name());
-        if (brickStateMsg.state == BrickStateMsg.State.RUNNING) {
-            ProjectConfiguration projectConfiguration = projectStore.getProjectConfigurationById(brickStateMsg.getProjectConfigurationIdentifier());
-            data.addProperty("url", "https://" + brickUrlFactory.forgeUrl(projectConfiguration.getName(), brickStateMsg.stackName ,brickStateMsg.getBrickType()));
+        data.addProperty("projectConfiguration", brickState.getProjectConfigurationIdentifier());
+        data.addProperty("brickType", brickState.getBrickType());
+        data.addProperty("brickName", brickState.getBrickName());
+        data.addProperty("state", brickState.getState().name());
+        if (brickState.state == BrickState.State.RUNNING) {
+            ProjectConfiguration projectConfiguration = projectStore.getProjectConfigurationById(brickState.getProjectConfigurationIdentifier());
+            data.addProperty("url", "https://" + brickUrlFactory.forgeUrl(projectConfiguration.getName(), brickState.stackName , brickState.getBrickType()));
         }
-        if (brickStateMsg.state == BrickStateMsg.State.ONFAILURE) {
-            data.addProperty("message", brickStateMsg.message);
+        if (brickState.state == BrickState.State.ONFAILURE) {
+            data.addProperty("message", brickState.message);
         }
 
         return new WebSocketMessage("brick", "updateState", data);

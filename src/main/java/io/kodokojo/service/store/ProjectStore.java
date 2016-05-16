@@ -15,13 +15,17 @@ public interface ProjectStore {
 
     ProjectConfiguration getProjectConfigurationById(String identifier);
 
-    String addProject(Project project, String projectConfigurationidentifier);
+    String addProject(Project project, String projectConfigurationIdentifier);
 
-    Project getProjectByName(String name);
+    void updateProject(Project project);
+
+    Project getProjectByIdentifier(String identifier);
 
     void updateProjectConfiguration(ProjectConfiguration projectConfiguration);
 
     Set<String> getProjectConfigIdsByUserIdentifier(String userIdentifier);
 
-    String getProjectByProjectConfigurationId(String projectConfigurationId);
+    String getProjectIdByProjectConfigurationId(String projectConfigurationId);
+
+    Project getProjectByProjectConfigurationId(String projectConfigurationId);
 }

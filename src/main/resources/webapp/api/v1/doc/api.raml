@@ -1,6 +1,6 @@
 #%RAML 0.8
 ---
-title: kodokojo API
+title: Kodo Kojo API
 baseUri: /api/{version}
 mediaType: application/json
 securitySchemes:
@@ -8,23 +8,6 @@ securitySchemes:
       type: Basic Authentication
 version: v1
 schemas:
-  - userCreation: |
-      {
-        "type": "object",
-        "$schema": "http://json-schema.org/draft-04/schema",
-        "id": "http://kodokojo.io/email",
-        "required": true,
-        "properties": {
-          "email": {
-            "type": "string",
-            "required": true
-          },
-          "entity": {
-            "type": "string",
-            "required": false
-          }
-        }
-      }
   - identifier: |
       {
         "type": "string",
@@ -43,238 +26,12 @@ schemas:
         },
         "required": true
       }
-  - userCreated: |
-      {
-        "type": "string",
-        "$schema": "http://json-schema.org/draft-04/schema",
-        "id": "http://kodokojo.io/userCreated",
-        "required": true,
-        "properties": {
-          "identifier": {
-            "type": "string",
-            "required": true
-          },
-          "firstName": {
-            "type": "string",
-            "required": false
-          },
-          "lastName": {
-            "type": "string",
-            "required": false
-          },
-          "name": {
-            "type": "string",
-            "required": true
-          },
-          "username": {
-            "type": "string",
-            "required": true
-          },
-          "email": {
-            "type": "string",
-            "required": true
-          },
-          "password": {
-            "type": "string",
-            "required": true
-          },
-          "privateKey": {
-            "type": "string",
-            "required": true
-          },
-          "sshPublicKey": {
-            "type": "string",
-            "required": true
-          }
-        }
-      }
-  - user: |
-      {
-        "type": "string",
-        "$schema": "http://json-schema.org/draft-04/schema",
-        "id": "http://kodokojo.io/user",
-        "required": true,
-        "properties": {
-          "identifier": {
-            "type": "string",
-            "required": true
-          },
-          "firstName": {
-            "type": "string",
-            "required": false
-          },
-          "lastName": {
-            "type": "string",
-            "required": false
-          },
-          "name": {
-            "type": "string",
-            "required": true
-          },
-          "username": {
-            "type": "string",
-            "required": true
-          },
-          "email": {
-            "type": "string",
-            "required": true
-          },
-          "password": {
-            "type": "string",
-            "required": false
-          },
-          "privateKey": {
-            "type": "string",
-            "required": false
-          },
-          "sshPublicKey": {
-            "type": "string",
-            "required": false
-          },
-          "projectConfigurationIds": {
-           "type": "array",
-            "items": {
-              "id": "http://kodokojo.io/userProjectConfig",
-              "type": "object",
-              "properties": {
-                "projectConfigurationId": {
-                  "id": "http://kodokojo.io/admins/identifier",
-                  "type": "string"
-                },
-                "projectId": {
-                  "id": "http://kodokojo.io/admins/identifier",
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-
-  - projectCreation: |
-      {
-        "$schema": "http://json-schema.org/draft-04/schema#",
-        "id": "http://kodokojo.io/projectCreation",
-        "type": "object",
-        "properties": {
-          "entityIdentifier": {
-            "id": "http://kodokojo.io/identifier",
-            "type": "string"
-          },
-          "name": {
-            "id": "http://kodokojo.io/name",
-            "type": "string"
-          },
-          "ownerIdentifier": {
-            "id": "http://kodokojo.io/identifier",
-            "type": "string"
-          },
-          "userIdentifiers": {
-            "id": "http://kodokojo.io/identifiers",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        },
-        "required": [
-          "name",
-          "ownerIdentifier"
-        ]
-      }
-  - projectConfiguration: |
-      {
-        "$schema": "http://json-schema.org/draft-04/schema#",
-        "id": "http://kodokojo.io",
-        "type": "object",
-        "properties": {
-          "entityIdentifier": {
-            "id": "http://kodokojo.io/identifier",
-            "type": "string"
-          },
-          "identifier": {
-            "id": "http://kodokojo.io/identifier",
-            "type": "string"
-          },
-          "name": {
-            "id": "http://kodokojo.io/name",
-            "type": "string"
-          },
-          "admins": {
-            "id": "http://kodokojo.io/admins",
-            "type": "array",
-            "items": {
-              "id": "http://kodokojo.io/user",
-              "type": "object",
-              "properties": {
-                "identifier": {
-                  "id": "http://kodokojo.io/admins/identifier",
-                  "type": "string"
-                },
-                "username": {
-                  "id": "http://kodokojo.io/admins/username",
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "users": {
-            "id": "http://kodokojo.io/users",
-            "type": "array",
-            "items": {
-              "id": "http://kodokojo.io/user",
-              "type": "object",
-              "properties": {
-                "identifier": {
-                  "id": "http://kodokojo.io/user/identifier",
-                  "type": "string"
-                },
-                "username": {
-                  "id": "http://kodokojo.io/user/username",
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "stackConfigs": {
-            "id": "http://kodokojo.io/stackConfigs",
-            "type": "array",
-            "items": {
-              "id": "http://kodokojo.io/stackConfig",
-              "type": "object",
-              "properties": {
-                "name": {
-                  "id": "http://kodokojo.io/stackConfig/name",
-                  "type": "string"
-                },
-                "type": {
-                  "id": "http://kodokojo.io/stackConfig/type",
-                  "type": "string"
-                },
-                "brickConfigs": {
-                  "id": "http://kodokojo.io/stackConfigs/brickConfigs",
-                  "type": "array",
-                  "items": [
-                    {
-                      "id": "http://kodokojo.io/stackConfigs/brickConfig",
-                      "type": "object",
-                      "properties": {
-                        "name": {
-                          "id": "http://kodokojo.io/stackConfigs/brickConfig/name",
-                          "type": "string"
-                        },
-                        "type": {
-                          "id": "http://kodokojo.io/stackConfigs/brickConfig/type",
-                          "type": "string"
-                        }
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
+  - userCreation: !include userCreation.schemas.json
+  - userCreated: !include userCreated.schemas.json
+  - user: !include user.schemas.json
+  - project: !include project.schemas.json
+  - projectCreation: !include projectCreation.schemas.json
+  - projectConfiguration: !include projectConfiguration.schemas.json
 /user:
   post:
     description: Allow to obtain a temporary identifier which may use _post_ to create a new user.
@@ -422,43 +179,7 @@ schemas:
           body:
             application/json:
               schema: projectConfiguration
-              example: |
-                {
-                  "identifier":"4ae84a999e553e4a85778c3229cc67fe4d4888d1",
-                  "name":"Acme",
-                  "admins": [
-                    {
-                      "identifier":"61e8209320eb5c1257e992db84bffe7e14cc7eb1",
-                      "username":"jpthiery"
-                    }
-                  ],
-                  "users": [
-                    {
-                      "identifier":"61e8209320eb5c1257e992db84bffe7e14cc7eb1",
-                      "username":"jpthiery"
-                    }
-                  ],
-                  "stackConfigs": [
-                    {
-                      "name":"build-A",
-                      "type":"BUILD",
-                      "brickConfigs": [
-                        {
-                          "name":"jenkins",
-                          "type":"CI"
-                        },
-                        {
-                          "name":"gitlab",
-                          "type":"SCM"
-                        },
-                        {
-                          "name":"haproxy",
-                          "type":"LOADBALANCER"
-                        }
-                      ]
-                    }
-                  ]
-                }
+              example: !include projectConfiguration.sample.json
         401:
           description: Authentification requiered.
         403:
@@ -554,16 +275,53 @@ schemas:
         application/json:
           schema: identifier
           example: |
-            c918adf9e28d0bae432b3b89fa7b2f5be682a16e
+            b1392a68c1ea01d1e445f9464351f67af86c5e14
       responses:
         201:
           description:
             Return project Detail.
           body:
             application/json:
-              schema: identifier
+              schema: project
               example: |
-                59e860b31588a0a1f2ae3fa75764ce133a6985e3
+                {
+                  "identifier": "b1392a68c1ea01d1e445f9464351f67af86c5e14",
+                  "projectConfigurationIdentifier": "1e25e0ca2fc382f332be16f1342d152eacedb434",
+                  "name": "jpascal",
+                  "snapshotDate": "May 16, 2016 1:31:26 PM",
+                  "stacks": [
+                    {
+                      "name": "build-A",
+                      "stackType": "BUILD",
+                      "brickStates": [
+                        {
+                          "projectConfigurationIdentifier": "1e25e0ca2fc382f332be16f1342d152eacedb434",
+                          "brickType": "CI",
+                          "stackName": "build-A",
+                          "brickName": "jenkins",
+                          "state": "RUNNING",
+                          "url": "https://ci-jpascal.kodokojo.io"
+                        },
+                        {
+                          "projectConfigurationIdentifier": "1e25e0ca2fc382f332be16f1342d152eacedb434",
+                          "brickType": "REPOSITORY",
+                          "stackName": "build-A",
+                          "brickName": "nexus",
+                          "state": "RUNNING",
+                          "url": "https://repository-jpascal.kodokojo.io"
+                        },
+                        {
+                          "projectConfigurationIdentifier": "1e25e0ca2fc382f332be16f1342d152eacedb434",
+                          "brickType": "SCM",
+                          "stackName": "build-A",
+                          "brickName": "gitlab",
+                          "state": "ONFAILURE",
+                          "url": "https://scm-jpascal.kodokojo.io"
+                        }
+                      ]
+                    }
+                  ]
+                }
         403:
           description: You are not the admins of the project.
         404:

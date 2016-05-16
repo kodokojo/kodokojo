@@ -1,5 +1,7 @@
 package io.kodokojo.brick;
 
+import io.kodokojo.model.BrickState;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -19,7 +21,7 @@ public class BrickStateMsgDispatcher implements BrickStateMsgListener {
     }
 
     @Override
-    public void receive(BrickStateMsg brickStateMsg) {
-        listeners.forEach(listener -> listener.receive(brickStateMsg));
+    public void receive(BrickState brickState) {
+        listeners.forEach(listener -> listener.receive(brickState));
     }
 }

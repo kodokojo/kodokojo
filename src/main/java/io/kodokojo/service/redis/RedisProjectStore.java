@@ -132,9 +132,9 @@ public class RedisProjectStore  extends  AbstractRedisStore implements ProjectSt
         if (projectNameIsValid(project.getName())) {
             try (Jedis jedis = pool.getResource()) {
                 String identifier = generateId();
-                Project toAdd = new Project(identifier, project.getName(), project.getSslRootCaKey(), project.getSnapshotDate(), project.getStacks());
+                Project toAdd = new Project(identifier, projectConfigurationIdentifier, project.getName(), project.getSslRootCaKey(), project.getSnapshotDate(), project.getStacks());
                 byte[] encryptedObject = RSAUtils.encryptObjectWithAES(key, toAdd);
-                jedis.set(RedisUtils.aggregateKey(PROJECT_PREFIX, project.getName()), encryptedObject);
+                jedis.set(RedisUtils.aggregateKey(PROJECT_PREFIX, identifier), encryptedObject);
                 jedis.set(RedisUtils.aggregateKey(PROJECTCONFIG_TO_PROJECT_PREFIX, projectConfigurationIdentifier), identifier.getBytes());
                 return identifier;
             }
@@ -142,6 +142,19 @@ public class RedisProjectStore  extends  AbstractRedisStore implements ProjectSt
         return null;
     }
 
+    @Override
+    public void updateProject(Project project) {
+        if (project == null) {
+            throw new IllegalArgumentException("project must be defined.");
+        }
+        if (isBlank(project.getIdentifier())) {
+            throw new IllegalArgumentException("Project identifier() must be defined.");
+        }
+        try (Jedis jedis= pool.getResource()) {
+            byte[] encryptedObject = RSAUtils.encryptObjectWithAES(key, project);
+            jedis.set(RedisUtils.aggregateKey(PROJECT_PREFIX, project.getIdentifier()), encryptedObject);
+        }
+    }
 
     @Override
     public Set<String> getProjectConfigIdsByUserIdentifier(String userIdentifier) {
@@ -159,7 +172,7 @@ public class RedisProjectStore  extends  AbstractRedisStore implements ProjectSt
     }
 
     @Override
-    public String getProjectByProjectConfigurationId(String projectConfigurationId) {
+    public String getProjectIdByProjectConfigurationId(String projectConfigurationId) {
         if (isBlank(projectConfigurationId)) {
             throw new IllegalArgumentException("projectConfigurationId must be defined.");
         }
@@ -173,12 +186,27 @@ public class RedisProjectStore  extends  AbstractRedisStore implements ProjectSt
     }
 
     @Override
-    public Project getProjectByName(String name) {
-        if (isBlank(name)) {
-            throw new IllegalArgumentException("name must be defined.");
+    public Project getProjectByProjectConfigurationId(String projectConfigurationId) {
+        if (isBlank(projectConfigurationId)) {
+            throw new IllegalArgumentException("projectConfigurationId must be defined.");
         }
         try (Jedis jedis = pool.getResource()) {
-            byte[] projectKey = RedisUtils.aggregateKey(PROJECT_PREFIX, name);
+            byte[] projectConfigKey = RedisUtils.aggregateKey(PROJECTCONFIG_TO_PROJECT_PREFIX, projectConfigurationId);
+            if (jedis.exists(projectConfigKey)) {
+                String projectId = new String(jedis.get(projectConfigKey));
+                return getProjectByIdentifier(projectId);
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public Project getProjectByIdentifier(String identifier) {
+        if (isBlank(identifier)) {
+            throw new IllegalArgumentException("identifier must be defined.");
+        }
+        try (Jedis jedis = pool.getResource()) {
+            byte[] projectKey = RedisUtils.aggregateKey(PROJECT_PREFIX, identifier);
             if (jedis.exists(projectKey)) {
                 byte[] encrypted = jedis.get(projectKey);
                 return (Project) RSAUtils.decryptObjectWithAES(key, encrypted);

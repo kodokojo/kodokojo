@@ -30,7 +30,7 @@ public class BrickConfigurerIntTest extends ScenarioTest<BrickConfigurerGiven<?>
                 //  Name, Docker imagen name, containerPort, Timeout in seconde unit, User Logger
                 
                 {"Gitlab", "gitlab/gitlab-ce:8.5.8-ce.0", 80, 180, new GitlabUserAuthenticator()},
-                {"Jenkins", "jenkins:1.651.1-alpine", 8080, 120, new JenkinsUserAuthenticator()},
+                {"Jenkins", "jenkins:1.651.2-alpine", 8080, 120, new JenkinsUserAuthenticator()},
                 {"DockerRegistry", "registry:2", 5000, 10, new DockerRegistryUserAuthenticator()}
                 //{"Jenkins", "jenkins:2.0-alpine", 8080, 120, new JenkinsUserAuthenticator()}
         };
