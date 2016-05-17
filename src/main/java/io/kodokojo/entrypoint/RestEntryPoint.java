@@ -413,6 +413,10 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
                 User currentUser = userStore.getUserByUsername(credential.getUsername());
                 String projectId = request.params(":id");
                 Project project = projectStore.getProjectByIdentifier(projectId);
+                if (project == null) {
+                    halt(404);
+                    return "";
+                }
                 ProjectConfiguration projectConfiguration = projectStore.getProjectConfigurationById(project.getProjectConfigurationIdentifier());
                 if (userStore.userIsAdminOfProjectConfiguration(currentUser.getUsername(), projectConfiguration)) {
                     return new ProjectDto(project);

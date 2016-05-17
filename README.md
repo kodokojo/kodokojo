@@ -10,7 +10,7 @@ Kodo Kojo use the power of [Apache Mesos](http://mesos.apache.org/) and [Maratho
 
 ## License
 
-`kodokojo` is a licensed under [GNU General Public License v3](http://www.gnu.org/licenses/gpl-3.0.en.html).
+`Kodo Kojo` is a licensed under [GNU General Public License v3](http://www.gnu.org/licenses/gpl-3.0.en.html).
 
 ## Quickstart
 ### Step 1 : Clone this repository
@@ -28,7 +28,7 @@ Go to [Quicstart page](doc/QUICKSTART.md) to get more details.
 
 ## Sofware factory tool supported
 * [Gitlab 8.5](http://gitlab.com/) 
-* [Jenkins](https://jenkins.io/) now in version 1.651-1-alpine. See Issue #7 to get more detail about Jenkins 2.
+* [Jenkins](https://jenkins.io/) now in version 1.651-2-alpine. See Issue #7 to get more detail about Jenkins 2.
 * [Nexus OSS 2.13.0-01](http://www.sonatype.com/nexus-repository-oss) 
 
 ## Contribute
@@ -38,8 +38,11 @@ You want to contribute, it's very Nice.We try to apply this practice [Contributi
 You may find help on our Slack channel if needed. Don't be afraid about 
 
 ## Go further
+Following schemas describe how Kodo Kojo and component will be deployed.  
 
-TODO Architecture link.
+![Kodo Kojo Architecture](doc/images/kodokojo-architecture.png)
+
+HA Proxy will be managed by [kodokojo-haproxy-marathon](https://github.com/kodokojo/kodokojo-haproxy-marathon) which is register on Marathon event bus. This will allow to update the Ha Proxy configuration when state of Marathon change.
 
 ## Stay tuned
 
