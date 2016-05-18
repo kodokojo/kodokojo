@@ -29,14 +29,15 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
-@Ignore
 public class ProjectManagementIntTest extends ScenarioTest<ClusterApplicationGiven<?>, ClusterApplicationWhen<?>, ClusterApplicationThen<?>> {
 
     @Rule
     public DockerPresentMethodRule dockerPresentMethodRule = new DockerPresentMethodRule();
 
+/*
     @Rule
     public MarathonIsPresent marathonIsPresent = new MarathonIsPresent();
+*/
 
     @Test
     @DockerIsRequire
@@ -49,7 +50,7 @@ public class ProjectManagementIntTest extends ScenarioTest<ClusterApplicationGiv
         .and().i_add_the_user_$_to_the_project("aletaxin");
         then().it_possible_to_log_on_brick_$_with_user_$("jenkins", "aletaxin");
     }
-
+/*
     @Test
     @Ignore
     @MarathonIsRequire
@@ -62,5 +63,5 @@ public class ProjectManagementIntTest extends ScenarioTest<ClusterApplicationGiv
                 .and().i_have_a_valid_scm()
                 .and().i_have_a_valid_ci();
     }
-
+*/
 }

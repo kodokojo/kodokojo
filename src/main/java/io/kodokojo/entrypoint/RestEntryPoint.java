@@ -353,6 +353,7 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
 
                 projectConfiguration.setUsers(users);
                 projectStore.updateProjectConfiguration(projectConfiguration);
+                projectManager.addUsersToProject(projectConfiguration, usersToAdd);
             } else {
                 halt(403);
             }

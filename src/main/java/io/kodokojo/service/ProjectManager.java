@@ -21,6 +21,8 @@ package io.kodokojo.service;
 
 import io.kodokojo.model.*;
 
+import java.util.List;
+
 /**
  * Allow to manage project.
  */
@@ -43,4 +45,10 @@ public interface ProjectManager {
      */
     Project start(ProjectConfiguration projectConfiguration) throws ProjectAlreadyExistException;
 
+    /**
+     * Add a list of users to a project
+     * @param projectConfiguration
+     * @param usersToAdd
+     */
+    void addUsersToProject(ProjectConfiguration projectConfiguration, List<User> usersToAdd);
 }

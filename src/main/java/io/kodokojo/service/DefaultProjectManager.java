@@ -1,27 +1,24 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package io.kodokojo.service;
 
 
-
-import io.kodokojo.brick.BrickConfigurationStarter;
-import io.kodokojo.brick.BrickStartContext;
-import io.kodokojo.brick.BrickUrlFactory;
+import io.kodokojo.brick.*;
 import io.kodokojo.commons.utils.ssl.SSLKeyPair;
 import io.kodokojo.commons.utils.ssl.SSLUtils;
 import io.kodokojo.model.*;
@@ -29,7 +26,9 @@ import io.kodokojo.model.Stack;
 import io.kodokojo.service.dns.DnsEntry;
 import io.kodokojo.service.dns.DnsManager;
 import io.kodokojo.service.store.ProjectStore;
+import org.apache.commons.codec.binary.StringUtils;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.IteratorUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,10 +57,12 @@ public class DefaultProjectManager implements ProjectManager {
 
     private final BrickUrlFactory brickUrlFactory;
 
+    private final BrickConfigurerProvider brickConfigurerProvider;
+
     private final long sslCaDuration;
 
     @Inject
-    public DefaultProjectManager(SSLKeyPair caKey, String domain, ConfigurationStore configurationStore, ProjectStore projectStore, BootstrapConfigurationProvider bootstrapConfigurationProvider, DnsManager dnsManager, BrickConfigurationStarter brickConfigurationStarter, BrickUrlFactory brickUrlFactory, long sslCaDuration) {
+    public DefaultProjectManager(SSLKeyPair caKey, String domain, ConfigurationStore configurationStore, ProjectStore projectStore, BootstrapConfigurationProvider bootstrapConfigurationProvider, DnsManager dnsManager, BrickConfigurerProvider brickConfigurerProvider, BrickConfigurationStarter brickConfigurationStarter, BrickUrlFactory brickUrlFactory, long sslCaDuration) {
         if (caKey == null) {
             throw new IllegalArgumentException("caKey must be defined.");
         }
@@ -83,6 +84,9 @@ public class DefaultProjectManager implements ProjectManager {
         if (dnsManager == null) {
             throw new IllegalArgumentException("dnsManager must be defined.");
         }
+        if (brickConfigurerProvider == null) {
+            throw new IllegalArgumentException("brickConfigurerProvider must be defined.");
+        }
         if (brickUrlFactory == null) {
             throw new IllegalArgumentException("brickUrlFactory must be defined.");
         }
@@ -92,6 +96,7 @@ public class DefaultProjectManager implements ProjectManager {
         this.configurationStore = configurationStore;
         this.projectStore = projectStore;
         this.bootstrapConfigurationProvider = bootstrapConfigurationProvider;
+        this.brickConfigurerProvider = brickConfigurerProvider;
         this.dnsManager = dnsManager;
         this.brickUrlFactory = brickUrlFactory;
         this.sslCaDuration = sslCaDuration;
@@ -138,7 +143,7 @@ public class DefaultProjectManager implements ProjectManager {
                     String brickDomainName = brickUrlFactory.forgeUrl(projectConfiguration, stackConfiguration.getName(), brickConfiguration);
                     dnsEntries.add(new DnsEntry(brickDomainName, DnsEntry.Type.A, lbIp));
                 }
-                BrickStartContext context = new BrickStartContext(projectConfiguration,stackConfiguration,  brickConfiguration, domain, projectCaSSL, lbIp);
+                BrickStartContext context = new BrickStartContext(projectConfiguration, stackConfiguration, brickConfiguration, domain, projectCaSSL, lbIp);
                 contexts.add(context);
             }
 
@@ -150,5 +155,38 @@ public class DefaultProjectManager implements ProjectManager {
         contexts.forEach(brickConfigurationStarter::start);
         Project project = new Project(projectConfiguration.getIdentifier(), projectName, projectCaSSL, new Date(), stacks);
         return project;
+    }
+
+    @Override
+    public void addUsersToProject(ProjectConfiguration projectConfiguration, List<User> usersToAdd) {
+        if (projectConfiguration == null) {
+            throw new IllegalArgumentException("projectConfiguration must be defined.");
+        }
+        if (CollectionUtils.isEmpty(usersToAdd)) {
+            throw new IllegalArgumentException("usersToAdd must be defined.");
+        }
+
+        projectConfiguration.getStackConfigurations().forEach(stackConfiguration -> {
+            stackConfiguration.getBrickConfigurations().forEach(brickConfiguration -> {
+                BrickConfigurer brickConfigurer = brickConfigurerProvider.provideFromBrick(brickConfiguration.getBrick());
+                String entrypoint = "http://" + brickUrlFactory.forgeUrl(projectConfiguration, stackConfiguration.getName(), brickConfiguration);
+                BrickConfigurerData brickConfigurerData = new BrickConfigurerData(projectConfiguration.getName(),
+                        stackConfiguration.getName(),
+                        entrypoint,
+                        domain,
+                        IteratorUtils.toList(projectConfiguration.getAdmins()),
+                        IteratorUtils.toList(projectConfiguration.getUsers())
+                );
+                try {
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug("Try to add users {} on entrypoint {}.", org.apache.commons.lang.StringUtils.join(usersToAdd, ","), entrypoint);
+                    }
+                    brickConfigurer.addUsers(brickConfigurerData, usersToAdd);
+                } catch (BrickConfigurationException e) {
+                    LOGGER.error("An error occure while add users to brick " + brickConfiguration.getName() + "[" + entrypoint + "] on project " + projectConfiguration.getName() + ".", e);
+                }
+            });
+        });
+
     }
 }

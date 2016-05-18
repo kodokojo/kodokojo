@@ -36,28 +36,27 @@ import com.tngtech.jgiven.annotation.Hidden;
 import com.tngtech.jgiven.annotation.ProvidedScenarioState;
 import com.tngtech.jgiven.annotation.Quoted;
 import io.kodokojo.Launcher;
+import io.kodokojo.bdd.MarathonBrickUrlFactory;
 import io.kodokojo.bdd.MarathonIsPresent;
 import io.kodokojo.bdd.stage.StageUtils;
 import io.kodokojo.bdd.stage.WebSocketConnectionResult;
 import io.kodokojo.bdd.stage.WebSocketEventsListener;
-import io.kodokojo.brick.BrickConfigurerProvider;
-import io.kodokojo.brick.BrickFactory;
-import io.kodokojo.brick.BrickUrlFactory;
+import io.kodokojo.brick.*;
 import io.kodokojo.commons.DockerPresentMethodRule;
 import io.kodokojo.commons.model.Service;
 import io.kodokojo.commons.utils.DockerTestSupport;
 import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.commons.utils.servicelocator.ServiceLocator;
 import io.kodokojo.commons.utils.servicelocator.marathon.MarathonServiceLocator;
+import io.kodokojo.commons.utils.ssl.SSLKeyPair;
 import io.kodokojo.config.ApplicationConfig;
 import io.kodokojo.config.MarathonConfig;
 import io.kodokojo.config.module.*;
 import io.kodokojo.entrypoint.RestEntryPoint;
 import io.kodokojo.model.Entity;
 import io.kodokojo.model.User;
-import io.kodokojo.service.BrickManager;
-import io.kodokojo.service.ConfigurationStore;
-import io.kodokojo.service.ProjectManager;
+import io.kodokojo.service.*;
+import io.kodokojo.service.dns.NoOpDnsManager;
 import io.kodokojo.service.lifecycle.ApplicationLifeCycleManager;
 import io.kodokojo.service.marathon.MarathonBrickManager;
 import io.kodokojo.service.marathon.MarathonConfigurationStore;
@@ -236,6 +235,19 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
     }
 
     private void startRedis() {
+
+        Service service = StageUtils.startDockerRedis(dockerTestSupport);
+        String redisHost = service.getHost();
+        int redisPort = service.getPort();
+        KeyGenerator kg = null;
+        try {
+            kg = KeyGenerator.getInstance("AES");
+            userStore = new RedisUserStore(kg.generateKey(),  redisHost, redisPort);
+            redisService = new Service("redis", redisHost, redisPort);
+        } catch (NoSuchAlgorithmException e) {
+            fail(e.getMessage());
+        }
+        /*
         VelocityEngine ve = new VelocityEngine();
         ve.init(VE_PROPERTIES);
 
@@ -276,6 +288,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
                 IOUtils.closeQuietly(response.body());
             }
         }
+        */
     }
 
     private void startMesosCluster() {
@@ -458,6 +471,9 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
 
     @AfterScenario
     public void tearDown() {
+        if (restEntryPoint != null) {
+            restEntryPoint.stop();
+        }
         if (injector != null) {
             ApplicationLifeCycleManager applicationLifeCycleManager = injector.getInstance(ApplicationLifeCycleManager.class);
             applicationLifeCycleManager.stop();
@@ -519,13 +535,24 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
             }
         });
         Launcher.INJECTOR = injector;
-        projectManager = injector.getInstance(ProjectManager.class);
         userStore = injector.getInstance(UserStore.class);
         projectStore = injector.getInstance(ProjectStore.class);
         entityStore = injector.getInstance(EntityStore.class);
         BrickFactory brickFactory = injector.getInstance(BrickFactory.class);
         restEntryPointHost = "localhost";
         restEntryPointPort = TestUtils.getEphemeralPort();
+        BrickUrlFactory brickUrlFactory = new MarathonBrickUrlFactory(marathonUrl);
+        projectManager = new DefaultProjectManager(injector.getInstance(SSLKeyPair.class),
+                domain,
+                injector.getInstance(ConfigurationStore.class),
+                projectStore,
+                injector.getInstance(BootstrapConfigurationProvider.class),
+                new NoOpDnsManager(),
+                new DefaultBrickConfigurerProvider(brickUrlFactory),
+                injector.getInstance(BrickConfigurationStarter.class),
+                brickUrlFactory,
+                300000000
+                );
         restEntryPoint = new RestEntryPoint(restEntryPointPort, userStore, new SimpleUserAuthenticator(userStore), entityStore, projectStore, projectManager, brickFactory);
         Semaphore semaphore = new Semaphore(1);
         try {

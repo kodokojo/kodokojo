@@ -126,6 +126,8 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
                 bind(BrickManager.class).toInstance(brickManager);
                 bind(DnsManager.class).toInstance(dnsManager);
                 bind(ConfigurationStore.class).toInstance(configurationStore);
+                DefaultBrickUrlFactory brickUrlFactory = new DefaultBrickUrlFactory("kodokojo.dev");
+                bind(BrickConfigurerProvider.class).toInstance(new DefaultBrickConfigurerProvider(brickUrlFactory));
                 bind(ApplicationConfig.class).toInstance(new ApplicationConfig() {
                     @Override
                     public int port() {
@@ -152,7 +154,7 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
                         return -1;
                     }
                 });
-                bind(BrickUrlFactory.class).toInstance(new DefaultBrickUrlFactory("kodokojo.dev"));
+                bind(BrickUrlFactory.class).toInstance(brickUrlFactory);
             }
         });
         Launcher.INJECTOR = injector;
@@ -165,7 +167,7 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
             fail(e.getMessage());
         }
         SSLKeyPair caKey = SSLUtils.createSelfSignedSSLKeyPair("Fake CA", (RSAPrivateKey) keyPair.getPrivate(), (RSAPublicKey) keyPair.getPublic());
-        DefaultProjectManager projectManager = new DefaultProjectManager(caKey, "kodokojo.dev", configurationStore, redisProjectStore, bootstrapProvider, dnsManager, injector.getInstance(BrickConfigurationStarter.class), new DefaultBrickUrlFactory("kodokojo.dev"), 10000000);
+        DefaultProjectManager projectManager = new DefaultProjectManager(caKey, "kodokojo.dev", configurationStore, redisProjectStore, bootstrapProvider, dnsManager, injector.getInstance(BrickConfigurerProvider.class), injector.getInstance(BrickConfigurationStarter.class), new DefaultBrickUrlFactory("kodokojo.dev"), 10000000);
         restEntryPoint = new RestEntryPoint(port, injector.getInstance(UserStore.class), new SimpleUserAuthenticator(redisUserManager),redisEntityStore, redisProjectStore, projectManager,new DefaultBrickFactory());
         restEntryPoint.start();
         return self();

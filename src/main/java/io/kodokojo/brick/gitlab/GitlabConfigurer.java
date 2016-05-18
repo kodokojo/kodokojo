@@ -103,13 +103,7 @@ public class GitlabConfigurer implements BrickConfigurer {
                             throw new BrickConfigurationException("Unable to get private token of root account for gitlab  for project " + brickConfigurerData.getProjectName() + " on url " + gitlabUrl);
                         }
                         brickConfigurerData.addInContext(GITLAB_ADMIN_TOKEN_KEY, authenticityToken);
-                        /*
-                        try {
-                            Thread.sleep(5000);
-                        } catch (InterruptedException e) {
-                            Thread.currentThread().interrupt();
-                        }
-                        */
+
                         return brickConfigurerData;
                     } catch (IOException e) {
                         LOGGER.error("Unable to retrieve account page", e);
