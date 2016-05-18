@@ -44,7 +44,18 @@ public class ProjectConfigurationIntTest extends ScenarioTest<ApplicationGiven<?
         given().redis_is_started()
                 .and().kodokojo_restEntrypoint_is_available()
                 .and().i_am_user_$("jpthiery", true);
-        when().create_a_new_project_configuration_with_name_$("Acme");
+        when().create_a_new_default_project_configuration_with_name_$("Acme");
+        then().it_exist_a_valid_project_configuration_in_store()
+        .and().it_is_possible_to_get_complete_details_for_user_$("jpthiery");
+    }
+
+    @Test
+    @DockerIsRequire
+    public void create_a_project_configuration_with_only_Jenkins() {
+        given().redis_is_started()
+                .and().kodokojo_restEntrypoint_is_available()
+                .and().i_am_user_$("jpthiery", true);
+        when().create_a_small_custom_project_configuration_with_name_$_and_only_brick_type_$("Acme", "jenkins");
         then().it_exist_a_valid_project_configuration_in_store()
         .and().it_is_possible_to_get_complete_details_for_user_$("jpthiery");
     }
@@ -55,7 +66,7 @@ public class ProjectConfigurationIntTest extends ScenarioTest<ApplicationGiven<?
         given().redis_is_started()
                 .and().kodokojo_restEntrypoint_is_available()
                 .and().i_am_user_$("jpthiery", true);
-        when().create_a_new_project_configuration_with_name_$("Acme")
+        when().create_a_new_default_project_configuration_with_name_$("Acme")
         .and().create_user_with_email_$("aletaxin@kodokojo.io")
         .and().add_user_$_to_project_configuration("aletaxin");
         then().it_exist_a_valid_project_configuration_in_store_which_contain_user("aletaxin")
@@ -69,7 +80,7 @@ public class ProjectConfigurationIntTest extends ScenarioTest<ApplicationGiven<?
         given().redis_is_started()
                 .and().kodokojo_restEntrypoint_is_available()
                 .and().i_am_user_$("jpthiery", true);
-        when().create_a_new_project_configuration_with_name_$("Acme")
+        when().create_a_new_default_project_configuration_with_name_$("Acme")
         .and().create_user_with_email_$("aletaxin@kodokojo.io");
         then().add_user_$_to_project_configuration_as_user_$_will_fail("aletaxin", "aletaxin");
     }
@@ -80,7 +91,7 @@ public class ProjectConfigurationIntTest extends ScenarioTest<ApplicationGiven<?
         given().redis_is_started()
                 .and().kodokojo_restEntrypoint_is_available()
                 .and().i_am_user_$("jpthiery", true);
-        when().create_a_new_project_configuration_with_name_$("Acme")
+        when().create_a_new_default_project_configuration_with_name_$("Acme")
                 .and().create_user_with_email_$("aletaxin@kodokojo.io")
                 .and().add_user_$_to_project_configuration("aletaxin")
         .and().remove_user_$_to_project_configuration("aletaxin");

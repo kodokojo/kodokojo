@@ -50,6 +50,7 @@ import java.security.SecureRandom;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static spark.Spark.*;
 
@@ -283,6 +284,18 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
             }
 
             Set<StackConfiguration> stackConfigurations = createDefaultStackConfiguration(dto.getName());
+            if (CollectionUtils.isNotEmpty(dto.getStackConfigs())) {
+                stackConfigurations = dto.getStackConfigs().stream().map(stack -> {
+                    Set<BrickConfiguration> brickConfigurations = stack.getBrickConfigs().stream().map(b -> {
+                        Brick brick = brickFactory.createBrick(b.getName());
+                        return new BrickConfiguration(brick);
+                    }).collect(Collectors.toSet());
+                    StackType stackType = StackType.valueOf(stack.getType());
+                    BootstrapStackData bootstrapStackData = projectManager.bootstrapStack(dto.getName(), stack.getName(), stackType);
+                    return new StackConfiguration(stack.getName(), stackType, brickConfigurations, bootstrapStackData.getLoadBalancerIp(), bootstrapStackData.getSshPort());
+                }).collect(Collectors.toSet());
+            }
+
             List<User> users = new ArrayList<>();
             users.add(owner);
             if (CollectionUtils.isNotEmpty(dto.getUserIdentifiers())) {
@@ -294,10 +307,6 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
             ProjectConfiguration projectConfiguration = new ProjectConfiguration(entityId, dto.getName(), Collections.singletonList(owner), stackConfigurations, users);
             String projectConfigIdentifier = projectStore.addProjectConfiguration(projectConfiguration);
 
-            /*
-            Project project = projectManager.start(new ProjectConfiguration(projectConfigIdentifier, projectConfiguration.getName(), projectConfiguration.getAdmins(), projectConfiguration.getStackConfigurations(), projectConfiguration.getUsers()));
-            projectStore.addProject(project);
-            */
             response.status(201);
             response.header("Location", "/projectconfig/" + projectConfigIdentifier);
             return projectConfigIdentifier;
@@ -332,13 +341,16 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
                 JsonParser parser = new JsonParser();
                 JsonArray root = (JsonArray) parser.parse(request.body());
                 List<User> users = IteratorUtils.toList(projectConfiguration.getUsers());
+                List<User> usersToAdd = new ArrayList<>();
                 for (JsonElement el : root) {
                     String userToAddId = el.getAsJsonPrimitive().getAsString();
                     User userToAdd = userStore.getUserByIdentifier(userToAddId);
-                    if (userToAdd != null) {
+                    if (userToAdd != null && ! users.contains(userToAdd)){
                         users.add(userToAdd);
+                        usersToAdd.add(userToAdd);
                     }
                 }
+
                 projectConfiguration.setUsers(users);
                 projectStore.updateProjectConfiguration(projectConfiguration);
             } else {

@@ -35,6 +35,7 @@ import javax.websocket.Session;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -66,7 +67,7 @@ public class BrickStateNotificationWhen<SELF extends BrickStateNotificationWhen<
     String projectConfigurationIdentifier;
 
     public SELF i_create_a_project_configuration_with_default_brick() {
-        ProjectCreationDto projectCreationDto = new ProjectCreationDto("123456", "Acme", currentUser.getIdentifier(), Collections.singletonList(currentUser.getIdentifier()));
+        ProjectCreationDto projectCreationDto = new ProjectCreationDto("123456", "Acme", currentUser.getIdentifier(),null, Collections.singletonList(currentUser.getIdentifier()));
 
         expectedBrickStarted = new String[]{"haproxy", "jenkins", "nexus", "gitlab"};
         startProjectConfiguration(projectCreationDto, expectedBrickStarted);

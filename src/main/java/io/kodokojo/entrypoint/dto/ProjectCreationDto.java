@@ -30,10 +30,13 @@ public class ProjectCreationDto implements Serializable {
 
     private List<String> userIdentifiers;
 
-    public ProjectCreationDto(String entityIdentifier, String name, String ownerIdentifier, List<String> userIdentifiers) {
+    private List<StackConfigDto> stackConfigs;
+
+    public ProjectCreationDto(String entityIdentifier, String name, String ownerIdentifier, List<StackConfigDto> stackConfigs, List<String> userIdentifiers) {
         this.entityIdentifier = entityIdentifier;
         this.name = name;
         this.ownerIdentifier = ownerIdentifier;
+        this.stackConfigs = stackConfigs;
         this.userIdentifiers = userIdentifiers;
     }
 
@@ -51,6 +54,18 @@ public class ProjectCreationDto implements Serializable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public void setEntityIdentifier(String entityIdentifier) {
+        this.entityIdentifier = entityIdentifier;
+    }
+
+    public List<StackConfigDto> getStackConfigs() {
+        return stackConfigs;
+    }
+
+    public void setStackConfigs(List<StackConfigDto> stackConfigs) {
+        this.stackConfigs = stackConfigs;
     }
 
     public List<String> getUserIdentifiers() {
@@ -71,6 +86,7 @@ public class ProjectCreationDto implements Serializable {
                 "name='" + name + '\'' +
                 ", entityIdentifier='" + entityIdentifier + '\'' +
                 ", ownerIdentifier='" + ownerIdentifier + '\'' +
+                ", stackConfigs=" + stackConfigs +
                 ", userIdentifiers=" + userIdentifiers +
                 '}';
     }

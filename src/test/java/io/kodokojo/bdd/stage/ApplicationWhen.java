@@ -1,22 +1,21 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package io.kodokojo.bdd.stage;
-
 
 
 import com.google.gson.JsonObject;
@@ -28,9 +27,14 @@ import com.tngtech.jgiven.annotation.ExpectedScenarioState;
 import com.tngtech.jgiven.annotation.ProvidedScenarioState;
 import com.tngtech.jgiven.annotation.Quoted;
 import com.tngtech.jgiven.attachment.Attachment;
+import io.kodokojo.brick.BrickFactory;
+import io.kodokojo.brick.DefaultBrickFactory;
 import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.commons.utils.ssl.SSLUtils;
+import io.kodokojo.entrypoint.dto.BrickConfigDto;
+import io.kodokojo.entrypoint.dto.StackConfigDto;
 import io.kodokojo.model.*;
+import io.kodokojo.model.Stack;
 import io.kodokojo.service.ProjectAlreadyExistException;
 import io.kodokojo.service.ProjectManager;
 import org.apache.commons.io.IOUtils;
@@ -42,10 +46,7 @@ import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
@@ -157,7 +158,19 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
         return self();
     }
 
-    public SELF create_a_new_project_configuration_with_name_$(String projectName) {
+    public SELF create_a_new_default_project_configuration_with_name_$(String projectName) {
+        return createProjectConfiguration(projectName, null);
+    }
+
+    public SELF create_a_small_custom_project_configuration_with_name_$_and_only_brick_type_$(String projectName, String brickName) {
+        BrickFactory brickFactory = new DefaultBrickFactory();
+        Brick brick = brickFactory.createBrick(brickName);
+        BrickConfigDto brickConfigDto = new BrickConfigDto(brickName, brick.getType().name());
+        StackConfigDto stackConfigDto = new StackConfigDto("build-A", StackType.BUILD.name(), Collections.singletonList(brickConfigDto));
+        return createProjectConfiguration(projectName, stackConfigDto);
+    }
+
+    public SELF createProjectConfiguration(String projectName, StackConfigDto stackConfigDto) {
         if (isBlank(projectName)) {
             throw new IllegalArgumentException("projectName must be defined.");
         }
@@ -184,8 +197,34 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
 
         String json = "{\n" +
                 "   \"name\": \"" + projectName + "\",\n" +
-                "   \"ownerIdentifier\": \"" + currentUser.getIdentifier() + "\"\n" +
-                "}";
+                "   \"ownerIdentifier\": \"" + currentUser.getIdentifier() + "\"";
+        if (stackConfigDto == null) {
+            json += "\n";
+        } else {
+
+            json += ",\n   \"stackConfigs\": [\n" +
+                    "    {\n" +
+                    "      \"name\":\"" + stackConfigDto.getName() + "\",\n" +
+                    "      \"type\":\"" + stackConfigDto.getType() + "\",\n" +
+                    "      \"brickConfigs\": [\n";
+            Iterator<BrickConfigDto> iterator = stackConfigDto.getBrickConfigs().iterator();
+            while (iterator.hasNext()) {
+                BrickConfigDto brickConfigDto = iterator.next();
+                json += "        {\n" +
+                        "          \"name\":\"" + brickConfigDto.getName() + "\",\n" +
+                        "          \"type\":\"" + brickConfigDto.getType() + "\"\n" +
+                        "        }";
+                if (iterator.hasNext()) {
+                    json += ",";
+                }
+                json += "\n";
+            }
+            json += "      ]\n" +
+                    "    }\n" +
+                    "  ]\n";
+        }
+
+        json += "}";
 
         OkHttpClient httpClient = new OkHttpClient();
 

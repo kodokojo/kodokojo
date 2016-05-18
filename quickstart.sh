@@ -60,7 +60,7 @@ docker pull mesosphere/marathon
 docker pull jplock/zookeeper
 docker pull gliderlabs/consul:latest
 docker pull haproxy
-docker pull jenkins:1.651-1-alpine
+docker pull jenkins:1.651-2-alpine
 docker pull gitlab/gitlab-ce:8.5.8-ce.0
 docker pull nginx:1.9
 docker pull node:5.9.0
