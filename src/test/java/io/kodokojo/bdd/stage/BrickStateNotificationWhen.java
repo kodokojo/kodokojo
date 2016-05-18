@@ -26,19 +26,11 @@ import com.tngtech.jgiven.annotation.ProvidedScenarioState;
 import io.kodokojo.entrypoint.dto.ProjectCreationDto;
 import io.kodokojo.model.User;
 import org.apache.commons.io.IOUtils;
-import org.glassfish.tyrus.client.ClientManager;
-import org.glassfish.tyrus.client.ClientProperties;
 
-import javax.websocket.ClientEndpointConfig;
-import javax.websocket.DeploymentException;
 import javax.websocket.Session;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -76,7 +68,7 @@ public class BrickStateNotificationWhen<SELF extends BrickStateNotificationWhen<
 
     private void startProjectConfiguration(ProjectCreationDto projectCreationDto, String[] expectedBrickStarted) {
         nbMessageExpected = new CountDownLatch((expectedBrickStarted.length * 3) + 1);
-        WebSocketConnectionResult webSocketConnectionResult = StageUtils.connectToWebSocket(entryPointUrl, currentUser, nbMessageExpected);
+        WebSocketConnectionResult webSocketConnectionResult = StageUtils.connectToWebSocketAndWaitMessage(entryPointUrl, currentUser, nbMessageExpected);
         listener = webSocketConnectionResult.getListener();
         session = webSocketConnectionResult.getSession();
         Gson gson = new GsonBuilder().create();

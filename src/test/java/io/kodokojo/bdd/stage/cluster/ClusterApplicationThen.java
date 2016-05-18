@@ -1,17 +1,17 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -25,16 +25,24 @@ import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.ExpectedScenarioState;
+import com.tngtech.jgiven.annotation.ProvidedScenarioState;
+import com.tngtech.jgiven.annotation.Quoted;
+import io.kodokojo.bdd.stage.StageUtils;
 import io.kodokojo.bdd.stage.UserInfo;
 import io.kodokojo.bdd.stage.WebSocketEventsListener;
 import io.kodokojo.bdd.stage.brickauthenticator.GitlabUserAuthenticator;
 import io.kodokojo.bdd.stage.brickauthenticator.JenkinsUserAuthenticator;
 import io.kodokojo.bdd.stage.brickauthenticator.UserAuthenticator;
+import io.kodokojo.brick.DefaultBrickFactory;
+import io.kodokojo.brick.gitlab.GitlabConfigurer;
+import io.kodokojo.commons.model.Service;
+import io.kodokojo.commons.utils.servicelocator.marathon.MarathonServiceLocator;
+import io.kodokojo.entrypoint.dto.ProjectDto;
+import io.kodokojo.entrypoint.dto.UserDto;
 import io.kodokojo.entrypoint.dto.WebSocketMessage;
 import io.kodokojo.entrypoint.dto.WebSocketMessageGsonAdapter;
 import io.kodokojo.model.ProjectConfiguration;
 import io.kodokojo.model.User;
-import io.kodokojo.brick.gitlab.GitlabConfigurer;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,6 +56,7 @@ import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -65,6 +74,8 @@ public class ClusterApplicationThen<SELF extends ClusterApplicationThen<?>> exte
         USER_AUTHENTICATOR.put("jenkins", new JenkinsUserAuthenticator());
     }
 
+    @ProvidedScenarioState
+    String marathonUrl;
 
     @ExpectedScenarioState
     User currentUser;
@@ -77,6 +88,16 @@ public class ClusterApplicationThen<SELF extends ClusterApplicationThen<?>> exte
 
     @ExpectedScenarioState
     ProjectConfiguration projectConfiguration;
+
+    @ExpectedScenarioState
+    Map<String, UserInfo> currentUsers = new HashMap<>();
+
+
+    @ExpectedScenarioState
+    String restEntryPointHost;
+
+    @ExpectedScenarioState
+    int restEntryPointPort;
 
     public SELF i_have_a_valid_scm() {
         checkHttpService("scm", "gitlab");
@@ -218,5 +239,30 @@ public class ClusterApplicationThen<SELF extends ClusterApplicationThen<?>> exte
         });
         httpClient.setSslSocketFactory(ctx.getSocketFactory());
         return httpClient;
+    }
+
+    public SELF it_possible_to_log_on_brick_$_with_user_$(@Quoted String brickName, @Quoted String username) {
+        OkHttpClient httpClient = provideDefaultOkHttpClient();
+        UserAuthenticator userAuthenticator = USER_AUTHENTICATOR.get(brickName);
+        assertThat(userAuthenticator).isNotNull();
+
+        UserInfo userInfo = new UserInfo(this.currentUser);
+        UserDto userDto = StageUtils.getUserDto(getApiBaseUrl(), userInfo, currentUsers.get(username).getIdentifier());
+        ProjectDto projectDto = StageUtils.getProjectDto(getApiBaseUrl(), userInfo, userDto.getProjectConfigurationIds().get(0).getProjectId());
+
+        MarathonServiceLocator serviceLocator = new MarathonServiceLocator(marathonUrl);
+        Set<Service> services = serviceLocator.getService(new DefaultBrickFactory().createBrick(brickName).getType().name().toLowerCase(), projectDto.getName().toLowerCase());
+        assertThat(services).isNotEmpty();
+        Service service = services.iterator().next();
+        String url = "http://" + service.getHost() + ":" + service.getPort();
+
+        boolean authenticate = userAuthenticator.authenticate(httpClient, url, currentUsers.get(username));
+        assertThat(authenticate).isTrue();
+        return self();
+    }
+
+
+    private String getApiBaseUrl() {
+        return "http://" + restEntryPointHost + ":" + restEntryPointPort + "/api/v1";
     }
 }

@@ -84,15 +84,20 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
         RequestBody emptyBody = RequestBody.create(null, new byte[0]);
         String baseUrl = getBaseUrl();
         Request request = new Request.Builder().post(emptyBody).url(baseUrl + "/api/v1/user").build();
+        Response response = null;
         try {
-            Response response = httpClient.newCall(request).execute();
+            response = httpClient.newCall(request).execute();
             if (response.code() != 200) {
                 fail("Invalid HTTP code status " + response.code() + " expected 200");
             }
             newUserId = response.body().string();
-            response.body().close();
+
         } catch (IOException e) {
             fail(e.getMessage(), e);
+        }  finally {
+            if (response != null) {
+                IOUtils.closeQuietly(response.body());
+            }
         }
         return self();
     }
@@ -192,59 +197,11 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
             fail(e.getMessage());
         }
 
-        //  Send project configuration configuration
-        UserInfo currentUser = currentUsers.get(currentUserLogin);
+        projectConfigurationId = StageUtils.createProjectConfiguration(getApiBaseUrl(), projectName, stackConfigDto, currentUsers.get(currentUserLogin));
 
-        String json = "{\n" +
-                "   \"name\": \"" + projectName + "\",\n" +
-                "   \"ownerIdentifier\": \"" + currentUser.getIdentifier() + "\"";
-        if (stackConfigDto == null) {
-            json += "\n";
-        } else {
+        String projectConfiguration = getProjectConfiguration(currentUserLogin, projectConfigurationId);
+        currentStep.addAttachment(Attachment.plainText(projectConfiguration).withTitle("Project configuration for " + projectName).withFileName("projectconfiguration_" + projectName + ".json"));
 
-            json += ",\n   \"stackConfigs\": [\n" +
-                    "    {\n" +
-                    "      \"name\":\"" + stackConfigDto.getName() + "\",\n" +
-                    "      \"type\":\"" + stackConfigDto.getType() + "\",\n" +
-                    "      \"brickConfigs\": [\n";
-            Iterator<BrickConfigDto> iterator = stackConfigDto.getBrickConfigs().iterator();
-            while (iterator.hasNext()) {
-                BrickConfigDto brickConfigDto = iterator.next();
-                json += "        {\n" +
-                        "          \"name\":\"" + brickConfigDto.getName() + "\",\n" +
-                        "          \"type\":\"" + brickConfigDto.getType() + "\"\n" +
-                        "        }";
-                if (iterator.hasNext()) {
-                    json += ",";
-                }
-                json += "\n";
-            }
-            json += "      ]\n" +
-                    "    }\n" +
-                    "  ]\n";
-        }
-
-        json += "}";
-
-        OkHttpClient httpClient = new OkHttpClient();
-
-        RequestBody body = RequestBody.create(MediaType.parse("application/json"), json.getBytes());
-        Request.Builder builder = new Request.Builder().url(getApiBaseUrl() + "/projectconfig").post(body);
-        Request request = StageUtils.addBasicAuthentification(currentUser, builder).build();
-        Response response = null;
-        try {
-            response = httpClient.newCall(request).execute();
-            assertThat(response.code()).isEqualTo(201);
-            projectConfigurationId = response.body().string();
-            String projectConfiguration = getProjectConfiguration(currentUserLogin, projectConfigurationId);
-            currentStep.addAttachment(Attachment.plainText(projectConfiguration).withTitle("Project configuration for " + projectName).withFileName("projectconfiguration_" + projectName + ".json"));
-        } catch (IOException e) {
-            fail(e.getMessage());
-        } finally {
-            if (response != null) {
-                IOUtils.closeQuietly(response.body());
-            }
-        }
         return self();
     }
 
@@ -274,16 +231,7 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
         UserInfo currentUser = currentUsers.get(currentUserLogin);
         UserInfo userToAdd = currentUsers.get(username);
 
-        String json = "[\n" +
-                "    \"" + userToAdd.getIdentifier() + "\"\n" +
-                "  ]";
-
-
-        RequestBody body = RequestBody.create(MediaType.parse("application/json"), json.getBytes());
-        Request.Builder builder = new Request.Builder().url(getApiBaseUrl() + "/projectconfig/" + projectConfigurationId + "/user").put(body);
-        Request request = StageUtils.addBasicAuthentification(currentUser, builder).build();
-
-        executeRequestWithExpectedStatus(request, 200);
+        StageUtils.addUserToProjectConfiguration(getApiBaseUrl(), projectConfigurationId, currentUser, userToAdd);
 
         return self();
     }
@@ -291,33 +239,9 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
     public SELF remove_user_$_to_project_configuration(String usernameToDelete) {
         UserInfo currentUser = currentUsers.get(currentUserLogin);
         UserInfo userToAdd = currentUsers.get(usernameToDelete);
-
-        String json = "[\n" +
-                "    \"" + userToAdd.getIdentifier() + "\"\n" +
-                "  ]";
-
-        RequestBody body = RequestBody.create(MediaType.parse("application/json"), json.getBytes());
-        Request.Builder builder = new Request.Builder().url(getApiBaseUrl() + "/projectconfig/" + projectConfigurationId + "/user").delete(body);
-        Request request = StageUtils.addBasicAuthentification(currentUser, builder).build();
-
-        executeRequestWithExpectedStatus(request, 200);
+        StageUtils.removeUserToProjectConfiguration(getApiBaseUrl(), projectConfigurationId, currentUser, userToAdd);
 
         return self();
-    }
-
-    private void executeRequestWithExpectedStatus(Request request, int expectedStatus) {
-        OkHttpClient httpClient = new OkHttpClient();
-        Response response = null;
-        try {
-            response = httpClient.newCall(request).execute();
-            assertThat(response.code()).isEqualTo(expectedStatus);
-        } catch (IOException e) {
-            fail(e.getMessage());
-        } finally {
-            if (response != null) {
-                IOUtils.closeQuietly(response.body());
-            }
-        }
     }
 
     private String getBaseUrl() {

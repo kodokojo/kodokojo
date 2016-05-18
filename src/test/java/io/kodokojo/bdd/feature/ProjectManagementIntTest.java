@@ -23,6 +23,7 @@ import io.kodokojo.bdd.MarathonIsRequire;
 import io.kodokojo.bdd.stage.cluster.ClusterApplicationGiven;
 import io.kodokojo.bdd.stage.cluster.ClusterApplicationThen;
 import io.kodokojo.bdd.stage.cluster.ClusterApplicationWhen;
+import io.kodokojo.commons.DockerIsRequire;
 import io.kodokojo.commons.DockerPresentMethodRule;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -38,6 +39,19 @@ public class ProjectManagementIntTest extends ScenarioTest<ClusterApplicationGiv
     public MarathonIsPresent marathonIsPresent = new MarathonIsPresent();
 
     @Test
+    @DockerIsRequire
+    public void create_a_project_with_jenkins_and_add_a_user() {
+        given().kodokojo_is_running(dockerPresentMethodRule)
+                .and().i_am_user_$("jpthiery");
+        when().i_configure_a_project_with_name_$_and_only_brick_$("Acme", "jenkins")
+        .and().i_start_the_project()
+        .and().i_create_a_new_user_$("aletaxin@xebia.fr")
+        .and().i_add_the_user_$_to_the_project("aletaxin");
+        then().it_possible_to_log_on_brick_$_with_user_$("jenkins", "aletaxin");
+    }
+
+    @Test
+    @Ignore
     @MarathonIsRequire
     public void create_a_simple_project_build_stack() {
         given().kodokojo_is_running(marathonIsPresent)

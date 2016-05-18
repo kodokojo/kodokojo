@@ -17,7 +17,7 @@
  */
 package io.kodokojo.bdd.stage;
 
-
+import io.kodokojo.model.User;
 
 public class UserInfo {
 
@@ -34,6 +34,10 @@ public class UserInfo {
         this.identifier = identifier;
         this.password = password;
         this.email = email;
+    }
+
+    public UserInfo(User user) {
+        this(user.getUsername(), user.getIdentifier(), user.getPassword(), user.getEmail());
     }
 
     public String getUsername() {

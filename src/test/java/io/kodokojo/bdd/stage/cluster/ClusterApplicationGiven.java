@@ -18,6 +18,7 @@
 package io.kodokojo.bdd.stage.cluster;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.NotModifiedException;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.ExposedPort;
@@ -38,19 +39,28 @@ import io.kodokojo.bdd.MarathonIsPresent;
 import io.kodokojo.bdd.stage.StageUtils;
 import io.kodokojo.bdd.stage.WebSocketConnectionResult;
 import io.kodokojo.bdd.stage.WebSocketEventsListener;
+import io.kodokojo.brick.BrickConfigurerProvider;
 import io.kodokojo.brick.BrickFactory;
+import io.kodokojo.brick.BrickUrlFactory;
 import io.kodokojo.commons.DockerPresentMethodRule;
 import io.kodokojo.commons.model.Service;
 import io.kodokojo.commons.utils.DockerTestSupport;
 import io.kodokojo.commons.utils.RSAUtils;
+import io.kodokojo.commons.utils.servicelocator.ServiceLocator;
+import io.kodokojo.commons.utils.servicelocator.marathon.MarathonServiceLocator;
 import io.kodokojo.config.ApplicationConfig;
+import io.kodokojo.config.MarathonConfig;
 import io.kodokojo.config.RedisConfig;
 import io.kodokojo.config.module.*;
 import io.kodokojo.entrypoint.RestEntryPoint;
+import io.kodokojo.model.Entity;
 import io.kodokojo.service.lifecycle.ApplicationLifeCycleManager;
 import io.kodokojo.model.User;
 import io.kodokojo.service.*;
+import io.kodokojo.service.marathon.MarathonBrickManager;
+import io.kodokojo.service.marathon.MarathonConfigurationStore;
 import io.kodokojo.service.redis.RedisBootstrapConfigurationProvider;
+import io.kodokojo.service.redis.RedisEntityStore;
 import io.kodokojo.service.redis.RedisProjectStore;
 import io.kodokojo.service.store.EntityStore;
 import io.kodokojo.service.store.ProjectStore;
@@ -93,6 +103,10 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterApplicationGiven.class);
 
     private static final Properties VE_PROPERTIES = new Properties();
+    public static final String DOCKER_MESOS_SLAVE_IMAGE_NAME = "mesosphere/mesos-slave:0.28.0-2.0.16.ubuntu1404";
+    public static final String DOCKER_MARATHON_IMAGE_NAME = "mesosphere/marathon:latest";
+    public static final String DOCKER_MESOS_MASTER_IMAGE_NAME = "mesosphere/mesos-master:0.28.0-2.0.16.ubuntu1404";
+    public static final String DOCKER_ZOOKEEPER_IMAGE_NAME = "jplock/zookeeper:latest";
 
     static {
         VE_PROPERTIES.setProperty(RuntimeConstants.RESOURCE_LOADER, "classpath");
@@ -140,7 +154,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
     String domain;
 
     @ProvidedScenarioState
-    RedisUserStore redisUserManager;
+    UserStore userStore;
 
     @ProvidedScenarioState
     String testId;
@@ -192,19 +206,27 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
     }
 
     public SELF i_am_user_$(@Quoted String username) {
-        String identifier = redisUserManager.generateId();
+        String identifier = userStore.generateId();
         try {
             userKeyPair = RSAUtils.generateRsaKeyPair();
             String email = username + "@kodokojo.io";
             currentUser = new User(identifier, username, username, email, username, RSAUtils.encodePublicKey((RSAPublicKey) userKeyPair.getPublic(), email));
-            redisUserManager.addUser(currentUser);
+
+            Entity entity = new Entity(currentUser.getUsername(), currentUser);
+            String entityId = entityStore.addEntity(entity);
+            entityStore.addUserToEntity(currentUser.getIdentifier(), entityId);
+
+            currentUser = new User(identifier,entityId, username, username, email, username, RSAUtils.encodePublicKey((RSAPublicKey) userKeyPair.getPublic(), email));
+            userStore.addUser(currentUser);
+
+
             LOGGER.info("Current user {} with password {}", currentUser, currentUser.getPassword());
         } catch (NoSuchAlgorithmException e) {
             fail("Unable to generate a new RSA key pair for user " + username, e);
         }
 
         CountDownLatch nbMessageExpected = new CountDownLatch(1000);
-        WebSocketConnectionResult webSocketConnectionResult = StageUtils.connectToWebSocket(restEntryPointHost + ":" + restEntryPointPort , currentUser, nbMessageExpected);
+        WebSocketConnectionResult webSocketConnectionResult = StageUtils.connectToWebSocketAndWaitMessage(restEntryPointHost + ":" + restEntryPointPort , currentUser, nbMessageExpected);
         webSocketEventsListener = webSocketConnectionResult.getListener();
         currentUserWebSocket = webSocketConnectionResult.getSession();
         return self();
@@ -250,7 +272,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
             services.addAll(servicesResponse);
             redisService = servicesResponse.get(0);
             KeyGenerator kg = KeyGenerator.getInstance("AES");
-            redisUserManager = new RedisUserStore(kg.generateKey(), redisService.getHost(), redisService.getPort());
+            userStore = new RedisUserStore(kg.generateKey(), redisService.getHost(), redisService.getPort());
         } catch (NoSuchAlgorithmException | IOException e) {
             fail("Unable to start Redis", e);
         } finally {
@@ -271,12 +293,12 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
     private String startZookeeper(DockerClient dockerClient) {
 
         LOGGER.info("Pulling docker image jplock/zookeeper");
-        dockerTestSupport.pullImage("jplock/zookeeper");
+        dockerTestSupport.pullImage(DOCKER_ZOOKEEPER_IMAGE_NAME);
 
         Ports portBinding = new Ports();
         ExposedPort exposedPort = ExposedPort.tcp(2181);
         portBinding.bind(exposedPort, Ports.Binding(null));
-        CreateContainerResponse zookeeperContainer = dockerClient.createContainerCmd("jplock/zookeeper")
+        CreateContainerResponse zookeeperContainer = dockerClient.createContainerCmd(DOCKER_ZOOKEEPER_IMAGE_NAME)
                 .withPortBindings(portBinding)
                 .withExposedPorts(exposedPort).exec();
 
@@ -287,8 +309,8 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
 
     private String startMesosMaster(DockerClient dockerClient, String zookeeperId) {
 
-        LOGGER.info("Pulling docker image mesosphere/mesos-master:0.28.0-2.0.16.ubuntu1404");
-        dockerTestSupport.pullImage("mesosphere/mesos-master:0.28.0-2.0.16.ubuntu1404");
+        LOGGER.info("Pulling docker image mesosphere/mesos-master");
+        dockerTestSupport.pullImage(DOCKER_MESOS_MASTER_IMAGE_NAME);
 
         Ports portBinding = new Ports();
         ExposedPort exposedPort = ExposedPort.tcp(5050);
@@ -297,7 +319,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         int zookeeperPort = dockerTestSupport.getExposedPort(zookeeperId, 2181);
         String serverIp = dockerTestSupport.getServerIp();
 
-        CreateContainerResponse mesosMasterContainer = dockerClient.createContainerCmd("mesosphere/mesos-master:0.28.0-2.0.16.ubuntu1404")
+        CreateContainerResponse mesosMasterContainer = dockerClient.createContainerCmd(DOCKER_MESOS_MASTER_IMAGE_NAME)
                 .withCmd("--zk=zk://" + serverIp + ":" + zookeeperPort + "/mesos",
                         "--registry=in_memory", "--advertise_ip=" + serverIp,
                         "--no-hostname_lookup"
@@ -313,8 +335,8 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
 
     private String startMesosSlave(DockerClient dockerClient, String mesosMasterId) {
 
-        LOGGER.info("Pulling docker image mesosphere/mesos-slave:0.28.0-2.0.16.ubuntu14044");
-        dockerTestSupport.pullImage("mesosphere/mesos-slave:0.28.0-2.0.16.ubuntu1404");
+        LOGGER.info("Pulling docker image mesosphere/mesos-slave");
+        dockerTestSupport.pullImage(DOCKER_MESOS_SLAVE_IMAGE_NAME);
 
         Ports portBinding = new Ports();
         ExposedPort exposedPort = ExposedPort.tcp(5051);
@@ -328,7 +350,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
                 new Bind("/var/run/docker.sock", new Volume("/var/run/docker.sock"))
         ));
 
-        CreateContainerResponse mesosSlaveContainer = dockerClient.createContainerCmd("mesosphere/mesos-slave:0.28.0-2.0.16.ubuntu1404")
+        CreateContainerResponse mesosSlaveContainer = dockerClient.createContainerCmd(DOCKER_MESOS_SLAVE_IMAGE_NAME)
                 .withCmd("--master=" + serverIp + ":" + mesosMasterPort,
                         "--containerizers=docker,mesos",
                         "--docker=/usr/local/bin/docker",
@@ -350,7 +372,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
     private String startMarathon(DockerClient dockerClient, String zookeeperId) {
 
         LOGGER.info("Pulling docker image mesosphere/marathon");
-        dockerTestSupport.pullImage("mesosphere/marathon");
+        dockerTestSupport.pullImage(DOCKER_MARATHON_IMAGE_NAME);
 
         Ports portBinding = new Ports();
         ExposedPort exposedPort = ExposedPort.tcp(8080);
@@ -359,7 +381,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         int zookeeperPort = dockerTestSupport.getExposedPort(zookeeperId, 2181);
         String serverIp = dockerTestSupport.getServerIp();
 
-        CreateContainerResponse marathonContainer = dockerClient.createContainerCmd("mesosphere/marathon")
+        CreateContainerResponse marathonContainer = dockerClient.createContainerCmd(DOCKER_MARATHON_IMAGE_NAME)
                 .withCmd("--master", "zk://" + serverIp + ":" + zookeeperPort + "/mesos",
                         "--zk", "zk://" + serverIp + ":" + zookeeperPort + "/marathon",
                         "--hostname", serverIp,
@@ -447,7 +469,11 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         for (Service service : services) {
             killApp(service.getName());
         }
-        dockerTestSupport.stopAndRemoveContainer();
+        try {
+            dockerTestSupport.stopAndRemoveContainer();
+        } catch (NotModifiedException e) {
+            // Nothing to do
+        }
     }
 
     private void startKodokojo() {
@@ -468,15 +494,39 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
                 System.setProperty("application.dns.domain","kodokojo.dev");
             }
         }
-        injector = Guice.createInjector(new PropertyModule(new String[]{}), new RedisTestModule(),new SecurityModule(), new ServiceModule(), new ActorModule(), new AwsModule(), new MarathonModule());
+        injector = Guice.createInjector(new PropertyModule(new String[]{}), new RedisModule(),new SecurityModule(), new ServiceModule(), new ActorModule(), new AwsModule(), new AbstractModule() {
+            @Override
+            protected void configure() {
+
+            }
+
+            @Provides
+            @Singleton
+            ServiceLocator provideServiceLocator(MarathonConfig marathonConfig) {
+                return new MarathonServiceLocator(marathonConfig.url());
+            }
+
+            @Provides
+            @Singleton
+            ConfigurationStore provideConfigurationStore(MarathonConfig marathonConfig) {
+                return new MarathonConfigurationStore(marathonConfig.url());
+            }
+            @Provides
+            @Singleton
+            BrickManager provideBrickManager(MarathonConfig marathonConfig, BrickConfigurerProvider brickConfigurerProvider, ApplicationConfig applicationConfig, BrickUrlFactory brickUrlFactory) {
+                MarathonServiceLocator marathonServiceLocator = new MarathonServiceLocator(marathonConfig.url());
+                return new MarathonBrickManager(marathonConfig.url(), marathonServiceLocator, brickConfigurerProvider, false, applicationConfig.domain(), brickUrlFactory);
+            }
+        });
         Launcher.INJECTOR = injector;
         projectManager = injector.getInstance(ProjectManager.class);
+        userStore = injector.getInstance(UserStore.class);
         projectStore = injector.getInstance(ProjectStore.class);
         entityStore = injector.getInstance(EntityStore.class);
         BrickFactory brickFactory = injector.getInstance(BrickFactory.class);
         restEntryPointHost = "localhost";
         restEntryPointPort = TestUtils.getEphemeralPort();
-        restEntryPoint = new RestEntryPoint(restEntryPointPort, redisUserManager, new SimpleUserAuthenticator(redisUserManager),entityStore, projectStore, projectManager, brickFactory);
+        restEntryPoint = new RestEntryPoint(restEntryPointPort, userStore, new SimpleUserAuthenticator(userStore),entityStore, projectStore, projectManager, brickFactory);
         Semaphore semaphore = new Semaphore(1);
         try {
             semaphore.acquire();
@@ -493,29 +543,6 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
             semaphore.acquire();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-        }
-    }
-
-    private class RedisTestModule extends AbstractModule {
-        @Override
-        protected void configure() {
-            bind(UserStore.class).toInstance(redisUserManager);
-        }
-
-        @Provides
-        @Singleton
-        BootstrapConfigurationProvider provideBootstrapConfigurationProvider(ApplicationConfig applicationConfig, RedisConfig redisConfig, ApplicationLifeCycleManager applicationLifeCycleManager) {
-            RedisBootstrapConfigurationProvider redisBootstrapConfigurationProvider = new RedisBootstrapConfigurationProvider(redisConfig.host(), redisConfig.port(), applicationConfig.defaultLoadbalancerIp(), applicationConfig.initialSshPort());
-            applicationLifeCycleManager.addService(redisBootstrapConfigurationProvider);
-            return redisBootstrapConfigurationProvider;
-        }
-
-        @Provides
-        @Singleton
-        ProjectStore provideProjectStore(@Named("securityKey") SecretKey key, RedisConfig redisConfig, BrickFactory brickFactory, ApplicationLifeCycleManager applicationLifeCycleManager) {
-            RedisProjectStore redisProjectStore = new RedisProjectStore(key, redisConfig.host(), redisConfig.port(), brickFactory);
-            applicationLifeCycleManager.addService(redisProjectStore);
-            return redisProjectStore;
         }
     }
 
