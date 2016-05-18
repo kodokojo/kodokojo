@@ -1,17 +1,17 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -25,6 +25,7 @@ import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.Ports;
 import com.github.dockerjava.api.model.Volume;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.inject.*;
@@ -50,23 +51,21 @@ import io.kodokojo.commons.utils.servicelocator.ServiceLocator;
 import io.kodokojo.commons.utils.servicelocator.marathon.MarathonServiceLocator;
 import io.kodokojo.config.ApplicationConfig;
 import io.kodokojo.config.MarathonConfig;
-import io.kodokojo.config.RedisConfig;
 import io.kodokojo.config.module.*;
 import io.kodokojo.entrypoint.RestEntryPoint;
 import io.kodokojo.model.Entity;
-import io.kodokojo.service.lifecycle.ApplicationLifeCycleManager;
 import io.kodokojo.model.User;
-import io.kodokojo.service.*;
+import io.kodokojo.service.BrickManager;
+import io.kodokojo.service.ConfigurationStore;
+import io.kodokojo.service.ProjectManager;
+import io.kodokojo.service.lifecycle.ApplicationLifeCycleManager;
 import io.kodokojo.service.marathon.MarathonBrickManager;
 import io.kodokojo.service.marathon.MarathonConfigurationStore;
-import io.kodokojo.service.redis.RedisBootstrapConfigurationProvider;
-import io.kodokojo.service.redis.RedisEntityStore;
-import io.kodokojo.service.redis.RedisProjectStore;
+import io.kodokojo.service.redis.RedisUserStore;
 import io.kodokojo.service.store.EntityStore;
 import io.kodokojo.service.store.ProjectStore;
 import io.kodokojo.service.store.UserStore;
 import io.kodokojo.service.user.SimpleUserAuthenticator;
-import io.kodokojo.service.redis.RedisUserStore;
 import io.kodokojo.test.utils.TestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -79,8 +78,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
-import javax.inject.Named;
 import javax.websocket.Session;
 import java.io.File;
 import java.io.IOException;
@@ -96,7 +93,6 @@ import java.util.concurrent.Semaphore;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-import static org.mockito.Mockito.mock;
 
 public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> extends Stage<SELF> {
 
@@ -216,7 +212,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
             String entityId = entityStore.addEntity(entity);
             entityStore.addUserToEntity(currentUser.getIdentifier(), entityId);
 
-            currentUser = new User(identifier,entityId, username, username, email, username, RSAUtils.encodePublicKey((RSAPublicKey) userKeyPair.getPublic(), email));
+            currentUser = new User(identifier, entityId, username, username, email, username, RSAUtils.encodePublicKey((RSAPublicKey) userKeyPair.getPublic(), email));
             userStore.addUser(currentUser);
 
 
@@ -226,7 +222,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         }
 
         CountDownLatch nbMessageExpected = new CountDownLatch(1000);
-        WebSocketConnectionResult webSocketConnectionResult = StageUtils.connectToWebSocketAndWaitMessage(restEntryPointHost + ":" + restEntryPointPort , currentUser, nbMessageExpected);
+        WebSocketConnectionResult webSocketConnectionResult = StageUtils.connectToWebSocketAndWaitMessage(restEntryPointHost + ":" + restEntryPointPort, currentUser, nbMessageExpected);
         webSocketEventsListener = webSocketConnectionResult.getListener();
         currentUserWebSocket = webSocketConnectionResult.getSession();
         return self();
@@ -470,6 +466,9 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
             killApp(service.getName());
         }
         try {
+            if (StringUtils.isNotBlank(marathonUrl)) {
+                killAllAppInMarathon(marathonUrl);
+            }
             dockerTestSupport.stopAndRemoveContainer();
         } catch (NotModifiedException e) {
             // Nothing to do
@@ -483,18 +482,18 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
             System.out.println(keystorePathDefined);
             System.setProperty("javax.net.ssl.keyStore", keystorePathDefined);
             System.setProperty("javax.net.ssl.keyStorePassword", "password");
-            System.setProperty("security.ssl.rootCa.ks.alias","rootcafake");
-            System.setProperty("security.ssl.rootCa.ks.password","password");
-            System.setProperty("application.dns.domain","kodokojo.io");
-            System.setProperty("redis.host",redisService.getHost());
-            System.setProperty("redis.port",""+redisService.getPort());
+            System.setProperty("security.ssl.rootCa.ks.alias", "rootcafake");
+            System.setProperty("security.ssl.rootCa.ks.password", "password");
+            System.setProperty("application.dns.domain", "kodokojo.io");
+            System.setProperty("redis.host", redisService.getHost());
+            System.setProperty("redis.port", "" + redisService.getPort());
             if (testContext == TestContext.LOCAL) {
                 System.setProperty("marathon.url", "http://" + dockerTestSupport.getServerIp() + ":8080");
                 System.setProperty("lb.defaultIp", dockerTestSupport.getServerIp());
-                System.setProperty("application.dns.domain","kodokojo.dev");
+                System.setProperty("application.dns.domain", "kodokojo.dev");
             }
         }
-        injector = Guice.createInjector(new PropertyModule(new String[]{}), new RedisModule(),new SecurityModule(), new ServiceModule(), new ActorModule(), new AwsModule(), new AbstractModule() {
+        injector = Guice.createInjector(new PropertyModule(new String[]{}), new RedisModule(), new SecurityModule(), new ServiceModule(), new ActorModule(), new AwsModule(), new AbstractModule() {
             @Override
             protected void configure() {
 
@@ -511,6 +510,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
             ConfigurationStore provideConfigurationStore(MarathonConfig marathonConfig) {
                 return new MarathonConfigurationStore(marathonConfig.url());
             }
+
             @Provides
             @Singleton
             BrickManager provideBrickManager(MarathonConfig marathonConfig, BrickConfigurerProvider brickConfigurerProvider, ApplicationConfig applicationConfig, BrickUrlFactory brickUrlFactory) {
@@ -526,7 +526,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         BrickFactory brickFactory = injector.getInstance(BrickFactory.class);
         restEntryPointHost = "localhost";
         restEntryPointPort = TestUtils.getEphemeralPort();
-        restEntryPoint = new RestEntryPoint(restEntryPointPort, userStore, new SimpleUserAuthenticator(userStore),entityStore, projectStore, projectManager, brickFactory);
+        restEntryPoint = new RestEntryPoint(restEntryPointPort, userStore, new SimpleUserAuthenticator(userStore), entityStore, projectStore, projectManager, brickFactory);
         Semaphore semaphore = new Semaphore(1);
         try {
             semaphore.acquire();
@@ -544,6 +544,46 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+    }
+
+    private void killAllAppInMarathon(String marathonUrl) {
+        OkHttpClient httpClient = new OkHttpClient();
+        Request.Builder builder = new Request.Builder().url(marathonUrl + "/v2/apps").get();
+        Response response = null;
+        Set<String> appIds = new HashSet<>();
+
+        try {
+            response = httpClient.newCall(builder.build()).execute();
+            String body = response.body().string();
+            JsonParser parser = new JsonParser();
+            JsonObject json = (JsonObject) parser.parse(body);
+            JsonArray apps = json.getAsJsonArray("apps");
+            for (JsonElement appEl : apps) {
+                JsonObject app = (JsonObject) appEl;
+                appIds.add(app.getAsJsonPrimitive("id").getAsString());
+            }
+        } catch (IOException e) {
+            fail(e.getMessage());
+        } finally {
+            if (response != null) {
+                IOUtils.closeQuietly(response.body());
+            }
+        }
+        appIds.stream().forEach(id -> {
+            Request.Builder rmBuilder = new Request.Builder().url(marathonUrl + "/v2/apps/" +id).delete();
+            Response responseRm = null;
+            try {
+                LOGGER.debug("Delete Marathon application id {}.", id);
+                responseRm = httpClient.newCall(rmBuilder.build()).execute();
+            } catch (IOException e) {
+                fail(e.getMessage());
+            } finally {
+                if (responseRm != null) {
+                    IOUtils.closeQuietly(responseRm.body());
+                }
+            }
+        });
+
     }
 
 }
