@@ -267,7 +267,7 @@ public class StageUtils {
         String redisHost = dockerTestSupport.getServerIp();
         int redisPort = dockerTestSupport.getExposedPort(createContainerResponse.getId(), 6379);
 
-        long end = System.currentTimeMillis() + 10000;
+        long end = System.currentTimeMillis() + 60000;
         boolean redisIsReady = false;
         while (!redisIsReady && (end - System.currentTimeMillis()) > 0) {
             JedisPool jedisPool = new JedisPool(new JedisPoolConfig(), redisHost, redisPort);

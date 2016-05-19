@@ -67,7 +67,6 @@ public class ClusterApplicationWhen<SELF extends ClusterApplicationWhen<?>> exte
     @ExpectedScenarioState
     ProjectStore projectStore;
 
-
     @ProvidedScenarioState
     ProjectConfiguration projectConfiguration;
 

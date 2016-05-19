@@ -18,7 +18,6 @@
 package io.kodokojo.bdd.stage.cluster;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.NotModifiedException;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.ExposedPort;
@@ -29,7 +28,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.inject.*;
-import com.squareup.okhttp.*;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.AfterScenario;
 import com.tngtech.jgiven.annotation.Hidden;
@@ -37,7 +38,6 @@ import com.tngtech.jgiven.annotation.ProvidedScenarioState;
 import com.tngtech.jgiven.annotation.Quoted;
 import io.kodokojo.Launcher;
 import io.kodokojo.bdd.MarathonBrickUrlFactory;
-import io.kodokojo.bdd.MarathonIsPresent;
 import io.kodokojo.bdd.stage.StageUtils;
 import io.kodokojo.bdd.stage.WebSocketConnectionResult;
 import io.kodokojo.bdd.stage.WebSocketEventsListener;
@@ -68,9 +68,6 @@ import io.kodokojo.service.user.SimpleUserAuthenticator;
 import io.kodokojo.test.utils.TestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.velocity.Template;
-import org.apache.velocity.VelocityContext;
-import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.slf4j.Logger;
@@ -80,7 +77,6 @@ import javax.crypto.KeyGenerator;
 import javax.websocket.Session;
 import java.io.File;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.math.BigInteger;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
@@ -109,17 +105,11 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         VE_PROPERTIES.setProperty("runtime.log.logsystem.class", "org.apache.velocity.runtime.log.NullLogChute");
     }
 
-
-    public enum TestContext {
-        LOCAL,
-        REMOTE_CLUSTER
-    }
-
     @ProvidedScenarioState
     Injector injector;
 
     @ProvidedScenarioState
-    DockerTestSupport dockerTestSupport = new DockerTestSupport();
+    DockerTestSupport dockerTestSupport;
 
     @ProvidedScenarioState
     RestEntryPoint restEntryPoint;
@@ -169,20 +159,11 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
     @ProvidedScenarioState
     List<Service> services = new ArrayList<>();
 
-    @ProvidedScenarioState
-    TestContext testContext;
-
-    public SELF kodokojo_is_running(@Hidden MarathonIsPresent marathonIsPresent) {
-        marathonUrl = marathonIsPresent.getMarathonUrl();
-        testContext = TestContext.REMOTE_CLUSTER;
-        return kodokojo_is_running_on_domain_$("kodokojo.io");
-    }
-
     public SELF kodokojo_is_running(@Hidden DockerPresentMethodRule dockerPresentMethodRule) {
-        testContext = TestContext.LOCAL;
+        dockerTestSupport = dockerPresentMethodRule.getDockerTestSupport();
         startMesosCluster();
         try {
-            Thread.sleep(12000); //Allow to all component to start.
+            Thread.sleep(10000); //Allow to all component to start.
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
@@ -227,6 +208,36 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         return self();
     }
 
+    @AfterScenario
+    public void tearDown() {
+        if (StringUtils.isNotBlank(marathonUrl)) {
+            try {
+                killAllAppInMarathon(marathonUrl);
+            }catch(Throwable e) {
+             LOGGER.error(e.getMessage(), e);
+                }
+        }
+        if (restEntryPoint != null) {
+            restEntryPoint.stop();
+            restEntryPoint = null;
+        }
+        if (injector != null) {
+            ApplicationLifeCycleManager applicationLifeCycleManager = injector.getInstance(ApplicationLifeCycleManager.class);
+            applicationLifeCycleManager.stop();
+            Launcher.INJECTOR = null;
+            injector = null;
+        }
+        for (Service service : services) {
+            killApp(service.getName());
+        }
+        services.clear();
+        services = null;
+        redisService = null;
+        dockerTestSupport.stopAndRemoveContainer();
+        dockerTestSupport = null;
+
+    }
+
     private String generateUid() {
         byte[] seed = new byte[1024];
         new Random(System.currentTimeMillis()).nextBytes(seed);
@@ -235,60 +246,14 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
     }
 
     private void startRedis() {
-
-        Service service = StageUtils.startDockerRedis(dockerTestSupport);
-        String redisHost = service.getHost();
-        int redisPort = service.getPort();
+        redisService = StageUtils.startDockerRedis(dockerTestSupport);
         KeyGenerator kg = null;
         try {
             kg = KeyGenerator.getInstance("AES");
-            userStore = new RedisUserStore(kg.generateKey(),  redisHost, redisPort);
-            redisService = new Service("redis", redisHost, redisPort);
+            userStore = new RedisUserStore(kg.generateKey(), redisService.getHost(), redisService.getPort());
         } catch (NoSuchAlgorithmException e) {
             fail(e.getMessage());
         }
-        /*
-        VelocityEngine ve = new VelocityEngine();
-        ve.init(VE_PROPERTIES);
-
-        Template template = ve.getTemplate("marathon/redis.json.vm");
-
-        VelocityContext context = new VelocityContext();
-        String id = "/redis-" + testId;
-        context.put("ID", id);
-        StringWriter sw = new StringWriter();
-        template.merge(context, sw);
-        String redisJson = sw.toString();
-
-        OkHttpClient httpClient = new OkHttpClient();
-        RequestBody body = RequestBody.create(MediaType.parse("application/json"), redisJson.getBytes());
-        String url = marathonUrl + "/v2/apps";
-        System.out.println("Start Redis on url " + url);
-        Request request = new Request.Builder().post(body).url(url).build();
-        Response response = null;
-        try {
-            response = httpClient.newCall(request).execute();
-            assertThat(response.code()).isEqualTo(201);
-            response.body().close();
-            List<Service> servicesResponse = waitForAppAvailable(id);
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-            assertThat(servicesResponse).isNotEmpty();
-            services.addAll(servicesResponse);
-            redisService = servicesResponse.get(0);
-            KeyGenerator kg = KeyGenerator.getInstance("AES");
-            userStore = new RedisUserStore(kg.generateKey(), redisService.getHost(), redisService.getPort());
-        } catch (NoSuchAlgorithmException | IOException e) {
-            fail("Unable to start Redis", e);
-        } finally {
-            if (response != null) {
-                IOUtils.closeQuietly(response.body());
-            }
-        }
-        */
     }
 
     private void startMesosCluster() {
@@ -407,57 +372,6 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
     }
 
 
-    private List<Service> waitForAppAvailable(String appId) {
-        OkHttpClient httpClient = new OkHttpClient();
-        Request request = new Request.Builder().get().url(marathonUrl + "/v2/apps/" + appId).build();
-        List<Service> res = null;
-        int nbMaxTry = 1000;
-        int nbTry = 0;
-        while (res == null && nbTry < nbMaxTry) {
-            nbTry++;
-            Response response = null;
-            try {
-                response = httpClient.newCall(request).execute();
-                if (response.code() == 200) {
-                    JsonParser parser = new JsonParser();
-                    String body = response.body().string();
-                    JsonObject rootJson = (JsonObject) parser.parse(body);
-                    JsonObject app = rootJson.getAsJsonObject("app");
-                    JsonArray tasks = app.getAsJsonArray("tasks");
-                    for (int i = 0; i < tasks.size(); i++) {
-                        JsonObject task = (JsonObject) tasks.get(i);
-                        String host = task.getAsJsonPrimitive("host").getAsString();
-                        JsonArray ports = task.getAsJsonArray("ports");
-                        List<Service> tmp = new ArrayList<>(ports.size());
-                        for (int j = 0; j < ports.size(); j++) {
-                            tmp.add(new Service(appId, host, ports.get(j).getAsInt()));
-                        }
-                        res = new ArrayList<>(tmp);
-                    }
-                }
-                response.body().close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                if (response != null) {
-                    try {
-                        response.body().close();
-                    } catch (IOException e) {
-                        fail(e.getMessage());
-                    }
-                }
-            }
-            if (res == null) {
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            }
-        }
-        return res;
-    }
-
     private void killApp(String appId) {
         OkHttpClient httpClient = new OkHttpClient();
         Request request = new Request.Builder().delete().url(marathonUrl + "/v2/apps/" + appId).build();
@@ -469,46 +383,26 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         }
     }
 
-    @AfterScenario
-    public void tearDown() {
-        if (restEntryPoint != null) {
-            restEntryPoint.stop();
-        }
-        if (injector != null) {
-            ApplicationLifeCycleManager applicationLifeCycleManager = injector.getInstance(ApplicationLifeCycleManager.class);
-            applicationLifeCycleManager.stop();
-        }
-        for (Service service : services) {
-            killApp(service.getName());
-        }
-        try {
-            if (StringUtils.isNotBlank(marathonUrl)) {
-                killAllAppInMarathon(marathonUrl);
-            }
-            dockerTestSupport.stopAndRemoveContainer();
-        } catch (NotModifiedException e) {
-            // Nothing to do
-        }
-    }
 
     private void startKodokojo() {
         String keystorePath = System.getProperty("javax.net.ssl.keyStore", null);
         if (StringUtils.isBlank(keystorePath)) {
             String keystorePathDefined = new File("").getAbsolutePath() + "/src/test/resources/keystore/mykeystore.jks";
             System.out.println(keystorePathDefined);
+
             System.setProperty("javax.net.ssl.keyStore", keystorePathDefined);
-            System.setProperty("javax.net.ssl.keyStorePassword", "password");
-            System.setProperty("security.ssl.rootCa.ks.alias", "rootcafake");
-            System.setProperty("security.ssl.rootCa.ks.password", "password");
-            System.setProperty("application.dns.domain", "kodokojo.io");
-            System.setProperty("redis.host", redisService.getHost());
-            System.setProperty("redis.port", "" + redisService.getPort());
-            if (testContext == TestContext.LOCAL) {
-                System.setProperty("marathon.url", "http://" + dockerTestSupport.getServerIp() + ":8080");
-                System.setProperty("lb.defaultIp", dockerTestSupport.getServerIp());
-                System.setProperty("application.dns.domain", "kodokojo.dev");
-            }
         }
+        System.setProperty("javax.net.ssl.keyStorePassword", "password");
+        System.setProperty("security.ssl.rootCa.ks.alias", "rootcafake");
+        System.setProperty("security.ssl.rootCa.ks.password", "password");
+        System.setProperty("application.dns.domain", "kodokojo.io");
+        System.setProperty("redis.host", redisService.getHost());
+        System.setProperty("redis.port", "" + redisService.getPort());
+
+        System.setProperty("marathon.url", "http://" + dockerTestSupport.getServerIp() + ":8080");
+        System.setProperty("lb.defaultIp", dockerTestSupport.getServerIp());
+        System.setProperty("application.dns.domain", "kodokojo.dev");
+        LOGGER.debug("redis.port: {}", System.getProperty("redis.port"));
         injector = Guice.createInjector(new PropertyModule(new String[]{}), new RedisModule(), new SecurityModule(), new ServiceModule(), new ActorModule(), new AwsModule(), new AbstractModule() {
             @Override
             protected void configure() {
@@ -552,7 +446,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
                 injector.getInstance(BrickConfigurationStarter.class),
                 brickUrlFactory,
                 300000000
-                );
+        );
         restEntryPoint = new RestEntryPoint(restEntryPointPort, userStore, new SimpleUserAuthenticator(userStore), entityStore, projectStore, projectManager, brickFactory);
         Semaphore semaphore = new Semaphore(1);
         try {
@@ -597,7 +491,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
             }
         }
         appIds.stream().forEach(id -> {
-            Request.Builder rmBuilder = new Request.Builder().url(marathonUrl + "/v2/apps/" +id).delete();
+            Request.Builder rmBuilder = new Request.Builder().url(marathonUrl + "/v2/apps/" + id).delete();
             Response responseRm = null;
             try {
                 LOGGER.debug("Delete Marathon application id {}.", id);

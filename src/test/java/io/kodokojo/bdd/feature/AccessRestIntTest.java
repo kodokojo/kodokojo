@@ -22,7 +22,6 @@ package io.kodokojo.bdd.feature;
 import com.tngtech.jgiven.annotation.As;
 import com.tngtech.jgiven.junit.ScenarioTest;
 import io.kodokojo.bdd.API;
-import io.kodokojo.bdd.User;
 import io.kodokojo.bdd.stage.*;
 import io.kodokojo.commons.DockerIsRequire;
 import io.kodokojo.commons.DockerPresentMethodRule;
