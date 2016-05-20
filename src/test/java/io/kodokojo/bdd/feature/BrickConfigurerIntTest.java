@@ -1,17 +1,17 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -45,7 +45,7 @@ public class BrickConfigurerIntTest extends ScenarioTest<BrickConfigurerGiven<?>
     public static Object[][] brickData() {
         return new Object[][]{
                 //  Name, Docker imagen name, containerPort, Timeout in seconde unit, User Logger
-                
+
                 {"Gitlab", "gitlab/gitlab-ce:8.5.8-ce.0", 80, 180, new GitlabUserAuthenticator()},
                 {"Jenkins", "jenkins:1.651.2-alpine", 8080, 120, new JenkinsUserAuthenticator()},
                 {"DockerRegistry", "registry:2", 5000, 10, new DockerRegistryUserAuthenticator()}
@@ -58,7 +58,7 @@ public class BrickConfigurerIntTest extends ScenarioTest<BrickConfigurerGiven<?>
     @UseDataProvider("brickData")
     public void run_and_configure_brick(String brickName, String imageName, int exposedPort, int timeout, UserAuthenticator userAuthenticator) {
 
-        given().$_is_started(brickName, imageName, exposedPort, timeout, userAuthenticator);
+        given().$_is_started(dockerPresentMethodRule.getDockerTestSupport(), brickName, imageName, exposedPort, timeout, userAuthenticator);
         when().i_create_a_default_user();
         then().it_is_possible_to_be_log_on_$_with_default_user(brickName);
     }

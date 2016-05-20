@@ -27,6 +27,7 @@ import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.ExpectedScenarioState;
 import com.tngtech.jgiven.annotation.ProvidedScenarioState;
 import com.tngtech.jgiven.annotation.Quoted;
+import io.kodokojo.bdd.stage.HttpUserSupport;
 import io.kodokojo.bdd.stage.StageUtils;
 import io.kodokojo.bdd.stage.UserInfo;
 import io.kodokojo.bdd.stage.WebSocketEventsListener;
@@ -81,31 +82,22 @@ public class ClusterApplicationThen<SELF extends ClusterApplicationThen<?>> exte
     String marathonUrl;
 
     @ExpectedScenarioState
-    User currentUser;
-
-    @ExpectedScenarioState
-    WebSocketEventsListener webSocketEventsListener;
-
-    @ExpectedScenarioState
-    ProjectConfiguration projectConfiguration;
+    UserInfo currentUser;
 
     @ExpectedScenarioState
     Map<String, UserInfo> currentUsers = new HashMap<>();
 
     @ExpectedScenarioState
-    String restEntryPointHost;
-
-    @ExpectedScenarioState
-    int restEntryPointPort;
+    HttpUserSupport httpUserSupport;
 
     public SELF it_possible_to_log_on_brick_$_with_user_$(@Quoted String brickName, @Quoted String username) {
         OkHttpClient httpClient = provideDefaultOkHttpClient();
         UserAuthenticator userAuthenticator = USER_AUTHENTICATOR.get(brickName);
         assertThat(userAuthenticator).isNotNull();
 
-        UserInfo userInfo = new UserInfo(this.currentUser);
-        UserDto userDto = StageUtils.getUserDto(getApiBaseUrl(), userInfo, currentUsers.get(username).getIdentifier());
-        ProjectDto projectDto = StageUtils.getProjectDto(getApiBaseUrl(), userInfo, userDto.getProjectConfigurationIds().get(0).getProjectId());
+
+        UserDto userDto = httpUserSupport.getUserDto(currentUser, currentUsers.get(username).getIdentifier());
+        ProjectDto projectDto = httpUserSupport.getProjectDto(currentUser, userDto.getProjectConfigurationIds().get(0).getProjectId());
 
         MarathonServiceLocator serviceLocator = new MarathonServiceLocator(marathonUrl);
         Set<Service> services = serviceLocator.getService(new DefaultBrickFactory().createBrick(brickName).getType().name().toLowerCase(), projectDto.getName().toLowerCase());
@@ -116,11 +108,6 @@ public class ClusterApplicationThen<SELF extends ClusterApplicationThen<?>> exte
         boolean authenticate = userAuthenticator.authenticate(httpClient, url, currentUsers.get(username));
         assertThat(authenticate).isTrue();
         return self();
-    }
-
-
-    private String getApiBaseUrl() {
-        return "http://" + restEntryPointHost + ":" + restEntryPointPort + "/api/v1";
     }
 
     private OkHttpClient provideDefaultOkHttpClient() {

@@ -25,10 +25,7 @@ import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.tngtech.jgiven.Stage;
-import com.tngtech.jgiven.annotation.AfterScenario;
-import com.tngtech.jgiven.annotation.Hidden;
-import com.tngtech.jgiven.annotation.ProvidedScenarioState;
-import com.tngtech.jgiven.annotation.Quoted;
+import com.tngtech.jgiven.annotation.*;
 import io.kodokojo.bdd.stage.brickauthenticator.UserAuthenticator;
 import io.kodokojo.brick.*;
 import io.kodokojo.commons.utils.DockerTestSupport;
@@ -44,7 +41,7 @@ public class BrickConfigurerGiven<SELF extends BrickConfigurerGiven<?>> extends 
 
 
     @ProvidedScenarioState
-    public DockerTestSupport dockerTestSupport = new DockerTestSupport();
+    public DockerTestSupport dockerTestSupport;
 
     @ProvidedScenarioState
     String containerId;
@@ -64,12 +61,19 @@ public class BrickConfigurerGiven<SELF extends BrickConfigurerGiven<?>> extends 
     @ProvidedScenarioState
     BrickConfigurerProvider brickConfigurerProvider;
 
+    @ProvidedScenarioState
+    HttpUserSupport httpUserSupport;
+
     private static final Logger LOGGER = LoggerFactory.getLogger(BrickConfigurerGiven.class);
 
-    public SELF $_is_started(@Quoted String brickName, @Hidden String image, @Hidden int port, @Hidden int timeout, @Hidden UserAuthenticator userAuthenticator) {
-        DockerClient dockerClient = dockerTestSupport.getDockerClient();
+    public SELF $_is_started(@Hidden DockerTestSupport dockerTestSupport, @Quoted String brickName, @Hidden String image, @Hidden int port, @Hidden int timeout, @Hidden UserAuthenticator userAuthenticator) {
+        if (this.dockerTestSupport != null) {
+            this.dockerTestSupport.stopAndRemoveContainer();
+        }
+        this.dockerTestSupport = dockerTestSupport;
+        DockerClient dockerClient = this.dockerTestSupport.getDockerClient();
         LOGGER.info("Pulling docker image {}", image);
-        dockerTestSupport.pullImage(image);
+        this.dockerTestSupport.pullImage(image);
 
         this.brickName = brickName.toLowerCase();
         this.userAuthenticator = userAuthenticator;
@@ -85,10 +89,10 @@ public class BrickConfigurerGiven<SELF extends BrickConfigurerGiven<?>> extends 
                 .withExposedPorts(exposedPort)
                 .exec();
         containerId = containerResponse.getId();
-        dockerTestSupport.addContainerIdToClean(containerId);
+        this.dockerTestSupport.addContainerIdToClean(containerId);
         dockerClient.startContainerCmd(containerId).exec();
 
-        brickUrl = dockerTestSupport.getHttpContainerUrl(containerId, port);
+        brickUrl = this.dockerTestSupport.getHttpContainerUrl(containerId, port);
 
         boolean brickStarted = waitBrickStarted(brickUrl, timeout);
         assertThat(brickStarted).isTrue();
@@ -135,8 +139,4 @@ public class BrickConfigurerGiven<SELF extends BrickConfigurerGiven<?>> extends 
         return started;
     }
 
-    @AfterScenario
-    public void tearDown() {
-        dockerTestSupport.stopAndRemoveContainer();
-    }
 }

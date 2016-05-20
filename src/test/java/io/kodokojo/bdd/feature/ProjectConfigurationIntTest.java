@@ -41,7 +41,7 @@ public class ProjectConfigurationIntTest extends ScenarioTest<ApplicationGiven<?
     @Test
     @DockerIsRequire
     public void create_a_simple_project_configuration() {
-        given().redis_is_started()
+        given().redis_is_started(dockerPresentMethodRule.getDockerTestSupport())
                 .and().kodokojo_restEntrypoint_is_available()
                 .and().i_am_user_$("jpthiery", true);
         when().create_a_new_default_project_configuration_with_name_$("Acme");
@@ -52,7 +52,7 @@ public class ProjectConfigurationIntTest extends ScenarioTest<ApplicationGiven<?
     @Test
     @DockerIsRequire
     public void create_a_project_configuration_with_only_Jenkins() {
-        given().redis_is_started()
+        given().redis_is_started(dockerPresentMethodRule.getDockerTestSupport())
                 .and().kodokojo_restEntrypoint_is_available()
                 .and().i_am_user_$("jpthiery", true);
         when().create_a_small_custom_project_configuration_with_name_$_and_only_brick_type_$("Acme", "jenkins");
@@ -63,7 +63,7 @@ public class ProjectConfigurationIntTest extends ScenarioTest<ApplicationGiven<?
     @Test
     @DockerIsRequire
     public void add_a_user_to_project_configuration() {
-        given().redis_is_started()
+        given().redis_is_started(dockerPresentMethodRule.getDockerTestSupport())
                 .and().kodokojo_restEntrypoint_is_available()
                 .and().i_am_user_$("jpthiery", true);
         when().create_a_new_default_project_configuration_with_name_$("Acme")
@@ -77,7 +77,7 @@ public class ProjectConfigurationIntTest extends ScenarioTest<ApplicationGiven<?
     @Test
     @DockerIsRequire
     public void add_a_user_to_project_configuration_as_no_owner_will_fail() {
-        given().redis_is_started()
+        given().redis_is_started(dockerPresentMethodRule.getDockerTestSupport())
                 .and().kodokojo_restEntrypoint_is_available()
                 .and().i_am_user_$("jpthiery", true);
         when().create_a_new_default_project_configuration_with_name_$("Acme")
@@ -88,7 +88,7 @@ public class ProjectConfigurationIntTest extends ScenarioTest<ApplicationGiven<?
     @Test
     @DockerIsRequire
     public void remove_a_user_to_project_configuration() {
-        given().redis_is_started()
+        given().redis_is_started(dockerPresentMethodRule.getDockerTestSupport())
                 .and().kodokojo_restEntrypoint_is_available()
                 .and().i_am_user_$("jpthiery", true);
         when().create_a_new_default_project_configuration_with_name_$("Acme")

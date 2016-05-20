@@ -1,22 +1,21 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package io.kodokojo.bdd.stage;
-
 
 
 import com.github.dockerjava.api.DockerClient;
@@ -24,8 +23,12 @@ import com.github.dockerjava.api.model.Image;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.squareup.okhttp.OkHttpClient;
 import com.tngtech.jgiven.Stage;
-import com.tngtech.jgiven.annotation.*;
+import com.tngtech.jgiven.annotation.AfterScenario;
+import com.tngtech.jgiven.annotation.Hidden;
+import com.tngtech.jgiven.annotation.ProvidedScenarioState;
+import com.tngtech.jgiven.annotation.Quoted;
 import io.kodokojo.Launcher;
 import io.kodokojo.brick.BrickUrlFactory;
 import io.kodokojo.brick.DefaultBrickFactory;
@@ -33,14 +36,11 @@ import io.kodokojo.brick.DefaultBrickUrlFactory;
 import io.kodokojo.commons.config.DockerConfig;
 import io.kodokojo.commons.model.Service;
 import io.kodokojo.commons.utils.DockerTestSupport;
-import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.commons.utils.properties.PropertyResolver;
 import io.kodokojo.commons.utils.properties.provider.*;
 import io.kodokojo.config.ApplicationConfig;
 import io.kodokojo.entrypoint.RestEntryPoint;
 import io.kodokojo.entrypoint.UserAuthenticator;
-import io.kodokojo.model.Entity;
-import io.kodokojo.model.User;
 import io.kodokojo.service.ProjectManager;
 import io.kodokojo.service.redis.RedisEntityStore;
 import io.kodokojo.service.redis.RedisProjectStore;
@@ -56,14 +56,9 @@ import org.slf4j.LoggerFactory;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
-import java.math.BigInteger;
-import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.security.interfaces.RSAPublicKey;
 import java.util.*;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 
@@ -119,8 +114,12 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
     @ProvidedScenarioState
     EntityStore entityStore;
 
-    @BeforeScenario
-    public void create_a_docker_client() {
+    @ProvidedScenarioState
+    HttpUserSupport httpUserSupport;
+
+    public SELF redis_is_started(@Hidden DockerTestSupport dockerTestSupport) {
+
+        this.dockerTestSupport = dockerTestSupport;
         dockerClient = dockerTestSupport.getDockerClient();
         Injector injector = Guice.createInjector(new AbstractModule() {
             @Override
@@ -139,6 +138,8 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
         });
         Launcher.INJECTOR = injector;
         DockerConfig dockerConfig = injector.getInstance(DockerConfig.class);
+        redis_is_started();
+        return self();
     }
 
     public SELF redis_is_started() {
@@ -151,10 +152,10 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
         }
         if (!foundRedis) {
             LOGGER.info("Pulling docker image redis:latest");
-            dockerTestSupport.pullImage("redis:latest");
+            this.dockerTestSupport.pullImage("redis:latest");
         }
 
-        Service service = StageUtils.startDockerRedis(dockerTestSupport);
+        Service service = StageUtils.startDockerRedis(this.dockerTestSupport);
         redisHost = service.getHost();
         redisPort = service.getPort();
 
@@ -166,8 +167,12 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
         return kodokojo_restEntrypoint_is_available_on_port_$(port);
     }
 
-    public SELF kodokojo_is_running() {
-        redis_is_started();
+    public SELF kodokojo_is_running(@Hidden DockerTestSupport dockerTestSupport) {
+        if (this.dockerTestSupport != null) {
+            this.dockerTestSupport.stopAndRemoveContainer();
+        }
+        this.dockerTestSupport = dockerTestSupport;
+        redis_is_started(dockerTestSupport);
         return kodokojo_restEntrypoint_is_available();
     }
 
@@ -201,7 +206,7 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
 
                         @Override
                         public String defaultLoadbalancerIp() {
-                            return "192.168.99.100";
+                            return dockerTestSupport.getServerIp();
                         }
 
                         @Override
@@ -217,6 +222,7 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
                     bind(BrickUrlFactory.class).toInstance(new DefaultBrickUrlFactory("kodokojo.dev"));
                 }
             });
+            httpUserSupport = new HttpUserSupport(new OkHttpClient(), "localhost:" + port);
             restEntryPoint.start();
             restEntryPointPort = port;
             restEntryPointHost = "localhost";
@@ -233,6 +239,12 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
     public SELF i_am_user_$(@Quoted String username, @Hidden boolean createUser) {
         currentUserLogin = username;
         if (createUser) {
+
+            UserInfo userCreated = httpUserSupport.createUser(null, username + "@kodokojo.io");
+            currentUsers.put(userCreated.getUsername(), userCreated);
+            /*
+
+            //TODO Use REST API instead.
             String identifier = userManager.generateId();
             String password = USER_PASSWORD.get(username) == null ? new BigInteger(130, new SecureRandom()).toString(32) : USER_PASSWORD.get(username);
 
@@ -254,13 +266,13 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
             } catch (NoSuchAlgorithmException e) {
                 e.printStackTrace();
             }
+            */
         }
         return self();
     }
 
     @AfterScenario
     public void tear_down() {
-        dockerTestSupport.stopAndRemoveContainer();
         if (restEntryPoint != null) {
             restEntryPoint.stop();
             restEntryPoint = null;

@@ -72,6 +72,9 @@ public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF
     @ExpectedScenarioState
     Map<String, UserInfo> currentUsers;
 
+    @ExpectedScenarioState
+    HttpUserSupport httpUserSupport;
+
     private ProjectConfigDto projectConfigDto;
 
     public SELF it_exist_a_valid_user_with_username_$(@Quoted String username) {
@@ -152,7 +155,7 @@ public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF
 
         RequestBody body = RequestBody.create(com.squareup.okhttp.MediaType.parse("application/json"), json.getBytes());
         Request.Builder builder = new Request.Builder().url(getApiBaseUrl() + "/projectconfig/" + projectConfigurationId + "/user").put(body);
-        Request request = StageUtils.addBasicAuthentification(currentUser, builder).build();
+        Request request = HttpUserSupport.addBasicAuthentification(currentUser, builder).build();
         Response response = null;
         try {
             response = httpClient.newCall(request).execute();
@@ -197,7 +200,7 @@ public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF
             url += "/" + targetUserInfo.getIdentifier();
         }
         Request.Builder builder = new Request.Builder().get().url(url);
-        Request request = StageUtils.addBasicAuthentification(requesterUserInfo, builder).build();
+        Request request = HttpUserSupport.addBasicAuthentification(requesterUserInfo, builder).build();
         Response response = null;
         try {
             response = httpClient.newCall(request).execute();
@@ -252,7 +255,7 @@ public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF
         OkHttpClient httpClient = new OkHttpClient();
         UserInfo requesterUserInfo = currentUsers.get(currentUserLogin);
         Request.Builder builder = new Request.Builder().url(getApiBaseUrl() + "/projectconfig/" + projectConfigurationId).get();
-        Request request = StageUtils.addBasicAuthentification(requesterUserInfo, builder).build();
+        Request request = HttpUserSupport.addBasicAuthentification(requesterUserInfo, builder).build();
         Response response = null;
         try {
             response = httpClient.newCall(request).execute();

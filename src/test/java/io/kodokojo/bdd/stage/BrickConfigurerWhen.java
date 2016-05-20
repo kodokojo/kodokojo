@@ -73,7 +73,7 @@ public class BrickConfigurerWhen<SELF extends BrickConfigurerWhen<?>> extends St
     BrickConfigurerData brickConfigurerData;
 
     public SELF i_create_a_default_user() {
-        defaultUserInfo = new UserInfo("jpthiery", "123456", "jpthiery", "jpthiery@kodokojo.io");
+        defaultUserInfo = new UserInfo("jpthiery", "123456", "67899","jpthiery", "jpthiery@kodokojo.io");
         Brick brick = brickFactory.createBrick(brickName);
         brickConfigurer = brickConfigurerProvider.provideFromBrick(brick);
         KeyPair keyPair = null;

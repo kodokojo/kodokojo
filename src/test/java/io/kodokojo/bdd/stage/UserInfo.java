@@ -17,6 +17,7 @@
  */
 package io.kodokojo.bdd.stage;
 
+import io.kodokojo.commons.docker.model.StringToDockerFileConverter;
 import io.kodokojo.model.User;
 
 public class UserInfo {
@@ -25,19 +26,22 @@ public class UserInfo {
 
     private final String identifier;
 
+    private final String entityId;
+
     private final String password;
 
     private final String email;
 
-    public UserInfo(String username, String identifier, String password, String email) {
+    public UserInfo(String username, String identifier, String entityId, String password, String email) {
         this.username = username;
+        this.entityId = entityId;
         this.identifier = identifier;
         this.password = password;
         this.email = email;
     }
 
     public UserInfo(User user) {
-        this(user.getUsername(), user.getIdentifier(), user.getPassword(), user.getEmail());
+        this(user.getUsername(), user.getIdentifier(), user.getEntityIdentifier(), user.getPassword(), user.getEmail());
     }
 
     public String getUsername() {
@@ -46,6 +50,10 @@ public class UserInfo {
 
     public String getIdentifier() {
         return identifier;
+    }
+
+    public String getEntityId() {
+        return entityId;
     }
 
     public String getPassword() {

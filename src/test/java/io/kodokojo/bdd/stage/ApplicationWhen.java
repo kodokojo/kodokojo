@@ -79,6 +79,9 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
     @ExpectedScenarioState
     CurrentStep currentStep;
 
+    @ExpectedScenarioState
+    HttpUserSupport httpUserSupport;
+
     public SELF retrive_a_new_id() {
         OkHttpClient httpClient = new OkHttpClient();
         RequestBody emptyBody = RequestBody.create(null, new byte[0]);
@@ -117,6 +120,8 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
         if (success && StringUtils.isBlank(newUserId)) {
             retrive_a_new_id();
         }
+
+
         OkHttpClient httpClient = new OkHttpClient();
         RequestBody body = RequestBody.create(MediaType.parse("application/json"), ("{\"email\": \"" + email + "\"}").getBytes());
         String baseUrl = getBaseUrl();
@@ -125,7 +130,7 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
         if (isNotBlank(currentUserLogin)) {
             UserInfo currentUser = currentUsers.get(currentUserLogin);
             if (currentUser != null) {
-                builder = StageUtils.addBasicAuthentification(currentUser, builder);
+                builder = HttpUserSupport.addBasicAuthentification(currentUser, builder);
             }
         }
         Request request = builder.build();
@@ -141,7 +146,8 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
                 String currentUserPassword = json.getAsJsonPrimitive("password").getAsString();
                 String currentUserEmail = json.getAsJsonPrimitive("email").getAsString();
                 String currentUserIdentifier = json.getAsJsonPrimitive("identifier").getAsString();
-                currentUsers.put(currentUsername, new UserInfo(currentUsername, currentUserIdentifier, currentUserPassword, currentUserEmail));
+                String currentUserEntityIdentifier = json.getAsJsonPrimitive("entityIdentifier").getAsString();
+                currentUsers.put(currentUsername, new UserInfo(currentUsername, currentUserIdentifier, currentUserEntityIdentifier, currentUserPassword, currentUserEmail));
                 if (isBlank(currentUserLogin)) {
                     currentUserLogin = currentUsername;
                 }
@@ -197,7 +203,7 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
             fail(e.getMessage());
         }
 
-        projectConfigurationId = StageUtils.createProjectConfiguration(getApiBaseUrl(), projectName, stackConfigDto, currentUsers.get(currentUserLogin));
+        projectConfigurationId = httpUserSupport.createProjectConfiguration(projectName, stackConfigDto, currentUsers.get(currentUserLogin));
 
         String projectConfiguration = getProjectConfiguration(currentUserLogin, projectConfigurationId);
         currentStep.addAttachment(Attachment.plainText(projectConfiguration).withTitle("Project configuration for " + projectName).withFileName("projectconfiguration_" + projectName + ".json"));
@@ -208,7 +214,7 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
     private String getProjectConfiguration(String username, String projectConfigurationId) {
         UserInfo userInfo = currentUsers.get(username);
         Request.Builder builder = new Request.Builder().get().url(getApiBaseUrl() + "/projectconfig/" + projectConfigurationId);
-        Request request = StageUtils.addBasicAuthentification(userInfo, builder).build();
+        Request request = HttpUserSupport.addBasicAuthentification(userInfo, builder).build();
         Response response = null;
         try {
             OkHttpClient httpClient = new OkHttpClient();
@@ -231,7 +237,7 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
         UserInfo currentUser = currentUsers.get(currentUserLogin);
         UserInfo userToAdd = currentUsers.get(username);
 
-        StageUtils.addUserToProjectConfiguration(getApiBaseUrl(), projectConfigurationId, currentUser, userToAdd);
+        httpUserSupport.addUserToProjectConfiguration(projectConfigurationId, currentUser, userToAdd);
 
         return self();
     }
@@ -239,7 +245,7 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
     public SELF remove_user_$_to_project_configuration(String usernameToDelete) {
         UserInfo currentUser = currentUsers.get(currentUserLogin);
         UserInfo userToAdd = currentUsers.get(usernameToDelete);
-        StageUtils.removeUserToProjectConfiguration(getApiBaseUrl(), projectConfigurationId, currentUser, userToAdd);
+        httpUserSupport.removeUserToProjectConfiguration(projectConfigurationId, currentUser, userToAdd);
 
         return self();
     }

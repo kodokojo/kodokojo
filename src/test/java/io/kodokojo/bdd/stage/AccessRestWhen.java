@@ -63,7 +63,7 @@ public class AccessRestWhen<SELF extends AccessRestWhen<?>> extends Stage<SELF> 
     int restEntryPointPort;
 
     @ExpectedScenarioState
-    String whoAmI;
+    String currentUserLogin;
 
     @ExpectedScenarioState
     Map<String, UserInfo> currentUsers;
@@ -85,9 +85,9 @@ public class AccessRestWhen<SELF extends AccessRestWhen<?>> extends Stage<SELF> 
     private SELF try_to_access_to_call_$_url_$(@Quoted String methodName, @Quoted String url) {
 
         Request.Builder builder = new Request.Builder().get().url(getBaseUrl() + url);
-        if (whoAmI != null) {
-            UserInfo requesterUserInfo = currentUsers.get(whoAmI);
-            builder = StageUtils.addBasicAuthentification(requesterUserInfo, builder);
+        if (currentUserLogin != null) {
+            UserInfo requesterUserInfo = currentUsers.get(currentUserLogin);
+            builder = HttpUserSupport.addBasicAuthentification(requesterUserInfo, builder);
         }
         Request request = builder.build();
         Response response = null;
@@ -111,7 +111,7 @@ public class AccessRestWhen<SELF extends AccessRestWhen<?>> extends Stage<SELF> 
     }
 
     public SELF try_to_access_to_events_websocket() {
-        UserInfo userInfo = currentUsers.get(whoAmI);
+        UserInfo userInfo = currentUsers.get(currentUserLogin);
         connectToWebSocket(userInfo, true);
         return self();
     }
@@ -136,21 +136,6 @@ public class AccessRestWhen<SELF extends AccessRestWhen<?>> extends Stage<SELF> 
             String uriStr = "ws://" + restEntryPointHost + ":" + restEntryPointPort + "/api/v1/event";
             CountDownLatch messageLatch = new CountDownLatch(1);
             Session session = client.connectToServer(new Endpoint() {
-                /*
-                @Override
-                public void onClose(Session session, CloseReason closeReason) {
-                    LOGGER.info("Closing connection.");
-                    messageLatch.countDown();
-                    super.onClose(session, closeReason);
-                }
-
-                @Override
-                public void onError(Session session, Throwable thr) {
-                    LOGGER.error("Error on session", thr);
-                    messageLatch.countDown();
-                    super.onError(session, thr);
-                }
-                */
                 @Override
                 public void onOpen(Session session, EndpointConfig config) {
 

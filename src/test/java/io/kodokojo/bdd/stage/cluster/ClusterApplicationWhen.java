@@ -17,18 +17,18 @@
  */
 package io.kodokojo.bdd.stage.cluster;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.squareup.okhttp.*;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
+import com.squareup.okhttp.Response;
 import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.ExpectedScenarioState;
 import com.tngtech.jgiven.annotation.ProvidedScenarioState;
 import com.tngtech.jgiven.annotation.Quoted;
-import io.kodokojo.bdd.stage.StageUtils;
+import io.kodokojo.bdd.stage.HttpUserSupport;
 import io.kodokojo.bdd.stage.UserInfo;
-import io.kodokojo.bdd.stage.WebSocketConnectionResult;
 import io.kodokojo.bdd.stage.WebSocketEventsListener;
 import io.kodokojo.brick.DefaultBrickFactory;
 import io.kodokojo.entrypoint.dto.BrickConfigDto;
@@ -36,7 +36,6 @@ import io.kodokojo.entrypoint.dto.StackConfigDto;
 import io.kodokojo.model.Brick;
 import io.kodokojo.model.ProjectConfiguration;
 import io.kodokojo.model.StackType;
-import io.kodokojo.model.User;
 import io.kodokojo.service.ProjectManager;
 import io.kodokojo.service.store.ProjectStore;
 import org.apache.commons.io.IOUtils;
@@ -48,7 +47,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -59,7 +57,7 @@ public class ClusterApplicationWhen<SELF extends ClusterApplicationWhen<?>> exte
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterApplicationWhen.class);
 
     @ExpectedScenarioState
-    User currentUser;
+    UserInfo currentUser;
 
     @ExpectedScenarioState
     ProjectManager projectManager;
@@ -85,9 +83,12 @@ public class ClusterApplicationWhen<SELF extends ClusterApplicationWhen<?>> exte
     @ProvidedScenarioState
     Map<String, UserInfo> currentUsers = new HashMap<>();
 
+    @ProvidedScenarioState
+    HttpUserSupport httpUserSupport;
+
     public SELF i_start_a_default_project_with_name_$(String projectName) {
 
-        String projectConfigurationId = StageUtils.createProjectConfiguration(getApiBaseUrl(), projectName, null, new UserInfo(currentUser));
+        String projectConfigurationId = httpUserSupport.createProjectConfiguration(projectName, null, currentUser);
         getProjectConfigurationData(projectConfigurationId);
 
         return self();
@@ -100,7 +101,7 @@ public class ClusterApplicationWhen<SELF extends ClusterApplicationWhen<?>> exte
         String url = "http://" + restEntryPointHost + ":" + restEntryPointPort + "/api/v1/project/" + projectConfiguration.getIdentifier();
         RequestBody body = RequestBody.create(null, new byte[0]);
         Request.Builder builder = new Request.Builder().url(url).post(body);
-        builder = StageUtils.addBasicAuthentification(currentUser, builder);
+        builder = HttpUserSupport.addBasicAuthentification(currentUser, builder);
         Response response = null;
 
         try {
@@ -121,7 +122,7 @@ public class ClusterApplicationWhen<SELF extends ClusterApplicationWhen<?>> exte
 
             do {
                 Iterator<String> messageReceive = webSocketEventsListener.getMessages().iterator();
-                while(messageReceive.hasNext()) {
+                while (messageReceive.hasNext()) {
                     String message = messageReceive.next();
                     JsonObject root = (JsonObject) parser.parse(message);
                     if ("updateState".equals(root.getAsJsonPrimitive("action").getAsString())) {
@@ -166,7 +167,7 @@ public class ClusterApplicationWhen<SELF extends ClusterApplicationWhen<?>> exte
         String brickType = brick.getType().name();
         BrickConfigDto brickConfig = new BrickConfigDto(brickName, brickType);
         StackConfigDto stackConfig = new StackConfigDto("build-A", StackType.BUILD.name(), Collections.singletonList(brickConfig));
-        String projectConfigurationId = StageUtils.createProjectConfiguration(getApiBaseUrl(), projectName, stackConfig, new UserInfo(currentUser));
+        String projectConfigurationId = httpUserSupport.createProjectConfiguration(projectName, stackConfig, currentUser);
         try {
             Thread.sleep(5000);
         } catch (InterruptedException e) {
@@ -191,81 +192,15 @@ public class ClusterApplicationWhen<SELF extends ClusterApplicationWhen<?>> exte
     }
 
     public SELF i_create_a_new_user_$(@Quoted String email) {
-        OkHttpClient httpClient = new OkHttpClient();
-
-        RequestBody emptyBody = RequestBody.create(null, new byte[0]);
-        Request.Builder builder = new Request.Builder().post(emptyBody).url(getApiBaseUrl() +"/user");
-        builder = StageUtils.addBasicAuthentification(currentUser, builder);
-        Request request = builder.build();
-        Response response = null;
-        String identifier = null;
-        try {
-            response = httpClient.newCall(request).execute();
-            identifier = response.body().string();
-            assertThat(identifier).isNotEmpty();
-        } catch (IOException e) {
-            fail(e.getMessage());
-        } finally {
-            if (response != null) {
-                IOUtils.closeQuietly(response.body());
-            }
-        }
-
-        RequestBody body = RequestBody.create(MediaType.parse("application/json"), ("{\"email\": \"" + email + "\"}").getBytes());
-        builder = new Request.Builder().post(body).url(getApiBaseUrl() + "/user/" +identifier);
-        builder = StageUtils.addBasicAuthentification(currentUser, builder);
-        request = builder.build();
-        response = null;
-        try {
-            response = httpClient.newCall(request).execute();
-            JsonParser parser = new JsonParser();
-            String bodyResponse = response.body().string();
-            JsonObject json = (JsonObject) parser.parse(bodyResponse);
-            String currentUsername = json.getAsJsonPrimitive("username").getAsString();
-            String currentUserPassword = json.getAsJsonPrimitive("password").getAsString();
-            String currentUserEmail = json.getAsJsonPrimitive("email").getAsString();
-            String currentUserIdentifier = json.getAsJsonPrimitive("identifier").getAsString();
-            currentUsers.put(currentUsername, new UserInfo(currentUsername, currentUserIdentifier, currentUserPassword, currentUserEmail));
-
-        } catch (IOException e) {
-            fail(e.getMessage());
-        } finally {
-            if (response != null) {
-                IOUtils.closeQuietly(response.body());
-            }
-        }
-
+        UserInfo user = httpUserSupport.createUser(currentUser, email);
+        currentUsers.put(user.getUsername(), user);
         return self();
     }
 
     public SELF i_add_the_user_$_to_the_project(@Quoted String username) {
-
         UserInfo userInfo = currentUsers.get(username);
         assertThat(userInfo).isNotNull();
-
-        OkHttpClient httpClient = new OkHttpClient();
-
-        String json = "[\n" +
-                "  \""+userInfo.getIdentifier()+"\"\n" +
-                "]";
-
-        RequestBody emptyBody = RequestBody.create(MediaType.parse("application/json"), json.getBytes());
-        String url = getApiBaseUrl() +"/projectconfig/"+projectConfiguration.getIdentifier()+"/user";
-        Request.Builder builder = new Request.Builder().put(emptyBody).url(url);
-        builder = StageUtils.addBasicAuthentification(currentUser, builder);
-        Request request = builder.build();
-        Response response = null;
-
-        try {
-            response = httpClient.newCall(request).execute();
-            assertThat(response.code()).isEqualTo(200);
-        } catch (IOException e) {
-            fail(e.getMessage());
-        } finally {
-            if (response != null) {
-                IOUtils.closeQuietly(response.body());
-            }
-        }
+        httpUserSupport.addUserToProjectConfiguration(projectConfiguration.getIdentifier(), currentUser, userInfo);
         return self();
     }
 }

@@ -184,7 +184,8 @@ public class MarathonBrickManager implements BrickManager {
                     List<User> users = IteratorUtils.toList(projectConfiguration.getUsers());
                     try {
                         BrickConfigurerData brickConfigurerData = configurer.configure(new BrickConfigurerData(projectConfiguration.getName(), projectConfiguration.getDefaultStackConfiguration().getName(), entrypoint, domain, IteratorUtils.toList(projectConfiguration.getAdmins()), users));
-                        configurer.addUsers(brickConfigurerData, users);
+                        brickConfigurerData = configurer.addUsers(brickConfigurerData, users);
+
                         if (LOGGER.isDebugEnabled()) {
                             LOGGER.debug("Adding users {} to brick {}", StringUtils.join(users, ","), brickType);
                         }

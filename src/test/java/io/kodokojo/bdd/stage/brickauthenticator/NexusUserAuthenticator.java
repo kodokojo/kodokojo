@@ -20,6 +20,7 @@ package io.kodokojo.bdd.stage.brickauthenticator;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
+import io.kodokojo.bdd.stage.HttpUserSupport;
 import io.kodokojo.bdd.stage.StageUtils;
 import io.kodokojo.bdd.stage.UserInfo;
 import org.apache.commons.io.IOUtils;
@@ -40,7 +41,7 @@ public class NexusUserAuthenticator implements UserAuthenticator {
     public boolean authenticate(OkHttpClient httpClient, String url, UserInfo userInfo) {
 
         Request.Builder builder = new Request.Builder().url(url + "/service/local/users");
-        builder = StageUtils.addBasicAuthentification(userInfo, builder);
+        builder = HttpUserSupport.addBasicAuthentification(userInfo, builder);
         Request request =  builder.build();
         Response response = null;
         try {

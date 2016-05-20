@@ -15,12 +15,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package io.kodokojo.bdd.feature;
-
-import com.tngtech.jgiven.Stage;
-
-public class MarathonBrickManagerIntTest {
+package io.kodokojo.bdd;
 
 
 
+
+import com.tngtech.jgiven.annotation.IsTag;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+
+@IsTag
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Marathon {
+    // Nothing to do.
 }

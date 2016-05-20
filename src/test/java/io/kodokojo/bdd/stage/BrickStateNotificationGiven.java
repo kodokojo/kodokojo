@@ -20,10 +20,9 @@ package io.kodokojo.bdd.stage;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.squareup.okhttp.OkHttpClient;
 import com.tngtech.jgiven.Stage;
-import com.tngtech.jgiven.annotation.AfterScenario;
-import com.tngtech.jgiven.annotation.ProvidedScenarioState;
-import com.tngtech.jgiven.annotation.Quoted;
+import com.tngtech.jgiven.annotation.*;
 import io.kodokojo.Launcher;
 import io.kodokojo.brick.*;
 import io.kodokojo.commons.model.Service;
@@ -66,7 +65,7 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
     private static final Logger LOGGER = LoggerFactory.getLogger(BrickStateNotificationGiven.class);
 
     @ProvidedScenarioState
-    public DockerTestSupport dockerTestSupport = new DockerTestSupport();
+    public DockerTestSupport dockerTestSupport;
 
     @ProvidedScenarioState
     RestEntryPoint restEntryPoint;
@@ -81,7 +80,7 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
     String entryPointUrl;
 
     @ProvidedScenarioState
-    User currentUser;
+    UserInfo currentUser;
 
     @ProvidedScenarioState
     BrickManager brickManager;
@@ -89,10 +88,17 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
     @ProvidedScenarioState
     DnsManager dnsManager;
 
-    public SELF kodokojo_is_started() {
+    @ProvidedScenarioState
+    HttpUserSupport httpUserSupport;
+
+    public SELF kodokojo_is_started(@Hidden DockerTestSupport dockerTestSupport) {
+        if (this.dockerTestSupport != null) {
+            this.dockerTestSupport.stopAndRemoveContainer();
+        }
+        this.dockerTestSupport = dockerTestSupport;
         LOGGER.info("Pulling docker image redis:latest");
-        dockerTestSupport.pullImage("redis:latest");
-        Service service = StageUtils.startDockerRedis(dockerTestSupport);
+        this.dockerTestSupport.pullImage("redis:latest");
+        Service service = StageUtils.startDockerRedis(this.dockerTestSupport);
 
         brickManager = mock(BrickManager.class);
         bootstrapProvider = mock(BootstrapConfigurationProvider.class);
@@ -169,18 +175,19 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
         SSLKeyPair caKey = SSLUtils.createSelfSignedSSLKeyPair("Fake CA", (RSAPrivateKey) keyPair.getPrivate(), (RSAPublicKey) keyPair.getPublic());
         DefaultProjectManager projectManager = new DefaultProjectManager(caKey, "kodokojo.dev", configurationStore, redisProjectStore, bootstrapProvider, dnsManager, injector.getInstance(BrickConfigurerProvider.class), injector.getInstance(BrickConfigurationStarter.class), new DefaultBrickUrlFactory("kodokojo.dev"), 10000000);
         restEntryPoint = new RestEntryPoint(port, injector.getInstance(UserStore.class), new SimpleUserAuthenticator(redisUserManager),redisEntityStore, redisProjectStore, projectManager,new DefaultBrickFactory());
+        httpUserSupport = new HttpUserSupport(new OkHttpClient(), entryPointUrl);
         restEntryPoint.start();
         return self();
     }
 
     public SELF i_am_user_$(@Quoted String username) {
-        currentUser = StageUtils.createUser(username, Launcher.INJECTOR.getInstance(UserStore.class), Launcher.INJECTOR.getInstance(EntityStore.class));
+        //currentUser = StageUtils.createUser(username, Launcher.INJECTOR.getInstance(UserStore.class), Launcher.INJECTOR.getInstance(EntityStore.class));
+        currentUser = httpUserSupport.createUser(null, username + "@kodokojo.dev");
         return self();
     }
 
     @AfterScenario
     public void tear_down() {
-        dockerTestSupport.stopAndRemoveContainer();
         if (restEntryPoint != null) {
             restEntryPoint.stop();
             restEntryPoint = null;

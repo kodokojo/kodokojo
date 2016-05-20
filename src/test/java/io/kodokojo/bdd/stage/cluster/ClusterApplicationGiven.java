@@ -38,14 +38,11 @@ import com.tngtech.jgiven.annotation.ProvidedScenarioState;
 import com.tngtech.jgiven.annotation.Quoted;
 import io.kodokojo.Launcher;
 import io.kodokojo.bdd.MarathonBrickUrlFactory;
-import io.kodokojo.bdd.stage.StageUtils;
-import io.kodokojo.bdd.stage.WebSocketConnectionResult;
-import io.kodokojo.bdd.stage.WebSocketEventsListener;
+import io.kodokojo.bdd.stage.*;
 import io.kodokojo.brick.*;
 import io.kodokojo.commons.DockerPresentMethodRule;
 import io.kodokojo.commons.model.Service;
 import io.kodokojo.commons.utils.DockerTestSupport;
-import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.commons.utils.servicelocator.ServiceLocator;
 import io.kodokojo.commons.utils.servicelocator.marathon.MarathonServiceLocator;
 import io.kodokojo.commons.utils.ssl.SSLKeyPair;
@@ -53,8 +50,6 @@ import io.kodokojo.config.ApplicationConfig;
 import io.kodokojo.config.MarathonConfig;
 import io.kodokojo.config.module.*;
 import io.kodokojo.entrypoint.RestEntryPoint;
-import io.kodokojo.model.Entity;
-import io.kodokojo.model.User;
 import io.kodokojo.service.*;
 import io.kodokojo.service.dns.NoOpDnsManager;
 import io.kodokojo.service.lifecycle.ApplicationLifeCycleManager;
@@ -81,7 +76,6 @@ import java.math.BigInteger;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.security.interfaces.RSAPublicKey;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
@@ -145,7 +139,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
     String testId;
 
     @ProvidedScenarioState
-    User currentUser;
+    UserInfo currentUser;
 
     @ProvidedScenarioState
     KeyPair userKeyPair;
@@ -155,6 +149,9 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
 
     @ProvidedScenarioState
     WebSocketEventsListener webSocketEventsListener;
+
+    @ProvidedScenarioState
+    HttpUserSupport httpUserSupport;
 
     @ProvidedScenarioState
     List<Service> services = new ArrayList<>();
@@ -182,6 +179,8 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
     }
 
     public SELF i_am_user_$(@Quoted String username) {
+
+        /*
         String identifier = userStore.generateId();
         try {
             userKeyPair = RSAUtils.generateRsaKeyPair();
@@ -200,9 +199,13 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         } catch (NoSuchAlgorithmException e) {
             fail("Unable to generate a new RSA key pair for user " + username, e);
         }
+        */
+
+        currentUser = httpUserSupport.createUser(null, username + "@kodokojo.dev");
+
 
         CountDownLatch nbMessageExpected = new CountDownLatch(1000);
-        WebSocketConnectionResult webSocketConnectionResult = StageUtils.connectToWebSocketAndWaitMessage(restEntryPointHost + ":" + restEntryPointPort, currentUser, nbMessageExpected);
+        WebSocketConnectionResult webSocketConnectionResult = httpUserSupport.connectToWebSocketAndWaitMessage(currentUser, nbMessageExpected);
         webSocketEventsListener = webSocketConnectionResult.getListener();
         currentUserWebSocket = webSocketConnectionResult.getSession();
         return self();
@@ -213,9 +216,9 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         if (StringUtils.isNotBlank(marathonUrl)) {
             try {
                 killAllAppInMarathon(marathonUrl);
-            }catch(Throwable e) {
-             LOGGER.error(e.getMessage(), e);
-                }
+            } catch (Throwable e) {
+                LOGGER.error(e.getMessage(), e);
+            }
         }
         if (restEntryPoint != null) {
             restEntryPoint.stop();
@@ -447,6 +450,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
                 brickUrlFactory,
                 300000000
         );
+        httpUserSupport = new HttpUserSupport(new OkHttpClient(), restEntryPointHost + ":" + restEntryPointPort);
         restEntryPoint = new RestEntryPoint(restEntryPointPort, userStore, new SimpleUserAuthenticator(userStore), entityStore, projectStore, projectManager, brickFactory);
         Semaphore semaphore = new Semaphore(1);
         try {

@@ -41,7 +41,7 @@ public class UserCreationIntTest extends ScenarioTest<ApplicationGiven<?>, Appli
     @Test
     @DockerIsRequire
     public void create_a_simple_user() {
-        given().redis_is_started()
+        given().redis_is_started(dockerPresentMethodRule.getDockerTestSupport())
                 .and().kodokojo_restEntrypoint_is_available();
         when().retrive_a_new_id()
                 .and().create_user_with_email_$("jpthiery@xebia.fr");
@@ -55,7 +55,7 @@ public class UserCreationIntTest extends ScenarioTest<ApplicationGiven<?>, Appli
     @Test
     @DockerIsRequire
     public void create_two_users_with_same_identifier() {
-        given().redis_is_started()
+        given().redis_is_started(dockerPresentMethodRule.getDockerTestSupport())
                 .and().kodokojo_restEntrypoint_is_available();
         when().retrive_a_new_id()
                 .and().create_user_with_email_$("jpthiery@xebia.fr")
@@ -68,7 +68,7 @@ public class UserCreationIntTest extends ScenarioTest<ApplicationGiven<?>, Appli
     @Test
     @DockerIsRequire
     public void create_two_users_and_get_details() {
-        given().redis_is_started()
+        given().redis_is_started(dockerPresentMethodRule.getDockerTestSupport())
                 .and().kodokojo_restEntrypoint_is_available()
                 .and().i_will_be_user_$("jpthiery");
         when().retrive_a_new_id()
@@ -85,7 +85,7 @@ public class UserCreationIntTest extends ScenarioTest<ApplicationGiven<?>, Appli
     @Test
     @DockerIsRequire
     public void create_two_users_with_same_username() {
-        given().redis_is_started()
+        given().redis_is_started(dockerPresentMethodRule.getDockerTestSupport())
                 .and().kodokojo_restEntrypoint_is_available();
         when().retrive_a_new_id()
                 .and().create_user_with_email_$("jpthiery@xebia.fr")
@@ -98,7 +98,7 @@ public class UserCreationIntTest extends ScenarioTest<ApplicationGiven<?>, Appli
     @Test
     @DockerIsRequire
     public void try_to_create_user_without_identifier() {
-        given().redis_is_started()
+        given().redis_is_started(dockerPresentMethodRule.getDockerTestSupport())
                 .and().kodokojo_restEntrypoint_is_available();
         when().create_user_with_email_$_which_must_fail("aletaxin@xebia.fr");
 

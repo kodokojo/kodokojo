@@ -38,10 +38,10 @@ import static org.assertj.core.api.Assertions.fail;
 public class BrickStateNotificationWhen<SELF extends BrickStateNotificationWhen<?>> extends Stage<SELF> {
 
     @ExpectedScenarioState
-    String entryPointUrl;
+    HttpUserSupport httpUserSupport;
 
     @ExpectedScenarioState
-    User currentUser;
+    UserInfo currentUser;
 
     @ProvidedScenarioState
     WebSocketEventsListener listener;
@@ -62,56 +62,17 @@ public class BrickStateNotificationWhen<SELF extends BrickStateNotificationWhen<
         ProjectCreationDto projectCreationDto = new ProjectCreationDto("123456", "Acme", currentUser.getIdentifier(),null, Collections.singletonList(currentUser.getIdentifier()));
 
         expectedBrickStarted = new String[]{"haproxy", "jenkins", "nexus", "gitlab"};
-        startProjectConfiguration(projectCreationDto, expectedBrickStarted);
+        nbMessageExpected = new CountDownLatch((expectedBrickStarted.length * 3) + 1);
+        WebSocketConnectionResult webSocketConnectionResult = httpUserSupport.connectToWebSocketAndWaitMessage(currentUser, nbMessageExpected);
+        listener = webSocketConnectionResult.getListener();
+        session = webSocketConnectionResult.getSession();
+
+        projectConfigurationIdentifier = httpUserSupport.createProjectConfiguration(projectCreationDto.getName(), null , currentUser);
         return self();
     }
 
-    private void startProjectConfiguration(ProjectCreationDto projectCreationDto, String[] expectedBrickStarted) {
-        nbMessageExpected = new CountDownLatch((expectedBrickStarted.length * 3) + 1);
-        WebSocketConnectionResult webSocketConnectionResult = StageUtils.connectToWebSocketAndWaitMessage(entryPointUrl, currentUser, nbMessageExpected);
-        listener = webSocketConnectionResult.getListener();
-        session = webSocketConnectionResult.getSession();
-        Gson gson = new GsonBuilder().create();
-        String json = gson.toJson(projectCreationDto);
-
-        OkHttpClient httpClient = new OkHttpClient();
-        RequestBody body = RequestBody.create(MediaType.parse("application/json"), json);
-        Request.Builder builder = new Request.Builder().url("http://" + entryPointUrl + "/api/v1/projectconfig").post(body);
-        builder = StageUtils.addBasicAuthentification(currentUser, builder);
-        Request request = builder.build();
-        Response response = null;
-        try {
-            response = httpClient.newCall(request).execute();
-            assertThat(response.code()).isEqualTo(201);
-            projectConfigurationIdentifier = response.body().string();
-
-        } catch (IOException e) {
-            fail(e.getMessage());
-        } finally {
-            if (response != null) {
-                IOUtils.closeQuietly(response.body());
-            }
-        }
-    }
-
-
     public SELF i_start_the_project() {
-        OkHttpClient httpClient = new OkHttpClient();
-        RequestBody body = RequestBody.create(null, new byte[0]);
-        Request.Builder builder = new Request.Builder().url("http://" + entryPointUrl + "/api/v1/project/" + projectConfigurationIdentifier).post(body);
-        builder = StageUtils.addBasicAuthentification(currentUser, builder);
-        Request request = builder.build();
-        Response response = null;
-        try {
-            response = httpClient.newCall(request).execute();
-            assertThat(response.code()).isEqualTo(201);
-        } catch (IOException e) {
-            fail(e.getMessage());
-        } finally {
-            if (response != null) {
-                IOUtils.closeQuietly(response.body());
-            }
-        }
+        httpUserSupport.startProject(projectConfigurationIdentifier,currentUser);
         return self();
     }
 }

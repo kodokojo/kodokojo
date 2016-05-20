@@ -39,7 +39,7 @@ public class AccessRestIntTest extends ScenarioTest<ApplicationGiven<?>, AccessR
     @Test
     @DockerIsRequire
     public void anonymous_user_access_to_api_documentation() {
-        given().kodokojo_is_running();
+        given().kodokojo_is_running(dockerPresentMethodRule.getDockerTestSupport());
         when().try_to_access_to_get_url_$("/api/v1/doc");
         then().it_should_return_status_$(200);
     }
@@ -47,7 +47,7 @@ public class AccessRestIntTest extends ScenarioTest<ApplicationGiven<?>, AccessR
     @Test
     @DockerIsRequire
     public void anonymous_user_access_to_api_version() {
-        given().kodokojo_is_running();
+        given().kodokojo_is_running(dockerPresentMethodRule.getDockerTestSupport());
         when().try_to_access_to_get_url_$("/api/v1");
         then().it_should_return_status_$(200);
     }
@@ -55,7 +55,7 @@ public class AccessRestIntTest extends ScenarioTest<ApplicationGiven<?>, AccessR
     @Test
     @DockerIsRequire
     public void anonymous_can_not_access_to_random_url() {
-        given().kodokojo_is_running();
+        given().kodokojo_is_running(dockerPresentMethodRule.getDockerTestSupport());
         when().try_to_access_to_get_url_$("/my/awersome/url/of/the/death");
         then().it_should_return_status_$(401);
     }
@@ -63,7 +63,7 @@ public class AccessRestIntTest extends ScenarioTest<ApplicationGiven<?>, AccessR
     @Test
     @DockerIsRequire
     public void user_connect_to_websocket_event() {
-        given().kodokojo_is_running()
+        given().kodokojo_is_running(dockerPresentMethodRule.getDockerTestSupport())
                 .and().i_am_user_$("jpthiery", true);
         when().try_to_access_to_events_websocket();
         then().it_receive_a_welcome_message();
@@ -71,7 +71,7 @@ public class AccessRestIntTest extends ScenarioTest<ApplicationGiven<?>, AccessR
     @Test
     @DockerIsRequire
     public void anonymous_user_fail_connect_to_websocket_event() {
-        given().kodokojo_is_running();
+        given().kodokojo_is_running(dockerPresentMethodRule.getDockerTestSupport());
         when().try_to_access_to_events_websocket_as_anonymous();
         then().it_NOT_receive_a_welcome_message();
     }
