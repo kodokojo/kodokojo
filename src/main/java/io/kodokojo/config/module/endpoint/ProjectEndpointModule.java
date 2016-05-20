@@ -15,24 +15,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package io.kodokojo.entrypoint;
+package io.kodokojo.config.module.endpoint;
 
+import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.Multibinder;
+import io.kodokojo.endpoint.ProjectSparkEndpoint;
+import io.kodokojo.endpoint.SparkEndpoint;
+import io.kodokojo.endpoint.UserSparkEndpoint;
 
+public class ProjectEndpointModule extends AbstractModule {
 
-import io.kodokojo.model.User;
-import io.kodokojo.service.user.Credential;
-
-/**
- * Extract {@link User} from a {@link Credential}.
- * @param <T>
- */
-public interface UserAuthenticator<T extends Credential> {
-
-    /**
-     * Check if credentials match with a User.
-     * @param credentials The credentials to test.
-     * @return The user which match credentials, <code>null</code> else.
-     */
-    User authenticate(T credentials);
+    @Override
+    protected void configure() {
+        Multibinder<SparkEndpoint> sparkEndpointBinder = Multibinder.newSetBinder(binder(), SparkEndpoint.class);
+        sparkEndpointBinder.addBinding().to(ProjectSparkEndpoint.class);
+    }
 
 }

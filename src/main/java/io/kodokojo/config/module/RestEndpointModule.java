@@ -20,18 +20,16 @@ package io.kodokojo.config.module;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import io.kodokojo.brick.BrickFactory;
 import io.kodokojo.config.ApplicationConfig;
-import io.kodokojo.entrypoint.RestEntryPoint;
-import io.kodokojo.service.ProjectManager;
-import io.kodokojo.service.store.EntityStore;
-import io.kodokojo.service.store.ProjectStore;
-import io.kodokojo.entrypoint.UserAuthenticator;
-import io.kodokojo.service.store.UserStore;
+import io.kodokojo.endpoint.HttpEndpoint;
+import io.kodokojo.endpoint.SparkEndpoint;
+import io.kodokojo.endpoint.UserAuthenticator;
 import io.kodokojo.service.lifecycle.ApplicationLifeCycleManager;
 import io.kodokojo.service.user.SimpleCredential;
 
-public class RestEntryPointModule extends AbstractModule {
+import java.util.Set;
+
+public class RestEndpointModule extends AbstractModule {
     @Override
     protected void configure() {
         // Nothing to do.
@@ -39,10 +37,10 @@ public class RestEntryPointModule extends AbstractModule {
 
     @Provides
     @Singleton
-    RestEntryPoint provideRestEntrypoint(ApplicationConfig applicationConfig, UserStore userStore, UserAuthenticator<SimpleCredential> userAuthenticator, EntityStore entityStore, ProjectStore projectStore, ProjectManager projectManager, BrickFactory brickFactory, ApplicationLifeCycleManager applicationLifeCycleManager) {
-        RestEntryPoint restEntryPoint = new RestEntryPoint(applicationConfig.port(), userStore, userAuthenticator, entityStore, projectStore, projectManager, brickFactory);
-        applicationLifeCycleManager.addService(restEntryPoint);
-        return restEntryPoint;
+    HttpEndpoint provideRestEntrypoint(ApplicationConfig applicationConfig, ApplicationLifeCycleManager applicationLifeCycleManager, UserAuthenticator<SimpleCredential> userAuthenticator, Set<SparkEndpoint> sparkEndpoints) {
+        HttpEndpoint httpEndpoint = new HttpEndpoint(applicationConfig.port(), userAuthenticator, sparkEndpoints);
+        applicationLifeCycleManager.addService(httpEndpoint);
+        return httpEndpoint;
     }
 
 }

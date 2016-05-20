@@ -15,36 +15,29 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package io.kodokojo.entrypoint.dto;
+package io.kodokojo.endpoint.dto;
 
 import io.kodokojo.model.BrickConfiguration;
-import io.kodokojo.model.StackConfiguration;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.Serializable;
 
-public class StackConfigDto {
+public class BrickConfigDto implements Serializable {
 
     private String name;
 
     private String type;
 
-    private List<BrickConfigDto> brickConfigs;
-
-    public StackConfigDto(String name, String type, List<BrickConfigDto> brickConfigs) {
+    public BrickConfigDto(String name, String type) {
         this.name = name;
         this.type = type;
-        this.brickConfigs = brickConfigs;
     }
 
-    public StackConfigDto(StackConfiguration stackConfiguration) {
-        if (stackConfiguration == null) {
-            throw new IllegalArgumentException("stackConfiguration must be defined.");
+    public BrickConfigDto(BrickConfiguration brickConfiguration) {
+        if (brickConfiguration == null) {
+            throw new IllegalArgumentException("brickConfiguration must be defined.");
         }
-        this.name = stackConfiguration.getName();
-        this.type = stackConfiguration.getType().name();
-        this.brickConfigs = new ArrayList<>(stackConfiguration.getBrickConfigurations().size());
-        stackConfiguration.getBrickConfigurations().forEach(brickConfiguration -> brickConfigs.add(new BrickConfigDto(brickConfiguration)));
+        this.name = brickConfiguration.getName();
+        this.type = brickConfiguration.getType().name();
     }
 
     public String getName() {
@@ -63,20 +56,11 @@ public class StackConfigDto {
         this.type = type;
     }
 
-    public List<BrickConfigDto> getBrickConfigs() {
-        return brickConfigs;
-    }
-
-    public void setBrickConfigs(List<BrickConfigDto> brickConfigs) {
-        this.brickConfigs = brickConfigs;
-    }
-
     @Override
     public String toString() {
-        return "StackConfigDto{" +
+        return "BrickConfigDto{" +
                 "name='" + name + '\'' +
                 ", type='" + type + '\'' +
-                ", brickConfigs=" + brickConfigs +
                 '}';
     }
 }

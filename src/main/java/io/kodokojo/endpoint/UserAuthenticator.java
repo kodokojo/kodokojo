@@ -15,12 +15,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package io.kodokojo.docker;
+package io.kodokojo.endpoint;
 
-public class MinimalLauncher {
 
-    public static void main(String[] args) {
-        //HttpEndpoint restEntrypoint = new HttpEndpoint(80, new RedisUserStore())
-    }
+
+import io.kodokojo.model.User;
+import io.kodokojo.service.user.Credential;
+
+/**
+ * Extract {@link User} from a {@link Credential}.
+ * @param <T>
+ */
+public interface UserAuthenticator<T extends Credential> {
+
+    /**
+     * Check if credentials match with a User.
+     * @param credentials The credentials to test.
+     * @return The user which match credentials, <code>null</code> else.
+     */
+    User authenticate(T credentials);
 
 }

@@ -23,8 +23,8 @@ import com.tngtech.jgiven.CurrentStep;
 import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.ExpectedScenarioState;
 import com.tngtech.jgiven.attachment.Attachment;
-import io.kodokojo.entrypoint.dto.WebSocketMessage;
-import io.kodokojo.entrypoint.dto.WebSocketMessageGsonAdapter;
+import io.kodokojo.endpoint.dto.WebSocketMessage;
+import io.kodokojo.endpoint.dto.WebSocketMessageGsonAdapter;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.*;

@@ -1,17 +1,17 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- * <p>
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * <p>
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * <p>
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -49,8 +49,14 @@ import io.kodokojo.commons.utils.ssl.SSLKeyPair;
 import io.kodokojo.config.ApplicationConfig;
 import io.kodokojo.config.MarathonConfig;
 import io.kodokojo.config.module.*;
-import io.kodokojo.entrypoint.RestEntryPoint;
+import io.kodokojo.config.module.endpoint.ProjectEndpointModule;
+import io.kodokojo.config.module.endpoint.UserEndpointModule;
+import io.kodokojo.endpoint.HttpEndpoint;
+import io.kodokojo.endpoint.ProjectSparkEndpoint;
+import io.kodokojo.endpoint.SparkEndpoint;
+import io.kodokojo.endpoint.UserAuthenticator;
 import io.kodokojo.service.*;
+import io.kodokojo.service.dns.DnsManager;
 import io.kodokojo.service.dns.NoOpDnsManager;
 import io.kodokojo.service.lifecycle.ApplicationLifeCycleManager;
 import io.kodokojo.service.marathon.MarathonBrickManager;
@@ -59,6 +65,7 @@ import io.kodokojo.service.redis.RedisUserStore;
 import io.kodokojo.service.store.EntityStore;
 import io.kodokojo.service.store.ProjectStore;
 import io.kodokojo.service.store.UserStore;
+import io.kodokojo.service.user.SimpleCredential;
 import io.kodokojo.service.user.SimpleUserAuthenticator;
 import io.kodokojo.test.utils.TestUtils;
 import org.apache.commons.io.IOUtils;
@@ -106,7 +113,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
     DockerTestSupport dockerTestSupport;
 
     @ProvidedScenarioState
-    RestEntryPoint restEntryPoint;
+    HttpEndpoint httpEndpoint;
 
     @ProvidedScenarioState
     String restEntryPointHost;
@@ -180,27 +187,6 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
 
     public SELF i_am_user_$(@Quoted String username) {
 
-        /*
-        String identifier = userStore.generateId();
-        try {
-            userKeyPair = RSAUtils.generateRsaKeyPair();
-            String email = username + "@kodokojo.io";
-            currentUser = new User(identifier, username, username, email, username, RSAUtils.encodePublicKey((RSAPublicKey) userKeyPair.getPublic(), email));
-
-            Entity entity = new Entity(currentUser.getUsername(), currentUser);
-            String entityId = entityStore.addEntity(entity);
-            entityStore.addUserToEntity(currentUser.getIdentifier(), entityId);
-
-            currentUser = new User(identifier, entityId, username, username, email, username, RSAUtils.encodePublicKey((RSAPublicKey) userKeyPair.getPublic(), email));
-            userStore.addUser(currentUser);
-
-
-            LOGGER.info("Current user {} with password {}", currentUser, currentUser.getPassword());
-        } catch (NoSuchAlgorithmException e) {
-            fail("Unable to generate a new RSA key pair for user " + username, e);
-        }
-        */
-
         currentUser = httpUserSupport.createUser(null, username + "@kodokojo.dev");
 
 
@@ -220,9 +206,9 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
                 LOGGER.error(e.getMessage(), e);
             }
         }
-        if (restEntryPoint != null) {
-            restEntryPoint.stop();
-            restEntryPoint = null;
+        if (httpEndpoint != null) {
+            httpEndpoint.stop();
+            httpEndpoint = null;
         }
         if (injector != null) {
             ApplicationLifeCycleManager applicationLifeCycleManager = injector.getInstance(ApplicationLifeCycleManager.class);
@@ -395,6 +381,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
 
             System.setProperty("javax.net.ssl.keyStore", keystorePathDefined);
         }
+        BrickUrlFactory brickUrlFactory = new MarathonBrickUrlFactory(marathonUrl);
         System.setProperty("javax.net.ssl.keyStorePassword", "password");
         System.setProperty("security.ssl.rootCa.ks.alias", "rootcafake");
         System.setProperty("security.ssl.rootCa.ks.password", "password");
@@ -406,39 +393,48 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         System.setProperty("lb.defaultIp", dockerTestSupport.getServerIp());
         System.setProperty("application.dns.domain", "kodokojo.dev");
         LOGGER.debug("redis.port: {}", System.getProperty("redis.port"));
-        injector = Guice.createInjector(new PropertyModule(new String[]{}), new RedisModule(), new SecurityModule(), new ServiceModule(), new ActorModule(), new AwsModule(), new AbstractModule() {
-            @Override
-            protected void configure() {
 
-            }
+        injector = Guice.createInjector(new PropertyModule(new String[]{}),
+                new RedisModule(),
+                new SecurityModule(),
+                new ServiceModule(),
+                new ActorModule(),
+                new AwsModule(),
+                new EmailSenderModule(),
+                new UserEndpointModule(),
+                new ProjectEndpointModule(),
+                new AbstractModule() {
+                    @Override
+                    protected void configure() {
 
-            @Provides
-            @Singleton
-            ServiceLocator provideServiceLocator(MarathonConfig marathonConfig) {
-                return new MarathonServiceLocator(marathonConfig.url());
-            }
+                    }
 
-            @Provides
-            @Singleton
-            ConfigurationStore provideConfigurationStore(MarathonConfig marathonConfig) {
-                return new MarathonConfigurationStore(marathonConfig.url());
-            }
+                    @Provides
+                    @Singleton
+                    ServiceLocator provideServiceLocator(MarathonConfig marathonConfig) {
+                        return new MarathonServiceLocator(marathonConfig.url());
+                    }
 
-            @Provides
-            @Singleton
-            BrickManager provideBrickManager(MarathonConfig marathonConfig, BrickConfigurerProvider brickConfigurerProvider, ApplicationConfig applicationConfig, BrickUrlFactory brickUrlFactory) {
-                MarathonServiceLocator marathonServiceLocator = new MarathonServiceLocator(marathonConfig.url());
-                return new MarathonBrickManager(marathonConfig.url(), marathonServiceLocator, brickConfigurerProvider, projectStore,false, applicationConfig.domain(), brickUrlFactory);
-            }
-        });
+                    @Provides
+                    @Singleton
+                    ConfigurationStore provideConfigurationStore(MarathonConfig marathonConfig) {
+                        return new MarathonConfigurationStore(marathonConfig.url());
+                    }
+
+                    @Provides
+                    @Singleton
+                    BrickManager provideBrickManager(MarathonConfig marathonConfig, BrickConfigurerProvider brickConfigurerProvider, ProjectStore projectStore, ApplicationConfig applicationConfig, BrickUrlFactory brickUrlFactory) {
+                        MarathonServiceLocator marathonServiceLocator = new MarathonServiceLocator(marathonConfig.url());
+                        return new MarathonBrickManager(marathonConfig.url(), marathonServiceLocator, brickConfigurerProvider, projectStore, false, applicationConfig.domain(), brickUrlFactory);
+                    }
+                });
         Launcher.INJECTOR = injector;
         userStore = injector.getInstance(UserStore.class);
         projectStore = injector.getInstance(ProjectStore.class);
         entityStore = injector.getInstance(EntityStore.class);
-        BrickFactory brickFactory = injector.getInstance(BrickFactory.class);
+        //BrickFactory brickFactory = injector.getInstance(BrickFactory.class);
         restEntryPointHost = "localhost";
         restEntryPointPort = TestUtils.getEphemeralPort();
-        BrickUrlFactory brickUrlFactory = new MarathonBrickUrlFactory(marathonUrl);
         projectManager = new DefaultProjectManager(injector.getInstance(SSLKeyPair.class),
                 domain,
                 injector.getInstance(ConfigurationStore.class),
@@ -451,7 +447,13 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
                 300000000
         );
         httpUserSupport = new HttpUserSupport(new OkHttpClient(), restEntryPointHost + ":" + restEntryPointPort);
-        restEntryPoint = new RestEntryPoint(restEntryPointPort, userStore, new SimpleUserAuthenticator(userStore), entityStore, projectStore, projectManager, brickFactory);
+        Set<SparkEndpoint> sparkEndpoints = new HashSet<>(injector.getInstance(Key.get(new TypeLiteral<Set<SparkEndpoint>>() {
+        })));
+        Key<UserAuthenticator<SimpleCredential>> authenticatorKey = Key.get(new TypeLiteral<UserAuthenticator<SimpleCredential>>() {
+        });
+        UserAuthenticator<SimpleCredential> userAuthenticator = injector.getInstance(authenticatorKey);
+        sparkEndpoints.add(new ProjectSparkEndpoint(userAuthenticator, userStore, projectStore, projectManager, injector.getInstance(BrickFactory.class)));
+        httpEndpoint = new HttpEndpoint(restEntryPointPort, new SimpleUserAuthenticator(userStore), sparkEndpoints);
         Semaphore semaphore = new Semaphore(1);
         try {
             semaphore.acquire();
@@ -460,7 +462,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         }
 
         Thread t = new Thread(() -> {
-            restEntryPoint.start();
+            httpEndpoint.start();
             semaphore.release();
         });
         t.start();

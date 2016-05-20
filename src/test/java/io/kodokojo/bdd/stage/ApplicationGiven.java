@@ -1,17 +1,17 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- * <p>
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * <p>
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * <p>
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -20,9 +20,7 @@ package io.kodokojo.bdd.stage;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Image;
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
+import com.google.inject.*;
 import com.squareup.okhttp.OkHttpClient;
 import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.AfterScenario;
@@ -30,6 +28,7 @@ import com.tngtech.jgiven.annotation.Hidden;
 import com.tngtech.jgiven.annotation.ProvidedScenarioState;
 import com.tngtech.jgiven.annotation.Quoted;
 import io.kodokojo.Launcher;
+import io.kodokojo.brick.BrickFactory;
 import io.kodokojo.brick.BrickUrlFactory;
 import io.kodokojo.brick.DefaultBrickFactory;
 import io.kodokojo.brick.DefaultBrickUrlFactory;
@@ -39,10 +38,14 @@ import io.kodokojo.commons.utils.DockerTestSupport;
 import io.kodokojo.commons.utils.properties.PropertyResolver;
 import io.kodokojo.commons.utils.properties.provider.*;
 import io.kodokojo.config.ApplicationConfig;
-import io.kodokojo.entrypoint.RestEntryPoint;
-import io.kodokojo.entrypoint.UserAuthenticator;
+import io.kodokojo.config.EmailConfig;
+import io.kodokojo.config.module.EmailSenderModule;
+import io.kodokojo.config.module.endpoint.ProjectEndpointModule;
+import io.kodokojo.config.module.endpoint.UserEndpointModule;
+import io.kodokojo.endpoint.HttpEndpoint;
+import io.kodokojo.endpoint.SparkEndpoint;
+import io.kodokojo.endpoint.UserAuthenticator;
 import io.kodokojo.service.ProjectManager;
-import io.kodokojo.service.SmtpEmailSender;
 import io.kodokojo.service.redis.RedisEntityStore;
 import io.kodokojo.service.redis.RedisProjectStore;
 import io.kodokojo.service.redis.RedisUserStore;
@@ -86,7 +89,7 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
     int redisPort;
 
     @ProvidedScenarioState
-    RestEntryPoint restEntryPoint;
+    HttpEndpoint httpEndpoint;
 
     @ProvidedScenarioState
     String restEntryPointHost;
@@ -95,7 +98,7 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
     int restEntryPointPort;
 
     @ProvidedScenarioState
-    RedisUserStore userManager;
+    RedisUserStore userStore;
 
     @ProvidedScenarioState
     String currentUserLogin;
@@ -182,18 +185,22 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
             KeyGenerator generator = KeyGenerator.getInstance("AES");
             generator.init(128);
             SecretKey aesKey = generator.generateKey();
-            userManager = new RedisUserStore(aesKey, redisHost, redisPort);
-            projectStore = new RedisProjectStore(aesKey, redisHost, redisPort, new DefaultBrickFactory());
+            userStore = new RedisUserStore(aesKey, redisHost, redisPort);
+            DefaultBrickFactory brickFactory = new DefaultBrickFactory();
+            projectStore = new RedisProjectStore(aesKey, redisHost, redisPort, brickFactory);
             entityStore = new RedisEntityStore(aesKey, redisHost, redisPort);
-            UserAuthenticator<SimpleCredential> userAuthenticator = new SimpleUserAuthenticator(userManager);
+            UserAuthenticator<SimpleCredential> userAuthenticator = new SimpleUserAuthenticator(userStore);
             projectManager = mock(ProjectManager.class);
-            restEntryPoint = new RestEntryPoint(port, userManager, userAuthenticator, entityStore, projectStore, projectManager, new DefaultBrickFactory());
-            Launcher.INJECTOR = Guice.createInjector(new AbstractModule() {
+            Launcher.INJECTOR = Guice.createInjector(new UserEndpointModule(), new ProjectEndpointModule(), new EmailSenderModule(), new AbstractModule() {
                 @Override
                 protected void configure() {
-                    bind(UserStore.class).toInstance(userManager);
+                    bind(UserStore.class).toInstance(userStore);
                     bind(ProjectStore.class).toInstance(projectStore);
+                    bind(ProjectManager.class).toInstance(projectManager);
                     bind(EntityStore.class).toInstance(entityStore);
+                    bind(Key.get(new TypeLiteral<UserAuthenticator<SimpleCredential>>() {
+                    })).toInstance(userAuthenticator);
+                    bind(BrickFactory.class).toInstance(brickFactory);
                     bind(ApplicationConfig.class).toInstance(new ApplicationConfig() {
                         @Override
                         public int port() {
@@ -221,10 +228,40 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
                         }
                     });
                     bind(BrickUrlFactory.class).toInstance(new DefaultBrickUrlFactory("kodokojo.dev"));
+                    bind(EmailConfig.class).toInstance(new EmailConfig() {
+                        @Override
+                        public String smtpHost() {
+                            return null;
+                        }
+
+                        @Override
+                        public int smtpPort() {
+                            return 0;
+                        }
+
+                        @Override
+                        public String smtpUsername() {
+                            return null;
+                        }
+
+                        @Override
+                        public String smtpPassword() {
+                            return null;
+                        }
+
+                        @Override
+                        public String smtpFrom() {
+                            return null;
+                        }
+
+                    });
                 }
             });
+            Set<SparkEndpoint> sparkEndpoints = Launcher.INJECTOR.getInstance(Key.get(new TypeLiteral<Set<SparkEndpoint>>() {
+            }));
+            httpEndpoint = new HttpEndpoint(port, new SimpleUserAuthenticator(userStore), sparkEndpoints);
             httpUserSupport = new HttpUserSupport(new OkHttpClient(), "localhost:" + port);
-            restEntryPoint.start();
+            httpEndpoint.start();
             restEntryPointPort = port;
             restEntryPointHost = "localhost";
         } catch (NoSuchAlgorithmException e) {
@@ -246,7 +283,7 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
             /*
 
             //TODO Use REST API instead.
-            String identifier = userManager.generateId();
+            String identifier = userStore.generateId();
             String password = USER_PASSWORD.get(username) == null ? new BigInteger(130, new SecureRandom()).toString(32) : USER_PASSWORD.get(username);
 
             try {
@@ -260,7 +297,7 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
                 String entityId = entityStore.addEntity(entity);
                 entityStore.addUserToEntity(user.getIdentifier(), entityId);
                 user = new User(user.getIdentifier(), entityId, user.getFirstName(), user.getLastName(), username, email, password, user.getSshPublicKey());
-                boolean userAdded = userManager.addUser(user);
+                boolean userAdded = userStore.addUser(user);
                 assertThat(userAdded).isTrue();
                 whoAmI = username;
                 currentUsers.put(currentUserLogin, new UserInfo(currentUserLogin, identifier, password, email));
@@ -274,9 +311,9 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
 
     @AfterScenario
     public void tear_down() {
-        if (restEntryPoint != null) {
-            restEntryPoint.stop();
-            restEntryPoint = null;
+        if (httpEndpoint != null) {
+            httpEndpoint.stop();
+            httpEndpoint = null;
         }
     }
 

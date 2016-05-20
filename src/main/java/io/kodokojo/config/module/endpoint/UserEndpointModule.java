@@ -15,20 +15,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package io.kodokojo.entrypoint;
+package io.kodokojo.config.module.endpoint;
 
+import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.Multibinder;
+import io.kodokojo.endpoint.SparkEndpoint;
+import io.kodokojo.endpoint.UserSparkEndpoint;
 
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import spark.ResponseTransformer;
-
-public class JsonTransformer implements ResponseTransformer {
-
-    private Gson gson = new GsonBuilder().create();
+public class UserEndpointModule extends AbstractModule {
 
     @Override
-    public String render(Object model) throws Exception {
-        return gson.toJson(model);
+    protected void configure() {
+        Multibinder<SparkEndpoint> sparkEndpointBinder = Multibinder.newSetBinder(binder(), SparkEndpoint.class);
+        sparkEndpointBinder.addBinding().to(UserSparkEndpoint.class);
     }
+
 }

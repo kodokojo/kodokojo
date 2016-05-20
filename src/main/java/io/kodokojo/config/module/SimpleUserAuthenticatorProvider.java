@@ -21,7 +21,7 @@ import com.google.inject.Provider;
 import io.kodokojo.service.store.UserStore;
 import io.kodokojo.service.user.SimpleCredential;
 import io.kodokojo.service.user.SimpleUserAuthenticator;
-import io.kodokojo.entrypoint.UserAuthenticator;
+import io.kodokojo.endpoint.UserAuthenticator;
 
 import javax.inject.Inject;
 

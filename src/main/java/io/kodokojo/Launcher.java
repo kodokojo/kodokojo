@@ -20,7 +20,9 @@ package io.kodokojo;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.kodokojo.config.module.*;
-import io.kodokojo.entrypoint.RestEntryPoint;
+import io.kodokojo.config.module.endpoint.ProjectEndpointModule;
+import io.kodokojo.config.module.endpoint.UserEndpointModule;
+import io.kodokojo.endpoint.HttpEndpoint;
 import io.kodokojo.service.lifecycle.ApplicationLifeCycleManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,12 +41,15 @@ public class Launcher {
 
         INJECTOR = Guice.createInjector(new PropertyModule(args),
                 new SecurityModule(),
+                new EmailSenderModule(),
                 new RedisModule(),
                 new ServiceModule(),
                 new ActorModule(),
                 new AwsModule(),
                 new MarathonModule(),
-                new RestEntryPointModule()
+                new UserEndpointModule(),
+                new ProjectEndpointModule(),
+                new RestEndpointModule()
         );
 
         ApplicationLifeCycleManager applicationLifeCycleManager = INJECTOR.getInstance(ApplicationLifeCycleManager.class);
@@ -59,8 +64,8 @@ public class Launcher {
             }
         });
 
-        RestEntryPoint restEntryPoint = INJECTOR.getInstance(RestEntryPoint.class);
-        restEntryPoint.start();
+        HttpEndpoint httpEndpoint = INJECTOR.getInstance(HttpEndpoint.class);
+        httpEndpoint.start();
 
         LOGGER.info("Kodo Kojo started.");
 

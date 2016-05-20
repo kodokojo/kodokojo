@@ -17,18 +17,12 @@
  */
 package io.kodokojo.bdd.stage;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.squareup.okhttp.*;
 import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.ExpectedScenarioState;
 import com.tngtech.jgiven.annotation.ProvidedScenarioState;
-import io.kodokojo.entrypoint.dto.ProjectCreationDto;
-import io.kodokojo.model.User;
-import org.apache.commons.io.IOUtils;
+import io.kodokojo.endpoint.dto.ProjectCreationDto;
 
 import javax.websocket.Session;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 

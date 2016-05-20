@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package io.kodokojo.entrypoint;
+package io.kodokojo.endpoint;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -25,8 +25,8 @@ import io.kodokojo.model.BrickState;
 import io.kodokojo.brick.BrickStateMsgDispatcher;
 import io.kodokojo.brick.BrickStateMsgListener;
 import io.kodokojo.brick.BrickUrlFactory;
-import io.kodokojo.entrypoint.dto.WebSocketMessage;
-import io.kodokojo.entrypoint.dto.WebSocketMessageGsonAdapter;
+import io.kodokojo.endpoint.dto.WebSocketMessage;
+import io.kodokojo.endpoint.dto.WebSocketMessageGsonAdapter;
 import io.kodokojo.model.ProjectConfiguration;
 import io.kodokojo.model.User;
 import io.kodokojo.service.store.ProjectStore;

@@ -15,12 +15,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package io.kodokojo.docker;
+package io.kodokojo.endpoint;
 
-public class MinimalLauncher {
 
-    public static void main(String[] args) {
-        //HttpEndpoint restEntrypoint = new HttpEndpoint(80, new RedisUserStore())
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import spark.ResponseTransformer;
+
+public class JsonTransformer implements ResponseTransformer {
+
+    private Gson gson = new GsonBuilder().create();
+
+    @Override
+    public String render(Object model) throws Exception {
+        return gson.toJson(model);
     }
-
 }
