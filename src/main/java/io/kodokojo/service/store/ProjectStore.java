@@ -17,11 +17,14 @@
  */
 package io.kodokojo.service.store;
 
+import io.kodokojo.model.BrickConfiguration;
 import io.kodokojo.model.Entity;
 import io.kodokojo.model.Project;
 import io.kodokojo.model.ProjectConfiguration;
 
+import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public interface ProjectStore {
@@ -45,4 +48,6 @@ public interface ProjectStore {
     String getProjectIdByProjectConfigurationId(String projectConfigurationId);
 
     Project getProjectByProjectConfigurationId(String projectConfigurationId);
+
+    void setContextToBrickConfiguration(String projectConfigurationId, BrickConfiguration brickConfiguration, Map<String, Serializable> context);
 }

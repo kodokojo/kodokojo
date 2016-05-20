@@ -20,6 +20,9 @@ package io.kodokojo.model;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
@@ -39,6 +42,8 @@ public class BrickConfiguration implements Configuration, Serializable {
 
     private final boolean waitRunning;
 
+    private Map<String, Serializable> customData;
+
     public BrickConfiguration(Brick brick, String name, BrickType type, String url, boolean waitRunning) {
         if (isBlank(name)) {
             throw new IllegalArgumentException("name must be defined.");
@@ -56,6 +61,7 @@ public class BrickConfiguration implements Configuration, Serializable {
         this.type = type;
         this.url = url;
         this.waitRunning = waitRunning;
+        this.customData = new HashMap<>();
     }
     public BrickConfiguration(Brick brick, String name, BrickType type, String url) {
         this(brick, name, type, url, true);
@@ -90,6 +96,17 @@ public class BrickConfiguration implements Configuration, Serializable {
     @Override
     public void setVersionDate(Date versionDate) {
         this.versionDate = versionDate;
+    }
+
+    public Map<String, Serializable> getCustomData() {
+        return customData;
+    }
+
+    public void setCustomData(Map<String, Serializable> customData) {
+        if (customData == null) {
+            throw new IllegalArgumentException("customData must be defined.");
+        }
+        this.customData.putAll(customData);
     }
 
     public Brick getBrick() {

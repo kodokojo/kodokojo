@@ -177,6 +177,7 @@ public class DefaultProjectManager implements ProjectManager {
                         IteratorUtils.toList(projectConfiguration.getAdmins()),
                         IteratorUtils.toList(projectConfiguration.getUsers())
                 );
+                brickConfigurerData.getContext().putAll(brickConfiguration.getCustomData());
                 try {
                     if (LOGGER.isDebugEnabled()) {
                         LOGGER.debug("Try to add users {} on entrypoint {}.", org.apache.commons.lang.StringUtils.join(usersToAdd, ","), entrypoint);

@@ -30,6 +30,7 @@ import io.kodokojo.service.BrickManager;
 import io.kodokojo.service.ConfigurationStore;
 import io.kodokojo.service.marathon.MarathonBrickManager;
 import io.kodokojo.service.marathon.MarathonConfigurationStore;
+import io.kodokojo.service.store.ProjectStore;
 
 public class MarathonModule extends AbstractModule {
     @Override
@@ -45,9 +46,9 @@ public class MarathonModule extends AbstractModule {
 
     @Provides
     @Singleton
-    BrickManager provideBrickManager(MarathonConfig marathonConfig, BrickConfigurerProvider brickConfigurerProvider, ApplicationConfig applicationConfig, BrickUrlFactory brickUrlFactory) {
+    BrickManager provideBrickManager(MarathonConfig marathonConfig, BrickConfigurerProvider brickConfigurerProvider, ApplicationConfig applicationConfig, ProjectStore projectStore, BrickUrlFactory brickUrlFactory) {
         MarathonServiceLocator marathonServiceLocator = new MarathonServiceLocator(marathonConfig.url());
-        return new MarathonBrickManager(marathonConfig.url(), marathonServiceLocator, brickConfigurerProvider, applicationConfig.domain(), brickUrlFactory);
+        return new MarathonBrickManager(marathonConfig.url(), marathonServiceLocator, brickConfigurerProvider, projectStore, applicationConfig.domain(), brickUrlFactory);
     }
 
     @Provides

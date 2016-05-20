@@ -19,6 +19,7 @@ package io.kodokojo.bdd.feature;
 
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.jgiven.junit.ScenarioTest;
+import io.kodokojo.bdd.Marathon;
 import io.kodokojo.bdd.stage.cluster.ClusterApplicationGiven;
 import io.kodokojo.bdd.stage.cluster.ClusterApplicationThen;
 import io.kodokojo.bdd.stage.cluster.ClusterApplicationWhen;
@@ -30,6 +31,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(DataProviderRunner.class)
+@Marathon
 public class ProjectManagementIntTest extends ScenarioTest<ClusterApplicationGiven<?>, ClusterApplicationWhen<?>, ClusterApplicationThen<?>> {
 
     @Rule

@@ -21,6 +21,7 @@ package io.kodokojo.brick;
 
 import io.kodokojo.model.User;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +42,7 @@ public class BrickConfigurerData {
 
     private final  String stackName;
 
-    private final Map<String, Object> context;
+    private final Map<String, Serializable> context;
 
     public BrickConfigurerData(String projectName, String stackName, String entrypoint, String domaine, List<User> admins, List<User> users) {
         if (isBlank(projectName)) {
@@ -101,14 +102,14 @@ public class BrickConfigurerData {
         return users;
     }
 
-    public void addInContext(String key, Object data) {
+    public void addInContext(String key, Serializable data) {
         if (isBlank(key)) {
             throw new IllegalArgumentException("key must be defined.");
         }
         context.put(key, data);
     }
 
-    public Map<String, Object> getContext() {
+    public Map<String, Serializable> getContext() {
         return context;
     }
 

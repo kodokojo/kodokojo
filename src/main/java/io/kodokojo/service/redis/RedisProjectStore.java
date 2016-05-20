@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 
+import java.io.Serializable;
 import java.security.Key;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -110,7 +111,32 @@ public class RedisProjectStore  extends  AbstractRedisStore implements ProjectSt
         writeProjectConfiguration(projectConfiguration);
     }
 
+    @Override
+    public void setContextToBrickConfiguration(String projectConfigurationId, BrickConfiguration brickConfiguration, Map<String, Serializable> context) {
+        if (isBlank(projectConfigurationId)) {
+            throw new IllegalArgumentException("projectConfigurationId must be defined.");
+        }
+        if (brickConfiguration == null) {
+            throw new IllegalArgumentException("brickConfiguration must be defined.");
+        }
+        if (context == null) {
+            throw new IllegalArgumentException("context must be defined.");
+        }
+        ProjectConfiguration projectConfiguration = getProjectConfigurationById(projectConfigurationId);
+        BrickConfiguration current = null;
+        Iterator<BrickConfiguration> defaultBrickConfigurations = projectConfiguration.getDefaultBrickConfigurations();
+        while(defaultBrickConfigurations.hasNext() && current == null) {
+            BrickConfiguration tmp = defaultBrickConfigurations.next();
+            if (brickConfiguration.getName().equals(tmp.getName()) && brickConfiguration.getType() == tmp.getType()) {
+                current = tmp;
+            }
+        }
+        if(current != null) {
+            current.setCustomData(context);
+            updateProjectConfiguration(projectConfiguration);
+        }
 
+    }
 
     @Override
     public ProjectConfiguration getProjectConfigurationById(String identifier) {
