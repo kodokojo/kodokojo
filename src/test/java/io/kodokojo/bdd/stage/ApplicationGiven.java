@@ -42,6 +42,7 @@ import io.kodokojo.config.ApplicationConfig;
 import io.kodokojo.entrypoint.RestEntryPoint;
 import io.kodokojo.entrypoint.UserAuthenticator;
 import io.kodokojo.service.ProjectManager;
+import io.kodokojo.service.SmtpEmailSender;
 import io.kodokojo.service.redis.RedisEntityStore;
 import io.kodokojo.service.redis.RedisProjectStore;
 import io.kodokojo.service.redis.RedisUserStore;

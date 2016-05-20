@@ -25,6 +25,7 @@ import io.kodokojo.brick.DefaultBrickFactory;
 import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.entrypoint.dto.*;
 import io.kodokojo.model.*;
+import io.kodokojo.service.EmailSender;
 import io.kodokojo.service.ProjectManager;
 import io.kodokojo.service.store.EntityStore;
 import io.kodokojo.service.store.ProjectStore;
@@ -78,6 +79,8 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
 
     private final BrickFactory brickFactory;
 
+    private final EmailSender emailSender;
+
     private final ThreadLocal<Gson> localGson = new ThreadLocal<Gson>() {
         @Override
         protected Gson initialValue() {
@@ -88,7 +91,7 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
     private final ResponseTransformer jsonResponseTransformer;
 
     @Inject
-    public RestEntryPoint(int port, UserStore userStore, UserAuthenticator<SimpleCredential> userAuthenticator,EntityStore entityStore,  ProjectStore projectStore, ProjectManager projectManager, BrickFactory brickFactory) {
+    public RestEntryPoint(int port, UserStore userStore, UserAuthenticator<SimpleCredential> userAuthenticator,EntityStore entityStore,  ProjectStore projectStore, ProjectManager projectManager, BrickFactory brickFactory, EmailSender emailSender) {
         if (userStore == null) {
             throw new IllegalArgumentException("userStore must be defined.");
         }
@@ -114,7 +117,11 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
         this.projectStore = projectStore;
         this.projectManager = projectManager;
         this.brickFactory = brickFactory;
+        this.emailSender = emailSender;
         jsonResponseTransformer = new JsonTransformer();
+    }
+    public RestEntryPoint(int port, UserStore userStore, UserAuthenticator<SimpleCredential> userAuthenticator,EntityStore entityStore,  ProjectStore projectStore, ProjectManager projectManager, BrickFactory brickFactory) {
+        this(port, userStore, userAuthenticator, entityStore, projectStore, projectManager, brickFactory, null);
     }
 
     @Override
@@ -212,6 +219,36 @@ public class RestEntryPoint implements ApplicationLifeCycleListener {
                     RSAUtils.writeRsaPrivateKey(privateKey, sw);
                     response.header("Location", "/user/" + user.getIdentifier());
                     UserCreationDto userCreationDto = new UserCreationDto(user, sw.toString());
+
+                    if (emailSender != null) {
+                        List<String> cc = null;
+                        if (credential != null) {
+                            User userRequester = userAuthenticator.authenticate(credential);
+                            if (userRequester != null) {
+                                cc = Collections.singletonList(userRequester.getEmail());
+                            }
+                        }
+                        String content = "<h1>Welcome on Kodo Kojo</h1>\n" +
+                                "<p>You will find all information which is bind to your account '"+userCreationDto.getUsername()+"'.</p>\n" +
+                                "\n" +
+                                "<p>Password : <b>"+userCreationDto.getPassword()+"</b></p>\n" +
+                                "<p>Your SSH private key generated:\n" +
+                                "<br />\n" +
+                                userCreationDto.getPrivateKey()+ "\n"+
+                                "</p>\n" +
+                                "<p>Your SSH public key generated:\n" +
+                                "<br />\n" +
+                                userCreationDto.getSshPublicKey() +"\n" +
+                                "</p>";
+                        emailSender.send(Collections.singletonList(userCreationDto.getEmail()), null, cc, "User creation on Kodo Kojo " + userCreationDto.getName(), content, true);
+                        if (LOGGER.isDebugEnabled()) {
+                            LOGGER.debug("Mail with user data send to {}.", userCreationDto.getEmail());
+                            if (LOGGER.isTraceEnabled()) {
+                                LOGGER.trace("Email to {} content : \n {}", userCreationDto.getEmail(), content);
+                            }
+                        }
+                    }
+
                     return userCreationDto;
                 }
 
