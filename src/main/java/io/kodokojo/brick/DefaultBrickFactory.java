@@ -21,7 +21,9 @@ import io.kodokojo.model.Brick;
 import io.kodokojo.model.BrickType;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
@@ -56,5 +58,10 @@ public class DefaultBrickFactory implements BrickFactory {
             throw new IllegalArgumentException("name must be defined.");
         }
         return cache.get(name);
+    }
+
+    @Override
+    public List<Brick> listBrickAvailable() {
+        return new ArrayList<>(cache.values());
     }
 }

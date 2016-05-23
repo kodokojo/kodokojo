@@ -15,15 +15,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package io.kodokojo.brick;
+package io.kodokojo.config.module.endpoint;
 
-import io.kodokojo.model.Brick;
+import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.Multibinder;
+import io.kodokojo.endpoint.BrickEndpoint;
+import io.kodokojo.endpoint.SparkEndpoint;
+import io.kodokojo.endpoint.UserSparkEndpoint;
 
-import java.util.List;
+public class BrickEndpointModule extends AbstractModule {
 
-public interface BrickFactory {
+    @Override
+    protected void configure() {
+        Multibinder<SparkEndpoint> sparkEndpointBinder = Multibinder.newSetBinder(binder(), SparkEndpoint.class);
+        sparkEndpointBinder.addBinding().to(BrickEndpoint.class);
+    }
 
-    Brick createBrick(String name);
-
-    List<Brick> listBrickAvailable();
 }

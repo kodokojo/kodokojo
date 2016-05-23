@@ -1,25 +1,23 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package io.kodokojo.bdd.stage;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
+import com.google.gson.*;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
@@ -27,8 +25,10 @@ import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.ExpectedScenarioState;
 import com.tngtech.jgiven.annotation.ProvidedScenarioState;
 import com.tngtech.jgiven.annotation.Quoted;
+import io.kodokojo.endpoint.dto.BrickConfigDto;
 import io.kodokojo.endpoint.dto.WebSocketMessage;
 import io.kodokojo.endpoint.dto.WebSocketMessageGsonAdapter;
+import org.apache.commons.io.IOUtils;
 import org.glassfish.tyrus.client.ClientManager;
 import org.glassfish.tyrus.client.ClientProperties;
 import org.glassfish.tyrus.client.auth.Credentials;
@@ -38,7 +38,9 @@ import org.slf4j.LoggerFactory;
 import javax.websocket.*;
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -76,6 +78,9 @@ public class AccessRestWhen<SELF extends AccessRestWhen<?>> extends Stage<SELF> 
 
     @ProvidedScenarioState
     boolean receiveWebSocketWelcome = false;
+
+    @ProvidedScenarioState
+    List<BrickConfigDto> brickAvailable = new ArrayList<>();
 
     public SELF try_to_access_to_get_url_$(@Quoted String url) {
         return try_to_access_to_call_$_url_$("GET", url);
@@ -189,7 +194,36 @@ public class AccessRestWhen<SELF extends AccessRestWhen<?>> extends Stage<SELF> 
         }
     }
 
+
+    public SELF try_to_access_to_list_of_brick_available() {
+        UserInfo currentUser = currentUsers.get(currentUserLogin);
+        OkHttpClient httpClient = new OkHttpClient();
+        Request.Builder builder = new Request.Builder().url(getBaseUrl() + "/api/v1/brick").get();
+        builder = HttpUserSupport.addBasicAuthentification(currentUser, builder);
+        Response response = null;
+
+        try {
+            response = httpClient.newCall(builder.build()).execute();
+            Gson gson = new GsonBuilder().create();
+            JsonParser parser = new JsonParser();
+            JsonArray root = (JsonArray) parser.parse(response.body().string());
+            for (JsonElement el : root) {
+                brickAvailable.add(gson.fromJson(el, BrickConfigDto.class));
+            }
+        } catch (IOException e) {
+            fail(e.getMessage());
+        } finally {
+            if (response != null) {
+                IOUtils.closeQuietly(response.body());
+            }
+        }
+
+        return self();
+    }
+
+
     private String getBaseUrl() {
         return "http://" + restEntryPointHost + ":" + restEntryPointPort;
     }
+
 }
