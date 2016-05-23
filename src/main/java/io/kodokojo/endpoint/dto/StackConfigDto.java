@@ -43,7 +43,7 @@ public class StackConfigDto {
         this.name = stackConfiguration.getName();
         this.type = stackConfiguration.getType().name();
         this.brickConfigs = new ArrayList<>(stackConfiguration.getBrickConfigurations().size());
-        stackConfiguration.getBrickConfigurations().forEach(brickConfiguration -> brickConfigs.add(new BrickConfigDto(brickConfiguration)));
+        stackConfiguration.getBrickConfigurations().forEach(brickConfiguration -> brickConfigs.add(new BrickConfigDto(brickConfiguration, brickConfiguration.getVersion())));
     }
 
     public String getName() {

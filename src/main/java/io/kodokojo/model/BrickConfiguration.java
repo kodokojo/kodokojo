@@ -19,10 +19,8 @@ package io.kodokojo.model;
 
 
 import java.io.Serializable;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
@@ -36,18 +34,21 @@ public class BrickConfiguration implements Serializable {
 
     private final String url;
 
-    private String version;
+    private final String version;
 
     private final boolean waitRunning;
 
     private Map<String, Serializable> customData;
 
-    public BrickConfiguration(Brick brick, String name, BrickType type, String url, boolean waitRunning) {
+    public BrickConfiguration(Brick brick, String name, BrickType type, String url, String version, boolean waitRunning) {
         if (isBlank(name)) {
             throw new IllegalArgumentException("name must be defined.");
         }
         if (type == null) {
             throw new IllegalArgumentException("type must be defined.");
+        }
+        if (isBlank(version)) {
+            throw new IllegalArgumentException("version must be defined.");
         }
         if (brick == null) {
             if (isBlank(url)) {
@@ -58,29 +59,24 @@ public class BrickConfiguration implements Serializable {
         this.name = name;
         this.type = type;
         this.url = url;
+        this.version = version;
         this.waitRunning = waitRunning;
         this.customData = new HashMap<>();
     }
-    public BrickConfiguration(Brick brick, String name, BrickType type, String url) {
-        this(brick, name, type, url, true);
+    public BrickConfiguration(Brick brick, String name, BrickType type, String url, String version) {
+        this(brick, name, type, url, version, true);
     }
 
-    public BrickConfiguration(String name, BrickType type, String url) {
-        this(null, name, type, url);
+    public BrickConfiguration(String name, BrickType type, String url, String version) {
+        this(null, name, type, url, version);
     }
 
-    public BrickConfiguration(Brick brick, boolean waitRunning) {
-        this(brick, brick.getName(), brick.getType(), null, waitRunning);
+    public BrickConfiguration(Brick brick, boolean waitRunning, String version) {
+        this(brick, brick.getName(), brick.getType(), null, version, waitRunning);
     }
     public BrickConfiguration(Brick brick) {
-        this(brick, brick.getName(), brick.getType(), null);
+        this(brick, brick.getName(), brick.getType(), null, brick.getVersion());
     }
-
-
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
 
     public String getVersion() {
         return version;

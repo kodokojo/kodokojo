@@ -158,7 +158,10 @@ public class RedisProjectStore  extends  AbstractRedisStore implements ProjectSt
     private void fillStackConfigurationBrick(StackConfiguration stackConfiguration) {
         List<BrickConfiguration> brickConfigurationUpdated = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(stackConfiguration.getBrickConfigurations())) {
-            brickConfigurationUpdated.addAll(stackConfiguration.getBrickConfigurations().stream().map(brickConfiguration -> new BrickConfiguration(brickFactory.createBrick(brickConfiguration.getName()), brickConfiguration.getName(), brickConfiguration.getType(), brickConfiguration.getUrl(), brickConfiguration.isWaitRunning())).collect(Collectors.toList()));
+            brickConfigurationUpdated.addAll(stackConfiguration.getBrickConfigurations().stream().map(brickConfiguration -> {
+                Brick brick = brickFactory.createBrick(brickConfiguration.getName());
+                return new BrickConfiguration(brick, brickConfiguration.getName(), brickConfiguration.getType(), brickConfiguration.getUrl(), brick.getVersion(), brickConfiguration.isWaitRunning());
+            }).collect(Collectors.toList()));
         }
         stackConfiguration.getBrickConfigurations().clear();
         stackConfiguration.getBrickConfigurations().addAll(brickConfigurationUpdated);

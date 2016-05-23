@@ -28,15 +28,21 @@ public class Brick implements Serializable {
 
     private final BrickType type;
 
-    public Brick(String name, BrickType type) {
+    private final String version;
+
+    public Brick(String name, BrickType type, String version) {
         if (isBlank(name)) {
             throw new IllegalArgumentException("name must be defined.");
         }
         if (type == null) {
             throw new IllegalArgumentException("type must be defined.");
         }
+        if (isBlank(version)) {
+            throw new IllegalArgumentException("version must be defined.");
+        }
         this.name = name;
         this.type = type;
+        this.version = version;
     }
 
     public String getName() {
@@ -47,11 +53,17 @@ public class Brick implements Serializable {
         return type;
     }
 
+    public String getVersion() {
+        return version;
+    }
+
     @Override
     public String toString() {
         return "Brick{" +
                 "name='" + name + '\'' +
                 ", type=" + type +
+                ", version='" + version + '\'' +
                 '}';
     }
+
 }

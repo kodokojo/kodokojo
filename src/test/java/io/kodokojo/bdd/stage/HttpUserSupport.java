@@ -276,6 +276,7 @@ public class HttpUserSupport {
     public void addUserToProjectConfiguration(String projectConfigurationId, UserInfo currentUser, Iterator<UserInfo> userToAdds) {
         String json = generateUserIdJsonArray(userToAdds);
         Request.Builder builder = createChangeUserOnProjectConfiguration(getApiBaseUrl(), projectConfigurationId, json, UserChangeProjectConfig.ADD);
+
         Request request = addBasicAuthentification(currentUser, builder).build();
         executeRequestWithExpectedStatus(request, 200);
     }
