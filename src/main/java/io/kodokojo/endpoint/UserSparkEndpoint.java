@@ -29,7 +29,7 @@ import io.kodokojo.service.store.EntityStore;
 import io.kodokojo.service.store.ProjectStore;
 import io.kodokojo.service.store.UserStore;
 import io.kodokojo.service.authentification.SimpleCredential;
-import io.kodokojo.service.authentification.UserCreationDto;
+import io.kodokojo.endpoint.dto.UserCreationDto;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
