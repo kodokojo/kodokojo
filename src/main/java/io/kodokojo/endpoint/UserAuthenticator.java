@@ -20,7 +20,7 @@ package io.kodokojo.endpoint;
 
 
 import io.kodokojo.model.User;
-import io.kodokojo.service.user.Credential;
+import io.kodokojo.service.authentification.Credential;
 
 /**
  * Extract {@link User} from a {@link Credential}.

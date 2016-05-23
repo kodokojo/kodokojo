@@ -1,17 +1,17 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -56,7 +56,6 @@ import io.kodokojo.endpoint.ProjectSparkEndpoint;
 import io.kodokojo.endpoint.SparkEndpoint;
 import io.kodokojo.endpoint.UserAuthenticator;
 import io.kodokojo.service.*;
-import io.kodokojo.service.dns.DnsManager;
 import io.kodokojo.service.dns.NoOpDnsManager;
 import io.kodokojo.service.lifecycle.ApplicationLifeCycleManager;
 import io.kodokojo.service.marathon.MarathonBrickManager;
@@ -65,8 +64,8 @@ import io.kodokojo.service.redis.RedisUserStore;
 import io.kodokojo.service.store.EntityStore;
 import io.kodokojo.service.store.ProjectStore;
 import io.kodokojo.service.store.UserStore;
-import io.kodokojo.service.user.SimpleCredential;
-import io.kodokojo.service.user.SimpleUserAuthenticator;
+import io.kodokojo.service.authentification.SimpleCredential;
+import io.kodokojo.service.authentification.SimpleUserAuthenticator;
 import io.kodokojo.test.utils.TestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;

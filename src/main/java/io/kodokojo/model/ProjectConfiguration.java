@@ -25,7 +25,7 @@ import java.util.*;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
-public class ProjectConfiguration implements Configuration, Cloneable, Serializable {
+public class ProjectConfiguration implements Cloneable, Serializable {
 
     private final String identifier;
 
@@ -38,10 +38,6 @@ public class ProjectConfiguration implements Configuration, Cloneable, Serializa
     private final Set<StackConfiguration> stackConfigurations;
 
     private final List<User> users;
-
-    private  String version;
-
-    private  Date versionDate;
 
     public ProjectConfiguration(String entityIdentifier, String identifier, String name, List<User> admins, Set<StackConfiguration> stackConfigurations, List<User> users) {
         if (isBlank(entityIdentifier)) {
@@ -96,26 +92,6 @@ public class ProjectConfiguration implements Configuration, Cloneable, Serializa
     public void setUsers(List<User> users) {
         this.users.clear();
         this.users.addAll(users);
-    }
-
-    @Override
-    public String getVersion() {
-        return version;
-    }
-
-    @Override
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
-    @Override
-    public Date getVersionDate() {
-        return versionDate;
-    }
-
-    @Override
-    public void setVersionDate(Date versionDate) {
-        this.versionDate = versionDate;
     }
 
     public StackConfiguration getDefaultStackConfiguration() {

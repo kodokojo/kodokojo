@@ -29,7 +29,7 @@ import java.util.Set;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
-public class StackConfiguration implements Configuration, Serializable {
+public class StackConfiguration implements Serializable {
 
     private final String name;
 
@@ -40,10 +40,6 @@ public class StackConfiguration implements Configuration, Serializable {
     private final String loadBalancerIp;
 
     private final int scmSshPort;
-
-    private String version;
-
-    private Date versionDate;
 
     public StackConfiguration(String name, StackType type, Set<BrickConfiguration> brickConfigurations, String loadBalancerIp, int scmSshPort) {
         if (isBlank(name)) {
@@ -56,9 +52,6 @@ public class StackConfiguration implements Configuration, Serializable {
             throw new IllegalArgumentException("brickConfigurations must be defined.");
         }
 
-        for (BrickType expectedType : BrickType.values()) {
-     //       checkIfConfigurationExist(expectedType, brickConfigurations);
-        }
         this.name = name;
         this.type = type;
         this.brickConfigurations = brickConfigurations;
@@ -84,26 +77,6 @@ public class StackConfiguration implements Configuration, Serializable {
 
     public int getScmSshPort() {
         return scmSshPort;
-    }
-
-    @Override
-    public String getVersion() {
-        return version;
-    }
-
-    @Override
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
-    @Override
-    public Date getVersionDate() {
-        return versionDate;
-    }
-
-    @Override
-    public void setVersionDate(Date versionDate) {
-        this.versionDate = versionDate;
     }
 
 
@@ -137,23 +110,5 @@ public class StackConfiguration implements Configuration, Serializable {
                 ", loadBalancerIp=" + loadBalancerIp +
                 ", scmSshPort=" + scmSshPort +
                 '}';
-    }
-
-    private void checkIfConfigurationExist(BrickType expectedBrick, Set<BrickConfiguration> brickConfigurations) {
-        assert expectedBrick != null : "expectedBrick must be defined";
-        assert brickConfigurations != null : "brickConfigurations must be defined";
-
-        if (expectedBrick.isRequiered()) {
-            Iterator<BrickConfiguration> iterator = brickConfigurations.iterator();
-            boolean found = false;
-            while (!found && iterator.hasNext()) {
-                BrickConfiguration brickConfiguration = iterator.next();
-                found = brickConfiguration != null && expectedBrick.equals(brickConfiguration.getType());
-            }
-
-            if (!found) {
-                throw new IllegalArgumentException("brickConfigurations " + StringUtils.join(brickConfigurations, ",") + " not contain " + expectedBrick);
-            }
-        }
     }
 }

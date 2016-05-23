@@ -26,7 +26,7 @@ import java.util.Set;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
-public class BrickConfiguration implements Configuration, Serializable {
+public class BrickConfiguration implements Serializable {
 
     private final Brick brick;
 
@@ -37,8 +37,6 @@ public class BrickConfiguration implements Configuration, Serializable {
     private final String url;
 
     private String version;
-
-    private Date versionDate;
 
     private final boolean waitRunning;
 
@@ -78,24 +76,14 @@ public class BrickConfiguration implements Configuration, Serializable {
         this(brick, brick.getName(), brick.getType(), null);
     }
 
-    @Override
-    public String getVersion() {
-        return version;
-    }
 
-    @Override
     public void setVersion(String version) {
         this.version = version;
     }
 
-    @Override
-    public Date getVersionDate() {
-        return versionDate;
-    }
 
-    @Override
-    public void setVersionDate(Date versionDate) {
-        this.versionDate = versionDate;
+    public String getVersion() {
+        return version;
     }
 
     public Map<String, Serializable> getCustomData() {
@@ -141,7 +129,7 @@ public class BrickConfiguration implements Configuration, Serializable {
         if (type != that.type) return false;
         if (url != null ? !url.equals(that.url) : that.url != null) return false;
         if (version != null ? !version.equals(that.version) : that.version != null) return false;
-        return versionDate != null ? versionDate.equals(that.versionDate) : that.versionDate == null;
+        return true;
 
     }
 
@@ -152,7 +140,6 @@ public class BrickConfiguration implements Configuration, Serializable {
         result = 31 * result + type.hashCode();
         result = 31 * result + (url != null ? url.hashCode() : 0);
         result = 31 * result + (version != null ? version.hashCode() : 0);
-        result = 31 * result + (versionDate != null ? versionDate.hashCode() : 0);
         return result;
     }
 
@@ -165,7 +152,6 @@ public class BrickConfiguration implements Configuration, Serializable {
                 ", url='" + url + '\'' +
                 ", waitRunning='" + waitRunning + '\'' +
                 ", version='" + version + '\'' +
-                ", versionDate=" + versionDate +
                 '}';
     }
 }

@@ -29,7 +29,7 @@ import io.kodokojo.service.lifecycle.ApplicationLifeCycleManager;
 import io.kodokojo.service.*;
 import io.kodokojo.service.dns.DnsManager;
 import io.kodokojo.service.store.ProjectStore;
-import io.kodokojo.service.user.SimpleCredential;
+import io.kodokojo.service.authentification.SimpleCredential;
 
 public class ServiceModule extends AbstractModule {
 

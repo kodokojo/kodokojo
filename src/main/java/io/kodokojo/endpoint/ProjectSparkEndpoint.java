@@ -30,7 +30,7 @@ import io.kodokojo.model.*;
 import io.kodokojo.service.ProjectManager;
 import io.kodokojo.service.store.ProjectStore;
 import io.kodokojo.service.store.UserStore;
-import io.kodokojo.service.user.SimpleCredential;
+import io.kodokojo.service.authentification.SimpleCredential;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang.StringUtils;
@@ -256,7 +256,7 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
 
     private Set<StackConfiguration> createDefaultStackConfiguration(String projectName) {
         Set<BrickConfiguration> bricksConfigurations = new HashSet<>();
-        bricksConfigurations.add(new BrickConfiguration(brickFactory.createBrick(DefaultBrickFactory.HAPROXY), false));
+        //bricksConfigurations.add(new BrickConfiguration(brickFactory.createBrick(DefaultBrickFactory.HAPROXY), false));
         bricksConfigurations.add(new BrickConfiguration(brickFactory.createBrick(DefaultBrickFactory.JENKINS)));
         bricksConfigurations.add(new BrickConfiguration(brickFactory.createBrick(DefaultBrickFactory.NEXUS)));
         bricksConfigurations.add(new BrickConfiguration(brickFactory.createBrick(DefaultBrickFactory.GITLAB)));

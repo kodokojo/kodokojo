@@ -15,12 +15,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package io.kodokojo.docker;
+package io.kodokojo.service.authentification;
 
-public class MinimalLauncher {
+public interface Credential {
 
-    public static void main(String[] args) {
-        //HttpEndpoint restEntrypoint = new HttpEndpoint(80, new RedisUserStore())
-    }
+    String identity();
 
 }

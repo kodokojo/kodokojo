@@ -26,7 +26,7 @@ import io.kodokojo.model.UserService;
 /**
  * Allow to manage {@link User} and {@link UserService}.
  */
-public interface UserStore {
+public interface UserStore extends UserFetcher {
 
     String generateId();
 
@@ -35,12 +35,6 @@ public interface UserStore {
     boolean addUser(User user);
 
     boolean addUserService(UserService userService);
-
-    User getUserByUsername(String username);
-
-    User getUserByIdentifier(String identifier);
-
-    UserService getUserServiceByName(String name);
 
     boolean userIsAdminOfProjectConfiguration(String username, ProjectConfiguration projectConfiguration);
 }

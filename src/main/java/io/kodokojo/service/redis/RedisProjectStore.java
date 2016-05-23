@@ -262,9 +262,8 @@ public class RedisProjectStore  extends  AbstractRedisStore implements ProjectSt
     private String writeProjectConfiguration(ProjectConfiguration projectConfiguration) {
         try (Jedis jedis = pool.getResource()) {
             String identifier = projectConfiguration.getIdentifier();
-            Date versionDate = new Date();
+
             ProjectConfiguration toInsert = new ProjectConfiguration(projectConfiguration.getEntityIdentifier(), identifier, projectConfiguration.getName(), IteratorUtils.toList(projectConfiguration.getAdmins()), projectConfiguration.getStackConfigurations(), IteratorUtils.toList(projectConfiguration.getUsers()));
-            toInsert.setVersionDate(versionDate);
             byte[] encryptedObject = RSAUtils.encryptObjectWithAES(key, toInsert);
             jedis.set(RedisUtils.aggregateKey(PROJECTCONFIGURATION_PREFIX, identifier), encryptedObject);
             writeUserToProjectConfigurationId(jedis, toInsert.getAdmins(), toInsert.getIdentifier());

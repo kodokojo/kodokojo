@@ -25,7 +25,7 @@ import io.kodokojo.endpoint.HttpEndpoint;
 import io.kodokojo.endpoint.SparkEndpoint;
 import io.kodokojo.endpoint.UserAuthenticator;
 import io.kodokojo.service.lifecycle.ApplicationLifeCycleManager;
-import io.kodokojo.service.user.SimpleCredential;
+import io.kodokojo.service.authentification.SimpleCredential;
 
 import java.util.Set;
 

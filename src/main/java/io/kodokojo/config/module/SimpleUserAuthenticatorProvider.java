@@ -19,8 +19,8 @@ package io.kodokojo.config.module;
 
 import com.google.inject.Provider;
 import io.kodokojo.service.store.UserStore;
-import io.kodokojo.service.user.SimpleCredential;
-import io.kodokojo.service.user.SimpleUserAuthenticator;
+import io.kodokojo.service.authentification.SimpleCredential;
+import io.kodokojo.service.authentification.SimpleUserAuthenticator;
 import io.kodokojo.endpoint.UserAuthenticator;
 
 import javax.inject.Inject;

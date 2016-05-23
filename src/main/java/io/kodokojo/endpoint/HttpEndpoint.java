@@ -20,7 +20,7 @@ package io.kodokojo.endpoint;
 
 import io.kodokojo.model.User;
 import io.kodokojo.service.lifecycle.ApplicationLifeCycleListener;
-import io.kodokojo.service.user.SimpleCredential;
+import io.kodokojo.service.authentification.SimpleCredential;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
