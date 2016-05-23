@@ -135,7 +135,7 @@ public class RedisProjectStoreIntTest {
     private ProjectConfiguration createProjectConfiguration(List<User> users) {
         Set<StackConfiguration> stackConfigurations = new HashSet<>();
         Set<BrickConfiguration> brickConfigurations = new HashSet<>();
-        brickConfigurations.add(new BrickConfiguration(new Brick("jenkins", BrickType.CI)));
+        brickConfigurations.add(new BrickConfiguration(new Brick("jenkins", BrickType.CI, "1.651")));
         stackConfigurations.add(new StackConfiguration("build-A", StackType.BUILD, brickConfigurations, "127.0.0.1", 10022));
         return new ProjectConfiguration("123456","acme-a", users, stackConfigurations,users);
     }
@@ -145,7 +145,7 @@ public class RedisProjectStoreIntTest {
         SSLKeyPair sslKeyPair = SSLUtils.createSelfSignedSSLKeyPair("Acme", (RSAPrivateKey) keyPair.getPrivate(), (RSAPublicKey) keyPair.getPublic());
         Set<Stack> stacks = new HashSet<>();
         Set<BrickState> brickStates = new HashSet<>();
-        brickStates.add(new BrickState("123456", "build-A", BrickType.CI.name(), "jenkins", BrickState.State.RUNNING));
+        brickStates.add(new BrickState("123456", "build-A", BrickType.CI.name(), "jenkins", BrickState.State.RUNNING, "1.651"));
         stacks.add(new Stack("build-A", StackType.BUILD, brickStates));
         return new Project("123456", "Acme", sslKeyPair, new Date(), stacks);
     }

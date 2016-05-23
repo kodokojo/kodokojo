@@ -21,11 +21,21 @@ package io.kodokojo.bdd.stage;
 
 import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.ExpectedScenarioState;
+import com.tngtech.jgiven.annotation.ProvidedScenarioState;
+import io.kodokojo.endpoint.dto.BrickConfigDto;
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 public class AccessRestThen<SELF extends AccessRestThen<?>> extends Stage<SELF> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AccessRestThen.class);
 
     @ExpectedScenarioState
     int responseHttpStatusCode;
@@ -35,6 +45,9 @@ public class AccessRestThen<SELF extends AccessRestThen<?>> extends Stage<SELF> 
 
     @ExpectedScenarioState
     boolean receiveWebSocketWelcome;
+
+    @ExpectedScenarioState
+    List<BrickConfigDto> brickAvailable = new ArrayList<>();
 
 
     public SELF it_should_return_status_$(int expectedHttpStatus) {
@@ -49,6 +62,12 @@ public class AccessRestThen<SELF extends AccessRestThen<?>> extends Stage<SELF> 
 
     public SELF it_NOT_receive_a_welcome_message() {
         assertThat(receiveWebSocketWelcome).isFalse();
+        return self();
+    }
+
+    public SELF it_receive_a_valide_list_of_available_brick() {
+        assertThat(brickAvailable).isNotEmpty();
+        LOGGER.debug("Available brick are : {}", StringUtils.join(brickAvailable, ","));
         return self();
     }
 }

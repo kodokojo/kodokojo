@@ -165,7 +165,7 @@ public class ClusterApplicationWhen<SELF extends ClusterApplicationWhen<?>> exte
 
         Brick brick = new DefaultBrickFactory().createBrick(brickName);
         String brickType = brick.getType().name();
-        BrickConfigDto brickConfig = new BrickConfigDto(brickName, brickType);
+        BrickConfigDto brickConfig = new BrickConfigDto(brickName, brickType, brick.getVersion());
         StackConfigDto stackConfig = new StackConfigDto("build-A", StackType.BUILD.name(), Collections.singletonList(brickConfig));
         String projectConfigurationId = httpUserSupport.createProjectConfiguration(projectName, stackConfig, currentUser);
         try {

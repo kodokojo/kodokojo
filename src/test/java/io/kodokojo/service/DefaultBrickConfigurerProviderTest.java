@@ -42,7 +42,7 @@ public class DefaultBrickConfigurerProviderTest {
 
     @Test
     public void unexpected_brick_type() {
-        BrickConfigurer unknow = brickConfigurerProvider.provideFromBrick(new Brick("unknow", BrickType.ALTERTING));
+        BrickConfigurer unknow = brickConfigurerProvider.provideFromBrick(new Brick("unknow", BrickType.ALTERTING, "1.0"));
         assertThat(unknow).isNull();
     }
 

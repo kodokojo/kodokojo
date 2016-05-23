@@ -40,6 +40,7 @@ import io.kodokojo.commons.utils.properties.provider.*;
 import io.kodokojo.config.ApplicationConfig;
 import io.kodokojo.config.EmailConfig;
 import io.kodokojo.config.module.EmailSenderModule;
+import io.kodokojo.config.module.endpoint.BrickEndpointModule;
 import io.kodokojo.config.module.endpoint.ProjectEndpointModule;
 import io.kodokojo.config.module.endpoint.UserEndpointModule;
 import io.kodokojo.endpoint.HttpEndpoint;
@@ -191,7 +192,7 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
             entityStore = new RedisEntityStore(aesKey, redisHost, redisPort);
             UserAuthenticator<SimpleCredential> userAuthenticator = new SimpleUserAuthenticator(userStore);
             projectManager = mock(ProjectManager.class);
-            Launcher.INJECTOR = Guice.createInjector(new UserEndpointModule(), new ProjectEndpointModule(), new EmailSenderModule(), new AbstractModule() {
+            Launcher.INJECTOR = Guice.createInjector(new UserEndpointModule(), new ProjectEndpointModule(), new BrickEndpointModule(), new EmailSenderModule(), new AbstractModule() {
                 @Override
                 protected void configure() {
                     bind(UserStore.class).toInstance(userStore);

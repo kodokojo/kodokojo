@@ -18,9 +18,7 @@
 package io.kodokojo.brick;
 
 import io.kodokojo.model.*;
-import org.assertj.core.api.Assertions;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -37,7 +35,7 @@ public class DefaultBrickUrlFactoryTest {
 
         when(projectConfiguration.getName()).thenReturn("ACME");
         when(brickConfiguration.getType()).thenReturn(BrickType.CI);
-        when(brickConfiguration.getBrick()).thenReturn(new Brick("jenkins", BrickType.CI));
+        when(brickConfiguration.getBrick()).thenReturn(new Brick("jenkins", BrickType.CI, "1.651"));
 
         String forgedUrl = brickUrlFactory.forgeUrl(projectConfiguration, "build-A", brickConfiguration);
         assertThat(forgedUrl).isEqualTo("jenkins-acme.kodokojo.dev");
@@ -59,7 +57,7 @@ public class DefaultBrickUrlFactoryTest {
 
         when(projectConfiguration.getName()).thenReturn("acme");
         when(brickConfiguration.getType()).thenReturn(BrickType.CI);
-        when(brickConfiguration.getBrick()).thenReturn(new Brick("jenkins", BrickType.CI));
+        when(brickConfiguration.getBrick()).thenReturn(new Brick("jenkins", BrickType.CI, "1.651"));
 
         String forgedUrl = brickUrlFactory.forgeUrl(projectConfiguration, "build-A", brickConfiguration);
         assertThat(forgedUrl).isEqualTo("jenkins-acme.kodokojo.dev");

@@ -99,7 +99,7 @@ public class BrickConfigurationStarterActorTest {
 
 
             ActorRef ref = system.actorOf(props);
-            BrickStartContext context = createBrickStartContext(new BrickConfiguration(new Brick("test", BrickType.CI)));
+            BrickStartContext context = createBrickStartContext(new BrickConfiguration(new Brick("test", BrickType.CI, "1.0")));
 
             ref.tell(context, getRef());
             new AwaitAssert(duration("5 second")) {
@@ -137,7 +137,7 @@ public class BrickConfigurationStarterActorTest {
             final Props props = Props.create(BrickConfigurationStarterActor.class, brickManager, configurationStore, brickUrlFactory, probe.getRef());
 
             ActorRef ref = system.actorOf(props);
-            BrickStartContext context = createBrickStartContext(new BrickConfiguration(new Brick("test", BrickType.CI)));
+            BrickStartContext context = createBrickStartContext(new BrickConfiguration(new Brick("test", BrickType.CI, "1.0")));
 
             ref.tell(context, getRef());
             new AwaitAssert(duration("10 second")) {

@@ -32,21 +32,23 @@ public class BrickState implements Serializable {
         STOPPED
     }
 
-    public final String projectConfigurationIdentifier;
+    private final String projectConfigurationIdentifier;
 
-    public final String brickType;
+    private final String brickType;
 
-    public final String stackName;
+    private final String stackName;
 
-    public final String brickName;
+    private final String brickName;
 
-    public final State state;
+    private final State state;
 
-    public final String url;
+    private final String url;
 
-    public final String message;
+    private final String message;
 
-    public BrickState(String projectConfigurationIdentifier, String stackName, String brickType, String brickName, State state, String url, String message) {
+    private final String version;
+
+    public BrickState(String projectConfigurationIdentifier, String stackName, String brickType, String brickName, State state, String url, String message, String version) {
         if (isBlank(projectConfigurationIdentifier)) {
             throw new IllegalArgumentException("projectConfigurationIdentifier must be defined.");
         }
@@ -62,6 +64,9 @@ public class BrickState implements Serializable {
         if (state == null) {
             throw new IllegalArgumentException("state must be defined.");
         }
+        if (isBlank(version)) {
+            throw new IllegalArgumentException("version must be defined.");
+        }
         this.projectConfigurationIdentifier = projectConfigurationIdentifier;
         this.brickType = brickType;
         this.stackName = stackName;
@@ -69,14 +74,15 @@ public class BrickState implements Serializable {
         this.state = state;
         this.url = url;
         this.message = message;
+        this.version = version;
     }
 
-    public BrickState(String projectConfigurationIdentifier, String stackName, String brickType, String brickName, State state, String url) {
-        this(projectConfigurationIdentifier,stackName,  brickType, brickName, state, url, null);
+    public BrickState(String projectConfigurationIdentifier, String stackName, String brickType, String brickName, State state, String url, String version) {
+        this(projectConfigurationIdentifier,stackName,  brickType, brickName, state, url, null, version);
     }
 
-    public BrickState(String projectConfigurationIdentifier, String stackName, String brickType, String brickName, State state) {
-        this(projectConfigurationIdentifier,stackName,  brickType, brickName, state, null, null);
+    public BrickState(String projectConfigurationIdentifier, String stackName, String brickType, String brickName, State state, String version) {
+        this(projectConfigurationIdentifier,stackName,  brickType, brickName, state, null, null, version);
     }
 
     public String getProjectConfigurationIdentifier() {
@@ -107,6 +113,10 @@ public class BrickState implements Serializable {
         return message;
     }
 
+    public String getVersion() {
+        return version;
+    }
+
     @Override
     public String toString() {
         return "BrickState{" +
@@ -114,6 +124,7 @@ public class BrickState implements Serializable {
                 ", stackName='" + stackName + '\'' +
                 ", brickType='" + brickType + '\'' +
                 ", brickName='" + brickName + '\'' +
+                ", version=" + version +
                 ", message=" + message +
                 ", url=" + url +
                 ", state=" + state +
@@ -131,6 +142,7 @@ public class BrickState implements Serializable {
         if (!brickType.equals(that.brickType)) return false;
         if (!brickName.equals(that.brickName)) return false;
         if (!stackName.equals(that.stackName)) return false;
+        if (!version.equals(that.version)) return false;
         return state == that.state;
 
     }
@@ -142,6 +154,7 @@ public class BrickState implements Serializable {
         result = 31 * result + brickName.hashCode();
         result = 31 * result + stackName.hashCode();
         result = 31 * result + state.hashCode();
+        result = 31 * result + version.hashCode();
         return result;
     }
 }

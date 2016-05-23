@@ -27,17 +27,21 @@ public class BrickConfigDto implements Serializable {
 
     private String type;
 
-    public BrickConfigDto(String name, String type) {
+    private String version;
+
+    public BrickConfigDto(String name, String type, String version) {
         this.name = name;
         this.type = type;
+        this.version = version;
     }
 
-    public BrickConfigDto(BrickConfiguration brickConfiguration) {
+    public BrickConfigDto(BrickConfiguration brickConfiguration, String version) {
         if (brickConfiguration == null) {
             throw new IllegalArgumentException("brickConfiguration must be defined.");
         }
         this.name = brickConfiguration.getName();
         this.type = brickConfiguration.getType().name();
+        this.version = version;
     }
 
     public String getName() {
@@ -56,11 +60,20 @@ public class BrickConfigDto implements Serializable {
         this.type = type;
     }
 
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
     @Override
     public String toString() {
         return "BrickConfigDto{" +
                 "name='" + name + '\'' +
                 ", type='" + type + '\'' +
+                ", version='" + version + '\'' +
                 '}';
     }
 }

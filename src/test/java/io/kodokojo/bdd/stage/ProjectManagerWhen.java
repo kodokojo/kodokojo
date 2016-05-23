@@ -21,6 +21,8 @@ import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.ExpectedScenarioState;
 import com.tngtech.jgiven.annotation.ProvidedScenarioState;
 import com.tngtech.jgiven.annotation.Quoted;
+import io.kodokojo.brick.BrickFactory;
+import io.kodokojo.brick.DefaultBrickFactory;
 import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.model.*;
 import io.kodokojo.service.DefaultProjectManager;
@@ -68,9 +70,10 @@ public class ProjectManagerWhen<SELF extends ProjectManagerWhen<?>> extends Stag
         if ("Default".equals(configurationName)) {
             Set<StackConfiguration> stackConfigurations = new HashSet<>();
             Set<BrickConfiguration> brickConfigurations = new HashSet<>();
-            brickConfigurations.add(new BrickConfiguration(new Brick("jenkins", BrickType.CI)));
-            brickConfigurations.add(new BrickConfiguration(new Brick("gitlab", BrickType.SCM)));
-            brickConfigurations.add(new BrickConfiguration(new Brick("nexus", BrickType.REPOSITORY)));
+            BrickFactory brickFactory = new DefaultBrickFactory();
+            brickConfigurations.add(new BrickConfiguration(brickFactory.createBrick("jenkins")));
+            brickConfigurations.add(new BrickConfiguration(brickFactory.createBrick("gitlab")));
+            brickConfigurations.add(new BrickConfiguration(brickFactory.createBrick("nexus")));
             StackConfiguration stackConfiguration = new StackConfiguration(stackName, stackType, brickConfigurations, bootstrapStackData.getLoadBalancerIp(), bootstrapStackData.getSshPort());
             stackConfigurations.add(stackConfiguration);
             List<User> users = Arrays.asList(user);

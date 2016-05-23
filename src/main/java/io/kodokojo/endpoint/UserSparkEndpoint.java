@@ -203,12 +203,17 @@ public class UserSparkEndpoint extends AbstractSparkEndpoint {
         get(BASE_API + "/user/:id", JSON_CONTENT_TYPE, (request, response) -> {
             SimpleCredential credential = extractCredential(request);
             String identifier = request.params(":id");
+            User requestUser = userStore.getUserByUsername(credential.getUsername());
             User user = userStore.getUserByIdentifier(identifier);
-            if (user != null && credential != null) {
-                if (!user.getUsername().equals(credential.getUsername())) {
-                    user = new User(user.getIdentifier(), user.getName(), user.getUsername(), "", "", "");
+            if (user != null) {
+                if (user.getEntityIdentifier().equals(requestUser.getEntityIdentifier())) {
+                    if (!user.getUsername().equals(credential.getUsername())) {
+                        user = new User(user.getIdentifier(), user.getName(), user.getUsername(), user.getEmail(), "", user.getSshPublicKey());
+                    }
+                    return getUserDto(user);
                 }
-                return getUserDto(user);
+                halt(403, "You aren't in same entity.");
+                return "";
             }
             halt(404);
             return "";

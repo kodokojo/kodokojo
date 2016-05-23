@@ -17,13 +17,13 @@
  */
 package io.kodokojo.brick;
 
-import io.kodokojo.brick.BrickFactory;
-import io.kodokojo.commons.utils.properties.provider.PropertyValueProvider;
 import io.kodokojo.model.Brick;
 import io.kodokojo.model.BrickType;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
@@ -45,11 +45,11 @@ public class DefaultBrickFactory implements BrickFactory {
     @Inject
     public DefaultBrickFactory() {
         cache = new HashMap<>();
-        cache.put(JENKINS, new Brick(JENKINS, BrickType.CI));
-        cache.put(GITLAB, new Brick(GITLAB, BrickType.SCM));
-        cache.put(HAPROXY, new Brick(HAPROXY, BrickType.LOADBALANCER));
-        cache.put(NEXUS, new Brick(NEXUS, BrickType.REPOSITORY));
-        cache.put(DOCKER_REGISTRY, new Brick(DOCKER_REGISTRY, BrickType.REPOSITORY));
+        cache.put(JENKINS, new Brick(JENKINS, BrickType.CI, "1.651"));
+        cache.put(GITLAB, new Brick(GITLAB, BrickType.SCM, "8.5.2-ce"));
+        cache.put(HAPROXY, new Brick(HAPROXY, BrickType.LOADBALANCER, "1.6"));
+        cache.put(NEXUS, new Brick(NEXUS, BrickType.REPOSITORY, "2.13"));
+        cache.put(DOCKER_REGISTRY, new Brick(DOCKER_REGISTRY, BrickType.REPOSITORY, "2"));
     }
 
     @Override
@@ -58,5 +58,10 @@ public class DefaultBrickFactory implements BrickFactory {
             throw new IllegalArgumentException("name must be defined.");
         }
         return cache.get(name);
+    }
+
+    @Override
+    public List<Brick> listBrickAvailable() {
+        return new ArrayList<>(cache.values());
     }
 }

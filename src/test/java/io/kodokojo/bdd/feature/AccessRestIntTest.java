@@ -68,6 +68,16 @@ public class AccessRestIntTest extends ScenarioTest<ApplicationGiven<?>, AccessR
         when().try_to_access_to_events_websocket();
         then().it_receive_a_welcome_message();
     }
+
+    @Test
+    @DockerIsRequire
+    public void user_get_brick_list_available() {
+        given().kodokojo_is_running(dockerPresentMethodRule.getDockerTestSupport())
+                .and().i_am_user_$("jpthiery", true);
+        when().try_to_access_to_list_of_brick_available();
+        then().it_receive_a_valide_list_of_available_brick();
+    }
+
     @Test
     @DockerIsRequire
     public void anonymous_user_fail_connect_to_websocket_event() {

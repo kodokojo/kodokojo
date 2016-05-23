@@ -133,7 +133,7 @@ public class BrickConfigurationStarterActor extends AbstractActor {
         BrickConfiguration brickConfiguration = context.getBrickConfiguration();
         BrickType brickType = brickConfiguration.getType();
         String brickName = brickConfiguration.getName();
-        BrickState message = new BrickState(projectConfiguration.getIdentifier(),stackConfiguration.getName(),  brickType.name(), brickName, state, url, messageStr);
+        BrickState message = new BrickState(projectConfiguration.getIdentifier(),stackConfiguration.getName(),  brickType.name(), brickName, state, url, messageStr, brickConfiguration.getVersion());
         stateListener.tell(message, self());
     }
 
