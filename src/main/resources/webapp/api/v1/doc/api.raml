@@ -32,6 +32,7 @@ schemas:
   - project: !include project.schemas.json
   - projectCreation: !include projectCreation.schemas.json
   - projectConfiguration: !include projectConfiguration.schemas.json
+  - brickConfiguration: !include brickConfiguration.schemas.json
 /user:
   post:
     description: Allow to obtain a temporary identifier which may use _post_ to create a new user.
@@ -314,6 +315,7 @@ schemas:
                           "stackName": "build-A",
                           "brickName": "jenkins",
                           "state": "RUNNING",
+                          "version": "1.651",
                           "url": "https://ci-jpascal.kodokojo.io"
                         },
                         {
@@ -322,6 +324,7 @@ schemas:
                           "stackName": "build-A",
                           "brickName": "nexus",
                           "state": "RUNNING",
+                          "version": "2",
                           "url": "https://repository-jpascal.kodokojo.io"
                         },
                         {
@@ -330,6 +333,7 @@ schemas:
                           "stackName": "build-A",
                           "brickName": "gitlab",
                           "state": "ONFAILURE",
+                          "version": "8.5.2-ce",
                           "url": "https://scm-jpascal.kodokojo.io"
                         }
                       ]
@@ -340,3 +344,40 @@ schemas:
           description: You are not the admins of the project.
         404:
           description: Project configuration not found.
+/brick:
+  get:
+    description: Get list of available bricks
+    securedBy: [basic]
+    responses:
+      200:
+        body:
+          application/json:
+            schema: brickConfiguration
+            example: |
+              [
+                {
+                  "name": "nexus",
+                  "type": "REPOSITORY",
+                  "version": "2.13"
+                },
+                {
+                  "name": "dockerregistry",
+                  "type": "REPOSITORY",
+                  "version": "2"
+                },
+                {
+                  "name": "jenkins",
+                  "type": "CI",
+                  "version": "1.651"
+                },
+                {
+                  "name": "haproxy",
+                  "type": "LOADBALANCER",
+                  "version": "1.6"
+                },
+                {
+                  "name": "gitlab",
+                  "type": "SCM",
+                  "version": "8.5.2-ce"
+                }
+              ]

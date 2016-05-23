@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://kodokojo.io/brickConfig",
+  "type": "object",
+  "properties": {
+    "name": {
+      "id": "http://kodokojo.io/brickConfig/name",
+      "type": "string"
+    },
+    "type": {
+      "id": "http://kodokojo.io/brickConfig/type",
+      "type": "string"
+    },
+    "version": {
+      "id": "http://kodokojo.io/brickConfig/version",
+      "type": "version"
+    }
+  }
+}

@@ -20,15 +20,18 @@
       "brickConfigs": [
         {
           "name":"jenkins",
-          "type":"CI"
+          "type":"CI",
+          "version": "1.651"
         },
         {
           "name":"gitlab",
-          "type":"SCM"
+          "type":"SCM",
+          "version": "8.5.2-ce"
         },
         {
           "name":"haproxy",
-          "type":"LOADBALANCER"
+          "type":"LOADBALANCER",
+          "version": "1.6"
         }
       ]
     }

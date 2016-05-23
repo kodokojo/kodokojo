@@ -81,6 +81,10 @@
                   "type": {
                     "id": "http://kodokojo.io/stackConfigs/brickConfig/type",
                     "type": "string"
+                  },
+                  "version": {
+                    "id": "http://kodokojo.io/stackConfigs/brickConfig/version",
+                    "type": "string"
                   }
                 }
               }

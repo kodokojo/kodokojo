@@ -206,7 +206,11 @@ public class AccessRestWhen<SELF extends AccessRestWhen<?>> extends Stage<SELF> 
             response = httpClient.newCall(builder.build()).execute();
             Gson gson = new GsonBuilder().create();
             JsonParser parser = new JsonParser();
-            JsonArray root = (JsonArray) parser.parse(response.body().string());
+            String payload = response.body().string();
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace(payload);
+            }
+            JsonArray root = (JsonArray) parser.parse(payload);
             for (JsonElement el : root) {
                 brickAvailable.add(gson.fromJson(el, BrickConfigDto.class));
             }

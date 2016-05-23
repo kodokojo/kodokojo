@@ -60,6 +60,10 @@
                   "message": {
                     "id": "http://kodokojo.io/brickState/message",
                     "type": "string"
+                  },
+                  "version": {
+                    "id": "http://kodokojo.io/brickState/vesion",
+                    "type": "string"
                   }
                 }
               }
