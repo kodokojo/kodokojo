@@ -219,7 +219,7 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
                 if (userStore.userIsAdminOfProjectConfiguration(credential.getUsername(), projectConfiguration)) {
                     String projectId = projectStore.getProjectIdByProjectConfigurationId(projectConfigurationId);
                     if (StringUtils.isBlank(projectId)) {
-                        projectManager.bootstrapStack(projectConfiguration.getName(), projectConfiguration.getDefaultStackConfiguration().getName(), projectConfiguration.getDefaultStackConfiguration().getType());
+                     //   projectManager.bootstrapStack(projectConfiguration.getName(), projectConfiguration.getDefaultStackConfiguration().getName(), projectConfiguration.getDefaultStackConfiguration().getType());
                         Project project = projectManager.start(projectConfiguration);
                         response.status(201);
                         return projectStore.addProject(project, projectConfigurationId);
@@ -267,3 +267,4 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
     }
 
 }
+
