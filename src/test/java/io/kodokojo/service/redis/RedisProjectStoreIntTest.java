@@ -66,7 +66,6 @@ public class RedisProjectStoreIntTest {
 
     @After
     public void tearDown() {
-        dockerTestSupport.stopAndRemoveContainer();
         redisProjectStore.stop();
     }
 /*
