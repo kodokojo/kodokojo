@@ -21,8 +21,10 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.Ports;
+import io.kodokojo.bdd.stage.StageUtils;
 import io.kodokojo.commons.DockerIsRequire;
 import io.kodokojo.commons.DockerPresentMethodRule;
+import io.kodokojo.commons.model.Service;
 import io.kodokojo.commons.utils.DockerTestSupport;
 import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.commons.utils.ssl.SSLKeyPair;
@@ -59,12 +61,9 @@ public class RedisProjectStoreIntTest {
         KeyGenerator generator = KeyGenerator.getInstance("AES");
         generator.init(128);
         SecretKey aesKey = generator.generateKey();
-        DockerClient dockerClient = dockerTestSupport.getDockerClient();
-        CreateContainerResponse createContainerResponse = dockerClient.createContainerCmd("redis:latest").withExposedPorts(ExposedPort.tcp(6379)).withPortBindings(new Ports(ExposedPort.tcp(6379), Ports.Binding(null))).exec();
-        dockerClient.startContainerCmd(createContainerResponse.getId()).exec();
-        dockerTestSupport.addContainerIdToClean(createContainerResponse.getId());
-        String redisHost = dockerTestSupport.getServerIp();
-        int redisPort = dockerTestSupport.getExposedPort(createContainerResponse.getId(), 6379);
+        Service service = StageUtils.startDockerRedis(dockerTestSupport);
+        String redisHost = service.getHost();
+        int redisPort = service.getPort();
         redisProjectStore = new RedisProjectStore(aesKey, redisHost, redisPort, new DefaultBrickFactory());
     }
 
