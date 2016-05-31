@@ -32,6 +32,7 @@ import org.junit.runner.RunWith;
 
 @RunWith(DataProviderRunner.class)
 @Marathon
+@Ignore
 public class ProjectManagementIntTest extends ScenarioTest<ClusterApplicationGiven<?>, ClusterApplicationWhen<?>, ClusterApplicationThen<?>> {
 
     @Rule

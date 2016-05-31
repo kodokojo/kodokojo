@@ -1,0 +1,33 @@
+{
+  "id": "kodokojo/kodokojo-ui",
+  "instance": 1,
+  "cpus": 0.5,
+  "mem": 512,
+  "type": "DOCKER",
+  "container": {
+    "docker": {
+      "image": "kodokojo/kodokojo-ui",
+      "network": "BRIDGE",
+      "portMappings": [
+        {
+          "containerPort": 80,
+          "hostPort": 0,
+          "protocol": "tcp",
+          "servicePort": 0
+        }
+      ]
+    }
+  },
+  "constraints": [
+    [
+      "type",
+      "LIKE",
+      "operator"
+    ]
+  ],
+  "labels": {
+    "entity": "kodokojo",
+    "component": "ui"
+  }
+}
+

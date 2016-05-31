@@ -66,6 +66,7 @@ public class RedisUserStoreIntTest {
         CreateContainerResponse createContainerResponse = dockerClient.createContainerCmd("redis:latest").withExposedPorts(ExposedPort.tcp(6379)).withPortBindings(new Ports(ExposedPort.tcp(6379), Ports.Binding(null))).exec();
         dockerClient.startContainerCmd(createContainerResponse.getId()).exec();
         dockerTestSupport.addContainerIdToClean(createContainerResponse.getId());
+        dockerTestSupport.pullImage("redis:latest");
         redisHost = dockerTestSupport.getServerIp();
         redisPort = dockerTestSupport.getExposedPort(createContainerResponse.getId(), 6379);
 

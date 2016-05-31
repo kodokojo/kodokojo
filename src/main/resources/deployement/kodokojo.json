@@ -1,0 +1,38 @@
+{
+  "id": "kodokojo/kodokojo",
+  "instance": 1,
+  "cpus": 1,
+  "mem": 1024,
+  "type": "DOCKER",
+  "container": {
+    "docker": {
+      "image": "kodokojo/kodokojo",
+      "network": "BRIDGE",
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "hostPort": 0,
+          "protocol": "tcp",
+          "servicePort": 0
+        }
+      ]
+    }
+  },
+  "env": {
+    "application_dns_domain": "kodokojo.io",
+    "marathon_url": "@@MARTHON_URL@@",
+    "lb_defaultIp": "@@LB_IP@@"
+  }
+  "constraints": [
+    [
+      "type",
+      "LIKE",
+      "operator"
+    ]
+  ],
+  "labels": {
+    "entity": "kodokojo",
+    "component": "ui"
+  }
+}
+
