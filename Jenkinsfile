@@ -1,4 +1,5 @@
 def build(projectName) {
+
     ws("${projectName}/workspace") {
         try {
             git credentialsId: 'github', url: "https://github.com/kodokojo/${projectName}.git"
