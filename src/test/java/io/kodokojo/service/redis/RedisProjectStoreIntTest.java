@@ -28,10 +28,7 @@ import io.kodokojo.commons.utils.ssl.SSLKeyPair;
 import io.kodokojo.commons.utils.ssl.SSLUtils;
 import io.kodokojo.model.*;
 import io.kodokojo.model.Stack;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -43,6 +40,7 @@ import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Ignore
 public class RedisProjectStoreIntTest {
 
     @Rule
