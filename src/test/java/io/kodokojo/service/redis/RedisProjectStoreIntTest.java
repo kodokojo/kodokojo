@@ -1,27 +1,24 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package io.kodokojo.service.redis;
 
-import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.CreateContainerResponse;
-import com.github.dockerjava.api.model.ExposedPort;
-import com.github.dockerjava.api.model.Ports;
 import io.kodokojo.bdd.stage.StageUtils;
+import io.kodokojo.brick.DefaultBrickFactory;
 import io.kodokojo.commons.DockerIsRequire;
 import io.kodokojo.commons.DockerPresentMethodRule;
 import io.kodokojo.commons.model.Service;
@@ -31,7 +28,6 @@ import io.kodokojo.commons.utils.ssl.SSLKeyPair;
 import io.kodokojo.commons.utils.ssl.SSLUtils;
 import io.kodokojo.model.*;
 import io.kodokojo.model.Stack;
-import io.kodokojo.brick.DefaultBrickFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -52,12 +48,13 @@ public class RedisProjectStoreIntTest {
     @Rule
     public DockerPresentMethodRule dockerPresentMethodRule = new DockerPresentMethodRule();
 
-    private DockerTestSupport dockerTestSupport = new DockerTestSupport();
+    private DockerTestSupport dockerTestSupport;
 
     private RedisProjectStore redisProjectStore;
 
     @Before
     public void setup() throws NoSuchAlgorithmException {
+        dockerTestSupport = dockerPresentMethodRule.getDockerTestSupport();
         KeyGenerator generator = KeyGenerator.getInstance("AES");
         generator.init(128);
         SecretKey aesKey = generator.generateKey();
@@ -130,13 +127,12 @@ public class RedisProjectStoreIntTest {
     }
 
 
-
     private ProjectConfiguration createProjectConfiguration(List<User> users) {
         Set<StackConfiguration> stackConfigurations = new HashSet<>();
         Set<BrickConfiguration> brickConfigurations = new HashSet<>();
         brickConfigurations.add(new BrickConfiguration(new Brick("jenkins", BrickType.CI, "1.651")));
         stackConfigurations.add(new StackConfiguration("build-A", StackType.BUILD, brickConfigurations, "127.0.0.1", 10022));
-        return new ProjectConfiguration("123456","acme-a", users, stackConfigurations,users);
+        return new ProjectConfiguration("123456", "acme-a", users, stackConfigurations, users);
     }
 
     Project createProject() throws NoSuchAlgorithmException {
