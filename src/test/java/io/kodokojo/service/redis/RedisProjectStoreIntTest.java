@@ -55,9 +55,8 @@ public class RedisProjectStoreIntTest {
     @Before
     public void setup() throws NoSuchAlgorithmException {
         dockerTestSupport = dockerPresentMethodRule.getDockerTestSupport();
-        KeyGenerator generator = KeyGenerator.getInstance("AES");
-        generator.init(128);
-        SecretKey aesKey = generator.generateKey();
+        KeyGenerator kg = KeyGenerator.getInstance("AES");
+        SecretKey aesKey = kg.generateKey();
         Service service = StageUtils.startDockerRedis(dockerTestSupport);
         String redisHost = service.getHost();
         int redisPort = service.getPort();
