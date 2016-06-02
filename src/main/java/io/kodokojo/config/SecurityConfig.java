@@ -25,7 +25,9 @@ public interface SecurityConfig extends PropertyConfig {
     @Key(value = "security.secretkey.path", defaultValue = "secret.key")
     String privateKeyPath();
 
-    @Key("security.ssl.rootCa.pemPath")
+    @Key("security.ssl.wildcardPemPath")
+    String wildcardPemPath();
+
     String sslRootCaPemPath();
 
     @Key("security.ssl.rootCa.ks.alias")

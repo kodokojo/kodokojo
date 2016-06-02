@@ -42,6 +42,11 @@ public class SecurityModuleTest {
             }
 
             @Override
+            public String wildcardPemPath() {
+                return null;
+            }
+
+            @Override
             public String sslRootCaPemPath() {
                 String keystorePAth = new File("").getAbsolutePath() + "/src/test/resources/keystore/mykeystore.jks";
                 System.out.println("Keystore : " + keystorePAth);
@@ -59,5 +64,7 @@ public class SecurityModuleTest {
             }
         };
     }
+
+
 
 }

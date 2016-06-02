@@ -20,23 +20,24 @@ package io.kodokojo.config.module;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.commons.utils.ssl.SSLKeyPair;
 import io.kodokojo.config.SecurityConfig;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import javax.inject.Named;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateCrtKey;
+import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPublicKeySpec;
@@ -84,25 +85,46 @@ public class SecurityModule extends AbstractModule {
         if (securityConfig == null) {
             throw new IllegalArgumentException("securityConfig must be defined.");
         }
-        try {
-            KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
-            ks.load(new FileInputStream(System.getProperty("javax.net.ssl.keyStore")), System.getProperty("javax.net.ssl.keyStorePassword", "").toCharArray());
+        if (StringUtils.isNotBlank(securityConfig.wildcardPemPath())) {
 
-            RSAPrivateCrtKey key = (RSAPrivateCrtKey) ks.getKey(securityConfig.sslRootCaKsAlias(), securityConfig.sslRootCaKsPassword().toCharArray());
-            if (key == null) {
-                return null;
+            File pemFile = new File(securityConfig.wildcardPemPath());
+            try {
+                String content = IOUtils.toString(new FileReader(pemFile));
+                String contentPrivate = RSAUtils.extractPrivateKey(content);
+                String contentPublic = RSAUtils.extractPublic(content);
+
+                RSAPrivateKey rsaPrivateKey = RSAUtils.readRsaPrivateKey(new StringReader(contentPrivate));
+                X509Certificate certificate = RSAUtils.readRsaPublicKey(new StringReader(contentPublic));
+                RSAPublicKey rsaPublicKey = (RSAPublicKey) certificate.getPublicKey();
+
+                X509Certificate[] certificates = new X509Certificate[1];
+                certificates[0] = certificate;
+                return new SSLKeyPair(rsaPrivateKey, rsaPublicKey, certificates);
+            } catch (IOException e) {
+                throw new IllegalArgumentException("Unable to read pem file " + pemFile.getAbsolutePath() + ".", e);
             }
+        } else {
+            try {
+                KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+                ks.load(new FileInputStream(System.getProperty("javax.net.ssl.keyStore")), System.getProperty("javax.net.ssl.keyStorePassword", "").toCharArray());
 
-            RSAPublicKeySpec publicKeySpec = new RSAPublicKeySpec(key.getModulus(), key.getPublicExponent());
+                RSAPrivateCrtKey key = (RSAPrivateCrtKey) ks.getKey(securityConfig.sslRootCaKsAlias(), securityConfig.sslRootCaKsPassword().toCharArray());
+                if (key == null) {
+                    return null;
+                }
 
-            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-            RSAPublicKey publicKey = (RSAPublicKey) keyFactory.generatePublic(publicKeySpec);
-            Certificate[] certificateChain = ks.getCertificateChain(securityConfig.sslRootCaKsAlias());
-            List<X509Certificate> x509Certificates = Arrays.asList(certificateChain).stream().map(c -> (X509Certificate) c).collect(Collectors.toList());
+                RSAPublicKeySpec publicKeySpec = new RSAPublicKeySpec(key.getModulus(), key.getPublicExponent());
 
-            return new SSLKeyPair(key, publicKey, x509Certificates.toArray(new X509Certificate[x509Certificates.size()]));
-        } catch (UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException | InvalidKeySpecException | CertificateException | IOException e) {
-            throw new RuntimeException("Unable to open default Keystore", e);
+                KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+                RSAPublicKey publicKey = (RSAPublicKey) keyFactory.generatePublic(publicKeySpec);
+                Certificate[] certificateChain = ks.getCertificateChain(securityConfig.sslRootCaKsAlias());
+                List<X509Certificate> x509Certificates = Arrays.asList(certificateChain).stream().map(c -> (X509Certificate) c).collect(Collectors.toList());
+
+                return new SSLKeyPair(key, publicKey, x509Certificates.toArray(new X509Certificate[x509Certificates.size()]));
+            } catch (UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException | InvalidKeySpecException | CertificateException | IOException e) {
+
+                throw new RuntimeException("Unable to open default Keystore", e);
+            }
         }
     }
 

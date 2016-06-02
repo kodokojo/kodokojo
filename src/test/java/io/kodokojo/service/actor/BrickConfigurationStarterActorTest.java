@@ -34,6 +34,7 @@ import io.kodokojo.brick.BrickAlreadyExist;
 import io.kodokojo.brick.BrickStartContext;
 import io.kodokojo.service.ConfigurationStore;
 import io.kodokojo.service.ProjectConfigurationException;
+import io.kodokojo.service.SSLCertificatProvider;
 import org.assertj.core.api.Assertions;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -60,6 +61,7 @@ public class BrickConfigurationStarterActorTest {
     private BrickManager brickManager = mock(BrickManager.class);
 
     private ConfigurationStore configurationStore = mock(ConfigurationStore.class);
+    private SSLCertificatProvider sslCertificatProvider = mock(SSLCertificatProvider.class);
 
     private BrickUrlFactory brickUrlFactory = new DefaultBrickUrlFactory("kodokojo.dev");
 
@@ -95,7 +97,7 @@ public class BrickConfigurationStarterActorTest {
 
             JavaTestKit probe = new JavaTestKit(system);
 
-            final Props props = Props.create(BrickConfigurationStarterActor.class, brickManager, configurationStore, brickUrlFactory,  probe.getRef());
+            final Props props = Props.create(BrickConfigurationStarterActor.class, brickManager, configurationStore, brickUrlFactory,sslCertificatProvider,  probe.getRef());
 
 
             ActorRef ref = system.actorOf(props);
@@ -134,7 +136,7 @@ public class BrickConfigurationStarterActorTest {
 
             JavaTestKit probe = new JavaTestKit(system);
 
-            final Props props = Props.create(BrickConfigurationStarterActor.class, brickManager, configurationStore, brickUrlFactory, probe.getRef());
+            final Props props = Props.create(BrickConfigurationStarterActor.class, brickManager, configurationStore, brickUrlFactory, sslCertificatProvider, probe.getRef());
 
             ActorRef ref = system.actorOf(props);
             BrickStartContext context = createBrickStartContext(new BrickConfiguration(new Brick("test", BrickType.CI, "1.0")));
@@ -175,7 +177,7 @@ public class BrickConfigurationStarterActorTest {
         stackConfigurations.add(stackConfiguration);
         List<User> users = Collections.singletonList(owner);
         ProjectConfiguration projectConfiguration = new ProjectConfiguration("123456","7890", "Acme", users, stackConfigurations, users);
-        return new BrickStartContext(projectConfiguration, stackConfiguration, brickConfiguration, "kodokojo.dev", sslKeyPair, "127.0.0.1");
+        return new BrickStartContext(projectConfiguration, stackConfiguration, brickConfiguration, "kodokojo.dev", "127.0.0.1");
     }
 
 

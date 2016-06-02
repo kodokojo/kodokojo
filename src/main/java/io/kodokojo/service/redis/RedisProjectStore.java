@@ -178,7 +178,7 @@ public class RedisProjectStore  extends  AbstractRedisStore implements ProjectSt
         if (projectNameIsValid(project.getName())) {
             try (Jedis jedis = pool.getResource()) {
                 String identifier = generateId();
-                Project toAdd = new Project(identifier, projectConfigurationIdentifier, project.getName(), project.getSslRootCaKey(), project.getSnapshotDate(), project.getStacks());
+                Project toAdd = new Project(identifier, projectConfigurationIdentifier, project.getName(), project.getSnapshotDate(), project.getStacks());
                 byte[] encryptedObject = RSAUtils.encryptObjectWithAES(key, toAdd);
                 jedis.set(RedisUtils.aggregateKey(PROJECT_PREFIX, identifier), encryptedObject);
                 jedis.set(RedisUtils.aggregateKey(PROJECTCONFIG_TO_PROJECT_PREFIX, projectConfigurationIdentifier), identifier.getBytes());

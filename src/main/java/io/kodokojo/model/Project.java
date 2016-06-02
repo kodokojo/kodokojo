@@ -1,24 +1,23 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package io.kodokojo.model;
 
 
-import io.kodokojo.commons.utils.ssl.SSLKeyPair;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.io.Serializable;
@@ -35,21 +34,16 @@ public class Project implements Serializable {
 
     private final String name;
 
-    private final SSLKeyPair sslRootCaKey;
-
     private final Date snapshotDate;
 
     private final Set<Stack> stacks;
 
-    public Project(String identifier, String projectConfigurationIdentifier, String name, SSLKeyPair sslRootCaKey, Date snapshotDate, Set<Stack> stacks) {
+    public Project(String identifier, String projectConfigurationIdentifier, String name, Date snapshotDate, Set<Stack> stacks) {
         if (isBlank(name)) {
             throw new IllegalArgumentException("name must be defined.");
         }
         if (isBlank(projectConfigurationIdentifier)) {
             throw new IllegalArgumentException("projectConfigurationIdentifier must be defined.");
-        }
-        if (sslRootCaKey == null) {
-            throw new IllegalArgumentException("sslRootCaKey must be defined.");
         }
         if (snapshotDate == null) {
             throw new IllegalArgumentException("snapshotDate must be defined.");
@@ -60,13 +54,12 @@ public class Project implements Serializable {
         this.identifier = identifier;
         this.projectConfigurationIdentifier = projectConfigurationIdentifier;
         this.name = name;
-        this.sslRootCaKey = sslRootCaKey;
         this.snapshotDate = snapshotDate;
         this.stacks = stacks;
     }
 
-    public Project(String projectConfigurationIdentifier, String name, SSLKeyPair sslRootCaKey, Date snapshotDate, Set<Stack> stacks) {
-        this(null, projectConfigurationIdentifier,  name, sslRootCaKey, snapshotDate, stacks);
+    public Project(String projectConfigurationIdentifier, String name, Date snapshotDate, Set<Stack> stacks) {
+        this(null, projectConfigurationIdentifier, name, snapshotDate, stacks);
     }
 
     public String getIdentifier() {
@@ -75,10 +68,6 @@ public class Project implements Serializable {
 
     public String getProjectConfigurationIdentifier() {
         return projectConfigurationIdentifier;
-    }
-
-    public SSLKeyPair getSslRootCaKey() {
-        return sslRootCaKey;
     }
 
     public String getName() {

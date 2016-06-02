@@ -434,16 +434,14 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         //BrickFactory brickFactory = injector.getInstance(BrickFactory.class);
         restEntryPointHost = "localhost";
         restEntryPointPort = TestUtils.getEphemeralPort();
-        projectManager = new DefaultProjectManager(injector.getInstance(SSLKeyPair.class),
-                domain,
+        projectManager = new DefaultProjectManager(domain,
                 injector.getInstance(ConfigurationStore.class),
                 projectStore,
                 injector.getInstance(BootstrapConfigurationProvider.class),
                 new NoOpDnsManager(),
                 new DefaultBrickConfigurerProvider(brickUrlFactory),
                 injector.getInstance(BrickConfigurationStarter.class),
-                brickUrlFactory,
-                300000000
+                brickUrlFactory
         );
         httpUserSupport = new HttpUserSupport(new OkHttpClient(), restEntryPointHost + ":" + restEntryPointPort);
         Set<SparkEndpoint> sparkEndpoints = new HashSet<>(injector.getInstance(Key.get(new TypeLiteral<Set<SparkEndpoint>>() {

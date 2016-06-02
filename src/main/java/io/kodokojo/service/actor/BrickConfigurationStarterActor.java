@@ -24,7 +24,6 @@ import io.kodokojo.brick.BrickUrlFactory;
 import io.kodokojo.model.BrickState;
 import io.kodokojo.commons.model.Service;
 import io.kodokojo.commons.utils.ssl.SSLKeyPair;
-import io.kodokojo.commons.utils.ssl.SSLUtils;
 import io.kodokojo.model.BrickConfiguration;
 import io.kodokojo.model.BrickType;
 import io.kodokojo.model.ProjectConfiguration;
@@ -34,6 +33,7 @@ import io.kodokojo.brick.BrickAlreadyExist;
 import io.kodokojo.brick.BrickStartContext;
 import io.kodokojo.service.ConfigurationStore;
 import io.kodokojo.service.ProjectConfigurationException;
+import io.kodokojo.service.SSLCertificatProvider;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,10 +51,12 @@ public class BrickConfigurationStarterActor extends AbstractActor {
 
     private final BrickUrlFactory brickUrlFactory;
 
+    private final SSLCertificatProvider sslCertificatProvider;
+
     private final ActorRef stateListener;
 
     @Inject
-    public BrickConfigurationStarterActor(BrickManager brickManager, ConfigurationStore configurationStore, BrickUrlFactory brickUrlFactory, ActorRef stateListener) {
+    public BrickConfigurationStarterActor(BrickManager brickManager, ConfigurationStore configurationStore, BrickUrlFactory brickUrlFactory, SSLCertificatProvider sslCertificatProvider, ActorRef stateListener) {
         if (brickManager == null) {
             throw new IllegalArgumentException("brickManager must be defined.");
         }
@@ -64,12 +66,16 @@ public class BrickConfigurationStarterActor extends AbstractActor {
         if (brickUrlFactory == null) {
             throw new IllegalArgumentException("brickUrlFactory must be defined.");
         }
+        if (sslCertificatProvider == null) {
+            throw new IllegalArgumentException("sslCertificatProvider must be defined.");
+        }
         if (stateListener == null) {
             throw new IllegalArgumentException("stateMsgEndpointCreator must be defined.");
         }
         this.brickManager = brickManager;
         this.brickUrlFactory = brickUrlFactory;
         this.configurationStore = configurationStore;
+        this.sslCertificatProvider = sslCertificatProvider;
         this.stateListener = stateListener;
 
         receive(ReceiveBuilder.match(BrickStartContext.class, this::start)
@@ -87,8 +93,7 @@ public class BrickConfigurationStarterActor extends AbstractActor {
         String httpsUrl = "https://" + url;
         if (brickType.isRequiredHttpExposed()) {
             String brickTypeName = brickType.name().toLowerCase();
-            SSLKeyPair projectCaSSL = brickStartContext.getProjectCaSSL();
-            SSLKeyPair brickSslKeyPair = SSLUtils.createSSLKeyPair(url, projectCaSSL.getPrivateKey(), projectCaSSL.getPublicKey(), projectCaSSL.getCertificates());
+            SSLKeyPair brickSslKeyPair = sslCertificatProvider.provideCertificat(projectName, brickStartContext.getStackConfiguration().getName(), brickConfiguration);
             configurationStore.storeSSLKeys(projectName, brickTypeName, brickSslKeyPair);
         }
 
