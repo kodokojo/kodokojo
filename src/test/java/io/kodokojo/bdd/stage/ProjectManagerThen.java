@@ -47,7 +47,6 @@ public class ProjectManagerThen<SELF extends ProjectManagerThen<?>> extends Stag
 
     public SELF brick_$_are_started(ExpectedProjectState projectState) {
         assertThat(project).isNotNull();
-        assertThat(project.getSslRootCaKey()).isNotNull();
         assertThat(project.getName()).isEqualTo(projectConfiguration.getName());
         Set<Stack> stacks = project.getStacks();
         assertThat(stacks).isNotEmpty();

@@ -41,8 +41,6 @@ public class DefaultProjectManager implements ProjectManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultProjectManager.class);
 
-    private final SSLKeyPair caKey;
-
     private final String domain;
 
     private final ConfigurationStore configurationStore;
@@ -59,13 +57,16 @@ public class DefaultProjectManager implements ProjectManager {
 
     private final BrickConfigurerProvider brickConfigurerProvider;
 
-    private final long sslCaDuration;
-
     @Inject
-    public DefaultProjectManager(SSLKeyPair caKey, String domain, ConfigurationStore configurationStore, ProjectStore projectStore, BootstrapConfigurationProvider bootstrapConfigurationProvider, DnsManager dnsManager, BrickConfigurerProvider brickConfigurerProvider, BrickConfigurationStarter brickConfigurationStarter, BrickUrlFactory brickUrlFactory, long sslCaDuration) {
-        if (caKey == null) {
-            throw new IllegalArgumentException("caKey must be defined.");
-        }
+    public DefaultProjectManager(String domain,
+                                 ConfigurationStore configurationStore,
+                                 ProjectStore projectStore,
+                                 BootstrapConfigurationProvider bootstrapConfigurationProvider,
+                                 DnsManager dnsManager,
+                                 BrickConfigurerProvider brickConfigurerProvider,
+                                 BrickConfigurationStarter brickConfigurationStarter,
+                                 BrickUrlFactory brickUrlFactory) {
+
         if (isBlank(domain)) {
             throw new IllegalArgumentException("domain must be defined.");
         }
@@ -91,7 +92,6 @@ public class DefaultProjectManager implements ProjectManager {
             throw new IllegalArgumentException("brickUrlFactory must be defined.");
         }
         this.brickConfigurationStarter = brickConfigurationStarter;
-        this.caKey = caKey;
         this.domain = domain;
         this.configurationStore = configurationStore;
         this.projectStore = projectStore;
@@ -99,7 +99,6 @@ public class DefaultProjectManager implements ProjectManager {
         this.brickConfigurerProvider = brickConfigurerProvider;
         this.dnsManager = dnsManager;
         this.brickUrlFactory = brickUrlFactory;
-        this.sslCaDuration = sslCaDuration;
     }
 
     @Override
@@ -127,8 +126,6 @@ public class DefaultProjectManager implements ProjectManager {
         }
 
         String projectName = projectConfiguration.getName();
-        String projectDomainName = (projectName + "." + domain).toLowerCase();
-        SSLKeyPair projectCaSSL = SSLUtils.createSSLKeyPair(projectDomainName, caKey.getPrivateKey(), caKey.getPublicKey(), caKey.getCertificates(), sslCaDuration, true);
 
         Set<DnsEntry> dnsEntries = new HashSet<>();
         List<BrickStartContext> contexts = new ArrayList<>();
@@ -143,7 +140,7 @@ public class DefaultProjectManager implements ProjectManager {
                     String brickDomainName = brickUrlFactory.forgeUrl(projectConfiguration, stackConfiguration.getName(), brickConfiguration);
                     dnsEntries.add(new DnsEntry(brickDomainName, DnsEntry.Type.A, lbIp));
                 }
-                BrickStartContext context = new BrickStartContext(projectConfiguration, stackConfiguration, brickConfiguration, domain, projectCaSSL, lbIp);
+                BrickStartContext context = new BrickStartContext(projectConfiguration, stackConfiguration, brickConfiguration, domain, lbIp);
                 contexts.add(context);
             }
 
@@ -153,7 +150,7 @@ public class DefaultProjectManager implements ProjectManager {
         }
         dnsManager.createOrUpdateDnsEntries(dnsEntries);
         contexts.forEach(brickConfigurationStarter::start);
-        Project project = new Project(projectConfiguration.getIdentifier(), projectName, projectCaSSL, new Date(), stacks);
+        Project project = new Project(projectConfiguration.getIdentifier(), projectName, new Date(), stacks);
         return project;
     }
 

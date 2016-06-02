@@ -196,7 +196,7 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
         }
         Set<Stack> stacks = new HashSet<>();
         stacks.add(new Stack("build-A", StackType.BUILD, new HashSet<BrickState>()));
-        Project project = new Project("1234567890", projectName, SSLUtils.createSelfSignedSSLKeyPair(projectName, (RSAPrivateKey) keyPair.getPrivate(), (RSAPublicKey) keyPair.getPublic()), new Date(), stacks);
+        Project project = new Project("1234567890", projectName, new Date(), stacks);
         try {
             Mockito.when(projectManager.start(Mockito.any())).thenReturn(project);
         } catch (ProjectAlreadyExistException e) {

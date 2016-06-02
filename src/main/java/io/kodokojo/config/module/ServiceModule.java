@@ -24,12 +24,18 @@ import com.google.inject.TypeLiteral;
 import io.kodokojo.brick.*;
 import io.kodokojo.commons.utils.ssl.SSLKeyPair;
 import io.kodokojo.config.ApplicationConfig;
+import io.kodokojo.config.SecurityConfig;
 import io.kodokojo.endpoint.UserAuthenticator;
 import io.kodokojo.service.lifecycle.ApplicationLifeCycleManager;
 import io.kodokojo.service.*;
 import io.kodokojo.service.dns.DnsManager;
+import io.kodokojo.service.ssl.SSLCertificatProviderFromCaSSLpaire;
+import io.kodokojo.service.ssl.WildcardSSLCertificatProvider;
 import io.kodokojo.service.store.ProjectStore;
 import io.kodokojo.service.authentification.SimpleCredential;
+import org.apache.commons.lang.StringUtils;
+
+import java.io.File;
 
 public class ServiceModule extends AbstractModule {
 
@@ -68,8 +74,17 @@ public class ServiceModule extends AbstractModule {
 
     @Provides
     @Singleton
-    ProjectManager provideProjectManager(SSLKeyPair caKey, ApplicationConfig applicationConfig, BrickConfigurationStarter brickConfigurationStarter, ConfigurationStore configurationStore, ProjectStore projectStore, BootstrapConfigurationProvider bootstrapConfigurationProvider, DnsManager dnsManager, BrickConfigurerProvider brickConfigurerProvider,  BrickUrlFactory brickUrlFactory) {
-        return new DefaultProjectManager(caKey, applicationConfig.domain(), configurationStore, projectStore, bootstrapConfigurationProvider,dnsManager, brickConfigurerProvider,  brickConfigurationStarter, brickUrlFactory, applicationConfig.sslCaDuration());
+    SSLCertificatProvider provideSslCertificatProvider(SecurityConfig securityConfig, ApplicationConfig applicationConfig, SSLKeyPair sslKeyPair, BrickUrlFactory brickUrlFactory) {
+        if (StringUtils.isNotBlank(securityConfig.wildcardPemPath())) {
+            return new WildcardSSLCertificatProvider(sslKeyPair);
+        }
+        return new SSLCertificatProviderFromCaSSLpaire(applicationConfig.domain(), applicationConfig.sslCaDuration(), sslKeyPair, brickUrlFactory);
+    }
+
+    @Provides
+    @Singleton
+    ProjectManager provideProjectManager(ApplicationConfig applicationConfig,  BrickConfigurationStarter brickConfigurationStarter, ConfigurationStore configurationStore, ProjectStore projectStore, BootstrapConfigurationProvider bootstrapConfigurationProvider, DnsManager dnsManager, BrickConfigurerProvider brickConfigurerProvider, BrickUrlFactory brickUrlFactory) {
+        return new DefaultProjectManager(applicationConfig.domain(), configurationStore, projectStore, bootstrapConfigurationProvider,dnsManager, brickConfigurerProvider,  brickConfigurationStarter, brickUrlFactory);
     }
 
     @Provides

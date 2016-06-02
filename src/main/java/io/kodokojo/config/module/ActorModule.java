@@ -29,6 +29,7 @@ import io.kodokojo.service.BrickManager;
 import io.kodokojo.brick.BrickConfigurationStarter;
 import io.kodokojo.brick.BrickStateMsgDispatcher;
 import io.kodokojo.service.ConfigurationStore;
+import io.kodokojo.service.SSLCertificatProvider;
 import io.kodokojo.service.actor.BrickConfigurationStarterActor;
 import io.kodokojo.service.actor.BrickConfigurationStarterActorAdapter;
 import io.kodokojo.service.actor.BrickStateMsgEndpoint;
@@ -45,9 +46,9 @@ public class ActorModule extends AbstractModule {
 
     @Provides
     @Named("brickConfigurationStarter")
-    ActorRef provideBrickConfigurationStarterActor(ActorSystem system, BrickManager brickManager, ConfigurationStore configurationStore, BrickUrlFactory brickUrlFactory, @Named("brickStateMsgEndpoint")  ActorRef stateListener) {
+    ActorRef provideBrickConfigurationStarterActor(ActorSystem system, BrickManager brickManager, ConfigurationStore configurationStore, BrickUrlFactory brickUrlFactory, SSLCertificatProvider sslCertificatProvider, @Named("brickStateMsgEndpoint")  ActorRef stateListener) {
         //TODO Put Router configuration in file.
-        return system.actorOf(new RoundRobinPool(4).props(Props.create(BrickConfigurationStarterActor.class, brickManager, configurationStore, brickUrlFactory, stateListener)),"brickConfigurationStarter");
+        return system.actorOf(new RoundRobinPool(4).props(Props.create(BrickConfigurationStarterActor.class, brickManager, configurationStore, brickUrlFactory,sslCertificatProvider, stateListener)),"brickConfigurationStarter");
     }
 
     @Provides

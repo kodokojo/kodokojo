@@ -33,8 +33,6 @@ public class ProjectBuilder {
 
     private final String name;
 
-    private SSLKeyPair sslRootCaKey;
-
     private Date snapshotDate;
 
     private Set<Stack> stacks;
@@ -54,22 +52,16 @@ public class ProjectBuilder {
     public ProjectBuilder(Project project) {
         this(project.getProjectConfigurationIdentifier(), project.getName());
         this.identifier = project.getIdentifier();
-        this.sslRootCaKey = project.getSslRootCaKey();
         this.snapshotDate = project.getSnapshotDate();
         this.stacks  = project.getStacks();
     }
 
     public Project build() {
-        return new Project(identifier, projectConfigurationIdentifier , name, sslRootCaKey, snapshotDate, stacks);
+        return new Project(identifier, projectConfigurationIdentifier , name, snapshotDate, stacks);
     }
 
     public ProjectBuilder setIdentifier(String identifier) {
         this.identifier = identifier;
-        return this;
-    }
-
-    public ProjectBuilder setSslRootCaKey(SSLKeyPair sslRootCaKey) {
-        this.sslRootCaKey = sslRootCaKey;
         return this;
     }
 

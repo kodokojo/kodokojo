@@ -138,7 +138,7 @@ public class RedisProjectStoreIntTest {
         Set<BrickState> brickStates = new HashSet<>();
         brickStates.add(new BrickState("123456", "build-A", BrickType.CI.name(), "jenkins", BrickState.State.RUNNING, "1.651"));
         stacks.add(new Stack("build-A", StackType.BUILD, brickStates));
-        return new Project("123456", "Acme", sslKeyPair, new Date(), stacks);
+        return new Project("123456", "Acme", new Date(), stacks);
     }
 
 }

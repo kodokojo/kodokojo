@@ -43,6 +43,7 @@ import io.kodokojo.service.dns.DnsManager;
 import io.kodokojo.service.redis.RedisEntityStore;
 import io.kodokojo.service.redis.RedisProjectStore;
 import io.kodokojo.service.redis.RedisUserStore;
+import io.kodokojo.service.ssl.WildcardSSLCertificatProvider;
 import io.kodokojo.service.store.EntityStore;
 import io.kodokojo.service.store.ProjectStore;
 import io.kodokojo.service.store.UserStore;
@@ -202,13 +203,14 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
                         return null;
                     }
                 });
+                bind(SSLCertificatProvider.class).toInstance(new WildcardSSLCertificatProvider(caKey));
                 bind(BrickUrlFactory.class).toInstance(brickUrlFactory);
             }
 
             @Provides
             @Singleton
             ProjectManager provideProjectManager(BrickConfigurationStarter brickConfigurationStarter, BrickConfigurerProvider brickConfigurerProvider,  BrickUrlFactory brickUrlFactory) {
-                return new DefaultProjectManager(caKey, "kodokojo.dev", configurationStore, redisProjectStore, bootstrapProvider,dnsManager, brickConfigurerProvider,  brickConfigurationStarter, brickUrlFactory, 30000);
+                return new DefaultProjectManager( "kodokojo.dev", configurationStore, redisProjectStore, bootstrapProvider,dnsManager, brickConfigurerProvider,  brickConfigurationStarter, brickUrlFactory);
             }
 
         });

@@ -34,13 +34,11 @@ public class BrickStartContext implements Serializable {
 
     private final BrickConfiguration brickConfiguration;
 
-    private final String domaine;
-
-    private final SSLKeyPair projectCaSSL;
+    private final String domain;
 
     private final String lbIp;
 
-    public BrickStartContext(ProjectConfiguration projectConfiguration, StackConfiguration stackConfiguration, BrickConfiguration brickConfiguration, String domaine, SSLKeyPair projectCaSSL, String lbIp) {
+    public BrickStartContext(ProjectConfiguration projectConfiguration, StackConfiguration stackConfiguration, BrickConfiguration brickConfiguration, String domain, String lbIp) {
         if (projectConfiguration == null) {
             throw new IllegalArgumentException("projectConfiguration must be defined.");
         }
@@ -50,11 +48,8 @@ public class BrickStartContext implements Serializable {
         if (stackConfiguration == null) {
             throw new IllegalArgumentException("stackConfiguration must be defined.");
         }
-        if (isBlank(domaine)) {
+        if (isBlank(domain)) {
             throw new IllegalArgumentException("domaine must be defined.");
-        }
-        if (projectCaSSL == null) {
-            throw new IllegalArgumentException("projectCaSSL must be defined.");
         }
         if (isBlank(lbIp)) {
             throw new IllegalArgumentException("lbIp must be defined.");
@@ -62,8 +57,7 @@ public class BrickStartContext implements Serializable {
         this.projectConfiguration = projectConfiguration;
         this.stackConfiguration = stackConfiguration;
         this.brickConfiguration = brickConfiguration;
-        this.domaine = domaine;
-        this.projectCaSSL = projectCaSSL;
+        this.domain = domain;
         this.lbIp = lbIp;
     }
 
@@ -79,12 +73,8 @@ public class BrickStartContext implements Serializable {
         return brickConfiguration;
     }
 
-    public String getDomaine() {
-        return domaine;
-    }
-
-    public SSLKeyPair getProjectCaSSL() {
-        return projectCaSSL;
+    public String getDomain() {
+        return domain;
     }
 
     public String getLbIp() {
@@ -97,8 +87,7 @@ public class BrickStartContext implements Serializable {
                 "projectConfiguration=" + projectConfiguration +
                 "stackConfiguration=" + stackConfiguration +
                 ", brickConfiguration=" + brickConfiguration +
-                ", domaine='" + domaine + '\'' +
-                ", projectCaSSL=" + projectCaSSL +
+                ", domain='" + domain + '\'' +
                 ", lbIp='" + lbIp + '\'' +
                 '}';
     }
