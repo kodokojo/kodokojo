@@ -80,7 +80,7 @@ public class ProjectManagerGiven<SELF extends ProjectManagerGiven<?>> extends St
         projectStore = mock(ProjectStore.class);
         Mockito.when(projectStore.projectNameIsValid(projectName)).thenReturn(true);
         configProvider = mock(BootstrapConfigurationProvider.class);
-        Mockito.when(configProvider.provideLoadBalancerIp(anyString(),anyString())).thenReturn("127.0.0.1");
+        Mockito.when(configProvider.provideLoadBalancerHost(anyString(),anyString())).thenReturn("127.0.0.1");
         Mockito.when(configProvider.provideSshPortEntrypoint(anyString(),anyString())).thenReturn(10022);
         brickStarter = mock(BrickConfigurationStarter.class);
 

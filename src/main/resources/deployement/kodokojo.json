@@ -10,7 +10,7 @@
       "network": "BRIDGE",
       "portMappings": [
         {
-          "containerPort": 8080,
+          "containerPort": 80,
           "hostPort": 0,
           "protocol": "tcp",
           "servicePort": 0
@@ -22,7 +22,7 @@
     "application_dns_domain": "kodokojo.io",
     "marathon_url": "@@MARTHON_URL@@",
     "lb_defaultIp": "@@LB_IP@@"
-  }
+  },
   "constraints": [
     [
       "type",

@@ -19,12 +19,9 @@ package io.kodokojo.model;
 
 
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
 
 import java.io.Serializable;
-import java.util.Date;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
@@ -37,11 +34,11 @@ public class StackConfiguration implements Serializable {
 
     private final Set<BrickConfiguration> brickConfigurations;
 
-    private final String loadBalancerIp;
+    private final String loadBalancerHost;
 
     private final int scmSshPort;
 
-    public StackConfiguration(String name, StackType type, Set<BrickConfiguration> brickConfigurations, String loadBalancerIp, int scmSshPort) {
+    public StackConfiguration(String name, StackType type, Set<BrickConfiguration> brickConfigurations, String loadBalancerHost, int scmSshPort) {
         if (isBlank(name)) {
             throw new IllegalArgumentException("name must be defined.");
         }
@@ -55,7 +52,7 @@ public class StackConfiguration implements Serializable {
         this.name = name;
         this.type = type;
         this.brickConfigurations = brickConfigurations;
-        this.loadBalancerIp = loadBalancerIp;
+        this.loadBalancerHost = loadBalancerHost;
         this.scmSshPort = scmSshPort;
     }
 
@@ -71,8 +68,8 @@ public class StackConfiguration implements Serializable {
         return new HashSet<>(brickConfigurations);
     }
 
-    public String getLoadBalancerIp() {
-        return loadBalancerIp;
+    public String getLoadBalancerHost() {
+        return loadBalancerHost;
     }
 
     public int getScmSshPort() {
@@ -107,7 +104,7 @@ public class StackConfiguration implements Serializable {
                 "name='" + name + '\'' +
                 ", type=" + type +
                 ", brickConfigurations=" + brickConfigurations +
-                ", loadBalancerIp=" + loadBalancerIp +
+                ", loadBalancerHost=" + loadBalancerHost +
                 ", scmSshPort=" + scmSshPort +
                 '}';
     }

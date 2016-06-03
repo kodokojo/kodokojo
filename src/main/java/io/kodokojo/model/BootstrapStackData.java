@@ -25,23 +25,23 @@ public class BootstrapStackData {
 
     private final String stackName;
 
-    private final String loadBalancerIp;
+    private final String loadBalancerHost;
 
     private final int sshPort;
 
-    public BootstrapStackData(String projectName, String stackName, String loadBalancerIp, int sshPort) {
+    public BootstrapStackData(String projectName, String stackName, String loadBalancerHost, int sshPort) {
         if (isBlank(projectName)) {
             throw new IllegalArgumentException("projectName must be defined.");
         }
         if (isBlank(stackName)) {
             throw new IllegalArgumentException("stackName must be defined.");
         }
-        if (isBlank(loadBalancerIp)) {
-            throw new IllegalArgumentException("loadBalancerIp must be defined.");
+        if (isBlank(loadBalancerHost)) {
+            throw new IllegalArgumentException("loadBalancerHost must be defined.");
         }
         this.projectName = projectName;
         this.stackName = stackName;
-        this.loadBalancerIp = loadBalancerIp;
+        this.loadBalancerHost = loadBalancerHost;
         this.sshPort = sshPort;
     }
 
@@ -53,8 +53,8 @@ public class BootstrapStackData {
         return stackName;
     }
 
-    public String getLoadBalancerIp() {
-        return loadBalancerIp;
+    public String getLoadBalancerHost() {
+        return loadBalancerHost;
     }
 
     public int getSshPort() {
@@ -66,7 +66,7 @@ public class BootstrapStackData {
         return "BootstrapStackData{" +
                 "projectName='" + projectName + '\'' +
                 ", stackName='" + stackName + '\'' +
-                ", loadBalancerIp='" + loadBalancerIp + '\'' +
+                ", loadBalancerHost='" + loadBalancerHost + '\'' +
                 ", sshPort=" + sshPort +
                 '}';
     }

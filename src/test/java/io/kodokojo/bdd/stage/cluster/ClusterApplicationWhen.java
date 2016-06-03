@@ -188,7 +188,7 @@ public class ClusterApplicationWhen<SELF extends ClusterApplicationWhen<?>> exte
         assertThat(projectConfigurationId).isNotEmpty();
         assertThat(this.projectConfiguration).isNotNull();
 
-        loadBalancerIp = this.projectConfiguration.getDefaultStackConfiguration().getLoadBalancerIp();
+        loadBalancerIp = this.projectConfiguration.getDefaultStackConfiguration().getLoadBalancerHost();
     }
 
     public SELF i_create_a_new_user_$(@Quoted String email) {

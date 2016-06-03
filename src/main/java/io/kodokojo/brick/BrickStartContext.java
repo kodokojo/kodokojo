@@ -17,7 +17,6 @@
  */
 package io.kodokojo.brick;
 
-import io.kodokojo.commons.utils.ssl.SSLKeyPair;
 import io.kodokojo.model.BrickConfiguration;
 import io.kodokojo.model.ProjectConfiguration;
 import io.kodokojo.model.StackConfiguration;
@@ -36,9 +35,9 @@ public class BrickStartContext implements Serializable {
 
     private final String domain;
 
-    private final String lbIp;
+    private final String lbHost;
 
-    public BrickStartContext(ProjectConfiguration projectConfiguration, StackConfiguration stackConfiguration, BrickConfiguration brickConfiguration, String domain, String lbIp) {
+    public BrickStartContext(ProjectConfiguration projectConfiguration, StackConfiguration stackConfiguration, BrickConfiguration brickConfiguration, String domain, String lbHost) {
         if (projectConfiguration == null) {
             throw new IllegalArgumentException("projectConfiguration must be defined.");
         }
@@ -49,16 +48,16 @@ public class BrickStartContext implements Serializable {
             throw new IllegalArgumentException("stackConfiguration must be defined.");
         }
         if (isBlank(domain)) {
-            throw new IllegalArgumentException("domaine must be defined.");
+            throw new IllegalArgumentException("domain must be defined.");
         }
-        if (isBlank(lbIp)) {
-            throw new IllegalArgumentException("lbIp must be defined.");
+        if (isBlank(lbHost)) {
+            throw new IllegalArgumentException("lbHost must be defined.");
         }
         this.projectConfiguration = projectConfiguration;
         this.stackConfiguration = stackConfiguration;
         this.brickConfiguration = brickConfiguration;
         this.domain = domain;
-        this.lbIp = lbIp;
+        this.lbHost = lbHost;
     }
 
     public ProjectConfiguration getProjectConfiguration() {
@@ -77,8 +76,8 @@ public class BrickStartContext implements Serializable {
         return domain;
     }
 
-    public String getLbIp() {
-        return lbIp;
+    public String getLbHost() {
+        return lbHost;
     }
 
     @Override
@@ -88,7 +87,7 @@ public class BrickStartContext implements Serializable {
                 "stackConfiguration=" + stackConfiguration +
                 ", brickConfiguration=" + brickConfiguration +
                 ", domain='" + domain + '\'' +
-                ", lbIp='" + lbIp + '\'' +
+                ", lbHost='" + lbHost + '\'' +
                 '}';
     }
 }

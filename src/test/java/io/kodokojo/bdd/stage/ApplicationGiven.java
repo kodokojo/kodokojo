@@ -214,7 +214,7 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
                         }
 
                         @Override
-                        public String defaultLoadbalancerIp() {
+                        public String loadbalancerHost() {
                             return dockerTestSupport.getServerIp();
                         }
 

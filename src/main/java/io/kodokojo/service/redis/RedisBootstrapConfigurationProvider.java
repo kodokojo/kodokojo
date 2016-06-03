@@ -31,7 +31,7 @@ public class RedisBootstrapConfigurationProvider implements BootstrapConfigurati
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RedisBootstrapConfigurationProvider.class);
 
-    public static final String DEFAULT_LB_IP_KEY = "loadbalancerIp";
+    public static final String DEFAULT_LB_IP_KEY = "loadbalancerHost";
 
     public static final String DEFAULT_SSH_PORT = "sshPort";
 
@@ -58,14 +58,14 @@ public class RedisBootstrapConfigurationProvider implements BootstrapConfigurati
     }
 
     @Override
-    public String provideLoadBalancerIp(String projectName, String stackName) {
+    public String provideLoadBalancerHost(String projectName, String stackName) {
         if (isBlank(projectName)) {
             throw new IllegalArgumentException("projectName must be defined.");
         }
         if (isBlank(stackName)) {
             throw new IllegalArgumentException("stackName must be defined.");
         }
-        String lbKey = RedisProjectStore.PROJECT_PREFIX + projectName + "/" + stackName + "/lbIp";
+        String lbKey = RedisProjectStore.PROJECT_PREFIX + projectName + "/" + stackName + "/lbHost";
         try (Jedis jedis = pool.getResource()) {
             if (jedis.exists(lbKey)) {
                 return jedis.get(lbKey);
