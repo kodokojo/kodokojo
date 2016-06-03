@@ -111,7 +111,7 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
         dnsManager = mock(DnsManager.class);
         configurationStore = mock(ConfigurationStore.class);
 
-        Mockito.when(bootstrapProvider.provideLoadBalancerIp(anyString(),anyString())).thenReturn("192.168.22.3");
+        Mockito.when(bootstrapProvider.provideLoadBalancerHost(anyString(),anyString())).thenReturn("192.168.22.3");
         Mockito.when(bootstrapProvider.provideSshPortEntrypoint(anyString(),anyString())).thenReturn(10022);
 
         SecretKey tmpKey = null;
@@ -163,7 +163,7 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
                     }
 
                     @Override
-                    public String defaultLoadbalancerIp() {
+                    public String loadbalancerHost() {
                         return "192.168.22.3";
                     }
 

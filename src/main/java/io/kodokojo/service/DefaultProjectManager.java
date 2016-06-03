@@ -19,27 +19,30 @@ package io.kodokojo.service;
 
 
 import io.kodokojo.brick.*;
-import io.kodokojo.commons.utils.ssl.SSLKeyPair;
-import io.kodokojo.commons.utils.ssl.SSLUtils;
 import io.kodokojo.model.*;
 import io.kodokojo.model.Stack;
 import io.kodokojo.service.dns.DnsEntry;
 import io.kodokojo.service.dns.DnsManager;
 import io.kodokojo.service.store.ProjectStore;
-import org.apache.commons.codec.binary.StringUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IteratorUtils;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
 public class DefaultProjectManager implements ProjectManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultProjectManager.class);
+
+    //  Source Regexp http://sroze.io/2008/10/09/regex-ipv4-et-ipv6/
+    private static final Pattern IP_PATTERN = Pattern.compile("^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
 
     private final String domain;
 
@@ -106,12 +109,12 @@ public class DefaultProjectManager implements ProjectManager {
         if (!projectStore.projectNameIsValid(projectName)) {
             throw new IllegalArgumentException("project name " + projectName + " isn't valid.");
         }
-        String loadBalancerIp = bootstrapConfigurationProvider.provideLoadBalancerIp(projectName, stackName);
+        String loadBalancerHost = bootstrapConfigurationProvider.provideLoadBalancerHost(projectName, stackName);
         int sshPortEntrypoint = 0;
         if (stackType == StackType.BUILD) {
             sshPortEntrypoint = bootstrapConfigurationProvider.provideSshPortEntrypoint(projectName, stackName);
         }
-        BootstrapStackData res = new BootstrapStackData(projectName, stackName, loadBalancerIp, sshPortEntrypoint);
+        BootstrapStackData res = new BootstrapStackData(projectName, stackName, loadBalancerHost, sshPortEntrypoint);
         configurationStore.storeBootstrapStackData(res);
         return res;
     }
@@ -131,16 +134,16 @@ public class DefaultProjectManager implements ProjectManager {
         List<BrickStartContext> contexts = new ArrayList<>();
         Set<Stack> stacks = new HashSet<>();
         for (StackConfiguration stackConfiguration : projectConfiguration.getStackConfigurations()) {
-            String lbIp = stackConfiguration.getLoadBalancerIp();
-
+            String lbHost = stackConfiguration.getLoadBalancerHost();
+            DnsEntry.Type dnsType = getDnsType(lbHost);
             for (BrickConfiguration brickConfiguration : stackConfiguration.getBrickConfigurations()) {
                 Brick brick = brickConfiguration.getBrick();
                 BrickType brickType = brick.getType();
                 if (brickType.isRequiredHttpExposed()) {
                     String brickDomainName = brickUrlFactory.forgeUrl(projectConfiguration, stackConfiguration.getName(), brickConfiguration);
-                    dnsEntries.add(new DnsEntry(brickDomainName, DnsEntry.Type.A, lbIp));
+                    dnsEntries.add(new DnsEntry(brickDomainName, dnsType, lbHost));
                 }
-                BrickStartContext context = new BrickStartContext(projectConfiguration, stackConfiguration, brickConfiguration, domain, lbIp);
+                BrickStartContext context = new BrickStartContext(projectConfiguration, stackConfiguration, brickConfiguration, domain, lbHost);
                 contexts.add(context);
             }
 
@@ -186,5 +189,11 @@ public class DefaultProjectManager implements ProjectManager {
             });
         });
 
+    }
+
+    private static DnsEntry.Type getDnsType(String host) {
+        assert StringUtils.isNotBlank(host) : "host must be defined";
+        Matcher matcher = IP_PATTERN.matcher(host);
+        return matcher.matches() ? DnsEntry.Type.A : DnsEntry.Type.CNAME;
     }
 }

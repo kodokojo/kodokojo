@@ -28,7 +28,7 @@ public interface BootstrapConfigurationProvider {
      * @param stackName The stack name
      * @return Ip of the load balancer
      */
-    String provideLoadBalancerIp(String projectName, String stackName);
+    String provideLoadBalancerHost(String projectName, String stackName);
 
     /**
      * Provide SSH port configured on the load balancer to access to the stack.

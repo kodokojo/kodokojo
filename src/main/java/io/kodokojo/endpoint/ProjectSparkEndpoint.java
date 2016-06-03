@@ -105,7 +105,7 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
                     }).collect(Collectors.toSet());
                     StackType stackType = StackType.valueOf(stack.getType());
                     BootstrapStackData bootstrapStackData = projectManager.bootstrapStack(dto.getName(), stack.getName(), stackType);
-                    return new StackConfiguration(stack.getName(), stackType, brickConfigurations, bootstrapStackData.getLoadBalancerIp(), bootstrapStackData.getSshPort());
+                    return new StackConfiguration(stack.getName(), stackType, brickConfigurations, bootstrapStackData.getLoadBalancerHost(), bootstrapStackData.getSshPort());
                 }).collect(Collectors.toSet());
             }
 
@@ -262,7 +262,7 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
         bricksConfigurations.add(new BrickConfiguration(brickFactory.createBrick(DefaultBrickFactory.GITLAB)));
         String stackName = "build-A";
         BootstrapStackData bootstrapStackData = projectManager.bootstrapStack(projectName, stackName, StackType.BUILD);
-        StackConfiguration stackConfiguration = new StackConfiguration(stackName, StackType.BUILD, bricksConfigurations, bootstrapStackData.getLoadBalancerIp(), bootstrapStackData.getSshPort());
+        StackConfiguration stackConfiguration = new StackConfiguration(stackName, StackType.BUILD, bricksConfigurations, bootstrapStackData.getLoadBalancerHost(), bootstrapStackData.getSshPort());
         return Collections.singleton(stackConfiguration);
     }
 

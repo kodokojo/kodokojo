@@ -57,7 +57,7 @@ public class RedisModule extends AbstractModule {
     @Provides
     @Singleton
     BootstrapConfigurationProvider provideBootstrapConfigurationProvider(ApplicationConfig applicationConfig, RedisConfig redisConfig, ApplicationLifeCycleManager applicationLifeCycleManager) {
-        RedisBootstrapConfigurationProvider redisBootstrapConfigurationProvider = new RedisBootstrapConfigurationProvider(redisConfig.host(), redisConfig.port(), applicationConfig.defaultLoadbalancerIp(), applicationConfig.initialSshPort());
+        RedisBootstrapConfigurationProvider redisBootstrapConfigurationProvider = new RedisBootstrapConfigurationProvider(redisConfig.host(), redisConfig.port(), applicationConfig.loadbalancerHost(), applicationConfig.initialSshPort());
         applicationLifeCycleManager.addService(redisBootstrapConfigurationProvider);
         return redisBootstrapConfigurationProvider;
     }

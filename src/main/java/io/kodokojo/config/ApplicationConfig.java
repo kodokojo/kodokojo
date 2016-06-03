@@ -30,8 +30,8 @@ public interface ApplicationConfig extends PropertyConfig {
     @Key("application.dns.domain")
     String domain();
 
-    @Key("lb.defaultIp")
-    String defaultLoadbalancerIp();
+    @Key("lb.host")
+    String loadbalancerHost();
 
     @Key(value = "initSshport", defaultValue = "32768")
     int initialSshPort();
