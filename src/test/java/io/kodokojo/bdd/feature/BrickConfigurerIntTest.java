@@ -50,6 +50,7 @@ public class BrickConfigurerIntTest extends ScenarioTest<BrickConfigurerGiven<?>
                 {"Jenkins", "jenkins:1.651.2-alpine", 8080, 120, new JenkinsUserAuthenticator()},
                 {"DockerRegistry", "registry:2", 5000, 10, new DockerRegistryUserAuthenticator()}
                 //{"Jenkins", "jenkins:2.0-alpine", 8080, 120, new JenkinsUserAuthenticator()}
+                //{"Jenkins", "jenkins:1.651.2-alpine", 8080, 120, new JenkinsUserAuthenticator()}
         };
     }
 

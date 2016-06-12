@@ -17,6 +17,8 @@
  */
 package io.kodokojo.config.module;
 
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.google.inject.AbstractModule;
@@ -27,8 +29,14 @@ import io.kodokojo.config.AwsConfig;
 import io.kodokojo.service.aws.Route53DnsManager;
 import io.kodokojo.service.dns.DnsManager;
 import io.kodokojo.service.dns.NoOpDnsManager;
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AwsModule extends AbstractModule {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AwsModule.class);
+
     @Override
     protected void configure() {
         // Nothing to do.
@@ -37,9 +45,13 @@ public class AwsModule extends AbstractModule {
     @Provides
     @Singleton
     DnsManager provideDnsManager(ApplicationConfig applicationConfig, AwsConfig awsConfig) {
-        if (System.getenv("AWS_SECRET_ACCESS_KEY") == null) {
+        DefaultAWSCredentialsProviderChain defaultAWSCredentialsProviderChain = new DefaultAWSCredentialsProviderChain();
+        AWSCredentials credentials = defaultAWSCredentialsProviderChain.getCredentials();
+        if (StringUtils.isNotBlank(System.getenv("NO_DNS")) || credentials == null) {
+            LOGGER.info("Using NoOpDnsManager as DnsManger implementation");
             return new NoOpDnsManager();
         } else {
+            LOGGER.info("Using Route53DnsManager as DnsManger implementation");
             return new Route53DnsManager(applicationConfig.domain(), Region.getRegion(Regions.fromName(awsConfig.region())));
         }
     }

@@ -18,6 +18,7 @@
 package io.kodokojo.service.aws;
 
 import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
@@ -49,7 +50,7 @@ public class Route53DnsManager implements DnsManager {
         }
         this.domainName = domainName.endsWith(".") ? domainName : domainName + ".";
 
-        AWSCredentials credentials = new EnvironmentVariableCredentialsProvider().getCredentials();
+        AWSCredentials credentials = new DefaultAWSCredentialsProviderChain().getCredentials();
         client = new AmazonRoute53Client(credentials);
         client.setRegion(region == null ? Region.getRegion(Regions.EU_WEST_1) : region);
     }
