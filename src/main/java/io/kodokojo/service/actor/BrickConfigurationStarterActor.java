@@ -92,9 +92,8 @@ public class BrickConfigurationStarterActor extends AbstractActor {
         String url = brickUrlFactory.forgeUrl(projectConfiguration,projectConfiguration.getDefaultStackConfiguration().getName(), brickConfiguration);
         String httpsUrl = "https://" + url;
         if (brickType.isRequiredHttpExposed()) {
-            String brickTypeName = brickType.name().toLowerCase();
             SSLKeyPair brickSslKeyPair = sslCertificatProvider.provideCertificat(projectName, brickStartContext.getStackConfiguration().getName(), brickConfiguration);
-            configurationStore.storeSSLKeys(projectName, brickTypeName, brickSslKeyPair);
+            configurationStore.storeSSLKeys(projectName, brickStartContext.getBrickConfiguration().getBrick().getName().toLowerCase(), brickSslKeyPair);
         }
 
         try {

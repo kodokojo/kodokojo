@@ -79,12 +79,12 @@ public class MarathonConfigurationStore implements ConfigurationStore {
     }
 
     @Override
-    public boolean storeSSLKeys(String project, String entityType, SSLKeyPair sslKeyPair) {
+    public boolean storeSSLKeys(String project, String entityName, SSLKeyPair sslKeyPair) {
         if (isBlank(project)) {
             throw new IllegalArgumentException("project must be defined.");
         }
-        if (isBlank(entityType)) {
-            throw new IllegalArgumentException("entityType must be defined.");
+        if (isBlank(entityName)) {
+            throw new IllegalArgumentException("entityName must be defined.");
         }
         if (sslKeyPair == null) {
             throw new IllegalArgumentException("sslKeyPair must be defined.");
@@ -95,18 +95,24 @@ public class MarathonConfigurationStore implements ConfigurationStore {
             SSLUtils.writeSSLKeyPairPem(sslKeyPair, writer);
             byte[] certificat = writer.toString().getBytes();
 
-            String url = marathonUrl + "/v2/artifacts/ssl/" + project.toLowerCase() + "/" + entityType.toLowerCase() + "/" + project.toLowerCase() + "-" + entityType.toLowerCase() + "-server.pem";
+            String url = marathonUrl + "/v2/artifacts/ssl/" + project.toLowerCase() + "/" + entityName.toLowerCase() + "/" + project.toLowerCase() + "-" + entityName.toLowerCase() + "-server.pem";
             OkHttpClient httpClient = new OkHttpClient();
             RequestBody requestBody = new MultipartBuilder()
                     .type(MultipartBuilder.FORM)
-                    .addFormDataPart("file", project + "-" + entityType + "-server.pem",
+                    .addFormDataPart("file", project + "-" + entityName + "-server.pem",
                             RequestBody.create(MediaType.parse("application/text"), certificat))
                     .build();
             Request request = new Request.Builder().url(url).post(requestBody).build();
             response = httpClient.newCall(request).execute();
-            return response.code() == 200;
+            int code = response.code();
+            if (code == 200) {
+                LOGGER.info("Push SSL certificate on marathon url '{}' [content-size={}]", url, certificat.length);
+            } else {
+                LOGGER.error("Fail to push SSL certificate on marathon url '{}'.", url);
+            }
+            return code == 200;
         } catch (IOException e) {
-            LOGGER.error("Unable to store ssl key for project {} and brick {}", project, entityType, e);
+            LOGGER.error("Unable to store ssl key for project {} and brick {}", project, entityName, e);
         } finally {
             if (response != null) {
                 IOUtils.closeQuietly(response.body());
