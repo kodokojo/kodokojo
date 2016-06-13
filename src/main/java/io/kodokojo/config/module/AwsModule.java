@@ -45,8 +45,13 @@ public class AwsModule extends AbstractModule {
     @Provides
     @Singleton
     DnsManager provideDnsManager(ApplicationConfig applicationConfig, AwsConfig awsConfig) {
-        DefaultAWSCredentialsProviderChain defaultAWSCredentialsProviderChain = new DefaultAWSCredentialsProviderChain();
-        AWSCredentials credentials = defaultAWSCredentialsProviderChain.getCredentials();
+        AWSCredentials credentials = null;
+        try {
+            DefaultAWSCredentialsProviderChain defaultAWSCredentialsProviderChain = new DefaultAWSCredentialsProviderChain();
+            credentials = defaultAWSCredentialsProviderChain.getCredentials();
+        } catch (RuntimeException e) {
+            LOGGER.warn("Unable to retrieve AWS credentials.");
+        }
         if (StringUtils.isNotBlank(System.getenv("NO_DNS")) || credentials == null) {
             LOGGER.info("Using NoOpDnsManager as DnsManger implementation");
             return new NoOpDnsManager();
