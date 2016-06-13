@@ -26,6 +26,8 @@ import io.kodokojo.config.SecurityConfig;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -46,6 +48,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class SecurityModule extends AbstractModule {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(SecurityModule.class);
 
     @Override
     protected void configure() {
@@ -99,6 +103,7 @@ public class SecurityModule extends AbstractModule {
 
                 X509Certificate[] certificates = new X509Certificate[1];
                 certificates[0] = certificate;
+                LOGGER.info("Using Wildcard SSL certificat {} from path {}to provide Certificat to all instances of Kodo Kojo. ", certificate.getSubjectDN().toString(), securityConfig.wildcardPemPath());
                 return new SSLKeyPair(rsaPrivateKey, rsaPublicKey, certificates);
             } catch (IOException e) {
                 throw new IllegalArgumentException("Unable to read pem file " + pemFile.getAbsolutePath() + ".", e);
@@ -119,7 +124,7 @@ public class SecurityModule extends AbstractModule {
                 RSAPublicKey publicKey = (RSAPublicKey) keyFactory.generatePublic(publicKeySpec);
                 Certificate[] certificateChain = ks.getCertificateChain(securityConfig.sslRootCaKsAlias());
                 List<X509Certificate> x509Certificates = Arrays.asList(certificateChain).stream().map(c -> (X509Certificate) c).collect(Collectors.toList());
-
+                LOGGER.info("Using a CA SSL certificat {} from keystore  to provide Certificat to all instances of Kodo Kojo. ", securityConfig.sslRootCaKsAlias(), System.getProperty("javax.net.ssl.keyStore"));
                 return new SSLKeyPair(key, publicKey, x509Certificates.toArray(new X509Certificate[x509Certificates.size()]));
             } catch (UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException | InvalidKeySpecException | CertificateException | IOException e) {
 
