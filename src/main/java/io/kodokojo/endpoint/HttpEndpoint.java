@@ -61,6 +61,7 @@ public class HttpEndpoint extends AbstractSparkEndpoint implements ApplicationLi
         Spark.port(port);
 
         webSocket(BASE_API + "/event", WebSocketEntryPoint.class);
+        webSocket(BASE_API + "/event/", WebSocketEntryPoint.class);
 
         staticFileLocation("webapp");
 
@@ -69,7 +70,7 @@ public class HttpEndpoint extends AbstractSparkEndpoint implements ApplicationLi
             // White list of url which not require to have an identifier.
             if (requestMatch("POST", BASE_API + "/user", request) ||
                     requestMatch("GET", BASE_API, request) ||
-                    requestMatch("GET", BASE_API + "/event", request) ||
+                    requestMatch("GET", BASE_API + "/event(/)?", request) ||
                     requestMatch("GET", BASE_API + "/doc(/)?.*", request) ||
                     requestMatch("POST", BASE_API + "/user/[^/]*", request)
                     ) {
@@ -78,6 +79,7 @@ public class HttpEndpoint extends AbstractSparkEndpoint implements ApplicationLi
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace("Authentication is {}require for request {} {}.", authenticationRequired ? "" : "NOT ", request.requestMethod(), request.pathInfo());
             }
+            LOGGER.info("Authentication is {}require for request {} {}.", authenticationRequired ? "" : "NOT ", request.requestMethod(), request.pathInfo());
             if (authenticationRequired) {
                 BasicAuthenticator basicAuthenticator = new BasicAuthenticator();
                 basicAuthenticator.handle(request, response);
