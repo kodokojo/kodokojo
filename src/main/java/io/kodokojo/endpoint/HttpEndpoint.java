@@ -79,7 +79,6 @@ public class HttpEndpoint extends AbstractSparkEndpoint implements ApplicationLi
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace("Authentication is {}require for request {} {}.", authenticationRequired ? "" : "NOT ", request.requestMethod(), request.pathInfo());
             }
-            LOGGER.info("Authentication is {}require for request {} {}.", authenticationRequired ? "" : "NOT ", request.requestMethod(), request.pathInfo());
             if (authenticationRequired) {
                 BasicAuthenticator basicAuthenticator = new BasicAuthenticator();
                 basicAuthenticator.handle(request, response);

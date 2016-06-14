@@ -168,7 +168,7 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
                 projectStore.updateProjectConfiguration(projectConfiguration);
                 projectManager.addUsersToProject(projectConfiguration, usersToAdd);
             } else {
-                halt(403);
+                halt(403,"You have not right to add user to project configuration id " + identifier + ".");
             }
 
             return "";
@@ -197,7 +197,7 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
                     projectConfiguration.setUsers(users);
                     projectStore.updateProjectConfiguration(projectConfiguration);
                 } else {
-                    halt(403);
+                    halt(403,"You have not right to delete user to project configuration id " + identifier + ".");
                 }
             }
             return "";
@@ -228,7 +228,7 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
                         halt(409, "Project already exist.");
                     }
                 } else {
-                    halt(403);
+                    halt(403,"You have not right to start project configuration id " + projectConfigurationId + ".");
                 }
             }
             return "";
@@ -248,7 +248,7 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
                 if (userStore.userIsAdminOfProjectConfiguration(currentUser.getUsername(), projectConfiguration)) {
                     return new ProjectDto(project);
                 } else {
-                    halt(403);
+                    halt(403,"You have not right to lookup project id " + projectId + ".");
                 }
             }
             return "";
