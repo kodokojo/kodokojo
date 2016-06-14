@@ -86,6 +86,7 @@ public class WebSocketEntryPoint implements BrickStateMsgListener {
 
     @OnWebSocketConnect
     public void connected(Session session) {
+        LOGGER.info("Create a new session to {}.", session.getRemoteAddress().getHostString());
         sessions.put(session, System.currentTimeMillis());
     }
 
@@ -160,6 +161,7 @@ public class WebSocketEntryPoint implements BrickStateMsgListener {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Connection closed for reason '{}' with status code {}.", reason, statusCode);
         }
+        LOGGER.info("Connection closed for reason '{}' with status code {}.", reason, statusCode);
         sessions.remove(session);
         String identifier = null;
         Iterator<Map.Entry<String, UserSession>> iterator = userConnectedSession.entrySet().iterator();
@@ -197,6 +199,7 @@ public class WebSocketEntryPoint implements BrickStateMsgListener {
                     UserSession session = userConnectedSession.get(user.getIdentifier());
                     if (session != null && !ownerSession.getUser().getIdentifier().equals(user.getIdentifier())) {
                         sendMessageToUser(message, session);
+                        LOGGER.info("Send message to {} :{}", ownerSession.getUser().getUsername(), message);
                     }
                 });
             }
