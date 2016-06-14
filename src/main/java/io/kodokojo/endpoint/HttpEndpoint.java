@@ -84,11 +84,11 @@ public class HttpEndpoint extends AbstractSparkEndpoint implements ApplicationLi
                 if (basicAuthenticator.isProvideCredentials()) {
                     User user = userAuthenticator.authenticate(new SimpleCredential(basicAuthenticator.getUsername(), basicAuthenticator.getPassword()));
                     if (user == null) {
-                        authorizationRequiered(response);
-
+                        LOGGER.warn("ClientIp '{}' try to access to path '{}' with invalid credentials.", request.ip(), request.pathInfo());
+                        authorizationRequiered(request,response);
                     }
                 } else {
-                    authorizationRequiered(response);
+                    authorizationRequiered(request, response);
                 }
             }
         });
@@ -114,10 +114,11 @@ public class HttpEndpoint extends AbstractSparkEndpoint implements ApplicationLi
         Spark.stop();
     }
 
-    private static void authorizationRequiered(Response response) {
+    private static void authorizationRequiered(Request request,Response response) {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Current request required an authentication which not currently provide.");
         }
+        LOGGER.warn("ClientIp {} try to access to '{}' which require valid credentials.", request.ip(), request.pathInfo());
         response.header("WWW-Authenticate", "Basic realm=\"Kodokojo\"");
         response.status(401);
         halt(401);

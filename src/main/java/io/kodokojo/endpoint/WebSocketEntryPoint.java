@@ -92,7 +92,7 @@ public class WebSocketEntryPoint implements BrickStateMsgListener {
     @OnWebSocketMessage
     public void message(Session session, String message) throws IOException {
 
-        LOGGER.debug("Receive following message: {}", message);
+        LOGGER.info("Receive following message: {}", message);
         UserSession userSession = sessionIsValidated(session);
         if (userSession == null) {
             Long connectDate = sessions.get(session);
