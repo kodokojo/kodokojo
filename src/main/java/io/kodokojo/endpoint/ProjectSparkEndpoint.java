@@ -222,7 +222,8 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
                      //   projectManager.bootstrapStack(projectConfiguration.getName(), projectConfiguration.getDefaultStackConfiguration().getName(), projectConfiguration.getDefaultStackConfiguration().getType());
                         Project project = projectManager.start(projectConfiguration);
                         response.status(201);
-                        return projectStore.addProject(project, projectConfigurationId);
+                        String projectIdStarted = projectStore.addProject(project, projectConfigurationId);
+                        return projectIdStarted;
                     } else {
                         halt(409, "Project already exist.");
                     }
@@ -231,7 +232,7 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
                 }
             }
             return "";
-        }), jsonResponseTransformer);
+        }));
 
         get(BASE_API + "/project/:id", JSON_CONTENT_TYPE, ((request, response) -> {
             SimpleCredential credential = extractCredential(request);
