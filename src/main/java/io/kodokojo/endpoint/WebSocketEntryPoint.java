@@ -81,6 +81,7 @@ public class WebSocketEntryPoint implements BrickStateMsgListener {
         brickUrlFactory = Launcher.INJECTOR.getInstance(BrickUrlFactory.class);
         BrickStateMsgDispatcher msgDispatcher = Launcher.INJECTOR.getInstance(BrickStateMsgDispatcher.class);
         msgDispatcher.addListener(this);
+        LOGGER.info("Create a new WebSocketEntryPoint : {}", Thread.currentThread().getStackTrace());
 
     }
 
@@ -95,11 +96,15 @@ public class WebSocketEntryPoint implements BrickStateMsgListener {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Receive following message: {}", message);
         }
+        LOGGER.info("Receive following message: {}", message);
         UserSession userSession = sessionIsValidated(session);
         if (userSession == null) {
             Long connectDate = sessions.get(session);
             long delta = (connectDate + USER_VALIDATION_TIMEOUT) - System.currentTimeMillis();
             if (delta < 0) {
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("Session of user wait for to many times....");
+                }
                 session.close(); // To late to connect.
             } else {
                 Gson gson = localGson.get();
@@ -135,9 +140,11 @@ public class WebSocketEntryPoint implements BrickStateMsgListener {
                                     if (LOGGER.isDebugEnabled()) {
                                         LOGGER.debug("Send following message to user {} : {}", user.getUsername(), responseStr);
                                     }
+                                    LOGGER.info("Send welcome message to user {} : {}", user.getUsername(), responseStr);
                                 } else {
                                     sessions.remove(session);
                                     session.close(4401, "Invalid credentials.");
+
                                 }
                             }
                         }
@@ -214,6 +221,7 @@ public class WebSocketEntryPoint implements BrickStateMsgListener {
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Following message sent to user {} : {}", userSession.getUser().getUsername(), json);
             }
+            LOGGER.info("Following message sent to user {} : {}", userSession.getUser().getUsername(), json);
         } catch (IOException e) {
             LOGGER.error("Unable to notify user {}.", userSession.getUser().getUsername());
         }

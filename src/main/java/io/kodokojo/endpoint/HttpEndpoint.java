@@ -61,7 +61,6 @@ public class HttpEndpoint extends AbstractSparkEndpoint implements ApplicationLi
         Spark.port(port);
 
         webSocket(BASE_API + "/event", WebSocketEntryPoint.class);
-        webSocket(BASE_API + "/event/", WebSocketEntryPoint.class);
 
         staticFileLocation("webapp");
 

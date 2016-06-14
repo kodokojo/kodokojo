@@ -59,6 +59,8 @@ public class BrickStateNotificationThen<SELF extends BrickStateNotificationThen<
         builder.registerTypeAdapter(WebSocketMessage.class, new WebSocketMessageGsonAdapter());
         Gson gson = builder.create();
         LinkedList<String> srcMessages = new LinkedList<>(listener.getMessages());
+        assertThat(srcMessages).isNotEmpty();
+
         List<WebSocketMessage> webSocketMessages = srcMessages.stream().map(m -> gson.fromJson(m, WebSocketMessage.class)).collect(Collectors.toList());
         Map<String, List<WebSocketMessage>> messagePerBrick = new HashMap<>();
         for (WebSocketMessage message : webSocketMessages) {

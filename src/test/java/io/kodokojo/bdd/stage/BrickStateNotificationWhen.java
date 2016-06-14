@@ -55,7 +55,7 @@ public class BrickStateNotificationWhen<SELF extends BrickStateNotificationWhen<
     public SELF i_create_a_project_configuration_with_default_brick() {
         ProjectCreationDto projectCreationDto = new ProjectCreationDto("123456", "Acme", currentUser.getIdentifier(),null, Collections.singletonList(currentUser.getIdentifier()));
 
-        expectedBrickStarted = new String[]{"haproxy", "jenkins", "nexus", "gitlab"};
+        expectedBrickStarted = new String[]{"jenkins", "nexus", "gitlab"};
         nbMessageExpected = new CountDownLatch((expectedBrickStarted.length * 3) + 1);
         WebSocketConnectionResult webSocketConnectionResult = httpUserSupport.connectToWebSocketAndWaitMessage(currentUser, nbMessageExpected);
         listener = webSocketConnectionResult.getListener();
