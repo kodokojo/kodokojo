@@ -41,7 +41,6 @@ public class Launcher {
 
         INJECTOR = Guice.createInjector(new PropertyModule(args),
                 new SecurityModule(),
-                new EmailSenderModule(),
                 new RedisModule(),
                 new ServiceModule(),
                 new ActorModule(),
