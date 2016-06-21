@@ -20,6 +20,7 @@ package io.kodokojo;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.kodokojo.config.module.*;
+import io.kodokojo.config.module.endpoint.BrickEndpointModule;
 import io.kodokojo.config.module.endpoint.ProjectEndpointModule;
 import io.kodokojo.config.module.endpoint.UserEndpointModule;
 import io.kodokojo.endpoint.HttpEndpoint;
@@ -47,6 +48,7 @@ public class Launcher {
                 new AwsModule(),
                 new MarathonModule(),
                 new UserEndpointModule(),
+                new BrickEndpointModule(),
                 new ProjectEndpointModule(),
                 new RestEndpointModule()
         );
