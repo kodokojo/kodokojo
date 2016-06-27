@@ -105,12 +105,12 @@ public class MarathonConfigurationStore implements ConfigurationStore {
             Request request = new Request.Builder().url(url).post(requestBody).build();
             response = httpClient.newCall(request).execute();
             int code = response.code();
-            if (code == 200) {
+            if (code > 200 && code < 300) {
                 LOGGER.info("Push SSL certificate on marathon url '{}' [content-size={}]", url, certificat.length);
             } else {
-                LOGGER.error("Fail to push SSL certificate on marathon url '{}'.", url);
+                LOGGER.error("Fail to push SSL certificate on marathon url '{}' status code {}. Bosy response:\n{}", url, code, response.body().string());
             }
-            return code == 200;
+            return code > 200 && code < 300;
         } catch (IOException e) {
             LOGGER.error("Unable to store ssl key for project {} and brick {}", project, entityName, e);
         } finally {
