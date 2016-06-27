@@ -49,7 +49,7 @@ public class DefaultBrickFactory implements BrickFactory {
         cache.put(GITLAB, new Brick(GITLAB, BrickType.SCM, "8.5.2-ce"));
         cache.put(HAPROXY, new Brick(HAPROXY, BrickType.LOADBALANCER, "1.6"));
         cache.put(NEXUS, new Brick(NEXUS, BrickType.REPOSITORY, "2.13"));
-        cache.put(DOCKER_REGISTRY, new Brick(DOCKER_REGISTRY, BrickType.REPOSITORY, "2"));
+     //   cache.put(DOCKER_REGISTRY, new Brick(DOCKER_REGISTRY, BrickType.REPOSITORY, "2"));
     }
 
     @Override

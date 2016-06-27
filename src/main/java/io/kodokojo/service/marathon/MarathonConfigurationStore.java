@@ -108,7 +108,7 @@ public class MarathonConfigurationStore implements ConfigurationStore {
             if (code > 200 && code < 300) {
                 LOGGER.info("Push SSL certificate on marathon url '{}' [content-size={}]", url, certificat.length);
             } else {
-                LOGGER.error("Fail to push SSL certificate on marathon url '{}' status code {}. Bosy response:\n{}", url, code, response.body().string());
+                LOGGER.error("Fail to push SSL certificate on marathon url '{}' status code {}. Body response:\n{}", url, code, response.body().string());
             }
             return code > 200 && code < 300;
         } catch (IOException e) {
