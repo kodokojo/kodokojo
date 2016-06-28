@@ -2,7 +2,7 @@
 
 Kodo Kojo allows you to get a full out-of-the-box software factory.
 
-If you don't want to spent your time setting up a software factory, its monitoring tools, adding and removing users on each component of your software factories; then Kodo Kojo is made for you.
+If you don't want to spend your time setting up a software factory, its monitoring tools, adding and removing users on each component of your software factories; then Kodo Kojo is made for you.
 
 Kodo Kojo uses the power of [Apache Mesos](http://mesos.apache.org/) and [Marathon](https://mesosphere.github.io/marathon/) via [Docker](https://www.docker.com/) to orchestrate and isolate your software factory tools.
 
@@ -27,32 +27,32 @@ cd kodokojo
 ./quickstart.sh
 ```
 
-Go to [Quickstart page](doc/QUICKSTART.md) to get more details.
+Go to our [Quickstart page](doc/QUICKSTART.md) for more details.
 
-## Sofware factory tools supported
+## Supported software factory tools
 
 * [Gitlab 8.5](http://gitlab.com/)
-* [Jenkins](https://jenkins.io/) now in version 1.651-2-alpine. See [Issue #7](https://github.com/kodokojo/kodokojo/issues/7) to get more detail about Jenkins 2.
+* [Jenkins](https://jenkins.io/) now in version 1.651-2-alpine. See [Issue #7](https://github.com/kodokojo/kodokojo/issues/7) to get more details on Jenkins 2.
 * [Nexus OSS 2.13.0-01](http://www.sonatype.com/nexus-repository-oss)
 
 ## Contribute
 
-You want to contribute? It's very nice! Feel free to read our [Contribution page](CONTRIBUTE.md) to know what guidelines we try to apply.
+Want to contribute? That's great! Feel free to read our [Contribution page](CONTRIBUTE.md) to know our guidelines.
 
 You may find help on our [Gitter](https://gitter.im/kodokojo/kodokojo) channel if needed. Don't be afraid to ask.
 
 ## Go further
 
-The following scheme describes how Kodo Kojo and its components will be deployed:
+The following diagram describes how Kodo Kojo and its components will be deployed:
 
 ![Kodo Kojo Architecture](doc/images/kodokojo-architecture.png)
 
 HA Proxy will be managed by [kodokojo-haproxy-marathon](https://github.com/kodokojo/kodokojo-haproxy-marathon) which is registered on the Marathon event bus.
-This will allow the HA Proxy configuration to be updated when a Marathon's state changes.
+This will allow the HA Proxy configuration to be updated when a Marathon state changes.
 
 ## Stay tuned
 
-You can stay tuned by following us on:
+Stay tuned by following us on:
 
 * Our Website http://kodokojo.io
 * Twitter : [@kodokojo](http://twitter.com/kodokojo)
