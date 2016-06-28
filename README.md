@@ -39,7 +39,7 @@ Go to [Quickstart page](doc/QUICKSTART.md) to get more details.
 
 You want to contribute? It's very nice! Feel free to read our [Contribution page](CONTRIBUTE.md) to know what guidelines we try to apply.
 
-You may find help on our Slack channel if needed. Don't be afraid to ask.
+You may find help on our [Gitter](https://gitter.im/kodokojo/kodokojo) channel if needed. Don't be afraid to ask.
 
 ## Go further
 
