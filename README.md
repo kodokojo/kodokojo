@@ -10,6 +10,8 @@ Kodo Kojo use the power of [Apache Mesos](http://mesos.apache.org/) and [Maratho
 
 ## License
 
+[![Join the chat at https://gitter.im/kodokojo/kodokojo](https://badges.gitter.im/kodokojo/kodokojo.svg)](https://gitter.im/kodokojo/kodokojo?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 `Kodo Kojo` is a licensed under [GNU General Public License v3](http://www.gnu.org/licenses/gpl-3.0.en.html).
 
 ## Quickstart
