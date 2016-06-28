@@ -1,10 +1,8 @@
-
 ![Kodo Kojo Logo](doc/images/logo-kodokojo-baseline-black1.png)
 
+Kodo Kojo alow you to bring a full ready to use software factory.
 
-Kodo Kojo alow you to bring a full ready to use software factory. 
-
-You don't want spent your time to setup software factory, setup monitoring tools, add and remove user on each component of yours software factories; Kodo Kojo is done for you. 
+You don't want spent your time to setup software factory, setup monitoring tools, add and remove user on each component of yours software factories; Kodo Kojo is done for you.
 
 Kodo Kojo use the power of [Apache Mesos](http://mesos.apache.org/) and [Marathon](https://mesosphere.github.io/marathon/) via [Docker](https://www.docker.com/) to orchestrate and isolate your software factory tools.
 
@@ -29,18 +27,18 @@ cd kodokojo
 Go to [Quicstart page](doc/QUICKSTART.md) to get more details.
 
 ## Sofware factory tool supported
-* [Gitlab 8.5](http://gitlab.com/) 
+* [Gitlab 8.5](http://gitlab.com/)
 * [Jenkins](https://jenkins.io/) now in version 1.651-2-alpine. See Issue #7 to get more detail about Jenkins 2.
-* [Nexus OSS 2.13.0-01](http://www.sonatype.com/nexus-repository-oss) 
+* [Nexus OSS 2.13.0-01](http://www.sonatype.com/nexus-repository-oss)
 
 ## Contribute
 
 You want to contribute, it's very Nice.We try to apply this practice [Contribution page](CONTRIBUTE.md).
 
-You may find help on our Slack channel if needed. Don't be afraid about 
+You may find help on our Slack channel if needed. Don't be afraid about
 
 ## Go further
-Following schemas describe how Kodo Kojo and component will be deployed.  
+Following schemas describe how Kodo Kojo and component will be deployed.
 
 ![Kodo Kojo Architecture](doc/images/kodokojo-architecture.png)
 
@@ -51,7 +49,6 @@ HA Proxy will be managed by [kodokojo-haproxy-marathon](https://github.com/kodok
 You can stay tuned following us on :
 * Our Website http://kodokojo.io
 * Twitter : [@kodokojo](http://twitter.com/kodokojo)
-
 
 ## Technology inside
 
@@ -72,8 +69,4 @@ We use following tests tools:
 * [Mockito](http://mockito.org/)
 * [AssertJ](http://joel-costigliola.github.io/assertj/)
 
-
 Thanks to all those Open source project which made possible to done such project!
-
- 
- 
