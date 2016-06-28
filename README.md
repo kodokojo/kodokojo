@@ -32,7 +32,7 @@ Go to [Quickstart page](doc/QUICKSTART.md) to get more details.
 ## Sofware factory tools supported
 
 * [Gitlab 8.5](http://gitlab.com/)
-* [Jenkins](https://jenkins.io/) now in version 1.651-2-alpine. See Issue #7 to get more detail about Jenkins 2.
+* [Jenkins](https://jenkins.io/) now in version 1.651-2-alpine. See [Issue #7](https://github.com/kodokojo/kodokojo/issues/7) to get more detail about Jenkins 2.
 * [Nexus OSS 2.13.0-01](http://www.sonatype.com/nexus-repository-oss)
 
 ## Contribute
