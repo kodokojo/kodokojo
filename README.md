@@ -50,12 +50,31 @@ The following diagram describes how Kodo Kojo and its components will be deploye
 HA Proxy will be managed by [kodokojo-haproxy-marathon](https://github.com/kodokojo/kodokojo-haproxy-marathon) which is registered on the Marathon event bus.
 This will allow the HA Proxy configuration to be updated when a Marathon state changes.
 
+## Roadmap
+
+### Summer change planned
+
+### Features and Bricks
+* Add (UI)/ Remove(UI and Back) User on all brick of software factory.
+* Upgrade version of Gitlabl to the latest and test Gitlab Docker registry. [Issue #2](https://github.com/kodokojo/kodokojo/issues/2)
+* Upgrade version og Jenkins to 2.x. [Issue #7](https://github.com/kodokojo/kodokojo/issues/7)
+
+#### Documentation and Usability
+* Improve Howto test on your laptop documentations
+* Provide Vagrantfile to Quickstart use case of Kodo Kojo (Multi Vms, etc...)
+
+#### Infrastructure 
+* Opensource our Terraform/Ansible playbook to setup Kodo Kojo on AWS
+* Add persistence support using GlusterFs.
+* Add log centralization using Rsyslog, Kafka, Elastic Search and Kibana (this is a very small story).
+
 ## Stay tuned
 
 Stay tuned by following us on:
 
 * Our Website http://kodokojo.io
 * Twitter : [@kodokojo](http://twitter.com/kodokojo)
+* Gitter : [Gitter](https://gitter.im/kodokojo/kodokojo) 
 
 ## Technology inside
 
