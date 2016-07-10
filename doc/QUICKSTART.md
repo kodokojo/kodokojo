@@ -59,5 +59,5 @@ docker-compose -f src/test/resources/docker/full/docker-compose.yml kill && \
     docker-compose -f src/test/resources/docker/full/docker-compose.yml rm --force
 ```
 
-### To go to fare
+### To go further
 Each project which composes Kodo Kojo has a `build.sh`script which allows you to test and build them.
