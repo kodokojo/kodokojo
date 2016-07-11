@@ -1,5 +1,8 @@
 # Quickstart kodo Kojo
 
+This Quickstart allow you to run a Mesos cluster with Marathon and Kodo Kojo.
+It's only present to allow you to test Kodo Kojo and must not been used as a target solution for production.
+
 ## Requirement
 
 To be able to work on Kodo Kojo and quickstart it, you need to install the following tools:
