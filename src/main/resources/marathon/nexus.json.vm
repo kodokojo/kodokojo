@@ -46,6 +46,7 @@
         "hostPath": "/data/glusterfs/global/$projectName/nexus/",
         "mode": "RW"
       }
+    ]
   },#if( $constrainByTypeAttribute )
   "constraints": [
     [
