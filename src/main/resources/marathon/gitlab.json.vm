@@ -41,7 +41,13 @@
           "value": "component=gitlab"
         }
       ]
-    }
+    },
+    "volumes": [
+      {
+        "containerPath": "/var/opt/gitlab",
+        "hostPath": "/data/glusterfs/global/$projectName/gitlab/",
+        "mode": "RW"
+      }
   },#if( $constrainByTypeAttribute )
   "constraints": [
     [

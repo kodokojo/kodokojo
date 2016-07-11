@@ -38,7 +38,14 @@
           "value": "component=jenkins"
         }
       ]
-    }
+    },
+    "volumes": [
+      {
+        "containerPath": "/var/jenkins_home/",
+        "hostPath": "/data/glusterfs/global/$projectName/jenkins/",
+        "mode": "RW"
+      }
+    ]
   },#if( $constrainByTypeAttribute )
   "constraints": [
     [

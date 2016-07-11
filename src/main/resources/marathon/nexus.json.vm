@@ -39,7 +39,13 @@
           "value": "component=nexus"
         }
       ]
-    }
+    },
+    "volumes": [
+      {
+        "containerPath": "/sonatype-work/",
+        "hostPath": "/data/glusterfs/global/$projectName/nexus/",
+        "mode": "RW"
+      }
   },#if( $constrainByTypeAttribute )
   "constraints": [
     [
