@@ -56,7 +56,7 @@ This will allow the HA Proxy configuration to be updated when a Marathon state c
 
 ### Features and Bricks
 * Add (UI)/ Remove(UI and Back) User on all brick of software factory.
-* Upgrade version of Gitlabl to the latest and test Gitlab Docker registry. [Issue #2](https://github.com/kodokojo/kodokojo/issues/2)
+* Upgrade version of Gitlab to the latest and test Gitlab Docker registry. [Issue #2](https://github.com/kodokojo/kodokojo/issues/2)
 * Upgrade version og Jenkins to 2.x. [Issue #7](https://github.com/kodokojo/kodokojo/issues/7)
 
 #### Documentation and Usability
@@ -88,6 +88,7 @@ Stay tuned by following us on:
 * [OkHttp](http://square.github.io/okhttp/)
 * [Retrofit](http://square.github.io/retrofit/)
 * [Gson](https://github.com/google/gson)
+* [Antlr](http://www.antlr.org/)
 
 We use the following tests tools:
 

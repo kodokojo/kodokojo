@@ -68,21 +68,11 @@ docker pull java:8-jre
 docker pull maven:3-jdk-8
 docker pull redis
 
-createOrUpdateGit commons-tests
-createOrUpdateGit commons
+#createOrUpdateGit commons-tests
+#createOrUpdateGit commons
 createOrUpdateGit kodokojo-ui
 #createOrUpdateGit kodokojo-haproxy-marathon
 
-build commons-tests
-rc=$?
-if [[ $rc != 0 ]]; then
-  exit $rc
-fi
-build commons
-rc=$?
-if [[ $rc != 0 ]]; then
-  exit $rc
-fi
 build kodokojo-ui
 rc=$?
 if [[ $rc != 0 ]]; then
