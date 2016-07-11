@@ -50,7 +50,7 @@ This `docker-compose.yml` file run several containers:
 If you want to get some logs, you may have use following command:
 
 ```bash
-docker-compose -f src/test/resources/docker/full/docker-compose.yml log kodokojo     
+docker-compose -f src/test/resources/docker/full/docker-compose.yml logs kodokojo     
 ```
 
 To clean all those containers:
