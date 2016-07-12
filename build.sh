@@ -25,7 +25,7 @@ if [ ! -x "$DOCKER_BIN_PATH" ]; then
 fi
 
 DOCKER_CERT_OPT=""
-if [ x "$DOCKER_CERT_PATH" ]; then
+if [ -x "$DOCKER_CERT_PATH" ]; then
   DOCKER_CERT_OPT="-v $DOCKER_CERT_PATH:$DOCKER_CERT_PATH"
 fi
 
