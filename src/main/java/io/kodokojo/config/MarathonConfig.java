@@ -25,4 +25,7 @@ public interface MarathonConfig extends PropertyConfig {
     @Key("marathon.url")
     String url();
 
+    @Key(value = "marathon.ignore.constraint", defaultValue = "FALSE")
+    Boolean ignoreContraint();
+
 }
