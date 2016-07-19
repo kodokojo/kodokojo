@@ -39,6 +39,10 @@
         {
           "key": "label",
           "value": "component=gitlab"
+        },
+        {
+          "key": "user",
+          "value": "root"
         }
       ]
     },
