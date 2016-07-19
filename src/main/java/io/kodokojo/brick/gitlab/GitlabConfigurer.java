@@ -1,25 +1,24 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package io.kodokojo.brick.gitlab;
 
-
-
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.squareup.okhttp.*;
 import io.kodokojo.brick.BrickConfigurationException;
 import io.kodokojo.brick.BrickConfigurer;
@@ -56,19 +55,15 @@ public class GitlabConfigurer implements BrickConfigurer {
 
     private static final Pattern FORM_TOKEN_PATTERN = Pattern.compile(".*<input type=\"hidden\" name=\"authenticity_token\" value=\"([^\"]*)\" />.*");
 
-    private static final Pattern META_TOKEN_PATTERN = Pattern.compile(".*<meta name=\"csrf-token\" content=\"([^\"]*)\" />.*");
+    private static final Pattern URL_RESET_TOKEN_PATTERN = Pattern.compile("reset_password_token=(.*)$");
 
     private static final Pattern PRIVATE_TOKEN_PATTERN = Pattern.compile(".*<input type=\"text\" name=\"token\" id=\"token\" value=\"([^\"]*)\" class=\"form-control\" />.*");
 
     private static final String SIGNIN_URL = "/users/sign_in";
 
-    private static final String PASSWORD_URL = "/profile/password";
-
-    private static final String PASSWORD_FORM_URL = PASSWORD_URL + "/new";
+    private static final String PASSWORD_URL = "/users/password";
 
     private static final String ACCOUNT_URL = "/profile/account";
-
-    private static final String OLD_PASSWORD = "5iveL!fe";
 
     private static final String ROOT_LOGIN = "root";
 
@@ -88,47 +83,43 @@ public class GitlabConfigurer implements BrickConfigurer {
     public BrickConfigurerData configure(BrickConfigurerData brickConfigurerData) throws BrickConfigurationException {
         String gitlabUrl = getGitlabEntryPoint(brickConfigurerData);
         OkHttpClient httpClient = provideDefaultOkHttpClient();
-        if (signIn(httpClient, gitlabUrl, ROOT_LOGIN, OLD_PASSWORD)) {
-            String token = getAuthenticityToken(httpClient, gitlabUrl + PASSWORD_FORM_URL, META_TOKEN_PATTERN);
-            String newPassword = brickConfigurerData.getDefaultAdmin().getPassword();
-            if (changePassword(httpClient, gitlabUrl, token, OLD_PASSWORD, newPassword)) {
-                if (signIn(httpClient, gitlabUrl, ROOT_LOGIN, newPassword)) {
-                    Request request = new Request.Builder().get().url(gitlabUrl + ACCOUNT_URL).build();
-                    Response response = null;
-                    try {
-                        response = httpClient.newCall(request).execute();
-                        String body = response.body().string();
-                        String authenticityToken = getAuthenticityToken(body, PRIVATE_TOKEN_PATTERN);
-                        if (StringUtils.isBlank(authenticityToken)) {
-                            throw new BrickConfigurationException("Unable to get private token of root account for gitlab  for project " + brickConfigurerData.getProjectName() + " on url " + gitlabUrl);
-                        }
-                        brickConfigurerData.addInContext(GITLAB_ADMIN_TOKEN_KEY, authenticityToken);
 
-                        return brickConfigurerData;
-                    } catch (IOException e) {
-                        LOGGER.error("Unable to retrieve account page", e);
-                    } finally {
-                        if (response != null) {
-                            try {
-                                response.body().close();
-                            } catch (IOException e) {
-                                LOGGER.debug("Unable to close body response", e);
-                            }
+        String changePasswordUrl = getChangePasswordUrl(httpClient, gitlabUrl);
+        String resetToken = getResetToken(changePasswordUrl);
+
+        String newPassword = brickConfigurerData.getDefaultAdmin().getPassword();
+
+        String authenticityToken = getAuthenticityToken(httpClient, changePasswordUrl, FORM_TOKEN_PATTERN);
+        if (changeDefaultPassword(httpClient, gitlabUrl + PASSWORD_URL, resetToken, authenticityToken, newPassword)) {
+            if (signIn(httpClient, gitlabUrl, ROOT_LOGIN, newPassword)) {
+                String url = gitlabUrl + ACCOUNT_URL;
+                Request request = new Request.Builder().get().url(url).build();
+                Response response = null;
+                try {
+                    response = httpClient.newCall(request).execute();
+                    authenticityToken = getAuthenticityToken(response.body().string(), PRIVATE_TOKEN_PATTERN);
+                    if (StringUtils.isBlank(authenticityToken)) {
+                        throw new BrickConfigurationException("Unable to get private token of root account for gitlab  for project " + brickConfigurerData.getProjectName() + " on url " + gitlabUrl);
+                    }
+                    brickConfigurerData.addInContext(GITLAB_ADMIN_TOKEN_KEY, authenticityToken);
+
+                    return brickConfigurerData;
+                } catch (IOException e) {
+                    LOGGER.error("Unable to retrieve account page", e);
+                } finally {
+                    if (response != null) {
+                        try {
+                            response.body().close();
+                        } catch (IOException e) {
+                            LOGGER.debug("Unable to close body response", e);
                         }
                     }
-                } else {
-                    LOGGER.error("Unable to log on Gitlab with new password");
-                    throw new BrickConfigurationException("Unable to log on Gitlab with new password for project " + brickConfigurerData.getProjectName() + " on url " + gitlabUrl);
                 }
             } else {
-                LOGGER.error("Unable to change root password on entrypoint {}", gitlabUrl);
-                throw new BrickConfigurationException("Unable to change root password on Gitlab for project " + brickConfigurerData.getProjectName() + " on url " + gitlabUrl);
+                LOGGER.error("Unable to log on Gitlab with new password");
+                throw new BrickConfigurationException("Unable to log on Gitlab with new password for project " + brickConfigurerData.getProjectName() + " on url " + gitlabUrl);
             }
-        } else {
-            LOGGER.error("Unable to log as root on entrypoint {}", gitlabUrl);
-            throw new BrickConfigurationException("Unable to log as root password on Gitlab for project " + brickConfigurerData.getProjectName() + " on url " + gitlabUrl);
         }
-
         return brickConfigurerData;
     }
 
@@ -143,8 +134,10 @@ public class GitlabConfigurer implements BrickConfigurer {
         }
 
         String gitlabEntryPoint = getGitlabEntryPoint(brickConfigurerData);
+
         RestAdapter adapter = new RestAdapter.Builder().setEndpoint(gitlabEntryPoint).setClient(new OkClient(provideDefaultOkHttpClient())).build();
         GitlabRest gitlabRest = adapter.create(GitlabRest.class);
+
         String privateToken = (String) brickConfigurerData.getContext().get(GITLAB_ADMIN_TOKEN_KEY);
         for (User user : users) {
             if (!createUser(gitlabRest, privateToken, user)) {
@@ -163,25 +156,51 @@ public class GitlabConfigurer implements BrickConfigurer {
         return "https://" + brickUrlFactory.forgeUrl(brickConfigurerData.getProjectName(), brickConfigurerData.getStackName(), "scm", "gitlab");
     }
 
-    private static boolean changePassword(OkHttpClient httpClient, String gitlabUrl, String token, String oldPassword, String newPassword) {
+    private static String getChangePasswordUrl(OkHttpClient httpClient, String gitlabUrl) {
+        Request request = new Request.Builder().get().url(gitlabUrl + SIGNIN_URL).build();
+        Response response = null;
+        String res = null;
+        try {
+            response = httpClient.newCall(request).execute();
+            res = response.request().urlString();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (response != null) {
+                IOUtils.closeQuietly(response.body());
+            }
+        }
+        return res;
+    }
+
+    private static String getResetToken(String changePasswordUrl) {
+        Matcher matcher = URL_RESET_TOKEN_PATTERN.matcher(changePasswordUrl);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return null;
+    }
+
+    private static boolean changeDefaultPassword(OkHttpClient httpClient, String url, String resetToken, String token, String newPassword) {
         RequestBody formBody = new FormEncodingBuilder()
                 .addEncoded("utf8", "%E2%9C%93")
                 .add("authenticity_token", token)
-                .add("user[current_password]", oldPassword)
+                .add("_method", "put")
+                .add("user[reset_password_token]", resetToken)
                 .add("user[password]", newPassword)
                 .add("user[password_confirmation]", newPassword)
                 .build();
         Request request = new Request.Builder()
-                .url(gitlabUrl + PASSWORD_URL)
+                .url(url)
                 .addHeader("Content-Type", "application/x-www-form-urlencoded")
                 .post(formBody).build();
         Response response = null;
         try {
             response = httpClient.newCall(request).execute();
-            String body = response.body().string();
-            return response.code() == 200 && !body.contains(GITLAB_CHANGE_FAIL_MESSAGE);
+            return response.code() == 200 && response.body().string().contains("Your password has been changed successfully.");
         } catch (IOException e) {
-            LOGGER.error("Unable to change the default password", e);
+            LOGGER.error("Unable to create admin account&", e);
             return false;
         } finally {
             if (response != null) {
@@ -216,12 +235,8 @@ public class GitlabConfigurer implements BrickConfigurer {
             LOGGER.error("Unable to change default password for Gitlab", e);
             return false;
         } finally {
-            if (response != null && response.body() != null) {
-                try {
-                    response.body().close();
-                } catch (IOException e) {
-                    LOGGER.debug("Unable to close body response", e);
-                }
+            if (response != null) {
+                IOUtils.closeQuietly(response.body());
             }
         }
     }
@@ -246,6 +261,7 @@ public class GitlabConfigurer implements BrickConfigurer {
 
     private boolean createUser(GitlabRest gitlabRest, String privateToken, User user) {
         Response response = null;
+
         int id = -1;
         try {
             JsonObject jsonObject = gitlabRest.createUser(privateToken, user.getUsername(), user.getPassword(), user.getEmail(), user.getName(), "false");
@@ -276,6 +292,45 @@ public class GitlabConfigurer implements BrickConfigurer {
                 if (response != null) {
                     IOUtils.closeQuietly(response.body());
                 }
+            }
+        }
+        return false;
+    }
+
+    private boolean createUser(OkHttpClient httpClient, String gitlabUrl, String privateToken, User user) {
+        Response response = null;
+
+        int id = -1;
+        RequestBody formBody = new FormEncodingBuilder()
+                .add("PRIVATE-TOKEN", privateToken)
+                .add("username", user.getUsername())
+                .add("password", user.getPassword())
+                .add("email", user.getEmail())
+                .add("name", user.getName())
+                .add("confirm", "false")
+                .build();
+        Request request = new Request.Builder().post(formBody).url(gitlabUrl + "/api/v3/users").build();
+        try {
+            response = httpClient.newCall(request).execute();
+            if (response.code() >= 200 && response.code() < 300) {
+                JsonParser parser = new JsonParser();
+                JsonObject json = (JsonObject) parser.parse(response.body().string());
+                id = json.getAsJsonPrimitive("id").getAsInt();
+
+                formBody = new FormEncodingBuilder()
+                        .add("PRIVATE-TOKEN", privateToken)
+                        .add("title", "SSH Key")
+                        .add("key", user.getSshPublicKey())
+                        .build();
+                request = new Request.Builder().post(formBody).url(gitlabUrl + "/api/v3/users/" + id + "/keys").build();
+                response = httpClient.newCall(request).execute();
+                return response.code() >= 200 && response.code() < 300;
+            }
+        } catch (IOException e) {
+            LOGGER.error("unable to add SSH keys creation of user : ", e);
+        } finally {
+            if (response != null) {
+                IOUtils.closeQuietly(response.body());
             }
         }
         return false;
