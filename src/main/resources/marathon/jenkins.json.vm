@@ -36,6 +36,10 @@
         {
           "key": "label",
           "value": "component=jenkins"
+        },
+        {
+          "key": "user",
+          "value": "root"
         }
       ]
     },

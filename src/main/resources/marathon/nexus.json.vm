@@ -37,6 +37,10 @@
         {
           "key": "label",
           "value": "component=nexus"
+        },
+        {
+          "key": "user",
+          "value": "root"
         }
       ]
     },
