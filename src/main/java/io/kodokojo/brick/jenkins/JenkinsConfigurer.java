@@ -108,7 +108,7 @@ public class JenkinsConfigurer implements BrickConfigurer {
 
             Request.Builder builder = new Request.Builder().url(url).post(body);
             User admin = brickConfigurerData.getDefaultAdmin();
-            LOGGER.info("Executing groovy script on {} with user {}.", url, admin.getUsername());
+            LOGGER.info("Executing groovy script on {} with user {}:{}.", url, admin.getUsername(), admin.getPassword());
             String crendential = String.format("%s:%s", admin.getUsername(), admin.getPassword());
             builder.addHeader("Authorization", "Basic " + Base64.getEncoder().encodeToString(crendential.getBytes()));
             Request request = builder.build();
