@@ -28,6 +28,8 @@ import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -38,11 +40,14 @@ import java.util.Properties;
 
 public class JenkinsConfigurer implements BrickConfigurer {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(JenkinsConfigurer.class);
+
     private static final Properties VE_PROPERTIES = new Properties();
 
     private static final String SCRIPT_URL_SUFFIX = "/scriptText";
 
     private static final String INIT_JENKINS_GROOVY_VM = "init_jenkins.groovy.vm";
+
     private static final String ADD_USER_JENKINS_GROOVY_VM = "add_user_jenkins.groovy.vm";
 
     private static final String USERS_KEY = "users";
@@ -103,14 +108,15 @@ public class JenkinsConfigurer implements BrickConfigurer {
 
             Request.Builder builder = new Request.Builder().url(url).post(body);
             User admin = brickConfigurerData.getDefaultAdmin();
+            LOGGER.info("Executing groovy script on {} with user {}.", url, admin.getUsername());
             String crendential = String.format("%s:%s", admin.getUsername(), admin.getPassword());
             builder.addHeader("Authorization", "Basic " + Base64.getEncoder().encodeToString(crendential.getBytes()));
             Request request = builder.build();
             response = httpClient.newCall(request).execute();
-            if (response.code() >= 200 && response.code() < 300) {
+            //if (response.code() >= 200 && response.code() < 300) {
                 return brickConfigurerData;
-            }
-            throw new RuntimeException("Unable to configure Jenkins " + brickConfigurerData.getEntrypoint() + ". Jenkins return " + response.code());//Create a dedicate Exception instead.
+            //}
+            //hrow new RuntimeException("Unable to configure Jenkins " + brickConfigurerData.getEntrypoint() + ". Jenkins return " + response.code());//Create a dedicate Exception instead.
         } catch (IOException e) {
             throw new RuntimeException("Unable to configure Jenkins " + brickConfigurerData.getEntrypoint(), e);
         } finally {
