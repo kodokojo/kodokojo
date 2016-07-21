@@ -29,6 +29,7 @@ import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Base64;
@@ -54,6 +55,16 @@ public class JenkinsConfigurer implements BrickConfigurer {
         VE_PROPERTIES.setProperty("runtime.log.logsystem.class", "org.apache.velocity.runtime.log.NullLogChute");
     }
 
+    private final OkHttpClient httpClient;
+
+    @Inject
+    public JenkinsConfigurer(OkHttpClient httpClient) {
+        this.httpClient = httpClient;
+        if (httpClient == null) {
+            throw new IllegalArgumentException("httpClient must be defined.");
+        }
+    }
+
     @Override
     public BrickConfigurerData configure(BrickConfigurerData brickConfigurerData) {
         VelocityContext context = new VelocityContext();
@@ -74,7 +85,7 @@ public class JenkinsConfigurer implements BrickConfigurer {
 
     private BrickConfigurerData executeGroovyScript(BrickConfigurerData brickConfigurerData, VelocityContext context, String templatePath) {
         String url = brickConfigurerData.getEntrypoint() + SCRIPT_URL_SUFFIX;
-        OkHttpClient httpClient = new OkHttpClient();
+
         Response response = null;
         try {
             VelocityEngine ve = new VelocityEngine();

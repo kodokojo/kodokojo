@@ -17,6 +17,7 @@
  */
 package io.kodokojo.service;
 
+import com.squareup.okhttp.OkHttpClient;
 import io.kodokojo.brick.*;
 import io.kodokojo.model.Brick;
 import io.kodokojo.model.BrickType;
@@ -37,7 +38,7 @@ public class DefaultBrickConfigurerProviderTest {
     @Before
     public void setup() {
         brickFactory = new DefaultBrickFactory();
-        brickConfigurerProvider = new DefaultBrickConfigurerProvider(new DefaultBrickUrlFactory("kodokojo.dev"));
+        brickConfigurerProvider = new DefaultBrickConfigurerProvider(new DefaultBrickUrlFactory("kodokojo.dev"), new OkHttpClient());
     }
 
     @Test

@@ -17,6 +17,7 @@
  */
 package io.kodokojo.brick;
 
+import com.squareup.okhttp.OkHttpClient;
 import io.kodokojo.brick.dockerregistry.DockerRegistryConfigurer;
 import io.kodokojo.model.Brick;
 import io.kodokojo.brick.gitlab.GitlabConfigurer;
@@ -29,12 +30,18 @@ public class DefaultBrickConfigurerProvider implements BrickConfigurerProvider {
 
     private final BrickUrlFactory brickUrlFactory;
 
+    private final OkHttpClient okHttpClient;
+
     @Inject
-    public DefaultBrickConfigurerProvider(BrickUrlFactory brickUrlFactory) {
+    public DefaultBrickConfigurerProvider(BrickUrlFactory brickUrlFactory, OkHttpClient okHttpClient) {
         if (brickUrlFactory == null) {
             throw new IllegalArgumentException("brickUrlFactory must be defined.");
         }
+        if (okHttpClient == null) {
+            throw new IllegalArgumentException("okHttpClient must be defined.");
+        }
         this.brickUrlFactory = brickUrlFactory;
+        this.okHttpClient = okHttpClient;
     }
 
     @Override
@@ -46,9 +53,9 @@ public class DefaultBrickConfigurerProvider implements BrickConfigurerProvider {
             case DefaultBrickFactory.GITLAB:
                 return new GitlabConfigurer(brickUrlFactory);
             case DefaultBrickFactory.JENKINS:
-                return new JenkinsConfigurer();
+                return new JenkinsConfigurer(okHttpClient);
             case DefaultBrickFactory.NEXUS:
-                return new NexusConfigurer();
+                return new NexusConfigurer(okHttpClient);
             case DefaultBrickFactory.DOCKER_REGISTRY:
                 return new DockerRegistryConfigurer();
             default:

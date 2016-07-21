@@ -98,7 +98,7 @@ public class BrickConfigurerGiven<SELF extends BrickConfigurerGiven<?>> extends 
         assertThat(brickStarted).isTrue();
         LOGGER.info("Brick {} successfully started.", brickName);
         brickFactory = new DefaultBrickFactory();
-        brickConfigurerProvider = new DefaultBrickConfigurerProvider(new DefaultBrickUrlFactory("kodokojo.dev"));
+        brickConfigurerProvider = new DefaultBrickConfigurerProvider(new DefaultBrickUrlFactory("kodokojo.dev"), new OkHttpClient());
         return self();
     }
 

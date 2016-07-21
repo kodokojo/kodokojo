@@ -17,6 +17,7 @@
  */
 package io.kodokojo.bdd.stage;
 
+import com.squareup.okhttp.OkHttpClient;
 import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.ProvidedScenarioState;
 import io.kodokojo.brick.BrickConfigurationStarter;
@@ -85,7 +86,7 @@ public class ProjectManagerGiven<SELF extends ProjectManagerGiven<?>> extends St
         brickStarter = mock(BrickConfigurationStarter.class);
 
 
-        projectManager = new DefaultProjectManager("kodokojo.dev", configurationStore, projectStore, configProvider, new NoOpDnsManager(), new DefaultBrickConfigurerProvider(new DefaultBrickUrlFactory("kodokojo.dev")), brickStarter, new DefaultBrickUrlFactory("kodokojo.dev"));
+        projectManager = new DefaultProjectManager("kodokojo.dev", configurationStore, projectStore, configProvider, new NoOpDnsManager(), new DefaultBrickConfigurerProvider(new DefaultBrickUrlFactory("kodokojo.dev"), new OkHttpClient()), brickStarter, new DefaultBrickUrlFactory("kodokojo.dev"));
 
         return self();
     }
