@@ -21,21 +21,25 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
+import com.squareup.okhttp.OkHttpClient;
 import io.kodokojo.brick.*;
 import io.kodokojo.commons.utils.ssl.SSLKeyPair;
 import io.kodokojo.config.ApplicationConfig;
 import io.kodokojo.config.SecurityConfig;
 import io.kodokojo.endpoint.UserAuthenticator;
-import io.kodokojo.service.lifecycle.ApplicationLifeCycleManager;
 import io.kodokojo.service.*;
+import io.kodokojo.service.authentification.SimpleCredential;
 import io.kodokojo.service.dns.DnsManager;
+import io.kodokojo.service.lifecycle.ApplicationLifeCycleManager;
 import io.kodokojo.service.ssl.SSLCertificatProviderFromCaSSLpaire;
 import io.kodokojo.service.ssl.WildcardSSLCertificatProvider;
 import io.kodokojo.service.store.ProjectStore;
-import io.kodokojo.service.authentification.SimpleCredential;
 import org.apache.commons.lang.StringUtils;
 
-import java.io.File;
+import javax.net.ssl.*;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 
 public class ServiceModule extends AbstractModule {
 
@@ -68,8 +72,8 @@ public class ServiceModule extends AbstractModule {
 
     @Provides
     @Singleton
-    BrickConfigurerProvider provideBrickConfigurerProvider(BrickUrlFactory brickUrlFactory) {
-        return new DefaultBrickConfigurerProvider(brickUrlFactory);
+    BrickConfigurerProvider provideBrickConfigurerProvider(BrickUrlFactory brickUrlFactory, OkHttpClient httpClient) {
+        return new DefaultBrickConfigurerProvider(brickUrlFactory, httpClient);
     }
 
     @Provides
@@ -91,6 +95,48 @@ public class ServiceModule extends AbstractModule {
     @Singleton
     BrickUrlFactory provideBrickUrlFactory(ApplicationConfig applicationConfig) {
         return new DefaultBrickUrlFactory(applicationConfig.domain());
+    }
+
+    @Provides
+    @Singleton
+    OkHttpClient provideOkHttpClient() {
+
+        // TODO : Replace this implementation by an httpClient which integrate the SSL CA used to create services.
+
+        OkHttpClient httpClient = new OkHttpClient();
+        final TrustManager[] certs = new TrustManager[]{new X509TrustManager() {
+
+            @Override
+            public X509Certificate[] getAcceptedIssuers() {
+                return null;
+            }
+
+            @Override
+            public void checkServerTrusted(final X509Certificate[] chain,
+                                           final String authType) throws CertificateException {
+            }
+
+            @Override
+            public void checkClientTrusted(final X509Certificate[] chain,
+                                           final String authType) throws CertificateException {
+            }
+        }};
+
+        SSLContext ctx = null;
+        try {
+            ctx = SSLContext.getInstance("TLS");
+            ctx.init(null, certs, new SecureRandom());
+        } catch (final java.security.GeneralSecurityException ex) {
+            //
+        }
+        httpClient.setHostnameVerifier(new HostnameVerifier() {
+            @Override
+            public boolean verify(String s, SSLSession sslSession) {
+                return true;
+            }
+        });
+        httpClient.setSslSocketFactory(ctx.getSocketFactory());
+        return httpClient;
     }
 
 }

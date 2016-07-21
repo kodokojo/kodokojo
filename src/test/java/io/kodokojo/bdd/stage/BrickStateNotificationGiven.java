@@ -150,7 +150,7 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
                 bind(Key.get(new TypeLiteral<UserAuthenticator<SimpleCredential>>() {
                 })).toInstance(new SimpleUserAuthenticator(redisUserManager));
                 DefaultBrickUrlFactory brickUrlFactory = new DefaultBrickUrlFactory("kodokojo.dev");
-                bind(BrickConfigurerProvider.class).toInstance(new DefaultBrickConfigurerProvider(brickUrlFactory));
+                bind(BrickConfigurerProvider.class).toInstance(new DefaultBrickConfigurerProvider(brickUrlFactory, new OkHttpClient()));
                 bind(ApplicationConfig.class).toInstance(new ApplicationConfig() {
                     @Override
                     public int port() {

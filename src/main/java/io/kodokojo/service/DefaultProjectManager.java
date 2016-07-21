@@ -169,7 +169,7 @@ public class DefaultProjectManager implements ProjectManager {
         projectConfiguration.getStackConfigurations().forEach(stackConfiguration -> {
             stackConfiguration.getBrickConfigurations().forEach(brickConfiguration -> {
                 BrickConfigurer brickConfigurer = brickConfigurerProvider.provideFromBrick(brickConfiguration.getBrick());
-                String entrypoint = "http://" + brickUrlFactory.forgeUrl(projectConfiguration, stackConfiguration.getName(), brickConfiguration);
+                String entrypoint = "https://" + brickUrlFactory.forgeUrl(projectConfiguration, stackConfiguration.getName(), brickConfiguration);
                 BrickConfigurerData brickConfigurerData = new BrickConfigurerData(projectConfiguration.getName(),
                         stackConfiguration.getName(),
                         entrypoint,

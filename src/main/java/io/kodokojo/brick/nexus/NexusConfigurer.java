@@ -40,11 +40,17 @@ public class NexusConfigurer implements BrickConfigurer {
 
     public static final String DEPLOYMENT_ACCOUNT_NAME = "deployment";
 
+    private final OkHttpClient httpClient;
+
+    public NexusConfigurer(OkHttpClient httpClient) {
+        if (httpClient == null) {
+            throw new IllegalArgumentException("httpClient must be defined.");
+        }
+        this.httpClient = httpClient;
+    }
+
     @Override
     public BrickConfigurerData configure(BrickConfigurerData brickConfigurerData) throws BrickConfigurationException {
-
-        OkHttpClient httpClient = provideHttpClient();
-
         String adminPassword = brickConfigurerData.getDefaultAdmin().getPassword();
         String xmlBody = getChangePasswordXmlBody(ADMIN_ACCOUNT_NAME, OLD_ADMIN_PASSWORD, adminPassword);
 
@@ -63,7 +69,7 @@ public class NexusConfigurer implements BrickConfigurer {
         if (users == null) {
             throw new IllegalArgumentException("users must be defined.");
         }
-        OkHttpClient httpClient = provideHttpClient();
+        OkHttpClient httpClient = this.httpClient;
         String adminPassword = brickConfigurerData.getDefaultAdmin().getPassword();
         for (User user : users) {
             String xmlBody = getCreatUserXmlBody(user);
@@ -72,10 +78,6 @@ public class NexusConfigurer implements BrickConfigurer {
             }
         }
         return brickConfigurerData;
-    }
-
-    protected OkHttpClient provideHttpClient() {
-        return new OkHttpClient();
     }
 
     private boolean executeRequest(OkHttpClient httpClient, String url, String xmlBody, String login, String password) {

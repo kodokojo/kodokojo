@@ -439,7 +439,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
                 projectStore,
                 injector.getInstance(BootstrapConfigurationProvider.class),
                 new NoOpDnsManager(),
-                new DefaultBrickConfigurerProvider(brickUrlFactory),
+                new DefaultBrickConfigurerProvider(brickUrlFactory, new OkHttpClient()),
                 injector.getInstance(BrickConfigurationStarter.class),
                 brickUrlFactory
         );
