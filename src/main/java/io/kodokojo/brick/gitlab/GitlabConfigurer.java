@@ -17,6 +17,8 @@
  */
 package io.kodokojo.brick.gitlab;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.squareup.okhttp.*;
@@ -27,6 +29,7 @@ import io.kodokojo.brick.BrickUrlFactory;
 import io.kodokojo.model.User;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.SystemUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import retrofit.RestAdapter;
@@ -36,6 +39,7 @@ import retrofit.client.OkClient;
 import javax.inject.Inject;
 import javax.net.ssl.*;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.*;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
@@ -135,12 +139,13 @@ public class GitlabConfigurer implements BrickConfigurer {
 
         String gitlabEntryPoint = getGitlabEntryPoint(brickConfigurerData);
 
-        RestAdapter adapter = new RestAdapter.Builder().setEndpoint(gitlabEntryPoint).setClient(new OkClient(provideDefaultOkHttpClient())).build();
+        OkHttpClient httpClient = provideDefaultOkHttpClient();
+        RestAdapter adapter = new RestAdapter.Builder().setEndpoint(gitlabEntryPoint).setClient(new OkClient(httpClient)).build();
         GitlabRest gitlabRest = adapter.create(GitlabRest.class);
 
         String privateToken = (String) brickConfigurerData.getContext().get(GITLAB_ADMIN_TOKEN_KEY);
         for (User user : users) {
-            if (!createUser(gitlabRest, privateToken, user)) {
+            if (!createUser(gitlabRest, httpClient, gitlabEntryPoint, privateToken, user)) {
                 throw new BrickConfigurationException("Unable to create user '" + user.getUsername() + "' for project " + brickConfigurerData.getProjectName() + " on url " + gitlabEntryPoint);
             }
         }
@@ -259,80 +264,77 @@ public class GitlabConfigurer implements BrickConfigurer {
         return null;
     }
 
-    private boolean createUser(GitlabRest gitlabRest, String privateToken, User user) {
+    private boolean createUser(GitlabRest gitlabRest, OkHttpClient httpClient, String gitlabUrl, String privateToken, User user) {
         Response response = null;
-
         int id = -1;
         try {
             JsonObject jsonObject = gitlabRest.createUser(privateToken, user.getUsername(), user.getPassword(), user.getEmail(), user.getName(), "false");
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace(jsonObject.toString());
             }
-
             id = jsonObject.getAsJsonPrimitive("id").getAsInt();
+
         } catch (RetrofitError e) {
-            LOGGER.error("unable to complete creation of user : ", e);
+            LOGGER.error("Unable to complete creation of user : ", e);
+            return false;
         }
 
-        if (id != -1) {
-            try {
-                try {
-                    Thread.sleep(500); // We encount some cases where Gitlab throw a 500 internal error while post the SSH key. Test if let some time to Gitlab to add user will resolv this issue ?
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-                response = gitlabRest.addSshKey(privateToken, Integer.toString(id), "SSH Key", user.getSshPublicKey());
-                return true;
-                //return response.code() >= 200 && response.code() < 300; return a non 20X HTTP code when success to push the SSH key...
-                //  Have a look on the HAproxy timeout ?
-
-            } catch (RetrofitError e) {
-                LOGGER.error("unable to add SSH keys creation of user : ", e);
-            } finally {
-                if (response != null) {
-                    IOUtils.closeQuietly(response.body());
-                }
-            }
-        }
-        return false;
-    }
-
-    private boolean createUser(OkHttpClient httpClient, String gitlabUrl, String privateToken, User user) {
-        Response response = null;
-
-        int id = -1;
         RequestBody formBody = new FormEncodingBuilder()
-                .add("PRIVATE-TOKEN", privateToken)
-                .add("username", user.getUsername())
-                .add("password", user.getPassword())
-                .add("email", user.getEmail())
-                .add("name", user.getName())
-                .add("confirm", "false")
+                .add("title", "SSH Key")
+                .add("key", user.getSshPublicKey())
                 .build();
-        Request request = new Request.Builder().post(formBody).url(gitlabUrl + "/api/v3/users").build();
+        Request request = new Request.Builder().post(formBody).url(gitlabUrl + "/api/v3/users/" + id + "/keys").addHeader("PRIVATE-TOKEN", privateToken).build();
         try {
             response = httpClient.newCall(request).execute();
-            if (response.code() >= 200 && response.code() < 300) {
-                JsonParser parser = new JsonParser();
-                JsonObject json = (JsonObject) parser.parse(response.body().string());
-                id = json.getAsJsonPrimitive("id").getAsInt();
-
-                formBody = new FormEncodingBuilder()
-                        .add("PRIVATE-TOKEN", privateToken)
-                        .add("title", "SSH Key")
-                        .add("key", user.getSshPublicKey())
-                        .build();
-                request = new Request.Builder().post(formBody).url(gitlabUrl + "/api/v3/users/" + id + "/keys").build();
+            boolean res = response.code() >= 200 && response.code() < 300;
+            if (response.code() == 500) {
+                LOGGER.warn("Gitlab return a 500 while trying to add SSH key for user {} on Gitlab {}.", user.getUsername(), gitlabUrl);
+                IOUtils.closeQuietly(response.body());
+                request = new Request.Builder().get().url(gitlabUrl + "/api/v3/users/" + id + "/keys").addHeader("PRIVATE-TOKEN", privateToken).build();
                 response = httpClient.newCall(request).execute();
-                return response.code() >= 200 && response.code() < 300;
+                String body = response.body().string();
+
+                JsonParser parser = new JsonParser();
+                JsonElement json =  parser.parse(body);
+                if (response.code() == 200) {
+                    JsonArray keys = (JsonArray) json;
+                    res = keys.size() > 0;
+                    long timeout = System.currentTimeMillis() + 180000;
+                    while (!res && System.currentTimeMillis() < timeout) {
+                        try {
+                            Thread.sleep(60000);
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                        }
+                        LOGGER.debug("Retry to add SSH Key");
+                        formBody = new FormEncodingBuilder()
+                                .add("title", "SSH Key")
+                                .add("key", user.getSshPublicKey())
+                                .build();
+                        request = new Request.Builder().post(formBody).url(gitlabUrl + "/api/v3/users/" + id + "/keys").addHeader("PRIVATE-TOKEN", privateToken).build();
+                        response = httpClient.newCall(request).execute();
+                        LOGGER.debug(response.toString());
+                        LOGGER.debug( response.body().string());
+                        res = response.code() == 201 || (response.code() == 400 && body.contains("has already been taken"));
+                        if (!res) {
+                            try {
+                                Thread.sleep(1000);
+                            } catch (InterruptedException e) {
+                                Thread.currentThread().interrupt();
+                            }
+                        }
+                    }
+                }
             }
+            return res;
         } catch (IOException e) {
-            LOGGER.error("unable to add SSH keys creation of user : ", e);
+            LOGGER.error("Unable to request gitlab at url {}.", gitlabUrl, e);
         } finally {
             if (response != null) {
                 IOUtils.closeQuietly(response.body());
             }
         }
+
         return false;
     }
 
