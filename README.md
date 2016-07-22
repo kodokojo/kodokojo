@@ -8,11 +8,7 @@ Kodo Kojo uses the power of [Apache Mesos](http://mesos.apache.org/) and [Marath
 
 [![Join the chat at https://gitter.im/kodokojo/kodokojo](https://badges.gitter.im/kodokojo/kodokojo.svg)](https://gitter.im/kodokojo/kodokojo?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-[![Open Source Love](https://badges.frapsoft.com/os/v2/open-source.svg?v=103)](https://github.com/ellerbrock/open-source-badge/) 
-[![](https://img.shields.io/badge/license-GPLv3-blue.svg?style=flat)](http://www.gnu.org/licenses/gpl-3.0.en.html)     
-[![](https://img.shields.io/badge/version-0.1.0-orange.svg?style=flat&maxAge=2592000)](https://github.com/kodokojo/kodokojo#kodo-kojo)
-
-[![Dependency Status](https://dependencyci.com/github/kodokojo/kodokojo/badge)](https://dependencyci.com/github/kodokojo/kodokojo)
+[![Open Source Love](https://badges.frapsoft.com/os/v2/open-source.svg?v=103)](https://github.com/ellerbrock/open-source-badge/) [![](https://img.shields.io/badge/License-GPLv3-blue.svg?style=flat)](http://www.gnu.org/licenses/gpl-3.0.en.html)  [![Dependency Status](https://dependencyci.com/github/kodokojo/kodokojo/badge)](https://dependencyci.com/github/kodokojo/kodokojo)
 
 ## License
 
