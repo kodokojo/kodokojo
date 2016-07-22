@@ -19,6 +19,7 @@ package io.kodokojo.brick.gitlab;
 
 
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.squareup.okhttp.Response;
 import retrofit.http.*;
@@ -32,5 +33,9 @@ public interface GitlabRest {
     @FormUrlEncoded
     @POST("/api/v3/users/{id}/keys")
     Response addSshKey(@Header("PRIVATE-TOKEN") String privateToken, @Path("id") String id, @Field("title") String title, @Field("key") String key);
+
+
+    @GET("/api/v3/users")
+    JsonArray searchByUsername(@Header("PRIVATE-TOKEN") String privateToken, @Query("username") String username);
 
 }
