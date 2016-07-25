@@ -17,7 +17,7 @@
  */
 package io.kodokojo.service;
 
-import io.kodokojo.commons.utils.ssl.SSLKeyPair;
+import io.kodokojo.service.ssl.SSLKeyPair;
 import io.kodokojo.model.BootstrapStackData;
 
 /**

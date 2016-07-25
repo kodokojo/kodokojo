@@ -17,7 +17,6 @@
  */
 package io.kodokojo.service.ssl;
 
-import io.kodokojo.commons.utils.ssl.SSLKeyPair;
 import io.kodokojo.model.BrickConfiguration;
 import io.kodokojo.service.SSLCertificatProvider;
 

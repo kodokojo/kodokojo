@@ -23,7 +23,7 @@ import com.tngtech.jgiven.annotation.ProvidedScenarioState;
 import com.tngtech.jgiven.annotation.Quoted;
 import io.kodokojo.brick.BrickFactory;
 import io.kodokojo.brick.DefaultBrickFactory;
-import io.kodokojo.commons.utils.RSAUtils;
+import io.kodokojo.service.RSAUtils;
 import io.kodokojo.model.*;
 import io.kodokojo.service.DefaultProjectManager;
 import io.kodokojo.service.ProjectAlreadyExistException;

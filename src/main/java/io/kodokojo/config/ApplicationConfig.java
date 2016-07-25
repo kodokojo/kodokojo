@@ -17,10 +17,8 @@
  */
 package io.kodokojo.config;
 
-import io.kodokojo.commons.utils.properties.Key;
-import io.kodokojo.commons.utils.properties.PropertyConfig;
-
-import java.util.concurrent.TimeUnit;
+import io.kodokojo.config.properties.Key;
+import io.kodokojo.config.properties.PropertyConfig;
 
 public interface ApplicationConfig extends PropertyConfig {
 

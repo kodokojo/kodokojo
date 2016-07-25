@@ -17,8 +17,8 @@
  */
 package io.kodokojo.config;
 
-import io.kodokojo.commons.utils.properties.Key;
-import io.kodokojo.commons.utils.properties.PropertyConfig;
+import io.kodokojo.config.properties.Key;
+import io.kodokojo.config.properties.PropertyConfig;
 
 public interface AwsConfig extends PropertyConfig {
 

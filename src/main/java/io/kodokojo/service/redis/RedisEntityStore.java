@@ -17,8 +17,7 @@
  */
 package io.kodokojo.service.redis;
 
-import io.kodokojo.brick.BrickFactory;
-import io.kodokojo.commons.utils.RSAUtils;
+import io.kodokojo.service.RSAUtils;
 import io.kodokojo.model.Entity;
 import io.kodokojo.model.User;
 import io.kodokojo.service.store.EntityStore;
@@ -27,15 +26,9 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.JedisPoolConfig;
 
 import javax.inject.Inject;
-import java.math.BigInteger;
 import java.security.Key;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;

@@ -17,7 +17,7 @@
  */
 package io.kodokojo.service.redis;
 
-import io.kodokojo.commons.utils.RSAUtils;
+import io.kodokojo.service.RSAUtils;
 import io.kodokojo.model.*;
 import io.kodokojo.brick.BrickFactory;
 import io.kodokojo.service.store.ProjectStore;
