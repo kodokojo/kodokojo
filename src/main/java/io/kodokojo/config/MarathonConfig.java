@@ -28,4 +28,10 @@ public interface MarathonConfig extends PropertyConfig {
     @Key(value = "marathon.ignore.constraint", defaultValue = "FALSE")
     Boolean ignoreContraint();
 
+    @Key("marathon.login")
+    String login();
+
+    @Key("marathon.password")
+    String password();
+
 }
