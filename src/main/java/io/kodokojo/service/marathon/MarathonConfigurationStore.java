@@ -20,11 +20,13 @@ package io.kodokojo.service.marathon;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.squareup.okhttp.*;
+import io.kodokojo.config.MarathonConfig;
 import io.kodokojo.service.ssl.SSLKeyPair;
 import io.kodokojo.service.ssl.SSLUtils;
 import io.kodokojo.model.BootstrapStackData;
 import io.kodokojo.service.ConfigurationStore;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,6 +34,7 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.Base64;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
@@ -39,14 +42,14 @@ public class MarathonConfigurationStore implements ConfigurationStore {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MarathonConfigurationStore.class);
 
-    private final String marathonUrl;
+    private final MarathonConfig marathonConfig;
 
     @Inject
-    public MarathonConfigurationStore(String marathonUrl) {
-        if (isBlank(marathonUrl)) {
-            throw new IllegalArgumentException("marathonUrl must be defined.");
+    public MarathonConfigurationStore(MarathonConfig marathonConfig) {
+        if (marathonConfig == null) {
+            throw new IllegalArgumentException("marathonConfig must be defined.");
         }
-        this.marathonUrl = marathonUrl;
+        this.marathonConfig = marathonConfig;
     }
 
     @Override
@@ -54,7 +57,7 @@ public class MarathonConfigurationStore implements ConfigurationStore {
         if (bootstrapStackData == null) {
             throw new IllegalArgumentException("bootstrapStackData must be defined.");
         }
-        String url = marathonUrl + "/v2/artifacts/config/" + bootstrapStackData.getProjectName().toLowerCase() + ".json";
+        String url = marathonConfig.url() + "/v2/artifacts/config/" + bootstrapStackData.getProjectName().toLowerCase() + ".json";
         OkHttpClient httpClient = new OkHttpClient();
         Gson gson = new GsonBuilder().create();
         String json = gson.toJson(bootstrapStackData);
@@ -63,7 +66,12 @@ public class MarathonConfigurationStore implements ConfigurationStore {
                 .addFormDataPart("file", bootstrapStackData.getProjectName().toLowerCase() + ".json",
                         RequestBody.create(MediaType.parse("application/json"), json.getBytes()))
                 .build();
-        Request request = new Request.Builder().url(url).post(requestBody).build();
+        Request.Builder builder = new Request.Builder().url(url).post(requestBody);
+        if (StringUtils.isNotBlank(marathonConfig.login())) {
+            String basicAuthenticationValue = "Basic " + Base64.getEncoder().encodeToString(String.format("%s:%s", marathonConfig.login(), marathonConfig.password()).getBytes());
+            builder.addHeader("Authorization", basicAuthenticationValue);
+        }
+        Request request = builder.build();
         Response response = null;
         try {
             response = httpClient.newCall(request).execute();
@@ -95,14 +103,19 @@ public class MarathonConfigurationStore implements ConfigurationStore {
             SSLUtils.writeSSLKeyPairPem(sslKeyPair, writer);
             byte[] certificat = writer.toString().getBytes();
 
-            String url = marathonUrl + "/v2/artifacts/ssl/" + project.toLowerCase() + "/" + entityName.toLowerCase() + "/" + project.toLowerCase() + "-" + entityName.toLowerCase() + "-server.pem";
+            String url = marathonConfig.url() + "/v2/artifacts/ssl/" + project.toLowerCase() + "/" + entityName.toLowerCase() + "/" + project.toLowerCase() + "-" + entityName.toLowerCase() + "-server.pem";
             OkHttpClient httpClient = new OkHttpClient();
             RequestBody requestBody = new MultipartBuilder()
                     .type(MultipartBuilder.FORM)
                     .addFormDataPart("file", project + "-" + entityName + "-server.pem",
                             RequestBody.create(MediaType.parse("application/text"), certificat))
                     .build();
-            Request request = new Request.Builder().url(url).post(requestBody).build();
+            Request.Builder builder = new Request.Builder().url(url).post(requestBody);
+            if (StringUtils.isNotBlank(marathonConfig.login())) {
+                String basicAuthenticationValue = "Basic " + Base64.getEncoder().encodeToString(String.format("%s:%s", marathonConfig.login(), marathonConfig.password()).getBytes());
+                builder.addHeader("Authorization", basicAuthenticationValue);
+            }
+            Request request = builder.build();
             response = httpClient.newCall(request).execute();
             int code = response.code();
             if (code >= 200 && code < 300) {

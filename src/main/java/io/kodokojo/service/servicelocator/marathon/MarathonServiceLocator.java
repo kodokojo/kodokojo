@@ -21,15 +21,14 @@ package io.kodokojo.service.servicelocator.marathon;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import io.kodokojo.config.MarathonConfig;
 import io.kodokojo.model.Service;
 import io.kodokojo.service.servicelocator.ServiceLocator;
+import org.apache.commons.lang.StringUtils;
 import retrofit.RestAdapter;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
@@ -38,15 +37,20 @@ public class MarathonServiceLocator implements ServiceLocator {
     private final MarathonRestApi marathonRestApi;
 
     @Inject
-    public MarathonServiceLocator(String marathonUrl) {
-        if (isBlank(marathonUrl)) {
-            throw new IllegalArgumentException("marathonUrl must be defined.");
+    public MarathonServiceLocator(MarathonConfig marathonConfig) {
+        if (marathonConfig == null) {
+            throw new IllegalArgumentException("marathonConfig must be defined.");
         }
-        marathonRestApi = provideMarathonRestApi(marathonUrl);
+        marathonRestApi = provideMarathonRestApi(marathonConfig);
     }
 
-    protected MarathonRestApi provideMarathonRestApi(String marathonUrl) {
-        RestAdapter adapter = new RestAdapter.Builder().setEndpoint(marathonUrl).build();
+    protected MarathonRestApi provideMarathonRestApi(MarathonConfig marathonConfig) {
+        RestAdapter.Builder builder = new RestAdapter.Builder().setEndpoint(marathonConfig.url());
+        if (StringUtils.isNotBlank(marathonConfig.login())) {
+            String basicAuthenticationValue = "Basic " + Base64.getEncoder().encodeToString(String.format("%s:%s", marathonConfig.login(), marathonConfig.password()).getBytes());
+            builder.setRequestInterceptor(request -> request.addHeader("Authorization", basicAuthenticationValue));
+        }
+        RestAdapter adapter = builder.build();
         return adapter.create(MarathonRestApi.class);
     }
 

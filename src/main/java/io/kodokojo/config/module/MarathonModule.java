@@ -54,7 +54,7 @@ public class MarathonModule extends AbstractModule {
     @Singleton
     BrickManager provideBrickManager(MarathonConfig marathonConfig, BrickConfigurerProvider brickConfigurerProvider, ApplicationConfig applicationConfig, ProjectStore projectStore, BrickUrlFactory brickUrlFactory) {
         if (StringUtils.isNotBlank(marathonConfig.login())) {
-            LOGGER.info("Add Marathon with basic Authentification {}:{}", marathonConfig.login(), marathonConfig.password());
+            LOGGER.info("Add Marathon with basic Authentication.");
         }
         MarathonServiceLocator marathonServiceLocator = new MarathonServiceLocator(marathonConfig.url());
         return new MarathonBrickManager(marathonConfig, marathonServiceLocator, brickConfigurerProvider, projectStore, !marathonConfig.ignoreContraint(), applicationConfig.domain(), brickUrlFactory);
