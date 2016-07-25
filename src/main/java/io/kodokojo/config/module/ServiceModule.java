@@ -23,7 +23,7 @@ import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.squareup.okhttp.OkHttpClient;
 import io.kodokojo.brick.*;
-import io.kodokojo.commons.utils.ssl.SSLKeyPair;
+import io.kodokojo.service.ssl.SSLKeyPair;
 import io.kodokojo.config.ApplicationConfig;
 import io.kodokojo.config.SecurityConfig;
 import io.kodokojo.endpoint.UserAuthenticator;

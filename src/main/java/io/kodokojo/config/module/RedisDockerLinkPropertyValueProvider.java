@@ -17,8 +17,8 @@
  */
 package io.kodokojo.config.module;
 
-import io.kodokojo.commons.utils.properties.provider.PropertyValueProvider;
-import io.kodokojo.commons.utils.properties.provider.SystemEnvValueProvider;
+import io.kodokojo.config.properties.provider.PropertyValueProvider;
+import io.kodokojo.config.properties.provider.SystemEnvValueProvider;
 import io.kodokojo.config.RedisConfig;
 
 public class RedisDockerLinkPropertyValueProvider implements PropertyValueProvider {

@@ -24,7 +24,7 @@ import com.tngtech.jgiven.annotation.ExpectedScenarioState;
 import com.tngtech.jgiven.annotation.ProvidedScenarioState;
 import io.kodokojo.brick.*;
 import io.kodokojo.commons.utils.DockerTestSupport;
-import io.kodokojo.commons.utils.RSAUtils;
+import io.kodokojo.service.RSAUtils;
 import io.kodokojo.model.Brick;
 import io.kodokojo.model.User;
 import io.kodokojo.brick.gitlab.GitlabConfigurer;

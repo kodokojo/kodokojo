@@ -19,9 +19,6 @@ package io.kodokojo.model;
 
 
 
-import io.kodokojo.commons.model.Service;
-import org.apache.commons.collections4.CollectionUtils;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;

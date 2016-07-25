@@ -20,7 +20,7 @@ package io.kodokojo.service;
 import io.kodokojo.brick.BrickAlreadyExist;
 import io.kodokojo.brick.BrickConfigurer;
 import io.kodokojo.brick.BrickConfigurerProvider;
-import io.kodokojo.commons.model.Service;
+import io.kodokojo.model.Service;
 import io.kodokojo.model.*;
 
 import java.util.Set;

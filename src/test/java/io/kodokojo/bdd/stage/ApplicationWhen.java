@@ -29,8 +29,7 @@ import com.tngtech.jgiven.annotation.Quoted;
 import com.tngtech.jgiven.attachment.Attachment;
 import io.kodokojo.brick.BrickFactory;
 import io.kodokojo.brick.DefaultBrickFactory;
-import io.kodokojo.commons.utils.RSAUtils;
-import io.kodokojo.commons.utils.ssl.SSLUtils;
+import io.kodokojo.service.RSAUtils;
 import io.kodokojo.endpoint.dto.BrickConfigDto;
 import io.kodokojo.endpoint.dto.StackConfigDto;
 import io.kodokojo.model.*;
@@ -44,8 +43,6 @@ import org.mockito.Mockito;
 import java.io.IOException;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
-import java.security.interfaces.RSAPrivateKey;
-import java.security.interfaces.RSAPublicKey;
 import java.util.*;
 
 import static org.apache.commons.lang.StringUtils.isBlank;

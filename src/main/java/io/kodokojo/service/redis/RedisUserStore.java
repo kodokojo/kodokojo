@@ -23,7 +23,7 @@ import io.kodokojo.model.ProjectConfiguration;
 import io.kodokojo.service.lifecycle.ApplicationLifeCycleListener;
 import io.kodokojo.model.User;
 import io.kodokojo.model.UserService;
-import io.kodokojo.commons.utils.RSAUtils;
+import io.kodokojo.service.RSAUtils;
 import io.kodokojo.service.store.UserStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

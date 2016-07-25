@@ -19,8 +19,8 @@ package io.kodokojo.bdd;
 
 import io.kodokojo.brick.BrickUrlFactory;
 import io.kodokojo.brick.DefaultBrickUrlFactory;
-import io.kodokojo.commons.model.Service;
-import io.kodokojo.commons.utils.servicelocator.marathon.MarathonServiceLocator;
+import io.kodokojo.model.Service;
+import io.kodokojo.service.servicelocator.marathon.MarathonServiceLocator;
 import org.apache.commons.collections4.CollectionUtils;
 
 import javax.inject.Inject;

@@ -19,7 +19,7 @@ package io.kodokojo.endpoint;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import io.kodokojo.commons.utils.RSAUtils;
+import io.kodokojo.service.RSAUtils;
 import io.kodokojo.endpoint.dto.UserDto;
 import io.kodokojo.endpoint.dto.UserProjectConfigIdDto;
 import io.kodokojo.model.Entity;

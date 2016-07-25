@@ -18,8 +18,8 @@
 package io.kodokojo.service.marathon;
 
 import io.kodokojo.brick.*;
-import io.kodokojo.commons.model.Service;
-import io.kodokojo.commons.utils.servicelocator.marathon.MarathonServiceLocator;
+import io.kodokojo.model.Service;
+import io.kodokojo.service.servicelocator.marathon.MarathonServiceLocator;
 import io.kodokojo.model.*;
 import io.kodokojo.brick.BrickConfigurerData;
 import io.kodokojo.service.BrickManager;

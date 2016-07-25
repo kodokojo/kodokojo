@@ -20,11 +20,11 @@ package io.kodokojo.config.module;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import io.kodokojo.commons.config.KodokojoConfig;
-import io.kodokojo.commons.utils.properties.PropertyConfig;
-import io.kodokojo.commons.utils.properties.PropertyResolver;
-import io.kodokojo.commons.utils.properties.provider.*;
+import io.kodokojo.config.KodokojoConfig;
+import io.kodokojo.config.properties.PropertyConfig;
+import io.kodokojo.config.properties.PropertyResolver;
 import io.kodokojo.config.*;
+import io.kodokojo.config.properties.provider.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

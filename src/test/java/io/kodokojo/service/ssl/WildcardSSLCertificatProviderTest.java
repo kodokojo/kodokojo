@@ -17,17 +17,7 @@
  */
 package io.kodokojo.service.ssl;
 
-import io.kodokojo.commons.utils.ssl.SSLKeyPair;
-import org.apache.commons.io.IOUtils;
-import org.assertj.core.api.Assertions;
-import org.junit.Test;
-
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
 
 public class WildcardSSLCertificatProviderTest {
 /*
