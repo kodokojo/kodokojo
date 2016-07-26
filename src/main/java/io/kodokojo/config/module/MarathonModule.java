@@ -31,8 +31,14 @@ import io.kodokojo.service.ConfigurationStore;
 import io.kodokojo.service.marathon.MarathonBrickManager;
 import io.kodokojo.service.marathon.MarathonConfigurationStore;
 import io.kodokojo.service.store.ProjectStore;
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MarathonModule extends AbstractModule {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(MarathonModule.class);
+
     @Override
     protected void configure() {
         // Nothing to do.
@@ -41,19 +47,22 @@ public class MarathonModule extends AbstractModule {
     @Provides
     @Singleton
     ServiceLocator provideServiceLocator(MarathonConfig marathonConfig) {
-        return new MarathonServiceLocator(marathonConfig.url());
+        return new MarathonServiceLocator(marathonConfig);
     }
 
     @Provides
     @Singleton
     BrickManager provideBrickManager(MarathonConfig marathonConfig, BrickConfigurerProvider brickConfigurerProvider, ApplicationConfig applicationConfig, ProjectStore projectStore, BrickUrlFactory brickUrlFactory) {
-        MarathonServiceLocator marathonServiceLocator = new MarathonServiceLocator(marathonConfig.url());
-        return new MarathonBrickManager(marathonConfig.url(), marathonServiceLocator, brickConfigurerProvider, projectStore, !marathonConfig.ignoreContraint(), applicationConfig.domain(), brickUrlFactory);
+        if (StringUtils.isNotBlank(marathonConfig.login())) {
+            LOGGER.info("Add Marathon with basic Authentication.");
+        }
+        MarathonServiceLocator marathonServiceLocator = new MarathonServiceLocator(marathonConfig);
+        return new MarathonBrickManager(marathonConfig, marathonServiceLocator, brickConfigurerProvider, projectStore, !marathonConfig.ignoreContraint(), applicationConfig.domain(), brickUrlFactory);
     }
 
     @Provides
     @Singleton
     ConfigurationStore provideConfigurationStore(MarathonConfig marathonConfig) {
-        return new MarathonConfigurationStore(marathonConfig.url());
+        return new MarathonConfigurationStore(marathonConfig);
     }
 }

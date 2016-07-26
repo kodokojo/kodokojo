@@ -423,7 +423,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
                     @Singleton
                     BrickManager provideBrickManager(MarathonConfig marathonConfig, BrickConfigurerProvider brickConfigurerProvider, ProjectStore projectStore, ApplicationConfig applicationConfig, BrickUrlFactory brickUrlFactory) {
                         MarathonServiceLocator marathonServiceLocator = new MarathonServiceLocator(marathonConfig.url());
-                        return new MarathonBrickManager(marathonConfig.url(), marathonServiceLocator, brickConfigurerProvider, projectStore, false, applicationConfig.domain(), brickUrlFactory);
+                        return new MarathonBrickManager(marathonConfig, marathonServiceLocator, brickConfigurerProvider, projectStore, false, applicationConfig.domain(), brickUrlFactory);
                     }
                 });
         Launcher.INJECTOR = injector;

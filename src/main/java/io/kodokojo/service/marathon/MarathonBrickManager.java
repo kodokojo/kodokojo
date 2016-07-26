@@ -18,6 +18,7 @@
 package io.kodokojo.service.marathon;
 
 import io.kodokojo.brick.*;
+import io.kodokojo.config.MarathonConfig;
 import io.kodokojo.model.Service;
 import io.kodokojo.service.servicelocator.marathon.MarathonServiceLocator;
 import io.kodokojo.model.*;
@@ -35,6 +36,7 @@ import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import retrofit.RequestInterceptor;
 import retrofit.RestAdapter;
 import retrofit.RetrofitError;
 import retrofit.mime.TypedString;
@@ -57,7 +59,7 @@ public class MarathonBrickManager implements BrickManager {
         VE_PROPERTIES.setProperty("runtime.log.logsystem.class", "org.apache.velocity.runtime.log.NullLogChute");
     }
 
-    private final String marathonUrl;
+    private final MarathonConfig marathonConfig;
 
     private final MarathonRestApi marathonRestApi;
 
@@ -74,9 +76,9 @@ public class MarathonBrickManager implements BrickManager {
     private final BrickUrlFactory brickUrlFactory;
 
     @Inject
-    public MarathonBrickManager(String marathonUrl, MarathonServiceLocator marathonServiceLocator, BrickConfigurerProvider brickConfigurerProvider, ProjectStore projectStore, boolean constrainByTypeAttribute, String domain, BrickUrlFactory brickUrlFactory) {
-        if (isBlank(marathonUrl)) {
-            throw new IllegalArgumentException("marathonUrl must be defined.");
+    public MarathonBrickManager(MarathonConfig marathonConfig, MarathonServiceLocator marathonServiceLocator, BrickConfigurerProvider brickConfigurerProvider, ProjectStore projectStore, boolean constrainByTypeAttribute, String domain, BrickUrlFactory brickUrlFactory) {
+        if (marathonConfig == null) {
+            throw new IllegalArgumentException("marathonConfig must be defined.");
         }
         if (marathonServiceLocator == null) {
             throw new IllegalArgumentException("marathonServiceLocator must be defined.");
@@ -93,8 +95,14 @@ public class MarathonBrickManager implements BrickManager {
         if (brickUrlFactory == null) {
             throw new IllegalArgumentException("brickUrlFactory must be defined.");
         }
-        this.marathonUrl = marathonUrl;
-        RestAdapter adapter = new RestAdapter.Builder().setEndpoint(marathonUrl).build();
+        this.marathonConfig = marathonConfig;
+
+        RestAdapter.Builder builder = new RestAdapter.Builder().setEndpoint(marathonConfig.url());
+        if (StringUtils.isNotBlank(marathonConfig.login())) {
+            String basicAuthenticationValue = "Basic " + Base64.getEncoder().encodeToString(String.format("%s:%s", marathonConfig.login(), marathonConfig.password()).getBytes());
+            builder.setRequestInterceptor(request -> request.addHeader("Authorization", basicAuthenticationValue));
+        }
+        RestAdapter adapter = builder.build();
         marathonRestApi = adapter.create(MarathonRestApi.class);
         this.marathonServiceLocator = marathonServiceLocator;
         this.brickConfigurerProvider = brickConfigurerProvider;
@@ -103,11 +111,6 @@ public class MarathonBrickManager implements BrickManager {
         this.domain = domain;
         this.brickUrlFactory = brickUrlFactory;
     }
-
-    public MarathonBrickManager(String marathonUrl, MarathonServiceLocator marathonServiceLocator, BrickConfigurerProvider brickConfigurerProvider, ProjectStore projectStore,String domain, BrickUrlFactory brickUrlFactory) {
-        this(marathonUrl, marathonServiceLocator, brickConfigurerProvider, projectStore,true, domain, brickUrlFactory);
-    }
-
 
     @Override
     public Set<Service> start(ProjectConfiguration projectConfiguration, BrickType brickType) throws BrickAlreadyExist {
@@ -250,7 +253,7 @@ public class MarathonBrickManager implements BrickManager {
 
         VelocityContext context = new VelocityContext();
         context.put("ID", id);
-        context.put("marathonUrl", marathonUrl);
+        context.put("marathonUrl", marathonConfig.url());
         context.put("project", projectConfiguration);
         context.put("projectName", projectConfiguration.getName().toLowerCase());
         context.put("stack", projectConfiguration.getDefaultStackConfiguration());
