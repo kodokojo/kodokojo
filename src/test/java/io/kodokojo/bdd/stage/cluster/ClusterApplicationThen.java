@@ -29,6 +29,7 @@ import io.kodokojo.bdd.stage.brickauthenticator.JenkinsUserAuthenticator;
 import io.kodokojo.bdd.stage.brickauthenticator.NexusUserAuthenticator;
 import io.kodokojo.bdd.stage.brickauthenticator.UserAuthenticator;
 import io.kodokojo.brick.DefaultBrickFactory;
+import io.kodokojo.config.MarathonConfig;
 import io.kodokojo.model.Service;
 import io.kodokojo.service.servicelocator.marathon.MarathonServiceLocator;
 import io.kodokojo.endpoint.dto.ProjectDto;
@@ -81,7 +82,27 @@ public class ClusterApplicationThen<SELF extends ClusterApplicationThen<?>> exte
         UserDto userDto = httpUserSupport.getUserDto(currentUser, currentUsers.get(username).getIdentifier());
         ProjectDto projectDto = httpUserSupport.getProjectDto(currentUser, userDto.getProjectConfigurationIds().get(0).getProjectId());
 
-        MarathonServiceLocator serviceLocator = new MarathonServiceLocator(marathonUrl);
+        MarathonServiceLocator serviceLocator = new MarathonServiceLocator(new MarathonConfig() {
+            @Override
+            public String url() {
+                return marathonUrl;
+            }
+
+            @Override
+            public Boolean ignoreContraint() {
+                return null;
+            }
+
+            @Override
+            public String login() {
+                return null;
+            }
+
+            @Override
+            public String password() {
+                return null;
+            }
+        });
         Set<Service> services = serviceLocator.getService(new DefaultBrickFactory().createBrick(brickName).getType().name().toLowerCase(), projectDto.getName().toLowerCase());
         assertThat(services).isNotEmpty();
         Service service = services.iterator().next();

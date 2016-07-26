@@ -379,7 +379,27 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
 
             System.setProperty("javax.net.ssl.keyStore", keystorePathDefined);
         }
-        BrickUrlFactory brickUrlFactory = new MarathonBrickUrlFactory(marathonUrl);
+        BrickUrlFactory brickUrlFactory = new MarathonBrickUrlFactory(new MarathonConfig() {
+            @Override
+            public String url() {
+                return marathonUrl;
+            }
+
+            @Override
+            public Boolean ignoreContraint() {
+                return null;
+            }
+
+            @Override
+            public String login() {
+                return null;
+            }
+
+            @Override
+            public String password() {
+                return null;
+            }
+        });
         System.setProperty("javax.net.ssl.keyStorePassword", "password");
         System.setProperty("security.ssl.rootCa.ks.alias", "rootcafake");
         System.setProperty("security.ssl.rootCa.ks.password", "password");
@@ -410,19 +430,19 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
                     @Provides
                     @Singleton
                     ServiceLocator provideServiceLocator(MarathonConfig marathonConfig) {
-                        return new MarathonServiceLocator(marathonConfig.url());
+                        return new MarathonServiceLocator(marathonConfig);
                     }
 
                     @Provides
                     @Singleton
                     ConfigurationStore provideConfigurationStore(MarathonConfig marathonConfig) {
-                        return new MarathonConfigurationStore(marathonConfig.url());
+                        return new MarathonConfigurationStore(marathonConfig);
                     }
 
                     @Provides
                     @Singleton
                     BrickManager provideBrickManager(MarathonConfig marathonConfig, BrickConfigurerProvider brickConfigurerProvider, ProjectStore projectStore, ApplicationConfig applicationConfig, BrickUrlFactory brickUrlFactory) {
-                        MarathonServiceLocator marathonServiceLocator = new MarathonServiceLocator(marathonConfig.url());
+                        MarathonServiceLocator marathonServiceLocator = new MarathonServiceLocator(marathonConfig);
                         return new MarathonBrickManager(marathonConfig, marathonServiceLocator, brickConfigurerProvider, projectStore, false, applicationConfig.domain(), brickUrlFactory);
                     }
                 });

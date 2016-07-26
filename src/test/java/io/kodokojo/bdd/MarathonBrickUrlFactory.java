@@ -19,6 +19,7 @@ package io.kodokojo.bdd;
 
 import io.kodokojo.brick.BrickUrlFactory;
 import io.kodokojo.brick.DefaultBrickUrlFactory;
+import io.kodokojo.config.*;
 import io.kodokojo.model.Service;
 import io.kodokojo.service.servicelocator.marathon.MarathonServiceLocator;
 import org.apache.commons.collections4.CollectionUtils;
@@ -43,11 +44,11 @@ public class MarathonBrickUrlFactory implements BrickUrlFactory {
         this.marathonServiceLocator = marathonServiceLocator;
     }
 
-    public MarathonBrickUrlFactory(String marathonUrl) {
-        if (isBlank(marathonUrl)) {
-            throw new IllegalArgumentException("marathonUrl must be defined.");
+    public MarathonBrickUrlFactory(io.kodokojo.config.MarathonConfig marathonConfig) {
+        if (marathonConfig == null) {
+            throw new IllegalArgumentException("marathonConfig must be defined.");
         }
-        marathonServiceLocator = new MarathonServiceLocator(marathonUrl);
+        marathonServiceLocator = new MarathonServiceLocator(marathonConfig);
     }
 
     @Override
