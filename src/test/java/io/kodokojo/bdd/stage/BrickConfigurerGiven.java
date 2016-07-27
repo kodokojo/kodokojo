@@ -82,11 +82,12 @@ public class BrickConfigurerGiven<SELF extends BrickConfigurerGiven<?>> extends 
 
         Ports portBinding = new Ports();
         ExposedPort exposedPort = ExposedPort.tcp(port);
-        portBinding.bind(exposedPort, Ports.Binding(null));
+        portBinding.bind(exposedPort, Ports.Binding(80));
 
         CreateContainerResponse containerResponse = dockerClient.createContainerCmd(image)
                 .withPortBindings(portBinding)
                 .withExposedPorts(exposedPort)
+                .withHostName(dockerTestSupport.getServerIp())
                 .exec();
         containerId = containerResponse.getId();
         this.dockerTestSupport.addContainerIdToClean(containerId);
@@ -114,7 +115,8 @@ public class BrickConfigurerGiven<SELF extends BrickConfigurerGiven<?>> extends 
             try {
                 response = httpClient.newCall(request).execute();
                 int httpStatusCode = response.code();
-                started = httpStatusCode >= 200 && httpStatusCode < 300;
+                //LOGGER.debug("Wait brick {}.",response.toString());
+                started = (httpStatusCode >= 200 && httpStatusCode < 405);
             } catch (IOException e) {
                 // Silently ignore, service maybe not available
                 started = false;

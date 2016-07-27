@@ -29,7 +29,6 @@ import io.kodokojo.brick.BrickUrlFactory;
 import io.kodokojo.model.User;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.SystemUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import retrofit.RestAdapter;
@@ -39,7 +38,6 @@ import retrofit.client.OkClient;
 import javax.inject.Inject;
 import javax.net.ssl.*;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.*;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
@@ -88,9 +86,32 @@ public class GitlabConfigurer implements BrickConfigurer {
         String gitlabUrl = getGitlabEntryPoint(brickConfigurerData);
         OkHttpClient httpClient = provideDefaultOkHttpClient();
 
-        String changePasswordUrl = getChangePasswordUrl(httpClient, gitlabUrl);
-        String resetToken = getResetToken(changePasswordUrl);
+        try {
+            Thread.sleep(60000);    // Waiting for Gitlab fully start. We don't have any strong way to defined if Gitlab is ready or not.
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
 
+        long end = System.currentTimeMillis() + 60000;
+        String changePasswordUrl = "";
+        String resetToken = "";
+
+        do {
+            changePasswordUrl = getChangePasswordUrl(httpClient, gitlabUrl);
+            resetToken = getResetToken(changePasswordUrl);
+            if (StringUtils.isBlank(resetToken)) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        } while (StringUtils.isBlank(resetToken) && System.currentTimeMillis() < end);
+
+
+        if (StringUtils.isBlank(resetToken)) {
+            throw new BrickConfigurationException("Unable to get the reset token for gitlab  for project " + brickConfigurerData.getProjectName() + " on url " + gitlabUrl);
+        }
         String newPassword = brickConfigurerData.getDefaultAdmin().getPassword();
 
         String authenticityToken = getAuthenticityToken(httpClient, changePasswordUrl, FORM_TOKEN_PATTERN);
@@ -167,6 +188,7 @@ public class GitlabConfigurer implements BrickConfigurer {
         String res = null;
         try {
             response = httpClient.newCall(request).execute();
+            //LOGGER.debug(response.toString());
             res = response.request().urlString();
 
         } catch (IOException e) {
@@ -180,6 +202,7 @@ public class GitlabConfigurer implements BrickConfigurer {
     }
 
     private static String getResetToken(String changePasswordUrl) {
+        //LOGGER.debug("Extract token from url {}.", changePasswordUrl);
         Matcher matcher = URL_RESET_TOKEN_PATTERN.matcher(changePasswordUrl);
         if (matcher.find()) {
             return matcher.group(1);
@@ -234,6 +257,7 @@ public class GitlabConfigurer implements BrickConfigurer {
         Response response = null;
         try {
             response = call.execute();
+            //LOGGER.debug("Signin on {} with login {}: {}", gitlabUrl + SIGNIN_URL, login, response.toString());
             String body = response.body().string();
             return response.isSuccessful() && !body.contains("Invalid login or password.");
         } catch (IOException e) {
@@ -295,7 +319,7 @@ public class GitlabConfigurer implements BrickConfigurer {
                 String body = response.body().string();
 
                 JsonParser parser = new JsonParser();
-                JsonElement json =  parser.parse(body);
+                JsonElement json = parser.parse(body);
                 if (response.code() == 200) {
                     JsonArray keys = (JsonArray) json;
                     res = keys.size() > 0;
@@ -314,7 +338,7 @@ public class GitlabConfigurer implements BrickConfigurer {
                         request = new Request.Builder().post(formBody).url(gitlabUrl + "/api/v3/users/" + id + "/keys").addHeader("PRIVATE-TOKEN", privateToken).build();
                         response = httpClient.newCall(request).execute();
                         LOGGER.debug(response.toString());
-                        LOGGER.debug( response.body().string());
+                        LOGGER.debug(response.body().string());
                         res = response.code() == 201 || (response.code() == 400 && body.contains("has already been taken"));
                         if (!res) {
                             try {
