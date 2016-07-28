@@ -24,7 +24,7 @@ import io.kodokojo.service.lifecycle.ApplicationLifeCycleListener;
 import io.kodokojo.model.User;
 import io.kodokojo.model.UserService;
 import io.kodokojo.service.RSAUtils;
-import io.kodokojo.service.store.UserStore;
+import io.kodokojo.service.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
@@ -38,9 +38,9 @@ import java.util.Iterator;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
-public class RedisUserStore extends AbstractRedisStore implements UserStore, ApplicationLifeCycleListener {
+public class RedisUserRepository extends AbstractRedisStore implements UserRepository, ApplicationLifeCycleListener {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RedisUserStore.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RedisUserRepository.class);
 
     private static final String ID_KEY = "kodokojo-userId";
 
@@ -62,7 +62,7 @@ public class RedisUserStore extends AbstractRedisStore implements UserStore, App
 
     private final int newIdExpirationTime;
 
-    public RedisUserStore(Key key, String host, int port, int newIdExpirationTime) {
+    public RedisUserRepository(Key key, String host, int port, int newIdExpirationTime) {
         super(key, host, port);
 
         this.newIdExpirationTime = newIdExpirationTime;
@@ -74,13 +74,13 @@ public class RedisUserStore extends AbstractRedisStore implements UserStore, App
 
     }
 
-    public RedisUserStore(Key key, String host, int port) {
+    public RedisUserRepository(Key key, String host, int port) {
         this(key, host, port, DEFAULT_NEW_ID_TTL);
     }
 
     @Override
     protected String getStoreName() {
-        return "RedisUserStore";
+        return "RedisUserRepository";
     }
 
     @Override

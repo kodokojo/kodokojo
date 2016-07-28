@@ -24,14 +24,14 @@ import io.kodokojo.brick.BrickFactory;
 import io.kodokojo.config.ApplicationConfig;
 import io.kodokojo.config.RedisConfig;
 import io.kodokojo.service.BootstrapConfigurationProvider;
-import io.kodokojo.service.redis.RedisEntityStore;
-import io.kodokojo.service.redis.RedisUserStore;
-import io.kodokojo.service.store.EntityStore;
-import io.kodokojo.service.store.ProjectStore;
+import io.kodokojo.service.redis.RedisEntityRepository;
+import io.kodokojo.service.redis.RedisProjectRepository;
+import io.kodokojo.service.redis.RedisUserRepository;
+import io.kodokojo.service.repository.EntityRepository;
+import io.kodokojo.service.repository.ProjectRepository;
 import io.kodokojo.service.lifecycle.ApplicationLifeCycleManager;
-import io.kodokojo.service.store.UserStore;
+import io.kodokojo.service.repository.UserRepository;
 import io.kodokojo.service.redis.RedisBootstrapConfigurationProvider;
-import io.kodokojo.service.redis.RedisProjectStore;
 
 import javax.crypto.SecretKey;
 import javax.inject.Named;
@@ -41,15 +41,15 @@ public class RedisModule extends AbstractModule {
     @Override
     protected void configure() {
         /*
-        Multibinder<UserStore> multibinder = Multibinder.newSetBinder(binder(), UserStore.class);
+        Multibinder<UserRepository> multibinder = Multibinder.newSetBinder(binder(), UserRepository.class);
         multibinder.addBinding().toProvider(RedisUserManagerProvider.class);
         */
     }
 
     @Provides
     @Singleton
-    UserStore provideRediUserManager(@Named("securityKey")SecretKey secretKey, RedisConfig redisConfig, ApplicationLifeCycleManager applicationLifeCycleManager) {
-        RedisUserStore redisUserManager = new RedisUserStore(secretKey, redisConfig.host(), redisConfig.port());
+    UserRepository provideRediUserManager(@Named("securityKey")SecretKey secretKey, RedisConfig redisConfig, ApplicationLifeCycleManager applicationLifeCycleManager) {
+        RedisUserRepository redisUserManager = new RedisUserRepository(secretKey, redisConfig.host(), redisConfig.port());
         applicationLifeCycleManager.addService(redisUserManager);
         return redisUserManager;
     }
@@ -64,16 +64,16 @@ public class RedisModule extends AbstractModule {
 
     @Provides
     @Singleton
-    EntityStore provideEntityStore(@Named("securityKey") SecretKey key, RedisConfig redisConfig, ApplicationLifeCycleManager applicationLifeCycleManager) {
-        RedisEntityStore entityStore = new RedisEntityStore(key, redisConfig.host(), redisConfig.port());
+    EntityRepository provideEntityStore(@Named("securityKey") SecretKey key, RedisConfig redisConfig, ApplicationLifeCycleManager applicationLifeCycleManager) {
+        RedisEntityRepository entityStore = new RedisEntityRepository(key, redisConfig.host(), redisConfig.port());
         applicationLifeCycleManager.addService(entityStore);
         return entityStore;
     }
 
     @Provides
     @Singleton
-    ProjectStore provideProjectStore(@Named("securityKey") SecretKey key, RedisConfig redisConfig, BrickFactory brickFactory, ApplicationLifeCycleManager applicationLifeCycleManager) {
-        RedisProjectStore redisProjectStore = new RedisProjectStore(key, redisConfig.host(), redisConfig.port(), brickFactory);
+    ProjectRepository provideProjectStore(@Named("securityKey") SecretKey key, RedisConfig redisConfig, BrickFactory brickFactory, ApplicationLifeCycleManager applicationLifeCycleManager) {
+        RedisProjectRepository redisProjectStore = new RedisProjectRepository(key, redisConfig.host(), redisConfig.port(), brickFactory);
         applicationLifeCycleManager.addService(redisProjectStore);
         return redisProjectStore;
     }

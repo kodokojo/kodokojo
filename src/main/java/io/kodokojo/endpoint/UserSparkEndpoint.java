@@ -25,9 +25,9 @@ import io.kodokojo.endpoint.dto.UserProjectConfigIdDto;
 import io.kodokojo.model.Entity;
 import io.kodokojo.model.User;
 import io.kodokojo.service.EmailSender;
-import io.kodokojo.service.store.EntityStore;
-import io.kodokojo.service.store.ProjectStore;
-import io.kodokojo.service.store.UserStore;
+import io.kodokojo.service.repository.EntityRepository;
+import io.kodokojo.service.repository.ProjectRepository;
+import io.kodokojo.service.repository.UserRepository;
 import io.kodokojo.service.authentification.SimpleCredential;
 import io.kodokojo.endpoint.dto.UserCreationDto;
 import org.apache.commons.lang.StringUtils;
@@ -52,29 +52,29 @@ public class UserSparkEndpoint extends AbstractSparkEndpoint {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserSparkEndpoint.class);
 
-    private final UserStore userStore;
+    private final UserRepository userRepository;
 
-    private final ProjectStore projectStore;
+    private final ProjectRepository projectRepository;
 
-    private final EntityStore entityStore;
+    private final EntityRepository entityRepository;
 
     private final EmailSender emailSender;
 
     @Inject
-    public UserSparkEndpoint(UserAuthenticator<SimpleCredential> userAuthenticator, EntityStore entityStore, UserStore userStore, ProjectStore projectStore, EmailSender emailSender) {
+    public UserSparkEndpoint(UserAuthenticator<SimpleCredential> userAuthenticator, EntityRepository entityRepository, UserRepository userRepository, ProjectRepository projectRepository, EmailSender emailSender) {
         super(userAuthenticator);
-        if (userStore == null) {
-            throw new IllegalArgumentException("userStore must be defined.");
+        if (userRepository == null) {
+            throw new IllegalArgumentException("userRepository must be defined.");
         }
-        if (entityStore == null) {
-            throw new IllegalArgumentException("entityStore must be defined.");
+        if (entityRepository == null) {
+            throw new IllegalArgumentException("entityRepository must be defined.");
         }
-        if (projectStore == null) {
-            throw new IllegalArgumentException("projectStore must be defined.");
+        if (projectRepository == null) {
+            throw new IllegalArgumentException("projectRepository must be defined.");
         }
-        this.userStore = userStore;
-        this.entityStore = entityStore;
-        this.projectStore = projectStore;
+        this.userRepository = userRepository;
+        this.entityRepository = entityRepository;
+        this.projectRepository = projectRepository;
         this.emailSender = emailSender;
     }
 
@@ -85,13 +85,13 @@ public class UserSparkEndpoint extends AbstractSparkEndpoint {
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Try to create user with id {}", identifier);
             }
-            if (userStore.identifierExpectedNewUser(identifier)) {
+            if (userRepository.identifierExpectedNewUser(identifier)) {
                 JsonParser parser = new JsonParser();
                 JsonObject json = (JsonObject) parser.parse(request.body());
                 String email = json.getAsJsonPrimitive("email").getAsString();
 
                 String username = email.substring(0, email.lastIndexOf("@"));
-                User userByUsername = userStore.getUserByUsername(username);
+                User userByUsername = userRepository.getUserByUsername(username);
                 if (userByUsername != null) {
                     if (LOGGER.isDebugEnabled()) {
                         LOGGER.debug("Trying to create user {} from email '{}' who already exist.", username, email);
@@ -116,18 +116,18 @@ public class UserSparkEndpoint extends AbstractSparkEndpoint {
                 if (credential != null) {
                     User userRequester = userAuthenticator.authenticate(credential);
                     if (userRequester != null) {
-                        entityId = entityStore.getEntityIdOfUserId(userRequester.getIdentifier());
+                        entityId = entityRepository.getEntityIdOfUserId(userRequester.getIdentifier());
                     }
                 }
                 if (entityId == null) {
                     Entity entity = new Entity(entityName, user);
-                    entityId = entityStore.addEntity(entity);
+                    entityId = entityRepository.addEntity(entity);
                 }
-                entityStore.addUserToEntity(identifier, entityId);
+                entityRepository.addUserToEntity(identifier, entityId);
 
                 user = new User(identifier, entityId, username, username, email, password, user.getSshPublicKey());
 
-                if (userStore.addUser(user)) {
+                if (userRepository.addUser(user)) {
 
                     response.status(201);
                     StringWriter sw = new StringWriter();
@@ -168,7 +168,7 @@ public class UserSparkEndpoint extends AbstractSparkEndpoint {
                 }
 
                 if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("The UserStore not abel to add following user {}.", user.toString());
+                    LOGGER.debug("The UserRepository not abel to add following user {}.", user.toString());
                 }
                 halt(428);
                 return "";
@@ -179,7 +179,7 @@ public class UserSparkEndpoint extends AbstractSparkEndpoint {
         }), jsonResponseTransformer);
 
         post(BASE_API + "/user", JSON_CONTENT_TYPE, (request, response) -> {
-            String res = userStore.generateId();
+            String res = userRepository.generateId();
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Generate id : {}", res);
             }
@@ -189,7 +189,7 @@ public class UserSparkEndpoint extends AbstractSparkEndpoint {
         get(BASE_API + "/user", JSON_CONTENT_TYPE, (request, response) -> {
             SimpleCredential credential = extractCredential(request);
             if (credential != null) {
-                User user = userStore.getUserByUsername(credential.getUsername());
+                User user = userRepository.getUserByUsername(credential.getUsername());
                 if (user == null) {
                     halt(404);
                     return "";
@@ -203,8 +203,8 @@ public class UserSparkEndpoint extends AbstractSparkEndpoint {
         get(BASE_API + "/user/:id", JSON_CONTENT_TYPE, (request, response) -> {
             SimpleCredential credential = extractCredential(request);
             String identifier = request.params(":id");
-            User requestUser = userStore.getUserByUsername(credential.getUsername());
-            User user = userStore.getUserByIdentifier(identifier);
+            User requestUser = userRepository.getUserByUsername(credential.getUsername());
+            User user = userRepository.getUserByIdentifier(identifier);
             if (user != null) {
                 if (user.getEntityIdentifier().equals(requestUser.getEntityIdentifier())) {
                     if (!user.getUsername().equals(credential.getUsername())) {
@@ -222,10 +222,10 @@ public class UserSparkEndpoint extends AbstractSparkEndpoint {
 
     private UserDto getUserDto(User user) {
         UserDto res = new UserDto(user);
-        Set<String> projectConfigIds = projectStore.getProjectConfigIdsByUserIdentifier(user.getIdentifier());
+        Set<String> projectConfigIds = projectRepository.getProjectConfigIdsByUserIdentifier(user.getIdentifier());
         List<UserProjectConfigIdDto> userProjectConfigIdDtos = new ArrayList<>();
         projectConfigIds.forEach(id -> {
-            String projectId = projectStore.getProjectIdByProjectConfigurationId(id);
+            String projectId = projectRepository.getProjectIdByProjectConfigurationId(id);
             UserProjectConfigIdDto userProjectConfigIdDto = new UserProjectConfigIdDto(id);
             userProjectConfigIdDto.setProjectId(projectId);
             userProjectConfigIdDtos.add(userProjectConfigIdDto);

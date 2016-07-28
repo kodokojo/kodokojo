@@ -19,20 +19,20 @@ package io.kodokojo.service.authentification;
 
 import io.kodokojo.model.User;
 import io.kodokojo.endpoint.UserAuthenticator;
-import io.kodokojo.service.store.UserStore;
+import io.kodokojo.service.repository.UserRepository;
 
 import javax.inject.Inject;
 
 public class SimpleUserAuthenticator implements UserAuthenticator<SimpleCredential> {
 
-    private final UserStore userStore;
+    private final UserRepository userRepository;
 
     @Inject
-    public SimpleUserAuthenticator(UserStore userStore) {
-        if (userStore == null) {
-            throw new IllegalArgumentException("userStore must be defined.");
+    public SimpleUserAuthenticator(UserRepository userRepository) {
+        if (userRepository == null) {
+            throw new IllegalArgumentException("userRepository must be defined.");
         }
-        this.userStore = userStore;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -40,7 +40,7 @@ public class SimpleUserAuthenticator implements UserAuthenticator<SimpleCredenti
         if (credentials == null) {
             throw new IllegalArgumentException("credentials must be defined.");
         }
-        User user = userStore.getUserByUsername(credentials.getUsername());
+        User user = userRepository.getUserByUsername(credentials.getUsername());
         return (user != null && user.getPassword().equals(credentials.getPassword())) ? user : null;
     }
 

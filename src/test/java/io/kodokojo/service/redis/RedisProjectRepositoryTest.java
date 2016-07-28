@@ -31,9 +31,9 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class RedisProjectStoreTest {
+public class RedisProjectRepositoryTest {
 
-    private RedisProjectStore redisProjectStore;
+    private RedisProjectRepository redisProjectStore;
 
     private JedisPool jedisPool;
 
@@ -42,7 +42,7 @@ public class RedisProjectStoreTest {
         KeyGenerator kg = KeyGenerator.getInstance("AES");
 
         jedisPool = mock(JedisPool.class);
-        redisProjectStore = new RedisProjectStore(kg.generateKey(), "localhost", 6379, new DefaultBrickFactory()) {
+        redisProjectStore = new RedisProjectRepository(kg.generateKey(), "localhost", 6379, new DefaultBrickFactory()) {
             @Override
             protected JedisPool createJedisPool(String host, int port) {
                 return jedisPool;

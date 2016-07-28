@@ -20,12 +20,12 @@ package io.kodokojo.service.marathon;
 import io.kodokojo.brick.*;
 import io.kodokojo.config.MarathonConfig;
 import io.kodokojo.model.Service;
+import io.kodokojo.service.repository.ProjectRepository;
 import io.kodokojo.service.servicelocator.marathon.MarathonServiceLocator;
 import io.kodokojo.model.*;
 import io.kodokojo.brick.BrickConfigurerData;
 import io.kodokojo.service.BrickManager;
 import io.kodokojo.service.ProjectConfigurationException;
-import io.kodokojo.service.store.ProjectStore;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang.StringUtils;
@@ -36,7 +36,6 @@ import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import retrofit.RequestInterceptor;
 import retrofit.RestAdapter;
 import retrofit.RetrofitError;
 import retrofit.mime.TypedString;
@@ -67,7 +66,7 @@ public class MarathonBrickManager implements BrickManager {
 
     private final BrickConfigurerProvider brickConfigurerProvider;
 
-    private final ProjectStore projectStore;
+    private final ProjectRepository projectRepository;
 
     private final boolean constrainByTypeAttribute;
 
@@ -76,7 +75,7 @@ public class MarathonBrickManager implements BrickManager {
     private final BrickUrlFactory brickUrlFactory;
 
     @Inject
-    public MarathonBrickManager(MarathonConfig marathonConfig, MarathonServiceLocator marathonServiceLocator, BrickConfigurerProvider brickConfigurerProvider, ProjectStore projectStore, boolean constrainByTypeAttribute, String domain, BrickUrlFactory brickUrlFactory) {
+    public MarathonBrickManager(MarathonConfig marathonConfig, MarathonServiceLocator marathonServiceLocator, BrickConfigurerProvider brickConfigurerProvider, ProjectRepository projectRepository, boolean constrainByTypeAttribute, String domain, BrickUrlFactory brickUrlFactory) {
         if (marathonConfig == null) {
             throw new IllegalArgumentException("marathonConfig must be defined.");
         }
@@ -86,8 +85,8 @@ public class MarathonBrickManager implements BrickManager {
         if (brickConfigurerProvider == null) {
             throw new IllegalArgumentException("brickConfigurerProvider must be defined.");
         }
-        if (projectStore == null) {
-            throw new IllegalArgumentException("projectStore must be defined.");
+        if (projectRepository == null) {
+            throw new IllegalArgumentException("projectRepository must be defined.");
         }
         if (isBlank(domain)) {
             throw new IllegalArgumentException("domain must be defined.");
@@ -106,7 +105,7 @@ public class MarathonBrickManager implements BrickManager {
         marathonRestApi = adapter.create(MarathonRestApi.class);
         this.marathonServiceLocator = marathonServiceLocator;
         this.brickConfigurerProvider = brickConfigurerProvider;
-        this.projectStore = projectStore;
+        this.projectRepository = projectRepository;
         this.constrainByTypeAttribute = constrainByTypeAttribute;
         this.domain = domain;
         this.brickUrlFactory = brickUrlFactory;
@@ -195,7 +194,7 @@ public class MarathonBrickManager implements BrickManager {
                     try {
                         BrickConfigurerData brickConfigurerData = configurer.configure(new BrickConfigurerData(projectConfiguration.getName(), projectConfiguration.getDefaultStackConfiguration().getName(), entrypoint, domain, IteratorUtils.toList(projectConfiguration.getAdmins()), users));
                         brickConfigurerData = configurer.addUsers(brickConfigurerData, users);
-                        projectStore.setContextToBrickConfiguration(projectConfiguration.getIdentifier(), brickConfiguration, brickConfigurerData.getContext());
+                        projectRepository.setContextToBrickConfiguration(projectConfiguration.getIdentifier(), brickConfiguration, brickConfigurerData.getContext());
 
                         if (LOGGER.isDebugEnabled()) {
                             LOGGER.debug("Adding users {} to brick {}", StringUtils.join(users, ","), brickType);

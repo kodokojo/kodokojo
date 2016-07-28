@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package io.kodokojo.service.store;
+package io.kodokojo.service.repository;
 
 
 
@@ -26,7 +26,7 @@ import io.kodokojo.model.UserService;
 /**
  * Allow to manage {@link User} and {@link UserService}.
  */
-public interface UserStore extends UserFetcher {
+public interface UserRepository extends UserFetcher {
 
     String generateId();
 

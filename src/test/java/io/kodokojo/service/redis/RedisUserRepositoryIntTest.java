@@ -30,7 +30,7 @@ import io.kodokojo.model.User;
 import io.kodokojo.model.UserService;
 import io.kodokojo.commons.utils.DockerTestSupport;
 import io.kodokojo.service.RSAUtils;
-import io.kodokojo.service.store.UserStore;
+import io.kodokojo.service.repository.UserRepository;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -46,7 +46,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 @Back
-public class RedisUserStoreIntTest {
+public class RedisUserRepositoryIntTest {
 
     @Rule
     public DockerPresentMethodRule dockerPresentMethodRule = new DockerPresentMethodRule();
@@ -88,14 +88,14 @@ public class RedisUserStoreIntTest {
     @DockerIsRequire
     public void add_user() {
 
-        UserStore userStore = new RedisUserStore(aesKey, redisHost, redisPort);
+        UserRepository userRepository = new RedisUserRepository(aesKey, redisHost, redisPort);
 
         String email = "jpthiery@xebia.fr";
-        User jpthiery = new User(userStore.generateId(),"Jean-Pascal THIERY", "jpthiery", email, "jpascal", RSAUtils.encodePublicKey((RSAPublicKey) keyPair.getPublic(), email));
+        User jpthiery = new User(userRepository.generateId(),"Jean-Pascal THIERY", "jpthiery", email, "jpascal", RSAUtils.encodePublicKey((RSAPublicKey) keyPair.getPublic(), email));
 
-        userStore.addUser(jpthiery);
+        userRepository.addUser(jpthiery);
 
-        User user = userStore.getUserByUsername("jpthiery");
+        User user = userRepository.getUserByUsername("jpthiery");
 
         assertThat(user).isNotNull();
     }
@@ -103,11 +103,11 @@ public class RedisUserStoreIntTest {
     @Test
     @DockerIsRequire
     public void add_user_service() {
-        UserStore userStore = new RedisUserStore(aesKey, redisHost, redisPort);
-        UserService jenkins = new UserService(userStore.generateId(), "jenkins", "jenkins", "jenkins", (RSAPrivateKey) keyPair.getPrivate(), (RSAPublicKey) keyPair.getPublic());
-        userStore.addUserService(jenkins);
+        UserRepository userRepository = new RedisUserRepository(aesKey, redisHost, redisPort);
+        UserService jenkins = new UserService(userRepository.generateId(), "jenkins", "jenkins", "jenkins", (RSAPrivateKey) keyPair.getPrivate(), (RSAPublicKey) keyPair.getPublic());
+        userRepository.addUserService(jenkins);
 
-        UserService userService = userStore.getUserServiceByName("jenkins");
+        UserService userService = userRepository.getUserServiceByName("jenkins");
 
         assertThat(userService).isNotNull();
     }

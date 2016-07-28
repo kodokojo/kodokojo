@@ -23,6 +23,7 @@ import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.squareup.okhttp.OkHttpClient;
 import io.kodokojo.brick.*;
+import io.kodokojo.service.repository.ProjectRepository;
 import io.kodokojo.service.ssl.SSLKeyPair;
 import io.kodokojo.config.ApplicationConfig;
 import io.kodokojo.config.SecurityConfig;
@@ -33,7 +34,6 @@ import io.kodokojo.service.dns.DnsManager;
 import io.kodokojo.service.lifecycle.ApplicationLifeCycleManager;
 import io.kodokojo.service.ssl.SSLCertificatProviderFromCaSSLpaire;
 import io.kodokojo.service.ssl.WildcardSSLCertificatProvider;
-import io.kodokojo.service.store.ProjectStore;
 import org.apache.commons.lang.StringUtils;
 
 import javax.net.ssl.*;
@@ -57,9 +57,9 @@ public class ServiceModule extends AbstractModule {
 
     @Provides
     @Singleton
-    BrickStateMsgDispatcher provideBrickStateMsgDispatcher(ProjectStore projectStore) {
+    BrickStateMsgDispatcher provideBrickStateMsgDispatcher(ProjectRepository projectRepository) {
         BrickStateMsgDispatcher dispatcher = new BrickStateMsgDispatcher();
-        StoreBrickStateListener storeBrickStateListener = new StoreBrickStateListener(projectStore);
+        StoreBrickStateListener storeBrickStateListener = new StoreBrickStateListener(projectRepository);
         dispatcher.addListener(storeBrickStateListener);
         return dispatcher;
     }
@@ -87,8 +87,8 @@ public class ServiceModule extends AbstractModule {
 
     @Provides
     @Singleton
-    ProjectManager provideProjectManager(ApplicationConfig applicationConfig,  BrickConfigurationStarter brickConfigurationStarter, ConfigurationStore configurationStore, ProjectStore projectStore, BootstrapConfigurationProvider bootstrapConfigurationProvider, DnsManager dnsManager, BrickConfigurerProvider brickConfigurerProvider, BrickUrlFactory brickUrlFactory) {
-        return new DefaultProjectManager(applicationConfig.domain(), configurationStore, projectStore, bootstrapConfigurationProvider,dnsManager, brickConfigurerProvider,  brickConfigurationStarter, brickUrlFactory);
+    ProjectManager provideProjectManager(ApplicationConfig applicationConfig, BrickConfigurationStarter brickConfigurationStarter, ConfigurationStore configurationStore, ProjectRepository projectRepository, BootstrapConfigurationProvider bootstrapConfigurationProvider, DnsManager dnsManager, BrickConfigurerProvider brickConfigurerProvider, BrickUrlFactory brickUrlFactory) {
+        return new DefaultProjectManager(applicationConfig.domain(), configurationStore, projectRepository, bootstrapConfigurationProvider,dnsManager, brickConfigurerProvider,  brickConfigurationStarter, brickUrlFactory);
     }
 
     @Provides

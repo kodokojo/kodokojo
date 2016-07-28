@@ -15,13 +15,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package io.kodokojo.service.store;
+package io.kodokojo.service.repository;
 
 import io.kodokojo.model.Entity;
 
-public interface EntityFetcher {
+public interface EntityRepository extends EntityFetcher {
 
-    Entity getEntityById(String entityIdentifier);
+    String addEntity(Entity entity);
 
-    String getEntityIdOfUserId(String userIdentifier);
+    void addUserToEntity(String userIdentifier, String entityIdentifier);
+
 }

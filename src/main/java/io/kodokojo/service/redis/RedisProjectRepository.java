@@ -20,7 +20,7 @@ package io.kodokojo.service.redis;
 import io.kodokojo.service.RSAUtils;
 import io.kodokojo.model.*;
 import io.kodokojo.brick.BrickFactory;
-import io.kodokojo.service.store.ProjectStore;
+import io.kodokojo.service.repository.ProjectRepository;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang.StringUtils;
@@ -37,9 +37,9 @@ import java.util.stream.Collectors;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
-public class RedisProjectStore  extends  AbstractRedisStore implements ProjectStore {
+public class RedisProjectRepository extends AbstractRedisStore implements ProjectRepository {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RedisProjectStore.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RedisProjectRepository.class);
 
     public static final String PROJECT_PREFIX = "project/";
 
@@ -55,7 +55,7 @@ public class RedisProjectStore  extends  AbstractRedisStore implements ProjectSt
 
     private final BrickFactory brickFactory;
 
-    public RedisProjectStore(Key key, String host, int port, BrickFactory brickFactory) {
+    public RedisProjectRepository(Key key, String host, int port, BrickFactory brickFactory) {
         super(key, host, port);
         if (brickFactory == null) {
             throw new IllegalArgumentException("brickFactory must be defined.");

@@ -99,7 +99,7 @@ public class UserValue implements Serializable {
         return "UserValue{" +
                 "name='" + name + '\'' +
                 ", username='" + username + '\'' +
-                ", entityId='" + entityId + '\'' +
+                ", entityName='" + entityId + '\'' +
                 ", email='" + email + '\'' +
                 ", sshPublicKey='" + sshPublicKey + '\'' +
                 '}';

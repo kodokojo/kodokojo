@@ -24,12 +24,12 @@ import io.kodokojo.brick.BrickConfigurationStarter;
 import io.kodokojo.brick.DefaultBrickConfigurerProvider;
 import io.kodokojo.brick.DefaultBrickUrlFactory;
 import io.kodokojo.service.RSAUtils;
+import io.kodokojo.service.repository.ProjectRepository;
 import io.kodokojo.service.ssl.SSLKeyPair;
 import io.kodokojo.service.ssl.SSLUtils;
 import io.kodokojo.service.BrickManager;
 import io.kodokojo.service.*;
 import io.kodokojo.service.dns.NoOpDnsManager;
-import io.kodokojo.service.store.ProjectStore;
 import org.mockito.Mockito;
 
 import java.security.KeyPair;
@@ -53,7 +53,7 @@ public class ProjectManagerGiven<SELF extends ProjectManagerGiven<?>> extends St
     ConfigurationStore configurationStore;
 
     @ProvidedScenarioState
-    ProjectStore projectStore;
+    ProjectRepository projectRepository;
 
     @ProvidedScenarioState
     String projectName;
@@ -78,15 +78,15 @@ public class ProjectManagerGiven<SELF extends ProjectManagerGiven<?>> extends St
 
         brickManager = mock(BrickManager.class);
         configurationStore = mock(ConfigurationStore.class);
-        projectStore = mock(ProjectStore.class);
-        Mockito.when(projectStore.projectNameIsValid(projectName)).thenReturn(true);
+        projectRepository = mock(ProjectRepository.class);
+        Mockito.when(projectRepository.projectNameIsValid(projectName)).thenReturn(true);
         configProvider = mock(BootstrapConfigurationProvider.class);
         Mockito.when(configProvider.provideLoadBalancerHost(anyString(),anyString())).thenReturn("127.0.0.1");
         Mockito.when(configProvider.provideSshPortEntrypoint(anyString(),anyString())).thenReturn(10022);
         brickStarter = mock(BrickConfigurationStarter.class);
 
 
-        projectManager = new DefaultProjectManager("kodokojo.dev", configurationStore, projectStore, configProvider, new NoOpDnsManager(), new DefaultBrickConfigurerProvider(new DefaultBrickUrlFactory("kodokojo.dev"), new OkHttpClient()), brickStarter, new DefaultBrickUrlFactory("kodokojo.dev"));
+        projectManager = new DefaultProjectManager("kodokojo.dev", configurationStore, projectRepository, configProvider, new NoOpDnsManager(), new DefaultBrickConfigurerProvider(new DefaultBrickUrlFactory("kodokojo.dev"), new OkHttpClient()), brickStarter, new DefaultBrickUrlFactory("kodokojo.dev"));
 
         return self();
     }

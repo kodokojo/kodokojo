@@ -33,8 +33,8 @@ import io.kodokojo.endpoint.dto.ProjectConfigDto;
 import io.kodokojo.endpoint.dto.UserLightDto;
 import io.kodokojo.model.Entity;
 import io.kodokojo.model.User;
-import io.kodokojo.service.redis.RedisUserStore;
-import io.kodokojo.service.store.EntityStore;
+import io.kodokojo.service.redis.RedisUserRepository;
+import io.kodokojo.service.repository.EntityRepository;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 
@@ -49,10 +49,10 @@ import static org.assertj.core.api.Assertions.fail;
 public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF> {
 
     @ExpectedScenarioState
-    RedisUserStore userManager;
+    RedisUserRepository userManager;
 
     @ExpectedScenarioState
-    EntityStore entityStore;
+    EntityRepository entityRepository;
 
     @ExpectedScenarioState
     CurrentStep currentStep;
@@ -113,10 +113,10 @@ public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF
 
     public SELF user_$_belong_to_entity_of_project_configuration(@Quoted  String username) {
         UserInfo requesterUserInfo = currentUsers.get(currentUserLogin);
-        String entityIdOfCurrentUser = entityStore.getEntityIdOfUserId(requesterUserInfo.getIdentifier());
+        String entityIdOfCurrentUser = entityRepository.getEntityIdOfUserId(requesterUserInfo.getIdentifier());
         assertThat(entityIdOfCurrentUser).isNotNull();
         UserInfo userToValidate = currentUsers.get(username);
-        String entityIdOfUserToValidate = entityStore.getEntityIdOfUserId(userToValidate.getIdentifier());
+        String entityIdOfUserToValidate = entityRepository.getEntityIdOfUserId(userToValidate.getIdentifier());
         assertThat(entityIdOfUserToValidate).isEqualTo(entityIdOfCurrentUser);
         return self();
     }
@@ -173,8 +173,8 @@ public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF
 
     public SELF user_$_belong_to_entity_$(String username, String entityName) {
         UserInfo userInfo = currentUsers.get(username);
-        String entityIdOfUserId = entityStore.getEntityIdOfUserId(userInfo.getIdentifier());
-        Entity entity = entityStore.getEntityById(entityIdOfUserId);
+        String entityIdOfUserId = entityRepository.getEntityIdOfUserId(userInfo.getIdentifier());
+        Entity entity = entityRepository.getEntityById(entityIdOfUserId);
         assertThat(entity).isNotNull();
         assertThat(entity.getName()).isEqualTo(entityName);
         return self();

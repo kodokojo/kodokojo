@@ -15,27 +15,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package io.kodokojo.service.store;
+package io.kodokojo.service.repository;
 
-import io.kodokojo.model.BrickConfiguration;
-import io.kodokojo.model.Project;
-import io.kodokojo.model.ProjectConfiguration;
+import io.kodokojo.model.Entity;
 
-import java.io.Serializable;
-import java.util.Map;
+public interface EntityFetcher {
 
-public interface ProjectStore extends ProjectFetcher {
+    Entity getEntityById(String entityIdentifier);
 
-    boolean projectNameIsValid(String projectName);
-
-    String addProjectConfiguration(ProjectConfiguration projectConfiguration);
-
-    String addProject(Project project, String projectConfigurationIdentifier);
-
-    void updateProject(Project project);
-
-    void updateProjectConfiguration(ProjectConfiguration projectConfiguration);
-
-    void setContextToBrickConfiguration(String projectConfigurationId, BrickConfiguration brickConfiguration, Map<String, Serializable> context);
-
+    String getEntityIdOfUserId(String userIdentifier);
 }

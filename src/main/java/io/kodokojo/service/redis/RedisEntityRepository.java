@@ -20,7 +20,7 @@ package io.kodokojo.service.redis;
 import io.kodokojo.service.RSAUtils;
 import io.kodokojo.model.Entity;
 import io.kodokojo.model.User;
-import io.kodokojo.service.store.EntityStore;
+import io.kodokojo.service.repository.EntityRepository;
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -36,24 +36,24 @@ import java.util.stream.Collectors;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
-public class RedisEntityStore extends AbstractRedisStore implements EntityStore {
+public class RedisEntityRepository extends AbstractRedisStore implements EntityRepository {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RedisEntityStore.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RedisEntityRepository.class);
 
-    private static final String ENTITY_GENERATEID_KEY = "entityId";
+    private static final String ENTITY_GENERATEID_KEY = "entityName";
 
     public static final String ENTITY_PREFIX = "entity/";
 
     public static final String ENTITY_USER_PREFIX = "entityUsers/";
 
     @Inject
-    public RedisEntityStore(Key key, String host, int port) {
+    public RedisEntityRepository(Key key, String host, int port) {
         super(key, host, port);
     }
 
     @Override
     protected String getStoreName() {
-        return "RedisEntityStore";
+        return "RedisEntityRepository";
     }
 
     @Override

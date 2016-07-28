@@ -41,14 +41,14 @@ import java.util.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Ignore
-public class RedisProjectStoreIntTest {
+public class RedisProjectRepositoryIntTest {
 
     @Rule
     public DockerPresentMethodRule dockerPresentMethodRule = new DockerPresentMethodRule();
 
     private DockerTestSupport dockerTestSupport;
 
-    private RedisProjectStore redisProjectStore;
+    private RedisProjectRepository redisProjectStore;
 
     @Before
     public void setup() throws NoSuchAlgorithmException {
@@ -58,7 +58,7 @@ public class RedisProjectStoreIntTest {
         Service service = StageUtils.startDockerRedis(dockerTestSupport);
         String redisHost = service.getHost();
         int redisPort = service.getPort();
-        redisProjectStore = new RedisProjectStore(aesKey, redisHost, redisPort, new DefaultBrickFactory());
+        redisProjectStore = new RedisProjectRepository(aesKey, redisHost, redisPort, new DefaultBrickFactory());
     }
 
     @After

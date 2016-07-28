@@ -26,6 +26,9 @@ import io.kodokojo.brick.*;
 import io.kodokojo.model.Service;
 import io.kodokojo.commons.utils.DockerTestSupport;
 import io.kodokojo.service.RSAUtils;
+import io.kodokojo.service.redis.RedisEntityRepository;
+import io.kodokojo.service.redis.RedisProjectRepository;
+import io.kodokojo.service.redis.RedisUserRepository;
 import io.kodokojo.service.ssl.SSLKeyPair;
 import io.kodokojo.service.ssl.SSLUtils;
 import io.kodokojo.config.ApplicationConfig;
@@ -40,13 +43,10 @@ import io.kodokojo.endpoint.UserAuthenticator;
 import io.kodokojo.service.BrickManager;
 import io.kodokojo.service.*;
 import io.kodokojo.service.dns.DnsManager;
-import io.kodokojo.service.redis.RedisEntityStore;
-import io.kodokojo.service.redis.RedisProjectStore;
-import io.kodokojo.service.redis.RedisUserStore;
 import io.kodokojo.service.ssl.WildcardSSLCertificatProvider;
-import io.kodokojo.service.store.EntityStore;
-import io.kodokojo.service.store.ProjectStore;
-import io.kodokojo.service.store.UserStore;
+import io.kodokojo.service.repository.EntityRepository;
+import io.kodokojo.service.repository.ProjectRepository;
+import io.kodokojo.service.repository.UserRepository;
 import io.kodokojo.service.authentification.SimpleCredential;
 import io.kodokojo.service.authentification.SimpleUserAuthenticator;
 import io.kodokojo.test.utils.TestUtils;
@@ -125,9 +125,9 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
 
         int port = TestUtils.getEphemeralPort();
 
-        RedisUserStore redisUserManager = new RedisUserStore(secreteKey, service.getHost(), service.getPort());
-        RedisProjectStore redisProjectStore = new RedisProjectStore(secreteKey, service.getHost(), service.getPort(), new DefaultBrickFactory());
-        RedisEntityStore redisEntityStore = new RedisEntityStore(secreteKey, service.getHost(), service.getPort());
+        RedisUserRepository redisUserManager = new RedisUserRepository(secreteKey, service.getHost(), service.getPort());
+        RedisProjectRepository redisProjectStore = new RedisProjectRepository(secreteKey, service.getHost(), service.getPort(), new DefaultBrickFactory());
+        RedisEntityRepository redisEntityStore = new RedisEntityRepository(secreteKey, service.getHost(), service.getPort());
         KeyPair keyPair = null;
         try {
             keyPair = RSAUtils.generateRsaKeyPair();
@@ -139,9 +139,9 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
         Injector injector = Guice.createInjector(new EmailSenderModule(), new UserEndpointModule(),new ProjectEndpointModule(), new ActorModule(), new AbstractModule() {
             @Override
             protected void configure() {
-                bind(UserStore.class).toInstance(redisUserManager);
-                bind(ProjectStore.class).toInstance(redisProjectStore);
-                bind(EntityStore.class).toInstance(redisEntityStore);
+                bind(UserRepository.class).toInstance(redisUserManager);
+                bind(ProjectRepository.class).toInstance(redisProjectStore);
+                bind(EntityRepository.class).toInstance(redisEntityStore);
                 bind(BrickStateMsgDispatcher.class).toInstance(new BrickStateMsgDispatcher());
                 bind(BrickManager.class).toInstance(brickManager);
                 bind(DnsManager.class).toInstance(dnsManager);
@@ -227,7 +227,7 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
     }
 
     public SELF i_am_user_$(@Quoted String username) {
-        //currentUser = StageUtils.createUser(username, Launcher.INJECTOR.getInstance(UserStore.class), Launcher.INJECTOR.getInstance(EntityStore.class));
+        //currentUser = StageUtils.createUser(username, Launcher.INJECTOR.getInstance(UserRepository.class), Launcher.INJECTOR.getInstance(EntityRepository.class));
         currentUser = httpUserSupport.createUser(null, username + "@kodokojo.dev");
         return self();
     }
