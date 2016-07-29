@@ -93,7 +93,7 @@ public class BrickConfigurerWhen<SELF extends BrickConfigurerWhen<?>> extends St
             configurationData = brickConfigurer.configure(configurationData);
             this.brickConfigurerData = brickConfigurer.addUsers(configurationData, users);
         } catch (BrickConfigurationException e) {
-            dockerTestSupport.getDockerClient().logContainerCmd(containerId).withStdErr().withStdOut().withTailAll().exec(new ResultCallback<Frame>() {
+            dockerTestSupport.getDockerClient().logContainerCmd(containerId).withStdErr(true).withStdOut(true).withTailAll().exec(new ResultCallback<Frame>() {
                 @Override
                 public void onStart(Closeable closeable) {
 

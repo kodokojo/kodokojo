@@ -1,17 +1,17 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -40,7 +40,6 @@ package io.kodokojo.commons.utils;
  */
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.NotModifiedException;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.Ports;
@@ -49,16 +48,12 @@ import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.command.PullImageResultCallback;
 import org.apache.commons.lang.StringUtils;
-import org.junit.rules.MethodRule;
-import org.junit.runners.model.FrameworkMethod;
-import org.junit.runners.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
@@ -78,8 +73,8 @@ public class DockerTestSupport {
         dockerClient = DockerClientBuilder.getInstance(config).build();
         String fromEnv = System.getenv("DOCKER_HOST_IP");
         String fromDockerConfig = "127.0.0.1";
-        if (config.getUri() != null && config.getUri().getScheme().equals("https")) {
-            fromDockerConfig = config.getUri().getHost();
+        if (config.getDockerHost() != null && config.getDockerHost().getScheme().equals("https")) {
+            fromDockerConfig = config.getDockerHost().getHost();
         }
         remoteDaemonDockerIp = StringUtils.isNotBlank(fromEnv) ? fromEnv : fromDockerConfig;
         containerToClean = new ArrayList<>();
@@ -97,13 +92,18 @@ public class DockerTestSupport {
     private static DockerClientConfig createDockerConfig() {
         String dockerHostEnv = System.getenv("DOCKER_HOST");
 
-        String uri = StringUtils.isNotBlank(dockerHostEnv) ? dockerHostEnv.replaceAll("tcp://", "https://") : "unix:///var/run/docker.sock";
-        DockerClientConfig.DockerClientConfigBuilder dockerClientConfigBuilder = DockerClientConfig.createDefaultConfigBuilder().withUri(uri);
+        String uri = StringUtils.isNotBlank(dockerHostEnv) ? dockerHostEnv.replaceAll("tcp://", "https://") : null;
+        DockerClientConfig.DockerClientConfigBuilder defaultConfigBuilder = DockerClientConfig.createDefaultConfigBuilder().withApiVersion("1.21");
+        if (uri != null) {
+            defaultConfigBuilder = defaultConfigBuilder.withDockerHost(uri);
+        } else {
+            defaultConfigBuilder.withDockerHost("unix:///var/tmp/docker.sock");
+        }
         String certPath = System.getenv("DOCKER_CERT_PATH");
         if (StringUtils.isNotBlank(certPath)) {
-            dockerClientConfigBuilder.withDockerCertPath(certPath);
+            defaultConfigBuilder.withDockerCertPath(certPath);
         }
-        return dockerClientConfigBuilder.build();
+        return defaultConfigBuilder.build();
     }
 
     public void addContainerIdToClean(String id) {
@@ -137,7 +137,7 @@ public class DockerTestSupport {
         if (bindingsExposed == null) {
             return -1;
         }
-        return bindingsExposed[0].getHostPort();
+        return Integer.parseInt(bindingsExposed[0].getHostPortSpec());
     }
 
     public String getHttpContainerUrl(String containerId, int containerPort) {
@@ -152,15 +152,13 @@ public class DockerTestSupport {
             containerToClean.forEach(id -> {
                 if (remove) {
                     InspectContainerResponse containerResponse = dockerClient.inspectContainerCmd(id).exec();
-                    try {
-                        dockerClient.stopContainerCmd(id).exec();
-                        //dockerClient.killContainerCmd(id).exec();
-                        dockerClient.removeContainerCmd(id).exec();
 
-                        LOGGER.debug("Stopped and removed container id: {}", id);
-                    } catch (NotModifiedException e) {
-                        LOGGER.error(e.getMessage(),e);
-                    }
+                    dockerClient.stopContainerCmd(id).exec();
+                    //dockerClient.killContainerCmd(id).exec();
+                    dockerClient.removeContainerCmd(id).exec();
+
+                    LOGGER.debug("Stopped and removed container id: {}", id);
+
                 } else {
                     LOGGER.warn("You ask us to not stop and remove containers. Ignore container id {}", id);
                 }

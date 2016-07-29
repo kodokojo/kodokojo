@@ -26,9 +26,12 @@ import io.kodokojo.brick.*;
 import io.kodokojo.model.Service;
 import io.kodokojo.commons.utils.DockerTestSupport;
 import io.kodokojo.service.RSAUtils;
-import io.kodokojo.service.redis.RedisEntityRepository;
-import io.kodokojo.service.redis.RedisProjectRepository;
+import io.kodokojo.service.redis.RedisEntityStore;
+import io.kodokojo.service.redis.RedisProjectStore;
 import io.kodokojo.service.redis.RedisUserRepository;
+import io.kodokojo.service.repository.Repository;
+import io.kodokojo.service.repository.store.EntityStore;
+import io.kodokojo.service.repository.store.ProjectStore;
 import io.kodokojo.service.ssl.SSLKeyPair;
 import io.kodokojo.service.ssl.SSLUtils;
 import io.kodokojo.config.ApplicationConfig;
@@ -126,8 +129,8 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
         int port = TestUtils.getEphemeralPort();
 
         RedisUserRepository redisUserManager = new RedisUserRepository(secreteKey, service.getHost(), service.getPort());
-        RedisProjectRepository redisProjectStore = new RedisProjectRepository(secreteKey, service.getHost(), service.getPort(), new DefaultBrickFactory());
-        RedisEntityRepository redisEntityStore = new RedisEntityRepository(secreteKey, service.getHost(), service.getPort());
+        RedisProjectStore redisProjectStore = new RedisProjectStore(secreteKey, service.getHost(), service.getPort(), new DefaultBrickFactory());
+        RedisEntityStore redisEntityStore = new RedisEntityStore(secreteKey, service.getHost(), service.getPort());
         KeyPair keyPair = null;
         try {
             keyPair = RSAUtils.generateRsaKeyPair();
@@ -135,13 +138,16 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
             fail(e.getMessage());
         }
         SSLKeyPair caKey = SSLUtils.createSelfSignedSSLKeyPair("Fake CA", (RSAPrivateKey) keyPair.getPrivate(), (RSAPublicKey) keyPair.getPublic());
-
+        Repository repository = new Repository(redisUserManager, redisUserManager, redisEntityStore, redisProjectStore);
         Injector injector = Guice.createInjector(new EmailSenderModule(), new UserEndpointModule(),new ProjectEndpointModule(), new ActorModule(), new AbstractModule() {
             @Override
             protected void configure() {
                 bind(UserRepository.class).toInstance(redisUserManager);
-                bind(ProjectRepository.class).toInstance(redisProjectStore);
-                bind(EntityRepository.class).toInstance(redisEntityStore);
+                bind(ProjectStore.class).toInstance(redisProjectStore);
+                bind(EntityStore.class).toInstance(redisEntityStore);
+                bind(Repository.class).toInstance(repository);
+                bind(ProjectRepository.class).toInstance(repository);
+                bind(EntityRepository.class).toInstance(repository);
                 bind(BrickStateMsgDispatcher.class).toInstance(new BrickStateMsgDispatcher());
                 bind(BrickManager.class).toInstance(brickManager);
                 bind(DnsManager.class).toInstance(dnsManager);
@@ -210,7 +216,7 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
             @Provides
             @Singleton
             ProjectManager provideProjectManager(BrickConfigurationStarter brickConfigurationStarter, BrickConfigurerProvider brickConfigurerProvider,  BrickUrlFactory brickUrlFactory) {
-                return new DefaultProjectManager( "kodokojo.dev", configurationStore, redisProjectStore, bootstrapProvider,dnsManager, brickConfigurerProvider,  brickConfigurationStarter, brickUrlFactory);
+                return new DefaultProjectManager( "kodokojo.dev", configurationStore, repository, bootstrapProvider,dnsManager, brickConfigurerProvider,  brickConfigurationStarter, brickUrlFactory);
             }
 
         });

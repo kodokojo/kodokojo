@@ -1,7 +1,5 @@
 package io.kodokojo.service.repository.store;
 
-import io.kodokojo.model.Entity;
-
 public interface EntityStore {
 
     EntityStoreModel getEntityById(String entityIdentifier);

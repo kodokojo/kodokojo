@@ -1,17 +1,17 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -19,7 +19,7 @@ package io.kodokojo.service.servicelocator.docker;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Container;
-import com.github.dockerjava.api.model.Filters;
+import com.github.dockerjava.api.model.ContainerPort;
 import io.kodokojo.config.KodokojoConfig;
 import io.kodokojo.model.Service;
 import io.kodokojo.service.servicelocator.ServiceLocator;
@@ -64,7 +64,7 @@ public class DockerServiceLocator implements ServiceLocator {
             throw new IllegalArgumentException("name must be defined.");
         }
         List<String> labels = new ArrayList<>(Arrays.asList(
-                COMPONENT_TYPE_KEY+ "=" + type,
+                COMPONENT_TYPE_KEY + "=" + type,
                 COMPONENT_NAME_KEY + "=" + name)
         );
 
@@ -110,14 +110,12 @@ public class DockerServiceLocator implements ServiceLocator {
     private Set<Service> searchServicesWithLabel(List<String> labels) {
         assert labels != null : "labels must be defined";
         labels.add(PROJECT_KEY + "=" + kodokojoConfig.projectName());
-        labels.add(STACK_NAME_KEY+ "=" + kodokojoConfig.stackName());
+        labels.add(STACK_NAME_KEY + "=" + kodokojoConfig.stackName());
         labels.add(STACK_TYPE_KEY + "=" + kodokojoConfig.stackType());
-        Filters filters = new Filters()
-                .withLabels(labels.toArray(new String[]{}));
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("DockerServiceLocator lookup container with following criteria {}", filters.toString());
+            LOGGER.debug("DockerServiceLocator lookup container with following criteria {}", labels.toString());
         }
-        List<Container> containers = dockerClient.listContainersCmd().withFilters(filters).exec();
+        List<Container> containers = dockerClient.listContainersCmd().withLabelFilter(labels.toArray(new String[labels.size()])).exec();
 
         if (CollectionUtils.isNotEmpty(containers)) {
             Set<Service> res = new HashSet<>(containers.size());
@@ -125,7 +123,7 @@ public class DockerServiceLocator implements ServiceLocator {
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("Lookup list of public port for container : {}", container.getId());
                 }
-                for (Container.Port port : container.getPorts()) {
+                for (ContainerPort port : container.getPorts()) {
                     if (port.getPublicPort() != null && port.getPublicPort() > 0) {
                         String name = container.getLabels().get(KODOKOJO_PREFIXE + "componentName");
                         res.add(new Service(name, dockerSupport.getDockerHost(), port.getPublicPort()));

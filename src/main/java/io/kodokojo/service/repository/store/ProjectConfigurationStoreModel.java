@@ -4,12 +4,13 @@ import io.kodokojo.model.ProjectConfiguration;
 import io.kodokojo.model.StackConfiguration;
 import io.kodokojo.model.User;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class ProjectConfigurationStoreModel {
+public class ProjectConfigurationStoreModel implements Serializable {
 
     private final String identifier;
 

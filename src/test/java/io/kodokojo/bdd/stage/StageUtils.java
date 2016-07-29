@@ -53,7 +53,7 @@ public class StageUtils {
 
         Ports portBinding = new Ports();
         ExposedPort exposedPort = ExposedPort.tcp(6379);
-        portBinding.bind(exposedPort, Ports.Binding(null));
+        portBinding.bind(exposedPort, Ports.Binding.bindIp("0.0.0.0"));
 
         CreateContainerResponse createContainerResponse = dockerClient.createContainerCmd("redis:latest")
                 .withExposedPorts(exposedPort)

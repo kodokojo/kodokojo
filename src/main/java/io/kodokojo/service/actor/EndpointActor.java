@@ -5,8 +5,10 @@ import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.japi.pf.ReceiveBuilder;
 import io.kodokojo.model.Entity;
+import io.kodokojo.service.actor.entity.AddUserToEntityActor;
 import io.kodokojo.service.actor.entity.EntityCreatorActor;
 import io.kodokojo.service.actor.entity.EntityEndpointActor;
+import io.kodokojo.service.actor.project.ProjectEndpointActor;
 import io.kodokojo.service.actor.user.UserCreatorActor;
 import io.kodokojo.service.actor.user.UserEndpointActor;
 import io.kodokojo.service.repository.EntityRepository;
@@ -56,18 +58,21 @@ public class EndpointActor extends AbstractActor {
 
         userEndpoint = getContext().actorOf(UserEndpointActor.PROPS(userRepository));
         entityEndpoint = getContext().actorOf(EntityEndpointActor.PROPS(entityRepository));
-        projectEndpoint = null;
+        projectEndpoint = getContext().actorOf(ProjectEndpointActor.PROPS(projectRepository));
 
         receive(ReceiveBuilder.match(UserCreatorActor.UserCreateMsg.class, msg -> {
 
-            getContext().actorOf(UserCreatorActor.PROPS(userRepository)).tell(msg,self());
-
+            userEndpoint.tell(msg,self());
         }).match(UserCreatorActor.UserCreatedMessage.class, msg -> {
             if (StringUtils.isBlank(msg.getEntityNameRequested())) {
+                Entity entity = new Entity(msg.getEntityNameRequested(), msg.getUser());
+                entityEndpoint.tell(new EntityCreatorActor.EntityCreatorMessage(entity), self());
+            } else if (msg.getRequester() != null) {
+                entityEndpoint.tell(new AddUserToEntityActor.AddUserToEntityMessage(msg.getUser(), msg.getUser().getIdentifier(), msg.getRequester().getEntityIdentifier()), self());
+            } else {
                 Entity entity = new Entity(msg.getUser().getEmail(), msg.getUser());
                 entityEndpoint.tell(new EntityCreatorActor.EntityCreatorMessage(entity), self());
             }
-        })
-                .matchAny(this::unhandled).build());
+        }).matchAny(this::unhandled).build());
     }
 }

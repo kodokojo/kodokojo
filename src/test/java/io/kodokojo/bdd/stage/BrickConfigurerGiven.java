@@ -82,7 +82,7 @@ public class BrickConfigurerGiven<SELF extends BrickConfigurerGiven<?>> extends 
 
         Ports portBinding = new Ports();
         ExposedPort exposedPort = ExposedPort.tcp(port);
-        portBinding.bind(exposedPort, Ports.Binding(80));
+        portBinding.bind(exposedPort, new Ports.Binding(null,"80"));
 
         CreateContainerResponse containerResponse = dockerClient.createContainerCmd(image)
                 .withPortBindings(portBinding)

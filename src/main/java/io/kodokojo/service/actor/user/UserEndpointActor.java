@@ -23,7 +23,7 @@ public class UserEndpointActor extends AbstractActor {
             getContext().actorOf(UserCreatorActor.PROPS(userRepository)).tell(msg, self());
         })
             .match(UserCreatorActor.UserCreatedMessage.class, msg -> {
-
+                getContext().parent().tell(msg, sender());
             })
         .matchAny(this::unhandled)
         .build());

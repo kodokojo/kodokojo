@@ -65,7 +65,7 @@ public class RedisBootstrapConfigurationProvider implements BootstrapConfigurati
         if (isBlank(stackName)) {
             throw new IllegalArgumentException("stackName must be defined.");
         }
-        String lbKey = RedisProjectRepository.PROJECT_PREFIX + projectName + "/" + stackName + "/lbHost";
+        String lbKey = RedisProjectStore.PROJECT_PREFIX + projectName + "/" + stackName + "/lbHost";
         try (Jedis jedis = pool.getResource()) {
             if (jedis.exists(lbKey)) {
                 return jedis.get(lbKey);
@@ -83,7 +83,7 @@ public class RedisBootstrapConfigurationProvider implements BootstrapConfigurati
         if (isBlank(stackName)) {
             throw new IllegalArgumentException("stackName must be defined.");
         }
-        String sshPortKey = RedisProjectRepository.PROJECT_PREFIX + projectName + "/" + stackName + "/sshPort";
+        String sshPortKey = RedisProjectStore.PROJECT_PREFIX + projectName + "/" + stackName + "/sshPort";
         try (Jedis jedis = pool.getResource()) {
             if (jedis.exists(sshPortKey)) {
                 return Integer.parseInt(jedis.get(sshPortKey));

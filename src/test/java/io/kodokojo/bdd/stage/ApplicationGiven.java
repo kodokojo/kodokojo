@@ -47,11 +47,12 @@ import io.kodokojo.endpoint.HttpEndpoint;
 import io.kodokojo.endpoint.SparkEndpoint;
 import io.kodokojo.endpoint.UserAuthenticator;
 import io.kodokojo.service.ProjectManager;
-import io.kodokojo.service.redis.RedisEntityRepository;
-import io.kodokojo.service.redis.RedisProjectRepository;
+import io.kodokojo.service.redis.RedisEntityStore;
+import io.kodokojo.service.redis.RedisProjectStore;
 import io.kodokojo.service.redis.RedisUserRepository;
 import io.kodokojo.service.repository.EntityRepository;
 import io.kodokojo.service.repository.ProjectRepository;
+import io.kodokojo.service.repository.Repository;
 import io.kodokojo.service.repository.UserRepository;
 import io.kodokojo.service.authentification.SimpleCredential;
 import io.kodokojo.service.authentification.SimpleUserAuthenticator;
@@ -188,9 +189,10 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
             SecretKey aesKey = generator.generateKey();
             userStore = new RedisUserRepository(aesKey, redisHost, redisPort);
             DefaultBrickFactory brickFactory = new DefaultBrickFactory();
-            projectRepository = new RedisProjectRepository(aesKey, redisHost, redisPort, brickFactory);
-            entityRepository = new RedisEntityRepository(aesKey, redisHost, redisPort);
             UserAuthenticator<SimpleCredential> userAuthenticator = new SimpleUserAuthenticator(userStore);
+            Repository repository = new Repository(userStore, userStore, new RedisEntityStore(aesKey, redisHost, redisPort), new RedisProjectStore(aesKey, redisHost, redisPort, brickFactory));
+            entityRepository = repository;
+            projectRepository = repository;
             projectManager = mock(ProjectManager.class);
             Launcher.INJECTOR = Guice.createInjector(new UserEndpointModule(), new ProjectEndpointModule(), new BrickEndpointModule(), new EmailSenderModule(), new AbstractModule() {
                 @Override

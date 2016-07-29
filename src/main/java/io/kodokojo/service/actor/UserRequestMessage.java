@@ -9,9 +9,6 @@ public class UserRequestMessage implements Serializable {
     protected final User requester;
 
     public UserRequestMessage(User requester) {
-        if (requester == null) {
-            throw new IllegalArgumentException("requester must be defined.");
-        }
         this.requester = requester;
     }
 

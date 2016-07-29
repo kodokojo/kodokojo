@@ -24,6 +24,7 @@ import io.kodokojo.commons.DockerPresentMethodRule;
 import io.kodokojo.model.Service;
 import io.kodokojo.commons.utils.DockerTestSupport;
 import io.kodokojo.service.RSAUtils;
+import io.kodokojo.service.repository.store.ProjectConfigurationStoreModel;
 import io.kodokojo.service.ssl.SSLKeyPair;
 import io.kodokojo.service.ssl.SSLUtils;
 import io.kodokojo.model.*;
@@ -41,14 +42,14 @@ import java.util.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Ignore
-public class RedisProjectRepositoryIntTest {
+public class RedisProjectStoreIntTest {
 
     @Rule
     public DockerPresentMethodRule dockerPresentMethodRule = new DockerPresentMethodRule();
 
     private DockerTestSupport dockerTestSupport;
 
-    private RedisProjectRepository redisProjectStore;
+    private RedisProjectStore redisProjectStore;
 
     @Before
     public void setup() throws NoSuchAlgorithmException {
@@ -58,7 +59,7 @@ public class RedisProjectRepositoryIntTest {
         Service service = StageUtils.startDockerRedis(dockerTestSupport);
         String redisHost = service.getHost();
         int redisPort = service.getPort();
-        redisProjectStore = new RedisProjectRepository(aesKey, redisHost, redisPort, new DefaultBrickFactory());
+        redisProjectStore = new RedisProjectStore(aesKey, redisHost, redisPort, new DefaultBrickFactory());
     }
 
     @After
@@ -88,11 +89,10 @@ public class RedisProjectRepositoryIntTest {
     @DockerIsRequire
     public void add_valid_project() throws NoSuchAlgorithmException {
 
-        List<User> users = new ArrayList<>();
-        User owner = new User("1234", "Jpascal", "jpthiery", "jpthiery@kodokojo.io", "mysecretpassword", "ssh public key");
-        users.add(owner);
+        List<String> users = new ArrayList<>();
+        users.add("1234");
 
-        ProjectConfiguration projectConfiguration = createProjectConfiguration(users);
+        ProjectConfigurationStoreModel projectConfiguration = createProjectConfiguration(users);
 
         String identifier = redisProjectStore.addProjectConfiguration(projectConfiguration);
 
@@ -102,7 +102,7 @@ public class RedisProjectRepositoryIntTest {
         String projectIdentifier = redisProjectStore.addProject(project, identifier);
 
 
-        ProjectConfiguration result = redisProjectStore.getProjectConfigurationById(identifier);
+        ProjectConfigurationStoreModel result = redisProjectStore.getProjectConfigurationById(identifier);
         assertThat(result).isNotNull();
         assertThat(result.getIdentifier()).isEqualTo(identifier);
         assertThat(result.getEntityIdentifier()).isNotNull();
@@ -123,12 +123,12 @@ public class RedisProjectRepositoryIntTest {
     }
 
 
-    private ProjectConfiguration createProjectConfiguration(List<User> users) {
+    private ProjectConfigurationStoreModel createProjectConfiguration(List<String> users) {
         Set<StackConfiguration> stackConfigurations = new HashSet<>();
         Set<BrickConfiguration> brickConfigurations = new HashSet<>();
         brickConfigurations.add(new BrickConfiguration(new Brick("jenkins", BrickType.CI, "1.651")));
         stackConfigurations.add(new StackConfiguration("build-A", StackType.BUILD, brickConfigurations, "127.0.0.1", 10022));
-        return new ProjectConfiguration("123456", "acme-a", users, stackConfigurations, users);
+        return new ProjectConfigurationStoreModel("123456",null, "acme-a", users, stackConfigurations, users);
     }
 
     Project createProject() throws NoSuchAlgorithmException {

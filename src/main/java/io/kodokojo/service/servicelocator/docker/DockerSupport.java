@@ -85,7 +85,7 @@ public class DockerSupport {
                 builder.withDockerCertPath(dockerConfig.dockerCertPath());
             }
             config = builder
-                    .withUri(dockerConfig.dockerServerUrl())
+                    .withDockerHost(dockerConfig.dockerServerUrl())
                     .build();
         }
         return DockerClientBuilder.getInstance(config).build();
@@ -107,7 +107,7 @@ public class DockerSupport {
         if (bindingsExposed == null) {
             return -1;
         }
-        return bindingsExposed[0].getHostPort();
+        return Integer.parseInt(bindingsExposed[0].getHostPortSpec());
     } public interface ServiceIsUp {
         boolean accept(Response response);
     }

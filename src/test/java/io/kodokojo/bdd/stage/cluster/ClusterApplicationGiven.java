@@ -258,7 +258,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
 
         Ports portBinding = new Ports();
         ExposedPort exposedPort = ExposedPort.tcp(2181);
-        portBinding.bind(exposedPort, Ports.Binding(null));
+        portBinding.bind(exposedPort, new Ports.Binding(null, null));
         CreateContainerResponse zookeeperContainer = dockerClient.createContainerCmd(DOCKER_ZOOKEEPER_IMAGE_NAME)
                 .withPortBindings(portBinding)
                 .withExposedPorts(exposedPort).exec();
@@ -275,7 +275,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
 
         Ports portBinding = new Ports();
         ExposedPort exposedPort = ExposedPort.tcp(5050);
-        portBinding.bind(exposedPort, Ports.Binding(5050));
+        portBinding.bind(exposedPort, new Ports.Binding(null, "5050"));
 
         int zookeeperPort = dockerTestSupport.getExposedPort(zookeeperId, 2181);
         String serverIp = dockerTestSupport.getServerIp();
@@ -301,7 +301,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
 
         Ports portBinding = new Ports();
         ExposedPort exposedPort = ExposedPort.tcp(5051);
-        portBinding.bind(exposedPort, Ports.Binding(5051));
+        portBinding.bind(exposedPort, new Ports.Binding(null, "5051"));
 
         int mesosMasterPort = dockerTestSupport.getExposedPort(mesosMasterId, 5050);
         String serverIp = dockerTestSupport.getServerIp();
@@ -337,7 +337,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
 
         Ports portBinding = new Ports();
         ExposedPort exposedPort = ExposedPort.tcp(8080);
-        portBinding.bind(exposedPort, Ports.Binding(8080));
+        portBinding.bind(exposedPort, new Ports.Binding(null, "8080"));
 
         int zookeeperPort = dockerTestSupport.getExposedPort(zookeeperId, 2181);
         String serverIp = dockerTestSupport.getServerIp();
