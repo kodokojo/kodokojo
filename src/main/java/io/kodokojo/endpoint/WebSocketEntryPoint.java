@@ -43,7 +43,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-//  WebSocket colse event code https://developer.mozilla.org/fr/docs/Web/API/CloseEvent
+//  WebSocket close event code https://developer.mozilla.org/fr/docs/Web/API/CloseEvent
 @WebSocket
 public class WebSocketEntryPoint implements BrickStateMsgListener {
 
