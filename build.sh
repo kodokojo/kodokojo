@@ -18,18 +18,16 @@
 #
 
 
-DOCKER_BIN_PATH=$(type -a docker | head -n1 | awk '{print $3}')
-if [ ! -x "$DOCKER_BIN_PATH" ]; then
-  echo "Unable to find a docker executable, please install Docker"
-  exit 1
-fi
-
 DOCKER_CERT_OPT=""
 if [ -x "$DOCKER_CERT_PATH" ]; then
   DOCKER_CERT_OPT="-v $DOCKER_CERT_PATH:$DOCKER_CERT_PATH"
 fi
 
-docker run -it --rm $DOCKER_CERT_OPT -v /tmp/kodokojo/.m2:/root/.m2 -v "$PWD":/usr/src/mymaven -w /usr/src/mymaven -e "DOCKER_HOST=$DOCKER_HOST" -e "DOCKER_CERT_PATH=$DOCKER_CERT_PATH" -v ${DOCKER_BIN_PATH}:/usr/bin/docker maven:3-jdk-8 /bin/bash -c 'mvn clean install verify && chmod -R 777 target' 
+if [ -x "$DOCKER_HOST_IP" ]; then
+  DOCKER_CERT_OPT="${DOCKER_CERT_OPT} -e $DOCKER_HOST_IP:$DOCKER_HOST_IP"
+fi
+
+docker run -it --rm $DOCKER_CERT_OPT -v /var/run/docker.sock:/var/tmp/docker.sock:rw -v /tmp/kodokojo/.m2:/root/.m2 -v "$PWD":/usr/src/mymaven -w /usr/src/mymaven -e "DOCKER_HOST=unix:///var/tmp/docker.sock" -e "DOCKER_HOST_IP=$DOCKER_HOST_IP" -e "DOCKER_CERT_PATH=$DOCKER_CERT_PATH"  maven:3-jdk-8 /bin/bash -c 'mvn clean install && chmod -R 777 target'
 rc=$?
 if [[ $rc != 0 ]]; then
   exit $rc

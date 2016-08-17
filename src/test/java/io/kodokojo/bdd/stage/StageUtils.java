@@ -28,6 +28,8 @@ import io.kodokojo.model.Entity;
 import io.kodokojo.model.User;
 import io.kodokojo.service.store.EntityStore;
 import io.kodokojo.service.store.UserStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
@@ -44,6 +46,8 @@ import static org.assertj.core.api.Assertions.fail;
 
 public class StageUtils {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(StageUtils.class);
+
     private StageUtils() {
         //
     }
@@ -53,7 +57,7 @@ public class StageUtils {
 
         Ports portBinding = new Ports();
         ExposedPort exposedPort = ExposedPort.tcp(6379);
-        portBinding.bind(exposedPort, Ports.Binding(null));
+        portBinding.bind(exposedPort, new Ports.Binding(null, null));
 
         CreateContainerResponse createContainerResponse = dockerClient.createContainerCmd("redis:latest")
                 .withExposedPorts(exposedPort)
@@ -62,7 +66,7 @@ public class StageUtils {
         dockerClient.startContainerCmd(createContainerResponse.getId()).exec();
         dockerTestSupport.addContainerIdToClean(createContainerResponse.getId());
 
-        String redisHost = dockerTestSupport.getServerIp();
+        String redisHost = dockerTestSupport.getContainerPublicIp(createContainerResponse.getId());
         int redisPort = dockerTestSupport.getExposedPort(createContainerResponse.getId(), 6379);
 
         long end = System.currentTimeMillis() + 60000;
