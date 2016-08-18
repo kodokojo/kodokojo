@@ -61,6 +61,7 @@ public class RedisUserRepositoryIntTest {
 
     @Before
     public void setup() {
+
         DockerTestSupport dockerTestSupport = dockerPresentMethodRule.getDockerTestSupport();
         DockerClient dockerClient = dockerTestSupport.getDockerClient();
         CreateContainerResponse createContainerResponse = dockerClient.createContainerCmd("redis:latest").withExposedPorts(ExposedPort.tcp(6379)).withPortBindings(new Ports(ExposedPort.tcp(6379), new Ports.Binding(null, null))).exec();

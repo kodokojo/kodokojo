@@ -53,7 +53,7 @@ public class StageUtils {
 
         Ports portBinding = new Ports();
         ExposedPort exposedPort = ExposedPort.tcp(6379);
-        portBinding.bind(exposedPort, Ports.Binding.bindIp("0.0.0.0"));
+        portBinding.bind(exposedPort, new Ports.Binding(null, null));
 
         CreateContainerResponse createContainerResponse = dockerClient.createContainerCmd("redis:latest")
                 .withExposedPorts(exposedPort)
@@ -62,7 +62,7 @@ public class StageUtils {
         dockerClient.startContainerCmd(createContainerResponse.getId()).exec();
         dockerTestSupport.addContainerIdToClean(createContainerResponse.getId());
 
-        String redisHost = dockerTestSupport.getServerIp();
+        String redisHost = dockerTestSupport.getContainerPublicIp(createContainerResponse.getId());
         int redisPort = dockerTestSupport.getExposedPort(createContainerResponse.getId(), 6379);
 
         long end = System.currentTimeMillis() + 60000;
