@@ -19,6 +19,7 @@ package io.kodokojo.endpoint;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import io.kodokojo.model.User;
 import io.kodokojo.service.authentification.SimpleCredential;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,6 +63,14 @@ public abstract class AbstractSparkEndpoint implements SparkEndpoint {
             }
         } catch (Exception e) {
             LOGGER.debug("Unable to retrieve credentials", e);
+        }
+        return null;
+    }
+
+    protected User getRequester(Request request) {
+        SimpleCredential credential = extractCredential(request);
+        if (credential != null) {
+            return userAuthenticator.authenticate(credential);
         }
         return null;
     }

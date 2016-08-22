@@ -30,6 +30,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.glassfish.tyrus.client.ClientManager;
 import org.glassfish.tyrus.client.ClientProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.websocket.ClientEndpointConfig;
 import javax.websocket.DeploymentException;
@@ -49,6 +51,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 public class HttpUserSupport {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(HttpUserSupport.class);
 
     private final OkHttpClient httpClient;
 
@@ -159,6 +163,7 @@ public class HttpUserSupport {
             response = httpClient.newCall(request).execute();
             JsonParser parser = new JsonParser();
             String bodyResponse = response.body().string();
+            LOGGER.debug("Receive following user response :\n{}", bodyResponse);
             JsonObject json = (JsonObject) parser.parse(bodyResponse);
             String currentUsername = json.getAsJsonPrimitive("username").getAsString();
             String currentUserPassword = json.getAsJsonPrimitive("password").getAsString();

@@ -51,7 +51,6 @@ public class UserCreationIntTest extends ScenarioTest<ApplicationGiven<?>, Appli
     }
 
 
-
     @Test
     @DockerIsRequire
     public void create_two_users_with_same_identifier() {

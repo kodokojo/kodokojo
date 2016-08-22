@@ -15,26 +15,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package io.kodokojo.service.store;
+package io.kodokojo.service.repository.store;
 
+public interface EntityStore {
 
+    EntityStoreModel getEntityById(String entityIdentifier);
 
-import io.kodokojo.model.ProjectConfiguration;
-import io.kodokojo.model.User;
-import io.kodokojo.model.UserService;
+    String addEntity(EntityStoreModel entity);
 
-/**
- * Allow to manage {@link User} and {@link UserService}.
- */
-public interface UserStore extends UserFetcher {
-
-    String generateId();
-
-    boolean identifierExpectedNewUser(String generatedId);
-
-    boolean addUser(User user);
-
-    boolean addUserService(UserService userService);
-
-    boolean userIsAdminOfProjectConfiguration(String username, ProjectConfiguration projectConfiguration);
+    void addUserToEntity(String userIdentifier, String entityIdentifier);
 }

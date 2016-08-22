@@ -61,12 +61,12 @@ public class Entity implements Serializable {
     }
 
 
-    public Entity(String name, boolean concrete, User admin) {
-        this(null, name, concrete, new ArrayList<>(), Collections.singletonList(admin), Collections.singletonList(admin));
+    public Entity(String name, boolean concrete) {
+        this(null, name, concrete, new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
     }
 
-    public Entity(String name, User admin) {
-        this(null, name, false, new ArrayList<>(), Collections.singletonList(admin), Collections.singletonList(admin));
+    public Entity(String name) {
+        this(null, name, false, new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
     }
 
     public String getIdentifier() {

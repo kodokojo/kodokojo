@@ -21,8 +21,7 @@ import io.kodokojo.model.BrickState;
 import io.kodokojo.model.Project;
 import io.kodokojo.model.ProjectBuilder;
 import io.kodokojo.model.Stack;
-import io.kodokojo.service.store.ProjectStore;
-import org.apache.commons.lang.StringUtils;
+import io.kodokojo.service.repository.ProjectRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,14 +35,14 @@ public class StoreBrickStateListener implements BrickStateMsgListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StoreBrickStateListener.class);
 
-    private final ProjectStore projectStore;
+    private final ProjectRepository projectRepository;
 
     @Inject
-    public StoreBrickStateListener(ProjectStore projectStore) {
-        if (projectStore == null) {
-            throw new IllegalArgumentException("projectStore must be defined.");
+    public StoreBrickStateListener(ProjectRepository projectRepository) {
+        if (projectRepository == null) {
+            throw new IllegalArgumentException("projectRepository must be defined.");
         }
-        this.projectStore = projectStore;
+        this.projectRepository = projectRepository;
     }
 
     @Override
@@ -55,7 +54,7 @@ public class StoreBrickStateListener implements BrickStateMsgListener {
             LOGGER.trace("Receive following message : {}", brickState);
         }
 
-        Project project = projectStore.getProjectByProjectConfigurationId(brickState.getProjectConfigurationIdentifier());
+        Project project = projectRepository.getProjectByProjectConfigurationId(brickState.getProjectConfigurationIdentifier());
         if (project != null) {
             ProjectBuilder builder = new ProjectBuilder(project);
             Set<Stack> stacks = new HashSet<>();
@@ -102,7 +101,7 @@ public class StoreBrickStateListener implements BrickStateMsgListener {
             builder.setStacks(stacks);
 
             project = builder.build();
-            projectStore.updateProject(project);
+            projectRepository.updateProject(project);
         } else if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Unable to find project with project configuration id '{}'.", brickState.getProjectConfigurationIdentifier());
         }

@@ -82,7 +82,10 @@ public class BrickConfigurationStarterActor extends AbstractActor {
                 .matchAny(this::unhandled)
                 .build()
         );
+
     }
+
+
 
     protected final void start(BrickStartContext brickStartContext) {
         BrickConfiguration brickConfiguration = brickStartContext.getBrickConfiguration();
@@ -128,6 +131,7 @@ public class BrickConfigurationStarterActor extends AbstractActor {
             LOGGER.error("An error occurred while trying to start brick {} for project {}.", brickType, projectName, e);
             generateMsgAndSend(brickStartContext, httpsUrl, BrickState.State.ONFAILURE, e.getMessage());
         }
+
     }
 
 

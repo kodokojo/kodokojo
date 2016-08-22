@@ -19,8 +19,8 @@ package io.kodokojo.config.module.endpoint;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import io.kodokojo.endpoint.SparkEndpoint;
 import io.kodokojo.endpoint.UserSparkEndpoint;
+import io.kodokojo.endpoint.SparkEndpoint;
 
 public class UserEndpointModule extends AbstractModule {
 

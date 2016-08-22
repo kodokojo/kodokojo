@@ -37,7 +37,7 @@ import io.kodokojo.model.Brick;
 import io.kodokojo.model.ProjectConfiguration;
 import io.kodokojo.model.StackType;
 import io.kodokojo.service.ProjectManager;
-import io.kodokojo.service.store.ProjectStore;
+import io.kodokojo.service.repository.ProjectRepository;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,7 +63,7 @@ public class ClusterApplicationWhen<SELF extends ClusterApplicationWhen<?>> exte
     ProjectManager projectManager;
 
     @ExpectedScenarioState
-    ProjectStore projectStore;
+    ProjectRepository projectRepository;
 
     @ProvidedScenarioState
     ProjectConfiguration projectConfiguration;
@@ -184,7 +184,7 @@ public class ClusterApplicationWhen<SELF extends ClusterApplicationWhen<?>> exte
 
     private void getProjectConfigurationData(String projectConfigurationId) {
 
-        this.projectConfiguration = projectStore.getProjectConfigurationById(projectConfigurationId);
+        this.projectConfiguration = projectRepository.getProjectConfigurationById(projectConfigurationId);
         assertThat(projectConfigurationId).isNotEmpty();
         assertThat(this.projectConfiguration).isNotNull();
 

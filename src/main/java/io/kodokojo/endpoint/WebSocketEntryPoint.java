@@ -29,8 +29,8 @@ import io.kodokojo.endpoint.dto.WebSocketMessage;
 import io.kodokojo.endpoint.dto.WebSocketMessageGsonAdapter;
 import io.kodokojo.model.ProjectConfiguration;
 import io.kodokojo.model.User;
-import io.kodokojo.service.store.ProjectStore;
-import io.kodokojo.service.store.UserStore;
+import io.kodokojo.service.repository.ProjectRepository;
+import io.kodokojo.service.repository.UserRepository;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
@@ -55,9 +55,9 @@ public class WebSocketEntryPoint implements BrickStateMsgListener {
 
     private final Map<String, UserSession> userConnectedSession;
 
-    private final UserStore userStore;
+    private final UserRepository userRepository;
 
-    private final ProjectStore projectStore;
+    private final ProjectRepository projectRepository;
 
     private final BrickUrlFactory brickUrlFactory;
 
@@ -76,12 +76,11 @@ public class WebSocketEntryPoint implements BrickStateMsgListener {
         super();
         sessions = new ConcurrentHashMap<>();
         userConnectedSession = new ConcurrentHashMap<>();
-        userStore = Launcher.INJECTOR.getInstance(UserStore.class);
-        projectStore = Launcher.INJECTOR.getInstance(ProjectStore.class);
+        userRepository = Launcher.INJECTOR.getInstance(UserRepository.class);
+        projectRepository = Launcher.INJECTOR.getInstance(ProjectRepository.class);
         brickUrlFactory = Launcher.INJECTOR.getInstance(BrickUrlFactory.class);
         BrickStateMsgDispatcher msgDispatcher = Launcher.INJECTOR.getInstance(BrickStateMsgDispatcher.class);
         msgDispatcher.addListener(this);
-        LOGGER.info("Create a new WebSocketEntryPoint : {}", Thread.currentThread().getStackTrace());
 
     }
 
@@ -123,7 +122,7 @@ public class WebSocketEntryPoint implements BrickStateMsgListener {
                             sessions.remove(session);
                             session.close(1008, "Authorization value in data mal formatted");
                         } else {
-                            User user = userStore.getUserByUsername(credentials[0]);
+                            User user = userRepository.getUserByUsername(credentials[0]);
                             if (user == null) {
                                 sessions.remove(session);
                                 session.close(4401, "Invalid credentials for user '" + credentials[0] + "'.");
@@ -194,7 +193,7 @@ public class WebSocketEntryPoint implements BrickStateMsgListener {
         }
         WebSocketMessage message = convertToWebSocketMessage(brickState);
         String projectConfigurationIdentifier = brickState.getProjectConfigurationIdentifier();
-        ProjectConfiguration projectConfiguration = projectStore.getProjectConfigurationById(projectConfigurationIdentifier);
+        ProjectConfiguration projectConfiguration = projectRepository.getProjectConfigurationById(projectConfigurationIdentifier);
         Iterator<User> admins = projectConfiguration.getAdmins();
         List<String> adminIds = new ArrayList<>();
         admins.forEachRemaining(admin -> adminIds.add(admin.getIdentifier()));
@@ -234,7 +233,7 @@ public class WebSocketEntryPoint implements BrickStateMsgListener {
         data.addProperty("brickName", brickState.getBrickName());
         data.addProperty("state", brickState.getState().name());
         if (brickState.getState() == BrickState.State.RUNNING) {
-            ProjectConfiguration projectConfiguration = projectStore.getProjectConfigurationById(brickState.getProjectConfigurationIdentifier());
+            ProjectConfiguration projectConfiguration = projectRepository.getProjectConfigurationById(brickState.getProjectConfigurationIdentifier());
             data.addProperty("url", "https://" + brickUrlFactory.forgeUrl(projectConfiguration.getName(), brickState.getStackName() , brickState.getBrickType(), brickState.getBrickName()));
         }
         if (brickState.getState() == BrickState.State.ONFAILURE) {

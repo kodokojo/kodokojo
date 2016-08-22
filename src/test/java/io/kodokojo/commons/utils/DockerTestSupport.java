@@ -1,17 +1,17 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- * <p>
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * <p>
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * <p>
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -31,7 +31,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -57,7 +56,6 @@ public class DockerTestSupport {
             fromDockerConfig = config.getDockerHost().getHost();
         }
         remoteDaemonDockerIp = StringUtils.isNotBlank(fromEnv) ? fromEnv : fromDockerConfig;
-        //LOGGER.debug("Defined Ip to access to services to {}", remoteDaemonDockerIp);
         containerToClean = new ArrayList<>();
         dockerIsPresent = isDockerWorking();
     }
@@ -115,11 +113,11 @@ public class DockerTestSupport {
         return remoteDaemonDockerIp;
 
     }
+
     public int getExposedPort(String containerId, int containerPort) {
         InspectContainerResponse inspectContainerResponse = dockerClient.inspectContainerCmd(containerId).exec();
         Map<ExposedPort, Ports.Binding[]> bindings = inspectContainerResponse.getNetworkSettings().getPorts().getBindings();
         Ports.Binding[] bindingsExposed = bindings.get(ExposedPort.tcp(containerPort));
-
         if (bindingsExposed == null) {
             return -1;
         }

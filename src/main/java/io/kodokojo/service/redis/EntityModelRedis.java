@@ -15,15 +15,35 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package io.kodokojo.service.store;
+package io.kodokojo.service.redis;
 
-import io.kodokojo.model.Entity;
+import io.kodokojo.service.repository.store.EntityStoreModel;
 
-public interface EntityStore extends EntityFetcher {
+import java.io.Serializable;
 
-    String addEntity(Entity entity);
+class EntityModelRedis implements Serializable {
 
+    private final String identifier;
 
-    void addUserToEntity(String userIdentifier, String entityIdentifier);
+    private final String name;
 
+    private final boolean concrete;
+
+    public EntityModelRedis(EntityStoreModel model) {
+        this.identifier = model.getIdentifier();
+        this.name = model.getName();
+        this.concrete = model.isConcrete();
+    }
+
+    public String getIdentifier() {
+        return identifier;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public boolean isConcrete() {
+        return concrete;
+    }
 }

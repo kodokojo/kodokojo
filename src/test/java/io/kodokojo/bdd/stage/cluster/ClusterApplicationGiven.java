@@ -43,6 +43,9 @@ import io.kodokojo.brick.*;
 import io.kodokojo.commons.DockerPresentMethodRule;
 import io.kodokojo.model.Service;
 import io.kodokojo.commons.utils.DockerTestSupport;
+import io.kodokojo.service.redis.RedisUserRepository;
+import io.kodokojo.service.repository.ProjectRepository;
+import io.kodokojo.service.repository.UserRepository;
 import io.kodokojo.service.servicelocator.ServiceLocator;
 import io.kodokojo.service.servicelocator.marathon.MarathonServiceLocator;
 import io.kodokojo.config.ApplicationConfig;
@@ -59,10 +62,7 @@ import io.kodokojo.service.dns.NoOpDnsManager;
 import io.kodokojo.service.lifecycle.ApplicationLifeCycleManager;
 import io.kodokojo.service.marathon.MarathonBrickManager;
 import io.kodokojo.service.marathon.MarathonConfigurationStore;
-import io.kodokojo.service.redis.RedisUserStore;
-import io.kodokojo.service.store.EntityStore;
-import io.kodokojo.service.store.ProjectStore;
-import io.kodokojo.service.store.UserStore;
+import io.kodokojo.service.repository.EntityRepository;
 import io.kodokojo.service.authentification.SimpleCredential;
 import io.kodokojo.service.authentification.SimpleUserAuthenticator;
 import io.kodokojo.test.utils.TestUtils;
@@ -123,10 +123,10 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
     ProjectManager projectManager;
 
     @ProvidedScenarioState
-    EntityStore entityStore;
+    EntityRepository entityRepository;
 
     @ProvidedScenarioState
-    ProjectStore projectStore;
+    ProjectRepository projectRepository;
 
     @ProvidedScenarioState
     String marathonUrl;
@@ -138,7 +138,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
     String domain;
 
     @ProvidedScenarioState
-    UserStore userStore;
+    UserRepository userRepository;
 
     @ProvidedScenarioState
     String testId;
@@ -237,7 +237,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         KeyGenerator kg = null;
         try {
             kg = KeyGenerator.getInstance("AES");
-            userStore = new RedisUserStore(kg.generateKey(), redisService.getHost(), redisService.getPort());
+            userRepository = new RedisUserRepository(kg.generateKey(), redisService.getHost(), redisService.getPort());
         } catch (NoSuchAlgorithmException e) {
             fail(e.getMessage());
         }
@@ -416,6 +416,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
                 new RedisModule(),
                 new SecurityModule(),
                 new ServiceModule(),
+                new AkkaModule(),
                 new ActorModule(),
                 new AwsModule(),
                 new EmailSenderModule(),
@@ -441,21 +442,21 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
 
                     @Provides
                     @Singleton
-                    BrickManager provideBrickManager(MarathonConfig marathonConfig, BrickConfigurerProvider brickConfigurerProvider, ProjectStore projectStore, ApplicationConfig applicationConfig, BrickUrlFactory brickUrlFactory) {
+                    BrickManager provideBrickManager(MarathonConfig marathonConfig, BrickConfigurerProvider brickConfigurerProvider, ProjectRepository projectRepository, ApplicationConfig applicationConfig, BrickUrlFactory brickUrlFactory) {
                         MarathonServiceLocator marathonServiceLocator = new MarathonServiceLocator(marathonConfig);
-                        return new MarathonBrickManager(marathonConfig, marathonServiceLocator, brickConfigurerProvider, projectStore, false, applicationConfig.domain(), brickUrlFactory);
+                        return new MarathonBrickManager(marathonConfig, marathonServiceLocator, brickConfigurerProvider, projectRepository, false, applicationConfig.domain(), brickUrlFactory);
                     }
                 });
         Launcher.INJECTOR = injector;
-        userStore = injector.getInstance(UserStore.class);
-        projectStore = injector.getInstance(ProjectStore.class);
-        entityStore = injector.getInstance(EntityStore.class);
+        userRepository = injector.getInstance(UserRepository.class);
+        projectRepository = injector.getInstance(ProjectRepository.class);
+        entityRepository = injector.getInstance(EntityRepository.class);
         //BrickFactory brickFactory = injector.getInstance(BrickFactory.class);
         restEntryPointHost = "localhost";
         restEntryPointPort = TestUtils.getEphemeralPort();
         projectManager = new DefaultProjectManager(domain,
                 injector.getInstance(ConfigurationStore.class),
-                projectStore,
+                projectRepository,
                 injector.getInstance(BootstrapConfigurationProvider.class),
                 new NoOpDnsManager(),
                 new DefaultBrickConfigurerProvider(brickUrlFactory, new OkHttpClient()),
@@ -468,8 +469,8 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         Key<UserAuthenticator<SimpleCredential>> authenticatorKey = Key.get(new TypeLiteral<UserAuthenticator<SimpleCredential>>() {
         });
         UserAuthenticator<SimpleCredential> userAuthenticator = injector.getInstance(authenticatorKey);
-        sparkEndpoints.add(new ProjectSparkEndpoint(userAuthenticator, userStore, projectStore, projectManager, injector.getInstance(BrickFactory.class)));
-        httpEndpoint = new HttpEndpoint(restEntryPointPort, new SimpleUserAuthenticator(userStore), sparkEndpoints);
+        sparkEndpoints.add(new ProjectSparkEndpoint(userAuthenticator, userRepository, projectRepository, projectManager, injector.getInstance(BrickFactory.class)));
+        httpEndpoint = new HttpEndpoint(restEntryPointPort, new SimpleUserAuthenticator(userRepository), sparkEndpoints);
         Semaphore semaphore = new Semaphore(1);
         try {
             semaphore.acquire();

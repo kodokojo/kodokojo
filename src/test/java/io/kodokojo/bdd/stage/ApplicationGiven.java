@@ -33,6 +33,9 @@ import io.kodokojo.brick.BrickUrlFactory;
 import io.kodokojo.brick.DefaultBrickFactory;
 import io.kodokojo.brick.DefaultBrickUrlFactory;
 import io.kodokojo.config.DockerConfig;
+import io.kodokojo.config.module.ActorModule;
+import io.kodokojo.config.module.AkkaModule;
+import io.kodokojo.config.module.endpoint.UserEndpointModule;
 import io.kodokojo.config.properties.provider.*;
 import io.kodokojo.model.Service;
 import io.kodokojo.commons.utils.DockerTestSupport;
@@ -42,17 +45,17 @@ import io.kodokojo.config.EmailConfig;
 import io.kodokojo.config.module.EmailSenderModule;
 import io.kodokojo.config.module.endpoint.BrickEndpointModule;
 import io.kodokojo.config.module.endpoint.ProjectEndpointModule;
-import io.kodokojo.config.module.endpoint.UserEndpointModule;
 import io.kodokojo.endpoint.HttpEndpoint;
 import io.kodokojo.endpoint.SparkEndpoint;
 import io.kodokojo.endpoint.UserAuthenticator;
 import io.kodokojo.service.ProjectManager;
 import io.kodokojo.service.redis.RedisEntityStore;
 import io.kodokojo.service.redis.RedisProjectStore;
-import io.kodokojo.service.redis.RedisUserStore;
-import io.kodokojo.service.store.EntityStore;
-import io.kodokojo.service.store.ProjectStore;
-import io.kodokojo.service.store.UserStore;
+import io.kodokojo.service.redis.RedisUserRepository;
+import io.kodokojo.service.repository.EntityRepository;
+import io.kodokojo.service.repository.ProjectRepository;
+import io.kodokojo.service.repository.Repository;
+import io.kodokojo.service.repository.UserRepository;
 import io.kodokojo.service.authentification.SimpleCredential;
 import io.kodokojo.service.authentification.SimpleUserAuthenticator;
 import io.kodokojo.test.utils.TestUtils;
@@ -99,7 +102,7 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
     int restEntryPointPort;
 
     @ProvidedScenarioState
-    RedisUserStore userStore;
+    RedisUserRepository userStore;
 
     @ProvidedScenarioState
     String currentUserLogin;
@@ -114,10 +117,10 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
     ProjectManager projectManager;
 
     @ProvidedScenarioState
-    ProjectStore projectStore;
+    ProjectRepository projectRepository;
 
     @ProvidedScenarioState
-    EntityStore entityStore;
+    EntityRepository entityRepository;
 
     @ProvidedScenarioState
     HttpUserSupport httpUserSupport;
@@ -186,19 +189,22 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
             KeyGenerator generator = KeyGenerator.getInstance("AES");
             generator.init(128);
             SecretKey aesKey = generator.generateKey();
-            userStore = new RedisUserStore(aesKey, redisHost, redisPort);
+            userStore = new RedisUserRepository(aesKey, redisHost, redisPort);
             DefaultBrickFactory brickFactory = new DefaultBrickFactory();
-            projectStore = new RedisProjectStore(aesKey, redisHost, redisPort, brickFactory);
-            entityStore = new RedisEntityStore(aesKey, redisHost, redisPort);
             UserAuthenticator<SimpleCredential> userAuthenticator = new SimpleUserAuthenticator(userStore);
+            Repository repository = new Repository(userStore, userStore, new RedisEntityStore(aesKey, redisHost, redisPort), new RedisProjectStore(aesKey, redisHost, redisPort, brickFactory));
+            entityRepository = repository;
+            projectRepository = repository;
             projectManager = mock(ProjectManager.class);
-            Launcher.INJECTOR = Guice.createInjector(new UserEndpointModule(), new ProjectEndpointModule(), new BrickEndpointModule(), new EmailSenderModule(), new AbstractModule() {
+            Launcher.INJECTOR = Guice.createInjector(new UserEndpointModule(), new AkkaModule(), new ProjectEndpointModule(), new BrickEndpointModule(), new EmailSenderModule(), new AbstractModule() {
                 @Override
                 protected void configure() {
-                    bind(UserStore.class).toInstance(userStore);
-                    bind(ProjectStore.class).toInstance(projectStore);
+                    bind(UserRepository.class).toInstance(userStore);
+                    bind(ProjectRepository.class).toInstance(projectRepository);
+                    bind(EntityRepository.class).toInstance(entityRepository);
+                    bind(Repository.class).toInstance(repository);
                     bind(ProjectManager.class).toInstance(projectManager);
-                    bind(EntityStore.class).toInstance(entityStore);
+
                     bind(Key.get(new TypeLiteral<UserAuthenticator<SimpleCredential>>() {
                     })).toInstance(userAuthenticator);
                     bind(BrickFactory.class).toInstance(brickFactory);
@@ -295,8 +301,8 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
                 User user = new User(identifier, username, username, email, password, RSAUtils.encodePublicKey(publicKey, email));
 
                 Entity entity = new Entity(user.getUsername(), user);
-                String entityId = entityStore.addEntity(entity);
-                entityStore.addUserToEntity(user.getIdentifier(), entityId);
+                String entityId = entityRepository.addEntity(entity);
+                entityRepository.addUserToEntity(user.getIdentifier(), entityId);
                 user = new User(user.getIdentifier(), entityId, user.getFirstName(), user.getLastName(), username, email, password, user.getSshPublicKey());
                 boolean userAdded = userStore.addUser(user);
                 assertThat(userAdded).isTrue();

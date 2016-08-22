@@ -23,7 +23,7 @@ import io.kodokojo.model.*;
 import io.kodokojo.model.Stack;
 import io.kodokojo.service.dns.DnsEntry;
 import io.kodokojo.service.dns.DnsManager;
-import io.kodokojo.service.store.ProjectStore;
+import io.kodokojo.service.repository.ProjectRepository;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang.StringUtils;
@@ -48,7 +48,7 @@ public class DefaultProjectManager implements ProjectManager {
 
     private final ConfigurationStore configurationStore;
 
-    private final ProjectStore projectStore;
+    private final ProjectRepository projectRepository;
 
     private final DnsManager dnsManager;
 
@@ -63,7 +63,7 @@ public class DefaultProjectManager implements ProjectManager {
     @Inject
     public DefaultProjectManager(String domain,
                                  ConfigurationStore configurationStore,
-                                 ProjectStore projectStore,
+                                 ProjectRepository projectRepository,
                                  BootstrapConfigurationProvider bootstrapConfigurationProvider,
                                  DnsManager dnsManager,
                                  BrickConfigurerProvider brickConfigurerProvider,
@@ -76,8 +76,8 @@ public class DefaultProjectManager implements ProjectManager {
         if (configurationStore == null) {
             throw new IllegalArgumentException("configurationStore must be defined.");
         }
-        if (projectStore == null) {
-            throw new IllegalArgumentException("projectStore must be defined.");
+        if (projectRepository == null) {
+            throw new IllegalArgumentException("projectRepository must be defined.");
         }
         if (bootstrapConfigurationProvider == null) {
             throw new IllegalArgumentException("bootstrapConfigurationProvider must be defined.");
@@ -97,7 +97,7 @@ public class DefaultProjectManager implements ProjectManager {
         this.brickConfigurationStarter = brickConfigurationStarter;
         this.domain = domain;
         this.configurationStore = configurationStore;
-        this.projectStore = projectStore;
+        this.projectRepository = projectRepository;
         this.bootstrapConfigurationProvider = bootstrapConfigurationProvider;
         this.brickConfigurerProvider = brickConfigurerProvider;
         this.dnsManager = dnsManager;
@@ -106,7 +106,7 @@ public class DefaultProjectManager implements ProjectManager {
 
     @Override
     public BootstrapStackData bootstrapStack(String projectName, String stackName, StackType stackType) {
-        if (!projectStore.projectNameIsValid(projectName)) {
+        if (!projectRepository.projectNameIsValid(projectName)) {
             throw new IllegalArgumentException("project name " + projectName + " isn't valid.");
         }
         String loadBalancerHost = bootstrapConfigurationProvider.provideLoadBalancerHost(projectName, stackName);

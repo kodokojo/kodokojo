@@ -17,65 +17,66 @@
  */
 package io.kodokojo.endpoint;
 
+import akka.actor.ActorRef;
+import akka.util.Timeout;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import io.kodokojo.service.RSAUtils;
+import io.kodokojo.endpoint.dto.UserCreationDto;
 import io.kodokojo.endpoint.dto.UserDto;
 import io.kodokojo.endpoint.dto.UserProjectConfigIdDto;
 import io.kodokojo.model.Entity;
 import io.kodokojo.model.User;
-import io.kodokojo.service.EmailSender;
-import io.kodokojo.service.store.EntityStore;
-import io.kodokojo.service.store.ProjectStore;
-import io.kodokojo.service.store.UserStore;
+import io.kodokojo.service.RSAUtils;
+import io.kodokojo.service.actor.entity.EntityCreatorActor;
+import io.kodokojo.service.actor.user.UserCreatorActor;
+import io.kodokojo.service.actor.user.UserEligibleActor;
+import io.kodokojo.service.actor.user.UserGenerateIdentifierActor;
 import io.kodokojo.service.authentification.SimpleCredential;
-import io.kodokojo.endpoint.dto.UserCreationDto;
-import org.apache.commons.lang.StringUtils;
+import io.kodokojo.service.repository.ProjectRepository;
+import io.kodokojo.service.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.concurrent.Await;
+import scala.concurrent.Future;
+import scala.concurrent.duration.Duration;
+import scala.concurrent.duration.FiniteDuration;
 
 import javax.inject.Inject;
 import java.io.StringWriter;
-import java.math.BigInteger;
-import java.security.KeyPair;
-import java.security.SecureRandom;
 import java.security.interfaces.RSAPrivateKey;
-import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
+import static akka.pattern.Patterns.ask;
 import static spark.Spark.*;
 
 public class UserSparkEndpoint extends AbstractSparkEndpoint {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserSparkEndpoint.class);
 
-    private final UserStore userStore;
+    private final ActorRef akkaEndpoint;
 
-    private final ProjectStore projectStore;
+    private final UserRepository userRepository;
 
-    private final EntityStore entityStore;
-
-    private final EmailSender emailSender;
+    private final ProjectRepository projectRepository;
 
     @Inject
-    public UserSparkEndpoint(UserAuthenticator<SimpleCredential> userAuthenticator, EntityStore entityStore, UserStore userStore, ProjectStore projectStore, EmailSender emailSender) {
+    public UserSparkEndpoint(UserAuthenticator<SimpleCredential> userAuthenticator, ActorRef akkaEndpoint, UserRepository userRepository, ProjectRepository projectRepository) {
         super(userAuthenticator);
-        if (userStore == null) {
-            throw new IllegalArgumentException("userStore must be defined.");
+        if (akkaEndpoint == null) {
+            throw new IllegalArgumentException("akkaEndpoint must be defined.");
         }
-        if (entityStore == null) {
-            throw new IllegalArgumentException("entityStore must be defined.");
+        if (userRepository == null) {
+            throw new IllegalArgumentException("userRepository must be defined.");
         }
-        if (projectStore == null) {
-            throw new IllegalArgumentException("projectStore must be defined.");
+        if (projectRepository == null) {
+            throw new IllegalArgumentException("projectRepository must be defined.");
         }
-        this.userStore = userStore;
-        this.entityStore = entityStore;
-        this.projectStore = projectStore;
-        this.emailSender = emailSender;
+        this.akkaEndpoint = akkaEndpoint;
+        this.userRepository = userRepository;
+        this.projectRepository = projectRepository;
     }
 
     @Override
@@ -85,130 +86,91 @@ public class UserSparkEndpoint extends AbstractSparkEndpoint {
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Try to create user with id {}", identifier);
             }
-            if (userStore.identifierExpectedNewUser(identifier)) {
-                JsonParser parser = new JsonParser();
-                JsonObject json = (JsonObject) parser.parse(request.body());
-                String email = json.getAsJsonPrimitive("email").getAsString();
 
-                String username = email.substring(0, email.lastIndexOf("@"));
-                User userByUsername = userStore.getUserByUsername(username);
-                if (userByUsername != null) {
-                    if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug("Trying to create user {} from email '{}' who already exist.", username, email);
-                    }
-                    halt(409);
+            User requester = getRequester(request);
+
+            FiniteDuration duration = Duration.apply(30, TimeUnit.SECONDS);
+
+            JsonParser parser = new JsonParser();
+            JsonObject json = (JsonObject) parser.parse(request.body());
+            String email = json.getAsJsonPrimitive("email").getAsString();
+            String username = email.substring(0, email.lastIndexOf("@"));
+
+            String entityId = "";
+            if (requester != null) {
+                entityId = requester.getEntityIdentifier();
+            } else {
+                Entity entity = new Entity(email);
+                Future<Object> entityFuture
+                        = ask(akkaEndpoint, new EntityCreatorActor.EntityCreateMsg(entity), new Timeout(duration));
+                EntityCreatorActor.EntityCreatedResultMsg result = (EntityCreatorActor.EntityCreatedResultMsg) Await.result(entityFuture, duration);
+                entityId = result.getEntityId();
+            }
+
+
+            Future<Object> userCreationFuture = ask(
+                    akkaEndpoint,
+                    new UserCreatorActor.UserCreateMsg(requester, identifier, email, username, entityId),
+                    new Timeout(duration));
+            Object result =  Await.result(userCreationFuture, duration);
+
+            if (result == null) {
+                String format = "An unexpected error occur while trying to create user %s.";
+                String errorMessage = String.format(format, username);
+                LOGGER.error(errorMessage);
+                halt(500, errorMessage);
+            } else if (result instanceof UserEligibleActor.UserEligibleResultMsg) {
+                UserEligibleActor.UserEligibleResultMsg msg = (UserEligibleActor.UserEligibleResultMsg) result;
+                if (!msg.isValid) {
+                    halt(428, "Identifier or username are not valid.");
                     return "";
                 }
+            } else if (result instanceof UserCreatorActor.UserCreateResultMsg ) {
 
-                String entityName = email;
-                if (json.has("entity") && StringUtils.isNotBlank(json.getAsJsonPrimitive("entity").getAsString())) {
-                    entityName = json.getAsJsonPrimitive("entity").getAsString();
-                }
+                UserCreatorActor.UserCreateResultMsg userCreateResultMsg = (UserCreatorActor.UserCreateResultMsg) result;
 
-                String password = new BigInteger(130, new SecureRandom()).toString(32);
-                KeyPair keyPair = RSAUtils.generateRsaKeyPair();
-                RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
-
-                User user = new User(identifier, username, username, email, password, RSAUtils.encodePublicKey((RSAPublicKey) keyPair.getPublic(), email));
-
-                String entityId = null;
-                SimpleCredential credential = extractCredential(request);
-                if (credential != null) {
-                    User userRequester = userAuthenticator.authenticate(credential);
-                    if (userRequester != null) {
-                        entityId = entityStore.getEntityIdOfUserId(userRequester.getIdentifier());
-                    }
-                }
-                if (entityId == null) {
-                    Entity entity = new Entity(entityName, user);
-                    entityId = entityStore.addEntity(entity);
-                }
-                entityStore.addUserToEntity(identifier, entityId);
-
-                user = new User(identifier, entityId, username, username, email, password, user.getSshPublicKey());
-
-                if (userStore.addUser(user)) {
-
-                    response.status(201);
-                    StringWriter sw = new StringWriter();
-                    RSAUtils.writeRsaPrivateKey(privateKey, sw);
-                    response.header("Location", "/user/" + user.getIdentifier());
-                    UserCreationDto userCreationDto = new UserCreationDto(user, sw.toString());
-
-                    if (emailSender != null) {
-                        List<String> cc = null;
-                        if (credential != null) {
-                            User userRequester = userAuthenticator.authenticate(credential);
-                            if (userRequester != null) {
-                                cc = Collections.singletonList(userRequester.getEmail());
-                            }
-                        }
-                        String content = "<h1>Welcome on Kodo Kojo</h1>\n" +
-                                "<p>You will find all information which is bind to your account '" + userCreationDto.getUsername() + "'.</p>\n" +
-                                "\n" +
-                                "<p>Password : <b>" + userCreationDto.getPassword() + "</b></p>\n" +
-                                "<p>Your SSH private key generated:\n" +
-                                "<br />\n" +
-                                userCreationDto.getPrivateKey() + "\n" +
-                                "</p>\n" +
-                                "<p>Your SSH public key generated:\n" +
-                                "<br />\n" +
-                                userCreationDto.getSshPublicKey() + "\n" +
-                                "</p>";
-                        emailSender.send(Collections.singletonList(userCreationDto.getEmail()), null, cc, "User creation on Kodo Kojo " + userCreationDto.getName(), content, true);
-                        if (LOGGER.isDebugEnabled()) {
-                            LOGGER.debug("Mail with user data send to {}.", userCreationDto.getEmail());
-                            if (LOGGER.isTraceEnabled()) {
-                                LOGGER.trace("Email to {} content : \n {}", userCreationDto.getEmail(), content);
-                            }
-                        }
-                    }
-
-                    return userCreationDto;
-                }
-
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("The UserStore not abel to add following user {}.", user.toString());
-                }
-                halt(428);
-                return "";
-            } else {
-                halt(412);
-                return "";
+                User user = userCreateResultMsg.getUser();
+                response.status(201);
+                StringWriter sw = new StringWriter();
+                RSAUtils.writeRsaPrivateKey((RSAPrivateKey) userCreateResultMsg.getKeyPair().getPrivate(), sw);
+                response.header("Location", "/user/" + user.getIdentifier());
+                UserCreationDto userCreationDto = new UserCreationDto(user, sw.toString());
+                return userCreationDto;
             }
+            halt(500, "An unexpected behaviour happened while trying to create user " + username + ".");
+            return "";
         }), jsonResponseTransformer);
 
         post(BASE_API + "/user", JSON_CONTENT_TYPE, (request, response) -> {
-            String res = userStore.generateId();
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Generate id : {}", res);
+
+            FiniteDuration duration = Duration.apply(30, TimeUnit.SECONDS);
+            Future<Object> future = ask(akkaEndpoint, new UserGenerateIdentifierActor.UserGenerateIdentifierMsg(), new Timeout(duration));
+
+            Object result = Await.result(future, duration);
+            if (result instanceof UserGenerateIdentifierActor.UserGenerateIdentifierResultMsg) {
+                UserGenerateIdentifierActor.UserGenerateIdentifierResultMsg msg = (UserGenerateIdentifierActor.UserGenerateIdentifierResultMsg) result;
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("Generate id : {}", msg.getGenerateId());
+                }
+                return msg.getGenerateId();
             }
-            return res;
+            halt(500, "An unexpected error occur while trying to generate a new user Id.");
+            return "";
         });
 
         get(BASE_API + "/user", JSON_CONTENT_TYPE, (request, response) -> {
-            SimpleCredential credential = extractCredential(request);
-            if (credential != null) {
-                User user = userStore.getUserByUsername(credential.getUsername());
-                if (user == null) {
-                    halt(404);
-                    return "";
-                }
-                return getUserDto(user);
-            }
-            halt(401);
-            return "";
+            User requester = getRequester(request);
+            return getUserDto(requester);
         }, jsonResponseTransformer);
 
         get(BASE_API + "/user/:id", JSON_CONTENT_TYPE, (request, response) -> {
-            SimpleCredential credential = extractCredential(request);
+            User requester = getRequester(request);
             String identifier = request.params(":id");
-            User requestUser = userStore.getUserByUsername(credential.getUsername());
-            User user = userStore.getUserByIdentifier(identifier);
+            User user = userRepository.getUserByIdentifier(identifier);
             if (user != null) {
-                if (user.getEntityIdentifier().equals(requestUser.getEntityIdentifier())) {
-                    if (!user.getUsername().equals(credential.getUsername())) {
-                        user = new User(user.getIdentifier(), user.getName(), user.getUsername(), user.getEmail(), "", user.getSshPublicKey());
+                if (user.getEntityIdentifier().equals(requester.getEntityIdentifier())) {
+                    if (!user.equals(requester)) {
+                        user = new User(user.getIdentifier(), user.getEntityIdentifier(), user.getName(), user.getUsername(), user.getEmail(), "", user.getSshPublicKey());
                     }
                     return getUserDto(user);
                 }
@@ -222,10 +184,10 @@ public class UserSparkEndpoint extends AbstractSparkEndpoint {
 
     private UserDto getUserDto(User user) {
         UserDto res = new UserDto(user);
-        Set<String> projectConfigIds = projectStore.getProjectConfigIdsByUserIdentifier(user.getIdentifier());
+        Set<String> projectConfigIds = projectRepository.getProjectConfigIdsByUserIdentifier(user.getIdentifier());
         List<UserProjectConfigIdDto> userProjectConfigIdDtos = new ArrayList<>();
         projectConfigIds.forEach(id -> {
-            String projectId = projectStore.getProjectIdByProjectConfigurationId(id);
+            String projectId = projectRepository.getProjectIdByProjectConfigurationId(id);
             UserProjectConfigIdDto userProjectConfigIdDto = new UserProjectConfigIdDto(id);
             userProjectConfigIdDto.setProjectId(projectId);
             userProjectConfigIdDtos.add(userProjectConfigIdDto);

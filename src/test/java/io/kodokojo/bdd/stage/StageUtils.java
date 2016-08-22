@@ -26,10 +26,8 @@ import io.kodokojo.commons.utils.DockerTestSupport;
 import io.kodokojo.service.RSAUtils;
 import io.kodokojo.model.Entity;
 import io.kodokojo.model.User;
-import io.kodokojo.service.store.EntityStore;
-import io.kodokojo.service.store.UserStore;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.kodokojo.service.repository.EntityRepository;
+import io.kodokojo.service.repository.UserRepository;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
@@ -45,8 +43,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 public class StageUtils {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(StageUtils.class);
 
     private StageUtils() {
         //
@@ -89,8 +85,8 @@ public class StageUtils {
         return new Service("redis", redisHost, redisPort);
     }
 
-    public static User createUser(String username, UserStore userStore, EntityStore entityStore) {
-        String identifier = userStore.generateId();
+    public static User createUser(String username, UserRepository userRepository, EntityRepository entityRepository) {
+        String identifier = userRepository.generateId();
         String password = new BigInteger(130, new SecureRandom()).toString(32);
         User user = null;
 
@@ -99,9 +95,10 @@ public class StageUtils {
             RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
             String email = username + "@kodokojo.io";
             String sshPublicKey = RSAUtils.encodePublicKey(publicKey, email);
-            user = new User(identifier, username, username, email, password, sshPublicKey);
-            String entityId = entityStore.addEntity(new Entity(username, user));
-            boolean userAdded = userStore.addUser(new User(user.getIdentifier(), entityId, username, username, email, password, sshPublicKey));
+            String entityId = entityRepository.addEntity(new Entity(username));
+            user = new User(identifier, entityId, username, username, email, password, sshPublicKey);
+            entityRepository.addUserToEntity(identifier, entityId);
+            boolean userAdded = userRepository.addUser(new User(user.getIdentifier(), entityId, username, username, email, password, sshPublicKey));
             assertThat(userAdded).isTrue();
 
         } catch (NoSuchAlgorithmException e) {

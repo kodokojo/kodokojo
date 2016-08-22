@@ -20,9 +20,9 @@ package io.kodokojo;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.kodokojo.config.module.*;
+import io.kodokojo.config.module.endpoint.UserEndpointModule;
 import io.kodokojo.config.module.endpoint.BrickEndpointModule;
 import io.kodokojo.config.module.endpoint.ProjectEndpointModule;
-import io.kodokojo.config.module.endpoint.UserEndpointModule;
 import io.kodokojo.endpoint.HttpEndpoint;
 import io.kodokojo.service.lifecycle.ApplicationLifeCycleManager;
 import org.slf4j.Logger;
@@ -44,9 +44,11 @@ public class Launcher {
                 new SecurityModule(),
                 new RedisModule(),
                 new ServiceModule(),
-                new ActorModule(),
+                //new ActorModule(),
+                new AkkaModule(),
                 new AwsModule(),
                 new MarathonModule(),
+                //new UserEndpointModule(),
                 new UserEndpointModule(),
                 new BrickEndpointModule(),
                 new ProjectEndpointModule(),

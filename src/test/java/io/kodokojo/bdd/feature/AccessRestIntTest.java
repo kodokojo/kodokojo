@@ -25,6 +25,7 @@ import io.kodokojo.bdd.API;
 import io.kodokojo.bdd.stage.*;
 import io.kodokojo.commons.DockerIsRequire;
 import io.kodokojo.commons.DockerPresentMethodRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -35,6 +36,27 @@ public class AccessRestIntTest extends ScenarioTest<ApplicationGiven<?>, AccessR
 
     @Rule
     public DockerPresentMethodRule dockerPresentMethodRule = new DockerPresentMethodRule();
+
+
+    @Test
+    @Ignore
+    @DockerIsRequire
+    public void user_connect_to_websocket_event() {
+        given().kodokojo_is_running(dockerPresentMethodRule.getDockerTestSupport())
+                .and().i_am_user_$("jpthiery", true);
+        when().try_to_access_to_events_websocket();
+        then().it_receive_a_welcome_message();
+    }
+
+    @Test
+    @Ignore
+    @DockerIsRequire
+    public void user_get_brick_list_available() {
+        given().kodokojo_is_running(dockerPresentMethodRule.getDockerTestSupport())
+                .and().i_am_user_$("jpthiery", true);
+        when().try_to_access_to_list_of_brick_available();
+        then().it_receive_a_valide_list_of_available_brick();
+    }
 
     @Test
     @DockerIsRequire
@@ -58,24 +80,6 @@ public class AccessRestIntTest extends ScenarioTest<ApplicationGiven<?>, AccessR
         given().kodokojo_is_running(dockerPresentMethodRule.getDockerTestSupport());
         when().try_to_access_to_get_url_$("/my/awersome/url/of/the/death");
         then().it_should_return_status_$(401);
-    }
-
-    @Test
-    @DockerIsRequire
-    public void user_connect_to_websocket_event() {
-        given().kodokojo_is_running(dockerPresentMethodRule.getDockerTestSupport())
-                .and().i_am_user_$("jpthiery", true);
-        when().try_to_access_to_events_websocket();
-        then().it_receive_a_welcome_message();
-    }
-
-    @Test
-    @DockerIsRequire
-    public void user_get_brick_list_available() {
-        given().kodokojo_is_running(dockerPresentMethodRule.getDockerTestSupport())
-                .and().i_am_user_$("jpthiery", true);
-        when().try_to_access_to_list_of_brick_available();
-        then().it_receive_a_valide_list_of_available_brick();
     }
 
     @Test

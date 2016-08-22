@@ -30,7 +30,7 @@ import io.kodokojo.service.BrickManager;
 import io.kodokojo.service.ConfigurationStore;
 import io.kodokojo.service.marathon.MarathonBrickManager;
 import io.kodokojo.service.marathon.MarathonConfigurationStore;
-import io.kodokojo.service.store.ProjectStore;
+import io.kodokojo.service.repository.ProjectRepository;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,12 +52,12 @@ public class MarathonModule extends AbstractModule {
 
     @Provides
     @Singleton
-    BrickManager provideBrickManager(MarathonConfig marathonConfig, BrickConfigurerProvider brickConfigurerProvider, ApplicationConfig applicationConfig, ProjectStore projectStore, BrickUrlFactory brickUrlFactory) {
+    BrickManager provideBrickManager(MarathonConfig marathonConfig, BrickConfigurerProvider brickConfigurerProvider, ApplicationConfig applicationConfig, ProjectRepository projectRepository, BrickUrlFactory brickUrlFactory) {
         if (StringUtils.isNotBlank(marathonConfig.login())) {
             LOGGER.info("Add Marathon with basic Authentication.");
         }
         MarathonServiceLocator marathonServiceLocator = new MarathonServiceLocator(marathonConfig);
-        return new MarathonBrickManager(marathonConfig, marathonServiceLocator, brickConfigurerProvider, projectStore, !marathonConfig.ignoreContraint(), applicationConfig.domain(), brickUrlFactory);
+        return new MarathonBrickManager(marathonConfig, marathonServiceLocator, brickConfigurerProvider, projectRepository, !marathonConfig.ignoreContraint(), applicationConfig.domain(), brickUrlFactory);
     }
 
     @Provides
