@@ -1,17 +1,17 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -37,6 +37,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -244,6 +245,15 @@ public class RSAUtils {
     }
 
     public static byte[] encryptObjectWithAES(Key key, Serializable data) {
+        if (key == null) {
+            throw new IllegalArgumentException("key must be defined.");
+        }
+        if (!"AES".equals(key.getAlgorithm())) {
+            throw new IllegalArgumentException("key must be an AES key, not a  " + key.getAlgorithm() + " .");
+        }
+        if (data == null) {
+            throw new IllegalArgumentException("data must be defined.");
+        }
         try {
             SecretKeySpec sks = new SecretKeySpec(key.getEncoded(), AES_ECB_PKCS5_PADDING);
             Cipher cipher = Cipher.getInstance(AES_ECB_PKCS5_PADDING);
@@ -262,6 +272,15 @@ public class RSAUtils {
     }
 
     public static Serializable decryptObjectWithAES(Key key, byte[] encrypted) {
+        if (key == null) {
+            throw new IllegalArgumentException("key must be defined.");
+        }
+        if (!key.getAlgorithm().equals("AES")) {
+            throw new IllegalArgumentException("key must be an AES key, not a  " + key.getAlgorithm() + " .");
+        }
+        if (encrypted == null) {
+            throw new IllegalArgumentException("encrypted must be defined.");
+        }
         try {
             SecretKeySpec sks = new SecretKeySpec(key.getEncoded(), AES_ECB_PKCS5_PADDING);
             Cipher cipher = Cipher.getInstance(AES_ECB_PKCS5_PADDING);

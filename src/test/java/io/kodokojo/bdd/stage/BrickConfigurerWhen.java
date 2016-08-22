@@ -84,7 +84,7 @@ public class BrickConfigurerWhen<SELF extends BrickConfigurerWhen<?>> extends St
         }
         RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
         String sshPublicKey = RSAUtils.encodePublicKey(publicKey, defaultUserInfo.getEmail());
-        User defaultUser = new User(defaultUserInfo.getIdentifier(), "Jean-Pascal THIERY", defaultUserInfo.getUsername(), defaultUserInfo.getEmail(), defaultUserInfo.getPassword(), sshPublicKey);
+        User defaultUser = new User(defaultUserInfo.getIdentifier(), "1234","Jean-Pascal THIERY", defaultUserInfo.getUsername(), defaultUserInfo.getEmail(), defaultUserInfo.getPassword(), sshPublicKey);
         List<User> users = Collections.singletonList(defaultUser);
 
         BrickConfigurerData configurationData = new BrickConfigurerData("Acme", "build-A", brickUrl, "kodokojo.dev", users, users);

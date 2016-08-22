@@ -95,8 +95,9 @@ public class StageUtils {
             RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
             String email = username + "@kodokojo.io";
             String sshPublicKey = RSAUtils.encodePublicKey(publicKey, email);
-            user = new User(identifier, username, username, email, password, sshPublicKey);
-            String entityId = entityRepository.addEntity(new Entity(username, user));
+            String entityId = entityRepository.addEntity(new Entity(username));
+            user = new User(identifier, entityId, username, username, email, password, sshPublicKey);
+            entityRepository.addUserToEntity(identifier, entityId);
             boolean userAdded = userRepository.addUser(new User(user.getIdentifier(), entityId, username, username, email, password, sshPublicKey));
             assertThat(userAdded).isTrue();
 

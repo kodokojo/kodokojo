@@ -23,5 +23,4 @@ public interface EntityFetcher {
 
     Entity getEntityById(String entityIdentifier);
 
-    String getEntityIdOfUserId(String userIdentifier);
 }

@@ -416,6 +416,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
                 new RedisModule(),
                 new SecurityModule(),
                 new ServiceModule(),
+                new AkkaModule(),
                 new ActorModule(),
                 new AwsModule(),
                 new EmailSenderModule(),

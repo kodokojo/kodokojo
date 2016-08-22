@@ -18,7 +18,6 @@
 package io.kodokojo.commons.utils;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.NotModifiedException;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.Ports;
@@ -28,16 +27,12 @@ import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.command.PullImageResultCallback;
 import org.apache.commons.lang.StringUtils;
-import org.junit.rules.MethodRule;
-import org.junit.runners.model.FrameworkMethod;
-import org.junit.runners.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
@@ -118,6 +113,7 @@ public class DockerTestSupport {
         return remoteDaemonDockerIp;
 
     }
+
     public int getExposedPort(String containerId, int containerPort) {
         InspectContainerResponse inspectContainerResponse = dockerClient.inspectContainerCmd(containerId).exec();
         Map<ExposedPort, Ports.Binding[]> bindings = inspectContainerResponse.getNetworkSettings().getPorts().getBindings();

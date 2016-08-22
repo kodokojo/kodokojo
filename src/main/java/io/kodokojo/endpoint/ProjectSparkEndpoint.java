@@ -166,6 +166,7 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
 
                 projectConfiguration.setUsers(users);
                 projectRepository.updateProjectConfiguration(projectConfiguration);
+                LOGGER.debug("Adding user {} to projectConfig {}", usersToAdd, projectConfiguration);
                 projectManager.addUsersToProject(projectConfiguration, usersToAdd);
             } else {
                 halt(403,"You have not right to add user to project configuration id " + identifier + ".");

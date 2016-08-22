@@ -81,7 +81,6 @@ public class WebSocketEntryPoint implements BrickStateMsgListener {
         brickUrlFactory = Launcher.INJECTOR.getInstance(BrickUrlFactory.class);
         BrickStateMsgDispatcher msgDispatcher = Launcher.INJECTOR.getInstance(BrickStateMsgDispatcher.class);
         msgDispatcher.addListener(this);
-        LOGGER.info("Create a new WebSocketEntryPoint : {}", Thread.currentThread().getStackTrace());
 
     }
 

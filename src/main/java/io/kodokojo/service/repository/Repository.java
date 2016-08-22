@@ -1,3 +1,20 @@
+/**
+ * Kodo Kojo - Software factory done right
+ * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 package io.kodokojo.service.repository;
 
 import io.kodokojo.model.*;
@@ -82,14 +99,6 @@ public class Repository implements UserRepository, ProjectRepository, EntityRepo
     }
 
     @Override
-    public String getEntityIdOfUserId(String userIdentifier) {
-        if (isBlank(userIdentifier)) {
-            throw new IllegalArgumentException("userIdentifier must be defined.");
-        }
-        return entityStore.getEntityIdOfUserId(userIdentifier);
-    }
-
-    @Override
     public boolean projectNameIsValid(String projectName) {
         if (isBlank(projectName)) {
             throw new IllegalArgumentException("projectName must be defined.");
@@ -151,7 +160,11 @@ public class Repository implements UserRepository, ProjectRepository, EntityRepo
         if (isBlank(identifier)) {
             throw new IllegalArgumentException("identifier must be defined.");
         }
-        return convertToProjectConfiguration(projectStore.getProjectConfigurationById(identifier));
+        ProjectConfigurationStoreModel projectConfiguration = projectStore.getProjectConfigurationById(identifier);
+        if (projectConfiguration == null) {
+            return null;
+        }
+        return convertToProjectConfiguration(projectConfiguration);
     }
 
     @Override
@@ -230,7 +243,9 @@ public class Repository implements UserRepository, ProjectRepository, EntityRepo
     }
 
     private ProjectConfiguration convertToProjectConfiguration(ProjectConfigurationStoreModel model) {
-        List<User> adminsProjectConfig = model.getAdmins().stream().map(userFetcher::getUserByIdentifier).collect(Collectors.toList());
+        List<User> adminsProjectConfig = model.getAdmins().stream().map(
+                userFetcher::getUserByIdentifier
+        ).collect(Collectors.toList());
         List<User> usersProjectConfig = model.getUsers().stream().map(userFetcher::getUserByIdentifier).collect(Collectors.toList());
         return new ProjectConfiguration(model.getEntityIdentifier(), model.getIdentifier(), model.getName(), adminsProjectConfig,model.getStackConfigurations(),usersProjectConfig);
     }

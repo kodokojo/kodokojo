@@ -41,7 +41,7 @@ public class ActorModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(ActorSystem.class).toInstance(ActorSystem.apply("kodokojo"));
+        //
     }
 
     @Provides

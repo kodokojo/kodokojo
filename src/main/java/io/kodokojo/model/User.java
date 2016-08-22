@@ -71,10 +71,6 @@ public class User implements Serializable {
         this(identifier, entityIdentifier, (name.contains(" ") ? name.substring(0,name.lastIndexOf(" ")): name), (name.contains(" ") ?name.substring(name.lastIndexOf(" "), name.length()): name), username, email, password, sshPublicKey);
     }
 
-    public User(String identifier, String name, String username, String email, String password, String sshPublicKey) {
-        this(identifier, null, name, username, email, password, sshPublicKey);
-    }
-
     public String getIdentifier() {
         return identifier;
     }

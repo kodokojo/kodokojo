@@ -92,7 +92,7 @@ public class RedisUserRepositoryIntTest {
         UserRepository userRepository = new RedisUserRepository(aesKey, redisHost, redisPort);
 
         String email = "jpthiery@xebia.fr";
-        User jpthiery = new User(userRepository.generateId(),"Jean-Pascal THIERY", "jpthiery", email, "jpascal", RSAUtils.encodePublicKey((RSAPublicKey) keyPair.getPublic(), email));
+        User jpthiery = new User(userRepository.generateId(), "1234","Jean-Pascal THIERY", "jpthiery", email, "jpascal", RSAUtils.encodePublicKey((RSAPublicKey) keyPair.getPublic(), email));
 
         userRepository.addUser(jpthiery);
 

@@ -15,22 +15,35 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package io.kodokojo.model;
+package io.kodokojo.service.redis;
 
-import org.junit.Test;
+import io.kodokojo.service.repository.store.EntityStoreModel;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.io.Serializable;
 
-public class UserTest {
+class EntityModelRedis implements Serializable {
 
+    private final String identifier;
 
-    @Test
-    public void construct_name_from_a_single_attribute() {
-        User user = new User("1234", "1234", "Jean-Pascal THIERY", "jpthiery", "jpthiery@kodokojo.io", "jpthiery", "an ssh public key");
-        assertThat(user.getName()).isEqualTo("Jean-Pascal THIERY");
-        assertThat(user.getFirstName()).isEqualTo("Jean-Pascal");
-        assertThat(user.getLastName()).isEqualTo("THIERY");
+    private final String name;
 
+    private final boolean concrete;
+
+    public EntityModelRedis(EntityStoreModel model) {
+        this.identifier = model.getIdentifier();
+        this.name = model.getName();
+        this.concrete = model.isConcrete();
     }
 
+    public String getIdentifier() {
+        return identifier;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public boolean isConcrete() {
+        return concrete;
+    }
 }

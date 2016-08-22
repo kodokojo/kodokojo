@@ -33,6 +33,9 @@ import io.kodokojo.brick.BrickUrlFactory;
 import io.kodokojo.brick.DefaultBrickFactory;
 import io.kodokojo.brick.DefaultBrickUrlFactory;
 import io.kodokojo.config.DockerConfig;
+import io.kodokojo.config.module.ActorModule;
+import io.kodokojo.config.module.AkkaModule;
+import io.kodokojo.config.module.endpoint.UserEndpointModule;
 import io.kodokojo.config.properties.provider.*;
 import io.kodokojo.model.Service;
 import io.kodokojo.commons.utils.DockerTestSupport;
@@ -42,7 +45,6 @@ import io.kodokojo.config.EmailConfig;
 import io.kodokojo.config.module.EmailSenderModule;
 import io.kodokojo.config.module.endpoint.BrickEndpointModule;
 import io.kodokojo.config.module.endpoint.ProjectEndpointModule;
-import io.kodokojo.config.module.endpoint.UserEndpointModule;
 import io.kodokojo.endpoint.HttpEndpoint;
 import io.kodokojo.endpoint.SparkEndpoint;
 import io.kodokojo.endpoint.UserAuthenticator;
@@ -194,13 +196,15 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
             entityRepository = repository;
             projectRepository = repository;
             projectManager = mock(ProjectManager.class);
-            Launcher.INJECTOR = Guice.createInjector(new UserEndpointModule(), new ProjectEndpointModule(), new BrickEndpointModule(), new EmailSenderModule(), new AbstractModule() {
+            Launcher.INJECTOR = Guice.createInjector(new UserEndpointModule(), new AkkaModule(), new ProjectEndpointModule(), new BrickEndpointModule(), new EmailSenderModule(), new AbstractModule() {
                 @Override
                 protected void configure() {
                     bind(UserRepository.class).toInstance(userStore);
                     bind(ProjectRepository.class).toInstance(projectRepository);
-                    bind(ProjectManager.class).toInstance(projectManager);
                     bind(EntityRepository.class).toInstance(entityRepository);
+                    bind(Repository.class).toInstance(repository);
+                    bind(ProjectManager.class).toInstance(projectManager);
+
                     bind(Key.get(new TypeLiteral<UserAuthenticator<SimpleCredential>>() {
                     })).toInstance(userAuthenticator);
                     bind(BrickFactory.class).toInstance(brickFactory);
@@ -297,9 +301,9 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
                 User user = new User(identifier, username, username, email, password, RSAUtils.encodePublicKey(publicKey, email));
 
                 Entity entity = new Entity(user.getUsername(), user);
-                String entityName = entityRepository.addEntity(entity);
-                entityRepository.addUserToEntity(user.getIdentifier(), entityName);
-                user = new User(user.getIdentifier(), entityName, user.getFirstName(), user.getLastName(), username, email, password, user.getSshPublicKey());
+                String entityId = entityRepository.addEntity(entity);
+                entityRepository.addUserToEntity(user.getIdentifier(), entityId);
+                user = new User(user.getIdentifier(), entityId, user.getFirstName(), user.getLastName(), username, email, password, user.getSshPublicKey());
                 boolean userAdded = userStore.addUser(user);
                 assertThat(userAdded).isTrue();
                 whoAmI = username;

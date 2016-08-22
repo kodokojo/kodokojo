@@ -15,22 +15,28 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package io.kodokojo.model;
+package io.kodokojo.service.actor.message;
 
-import org.junit.Test;
+import io.kodokojo.model.User;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.io.Serializable;
 
-public class UserTest {
+public class UserRequestMessage implements Serializable {
 
+    protected final User requester;
 
-    @Test
-    public void construct_name_from_a_single_attribute() {
-        User user = new User("1234", "1234", "Jean-Pascal THIERY", "jpthiery", "jpthiery@kodokojo.io", "jpthiery", "an ssh public key");
-        assertThat(user.getName()).isEqualTo("Jean-Pascal THIERY");
-        assertThat(user.getFirstName()).isEqualTo("Jean-Pascal");
-        assertThat(user.getLastName()).isEqualTo("THIERY");
-
+    public UserRequestMessage(User requester) {
+        this.requester = requester;
     }
 
+    public User getRequester() {
+        return requester;
+    }
+
+    @Override
+    public String toString() {
+        return "UserRequestMessage{" +
+                "requester=" + requester +
+                '}';
+    }
 }

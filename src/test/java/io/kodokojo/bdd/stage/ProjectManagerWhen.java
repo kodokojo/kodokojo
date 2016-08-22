@@ -60,7 +60,7 @@ public class ProjectManagerWhen<SELF extends ProjectManagerWhen<?>> extends Stag
             fail(e.getMessage());
         }
 
-        User user = new User("12345", "Jean-Pascal THIERY", "jpthiery", "jpthiery@kodokojo.io", "jpthiery", RSAUtils.encodePublicKey((RSAPublicKey) keyPair.getPublic(), "jpthiery@kodokojo.io"));
+        User user = new User("12345", "1234", "Jean-Pascal THIERY", "jpthiery", "jpthiery@kodokojo.io", "jpthiery", RSAUtils.encodePublicKey((RSAPublicKey) keyPair.getPublic(), "jpthiery@kodokojo.io"));
         String stackName = "build-a";
         StackType stackType = StackType.BUILD;
 

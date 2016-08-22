@@ -20,6 +20,7 @@ package io.kodokojo.service.redis;
 import io.kodokojo.service.RSAUtils;
 import io.kodokojo.service.repository.store.EntityStore;
 import io.kodokojo.service.repository.store.EntityStoreModel;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,11 +37,12 @@ public class RedisEntityStore extends AbstractRedisStore implements EntityStore 
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RedisEntityStore.class);
 
-    private static final String ENTITY_GENERATEID_KEY = "entityName";
+    private static final String ENTITY_GENERATEID_KEY = "entityId";
 
     public static final String ENTITY_PREFIX = "entity/";
-
-    public static final String ENTITY_USER_PREFIX = "entityUsers/";
+    public static final String ADMINS_KEY = "/admins";
+    public static final String USERS_KEY = "/users";
+    public static final String PROJECT_CONFIGS_KEY = "/projectConfigs";
 
     @Inject
     public RedisEntityStore(Key key, String host, int port) {
@@ -67,7 +69,17 @@ public class RedisEntityStore extends AbstractRedisStore implements EntityStore 
             byte[] entityKey = RedisUtils.aggregateKey(ENTITY_PREFIX, entityIdentifier);
             if (jedis.exists(entityKey)) {
                 byte[] encrypted = jedis.get(entityKey);
-                EntityStoreModel entity = (EntityStoreModel) RSAUtils.decryptObjectWithAES(key, encrypted);
+                EntityModelRedis entityModelRedis = (EntityModelRedis) RSAUtils.decryptObjectWithAES(key, encrypted);
+                String adminsKey = ENTITY_PREFIX + entityIdentifier + ADMINS_KEY;
+                String userKey = ENTITY_PREFIX + entityIdentifier + USERS_KEY;
+                String projectConfigKey = ENTITY_PREFIX + entityIdentifier + PROJECT_CONFIGS_KEY;
+                List<String> users = new ArrayList<>();
+                users.addAll(jedis.smembers(userKey));
+                List<String> admins = new ArrayList<>();
+                admins.addAll(jedis.smembers(adminsKey));
+                List<String> projectConfiguration = new ArrayList<>();
+                projectConfiguration.addAll(jedis.smembers(projectConfigKey));
+                EntityStoreModel entity = new EntityStoreModel(entityModelRedis.getIdentifier(), entityModelRedis.getName(), entityModelRedis.isConcrete(), projectConfiguration, admins, users);
                 return entity;
             }
         }
@@ -75,47 +87,36 @@ public class RedisEntityStore extends AbstractRedisStore implements EntityStore 
     }
 
     @Override
-    public String getEntityIdOfUserId(String userIdentifier) {
-        if (isBlank(userIdentifier)) {
-            throw new IllegalArgumentException("userIdentifier must be defined.");
+    public String addEntity(EntityStoreModel entity) {
+        if (entity == null) {
+            throw new IllegalArgumentException("entity must be defined.");
+        }
+        if (StringUtils.isNotBlank(entity.getIdentifier())) {
+            throw new IllegalArgumentException("entity had already an id.");
         }
         try (Jedis jedis = pool.getResource()) {
-            byte[] key = RedisUtils.aggregateKey(ENTITY_USER_PREFIX, userIdentifier);
-            if (jedis.exists(key)) {
-                return new String(jedis.get(key));
+            String id = generateId();
+            List<String> admins = entity.getAdmins();
+            List<String> users = entity.getUsers();
+            List<String> projectConfigurations = entity.getProjectConfigurations();
+
+            EntityModelRedis entityModelRedis = new EntityModelRedis(entity);
+
+            LOGGER.debug("Using key {}", key.getAlgorithm());
+
+            byte[] encryptedObject = RSAUtils.encryptObjectWithAES(key, entityModelRedis);
+            jedis.set(RedisUtils.aggregateKey(ENTITY_PREFIX, id), encryptedObject);
+            if (CollectionUtils.isNotEmpty(admins)) {
+                jedis.sadd(ENTITY_PREFIX + id + ADMINS_KEY, admins.toArray(new String[admins.size()]));
             }
+            if (CollectionUtils.isNotEmpty(users)) {
+                jedis.sadd(ENTITY_PREFIX + id + USERS_KEY, users.toArray(new String[users.size()]));
+            }
+            if (CollectionUtils.isNotEmpty(projectConfigurations)) {
+                jedis.sadd(ENTITY_PREFIX + id + PROJECT_CONFIGS_KEY, projectConfigurations.toArray(new String[projectConfigurations.size()]));
+            }
+            return id;
         }
-        return null;
-    }
-
-    @Override
-    public String addEntity(EntityStoreModel entity) {
-    if (entity == null) {
-        throw new IllegalArgumentException("entity must be defined.");
-    }
-    if (StringUtils.isNotBlank(entity.getIdentifier())) {
-        throw  new IllegalArgumentException("entity had already an id.");
-    }
-    try (Jedis jedis = pool.getResource()) {
-        String id = generateId();
-        List<String> admins = entity.getAdmins();
-        List<String> users = entity.getUsers();
-        EntityStoreModel entityToWrite = new EntityStoreModel(id, entity.getName(), entity.isConcrete(),
-                entity.getProjectConfigurations(),
-                admins,
-                users);
-
-        List<String> allUsers = new ArrayList<>(users);
-        allUsers.addAll(admins);
-
-        users.stream().forEach(userId -> {
-            addUserToEntity(userId, id);
-        });
-
-        byte[] encryptedObject = RSAUtils.encryptObjectWithAES(key, entityToWrite);
-        jedis.set(RedisUtils.aggregateKey(ENTITY_PREFIX, id), encryptedObject);
-        return id;
-    }
     }
 
     @Override
@@ -126,10 +127,12 @@ public class RedisEntityStore extends AbstractRedisStore implements EntityStore 
         if (isBlank(entityIdentifier)) {
             throw new IllegalArgumentException("entityIdentifier must be defined.");
         }
-        try (Jedis jedis = pool.getResource()){
+        try (Jedis jedis = pool.getResource()) {
             if (jedis.exists(RedisUtils.aggregateKey(ENTITY_PREFIX, entityIdentifier))) {
-                jedis.set(RedisUtils.aggregateKey(ENTITY_USER_PREFIX, userIdentifier), entityIdentifier.getBytes());
+                jedis.sadd(ENTITY_PREFIX + entityIdentifier + USERS_KEY, userIdentifier);
             }
         }
     }
+
+
 }

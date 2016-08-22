@@ -169,7 +169,7 @@ public class BrickConfigurationStarterActorTest {
         }
         RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
         SSLKeyPair sslKeyPair = SSLUtils.createSelfSignedSSLKeyPair("Test", (RSAPrivateKey) keyPair.getPrivate(), publicKey);
-        User owner = new User("123456", "Jean-Pascal THIERY", "jpthiery", "jpthiery@kodokojo.io", "jpthiery", RSAUtils.encodePublicKey(publicKey, "jpthiery@kodokojo.io"));
+        User owner = new User("123456", "1é34", "Jean-Pascal THIERY", "jpthiery", "jpthiery@kodokojo.io", "jpthiery", RSAUtils.encodePublicKey(publicKey, "jpthiery@kodokojo.io"));
         Set<StackConfiguration> stackConfigurations = new HashSet<>();
         Set<BrickConfiguration> brickConfigurations = new HashSet<>();
         brickConfigurations.add(brickConfiguration);

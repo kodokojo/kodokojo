@@ -92,7 +92,7 @@ public class MarathonConfigurationStore implements ConfigurationStore {
             throw new IllegalArgumentException("project must be defined.");
         }
         if (isBlank(entityName)) {
-            throw new IllegalArgumentException("entityName must be defined.");
+            throw new IllegalArgumentException("entityId must be defined.");
         }
         if (sslKeyPair == null) {
             throw new IllegalArgumentException("sslKeyPair must be defined.");
