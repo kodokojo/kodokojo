@@ -22,14 +22,20 @@ import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
+import io.kodokojo.brick.BrickFactory;
 import io.kodokojo.service.EmailSender;
+import io.kodokojo.service.ProjectManager;
 import io.kodokojo.service.actor.entity.AddUserToEntityActor;
 import io.kodokojo.service.actor.entity.EntityCreatorActor;
 import io.kodokojo.service.actor.entity.EntityEndpointActor;
 import io.kodokojo.service.actor.event.EventEndpointActor;
+import io.kodokojo.service.actor.project.BootstrapStackActor;
+import io.kodokojo.service.actor.project.ProjectConfigurationBuilderActor;
+import io.kodokojo.service.actor.project.ProjectConfigurationDtoCreatorActor;
 import io.kodokojo.service.actor.project.ProjectEndpointActor;
 import io.kodokojo.service.actor.user.UserCreatorActor;
 import io.kodokojo.service.actor.user.UserEndpointActor;
+import io.kodokojo.service.actor.user.UserFetcherActor;
 import io.kodokojo.service.actor.user.UserGenerateIdentifierActor;
 import io.kodokojo.service.repository.EntityRepository;
 import io.kodokojo.service.repository.ProjectRepository;
@@ -46,7 +52,7 @@ public class EndpointActor extends AbstractActor {
 
     private final LoggingAdapter LOGGER = getLogger(getContext().system(), this);
 
-    public static Props PROPS(UserRepository userRepository, EntityRepository entityRepository, ProjectRepository projectRepository, EmailSender emailSender) {
+    public static Props PROPS(UserRepository userRepository, EntityRepository entityRepository, ProjectRepository projectRepository, EmailSender emailSender, ProjectManager projectManager, BrickFactory brickFactory) {
         if (userRepository == null) {
             throw new IllegalArgumentException("userRepository must be defined.");
         }
@@ -59,14 +65,20 @@ public class EndpointActor extends AbstractActor {
         if (emailSender == null) {
             throw new IllegalArgumentException("emailSender must be defined.");
         }
-        return Props.create(EndpointActor.class, userRepository, entityRepository, projectRepository, emailSender);
+        if (projectManager == null) {
+            throw new IllegalArgumentException("projectManager must be defined.");
+        }
+        if (brickFactory == null) {
+            throw new IllegalArgumentException("brickFactory must be defined.");
+        }
+        return Props.create(EndpointActor.class, userRepository, entityRepository, projectRepository, emailSender, projectManager, brickFactory);
     }
 
-    public static Props PROPS(Repository repository, EmailSender emailSender) {
+    public static Props PROPS(Repository repository, EmailSender emailSender, ProjectManager projectManager, BrickFactory brickFactory) {
         if (repository == null) {
             throw new IllegalArgumentException("repository must be defined.");
         }
-        return PROPS(repository, repository, repository, emailSender);
+        return PROPS(repository, repository, repository, emailSender, projectManager, brickFactory);
     }
 
     private final ActorRef userEndpoint;
@@ -77,37 +89,30 @@ public class EndpointActor extends AbstractActor {
 
     private final ActorRef eventEndpointNotifier;
 
-    public EndpointActor(UserRepository userRepository, EntityRepository entityRepository, ProjectRepository projectRepository, EmailSender emailSender) {
-        if (userRepository == null) {
-            throw new IllegalArgumentException("userRepository must be defined.");
-        }
-        if (entityRepository == null) {
-            throw new IllegalArgumentException("entityRepository must be defined.");
-        }
-        if (projectRepository == null) {
-            throw new IllegalArgumentException("projectRepository must be defined.");
-        }
-        if (emailSender == null) {
-            throw new IllegalArgumentException("emailSender must be defined.");
-        }
-
+    public EndpointActor(UserRepository userRepository, EntityRepository entityRepository, ProjectRepository projectRepository, EmailSender emailSender, ProjectManager projectManager, BrickFactory brickFactory) {
         this.eventEndpointNotifier = getContext().actorOf(EventEndpointActor.PROPS(), "eventEndpoint");
         userEndpoint = getContext().actorOf(UserEndpointActor.PROPS(userRepository, emailSender, eventEndpointNotifier), "userEndpoint");
         entityEndpoint = getContext().actorOf(EntityEndpointActor.PROPS(entityRepository,eventEndpointNotifier), "entityEndpoint");
-        projectEndpoint = getContext().actorOf(ProjectEndpointActor.PROPS(projectRepository), "projectEndpoint");
+        projectEndpoint = getContext().actorOf(ProjectEndpointActor.PROPS(projectRepository, projectManager, brickFactory), "projectEndpoint");
         receive(ReceiveBuilder.match(UserGenerateIdentifierActor.UserGenerateIdentifierMsg.class, msg -> {
             userEndpoint.forward(msg, getContext());
         }).match(UserCreatorActor.UserCreateMsg.class, msg -> {
             //eventEndpointNotifier.tell(new EventEndpointActor.EventMsg(msg.getRequester(), ""));
             userEndpoint.forward(msg, getContext());
+        }).match(UserFetcherActor.UserFetchMsg.class, msg -> {
+            userEndpoint.forward(msg, getContext());
         }).match(EntityCreatorActor.EntityCreateMsg.class, msg -> {
-
             entityEndpoint.forward(msg, getContext());
         }).match(AddUserToEntityActor.AddUserToEntityMsg.class, msg -> {
-
             entityEndpoint.forward(msg, getContext());
-        }).match(EntityCreatorActor.EntityCreatedResultMsg.class, msg -> {
-
+        }).match(ProjectConfigurationBuilderActor.ProjectConfigurationBuildMsg.class, msg -> {
+            projectEndpoint.forward(msg, getContext());
+        }).match(BootstrapStackActor.BootstrapStackMsg.class, msg -> {
+            projectEndpoint.forward(msg, getContext());
+        }).match(ProjectConfigurationDtoCreatorActor.ProjectConfigurationDtoCreateMsg.class, msg -> {
+            projectEndpoint.forward(msg, getContext());
+        }).match(ProjectConfigurationBuilderActor.ProjectConfigurationBuildMsg.class, msg -> {
+            projectEndpoint.forward(msg, getContext());
         })
                 .matchAny(this::unhandled).build());
     }

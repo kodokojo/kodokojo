@@ -19,26 +19,71 @@ package io.kodokojo.service.actor.project;
 
 import akka.actor.AbstractActor;
 import akka.actor.Props;
+import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
+import io.kodokojo.brick.BrickFactory;
+import io.kodokojo.endpoint.dto.ProjectCreationDto;
+import io.kodokojo.service.ProjectManager;
 import io.kodokojo.service.repository.ProjectRepository;
+import org.apache.commons.collections4.CollectionUtils;
+
+import static akka.event.Logging.getLogger;
 
 public class ProjectEndpointActor extends AbstractActor {
 
-    public static Props PROPS(ProjectRepository projectRepository) {
+    private final LoggingAdapter LOGGER = getLogger(getContext().system(), this);
+
+    public static Props PROPS(ProjectRepository projectRepository, ProjectManager projectManager, BrickFactory brickFactory) {
         if (projectRepository == null) {
             throw new IllegalArgumentException("projectRepository must be defined.");
         }
-        return Props.create(ProjectEndpointActor.class, projectRepository);
+        if (projectManager == null) {
+            throw new IllegalArgumentException("projectManager must be defined.");
+        }
+        if (brickFactory == null) {
+            throw new IllegalArgumentException("brickFactory must be defined.");
+        }
+        return Props.create(ProjectEndpointActor.class, projectRepository, projectManager, brickFactory);
+
     }
 
     private final ProjectRepository projectRepository;
 
-    public ProjectEndpointActor(ProjectRepository projectRepository) {
+    private final ProjectManager projectManager;
+
+    private final BrickFactory brickFactory;
+
+    public ProjectEndpointActor(ProjectRepository projectRepository, ProjectManager projectManager, BrickFactory brickFactory) {
         if (projectRepository == null) {
             throw new IllegalArgumentException("projectRepository must be defined.");
         }
+        if (projectManager == null) {
+            throw new IllegalArgumentException("projectManager must be defined.");
+        }
+        if (brickFactory == null) {
+            throw new IllegalArgumentException("brickFactory must be defined.");
+        }
         this.projectRepository = projectRepository;
-        receive(ReceiveBuilder.matchAny(this::unhandled).build());
+        this.projectManager = projectManager;
+        this.brickFactory = brickFactory;
+
+        receive(ReceiveBuilder
+
+        .match(ProjectConfigurationBuilderActor.ProjectConfigurationBuildMsg.class, msg -> {
+            LOGGER.debug("Forward building of ProjectConfiguration to ProjectConfigurationBuilderActor.");
+            getContext().actorOf(ProjectConfigurationBuilderActor.PROPS(brickFactory)).forward(msg, getContext());
+
+        })
+                .match(ProjectConfigurationDtoCreatorActor.ProjectConfigurationDtoCreateMsg.class, msg -> {
+                    getContext().actorOf(ProjectConfigurationDtoCreatorActor.PROPS(projectRepository)).forward(msg, getContext());
+                })
+                .match(BootstrapStackActor.BootstrapStackMsg.class, msg -> {
+                    LOGGER.debug("Bootstrapping a project stack.");
+                    getContext().actorOf(BootstrapStackActor.PROPS(projectManager)).forward(msg, getContext());
+                })
+                .matchAny(this::unhandled).build());
     }
+
+
 
 }

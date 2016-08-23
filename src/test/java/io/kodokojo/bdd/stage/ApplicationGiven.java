@@ -38,6 +38,7 @@ import io.kodokojo.brick.DefaultBrickUrlFactory;
 import io.kodokojo.config.DockerConfig;
 import io.kodokojo.config.module.ActorModule;
 import io.kodokojo.config.module.AkkaModule;
+import io.kodokojo.config.module.endpoint.AkkaProjectEndpointModule;
 import io.kodokojo.config.module.endpoint.UserEndpointModule;
 import io.kodokojo.config.properties.provider.*;
 import io.kodokojo.model.Service;
@@ -204,7 +205,7 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
             entityRepository = repository;
             projectRepository = repository;
             projectManager = mock(ProjectManager.class);
-            Launcher.INJECTOR = Guice.createInjector(new UserEndpointModule(), new AkkaModule(), new ProjectEndpointModule(), new BrickEndpointModule(), new EmailSenderModule(), new AbstractModule() {
+            Launcher.INJECTOR = Guice.createInjector(new UserEndpointModule(), new AkkaModule(), new AkkaProjectEndpointModule(), new BrickEndpointModule(), new EmailSenderModule(), new AbstractModule() {
                 @Override
                 protected void configure() {
                     bind(UserRepository.class).toInstance(userStore);
