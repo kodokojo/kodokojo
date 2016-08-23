@@ -22,6 +22,7 @@ import akka.japi.pf.ReceiveBuilder;
 import io.kodokojo.model.BrickState;
 import io.kodokojo.brick.BrickStateMsgListener;
 
+@Deprecated
 public class BrickStateMsgEndpoint extends AbstractActor {
 
     public BrickStateMsgEndpoint(BrickStateMsgListener listener) {

@@ -19,6 +19,7 @@ package io.kodokojo.service.actor.user;
 
 import akka.actor.AbstractActor;
 import akka.actor.Props;
+import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
 import io.kodokojo.service.RSAUtils;
 import org.slf4j.Logger;
@@ -28,12 +29,14 @@ import java.math.BigInteger;
 import java.security.KeyPair;
 import java.security.SecureRandom;
 
+import static akka.event.Logging.getLogger;
+
 /**
  * Generate SSH keys and Secret password.
  */
 public class UserGenerateSecurityData extends AbstractActor {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(UserGenerateSecurityData.class);
+    private final LoggingAdapter LOGGER = getLogger(getContext().system(), this);
 
     public static Props PROPS() {
         return Props.create(UserGenerateSecurityData.class);

@@ -18,6 +18,9 @@
 package io.kodokojo.bdd.stage;
 
 
+import akka.actor.ActorRef;
+import akka.actor.ActorSystem;
+import akka.actor.Terminated;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Image;
 import com.google.inject.*;
@@ -49,6 +52,7 @@ import io.kodokojo.endpoint.HttpEndpoint;
 import io.kodokojo.endpoint.SparkEndpoint;
 import io.kodokojo.endpoint.UserAuthenticator;
 import io.kodokojo.service.ProjectManager;
+import io.kodokojo.service.actor.EndpointActor;
 import io.kodokojo.service.redis.RedisEntityStore;
 import io.kodokojo.service.redis.RedisProjectStore;
 import io.kodokojo.service.redis.RedisUserRepository;
@@ -61,11 +65,15 @@ import io.kodokojo.service.authentification.SimpleUserAuthenticator;
 import io.kodokojo.test.utils.TestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.concurrent.Await;
+import scala.concurrent.duration.Duration;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
@@ -287,31 +295,6 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
 
             UserInfo userCreated = httpUserSupport.createUser(null, username + "@kodokojo.io");
             currentUsers.put(userCreated.getUsername(), userCreated);
-            /*
-
-            //TODO Use REST API instead.
-            String identifier = userStore.generateId();
-            String password = USER_PASSWORD.get(username) == null ? new BigInteger(130, new SecureRandom()).toString(32) : USER_PASSWORD.get(username);
-
-            try {
-                KeyPair keyPair = RSAUtils.generateRsaKeyPair();
-                RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
-                String email = username + "@kodokojo.io";
-
-                User user = new User(identifier, username, username, email, password, RSAUtils.encodePublicKey(publicKey, email));
-
-                Entity entity = new Entity(user.getUsername(), user);
-                String entityId = entityRepository.addEntity(entity);
-                entityRepository.addUserToEntity(user.getIdentifier(), entityId);
-                user = new User(user.getIdentifier(), entityId, user.getFirstName(), user.getLastName(), username, email, password, user.getSshPublicKey());
-                boolean userAdded = userStore.addUser(user);
-                assertThat(userAdded).isTrue();
-                whoAmI = username;
-                currentUsers.put(currentUserLogin, new UserInfo(currentUserLogin, identifier, password, email));
-            } catch (NoSuchAlgorithmException e) {
-                e.printStackTrace();
-            }
-            */
         }
         return self();
     }
@@ -322,6 +305,20 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
             httpEndpoint.stop();
             httpEndpoint = null;
         }
+
+        ActorSystem actorSystem = Launcher.INJECTOR.getInstance(ActorSystem.class);
+        if (actorSystem != null) {
+            actorSystem.actorSelection(EndpointActor.ACTOR_PATH).tell(new Terminated(ActorRef.noSender(),true, true), ActorRef.noSender());
+            actorSystem.shutdown();
+            try {
+                Await.ready(actorSystem.whenTerminated(), Duration.create(1, TimeUnit.MINUTES));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (TimeoutException e) {
+                e.printStackTrace();
+            }
+        }
+
     }
 
 }

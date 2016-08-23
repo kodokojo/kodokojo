@@ -102,7 +102,7 @@ public class RedisEntityStore extends AbstractRedisStore implements EntityStore 
 
             EntityModelRedis entityModelRedis = new EntityModelRedis(entity);
 
-            LOGGER.debug("Using key {}", key.getAlgorithm());
+            //LOGGER.debug("Using key {}", key.getAlgorithm());
 
             byte[] encryptedObject = RSAUtils.encryptObjectWithAES(key, entityModelRedis);
             jedis.set(RedisUtils.aggregateKey(ENTITY_PREFIX, id), encryptedObject);

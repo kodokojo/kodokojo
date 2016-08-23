@@ -19,6 +19,7 @@ package io.kodokojo.service.actor;
 
 import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
+import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
 import io.kodokojo.brick.BrickUrlFactory;
 import io.kodokojo.model.BrickState;
@@ -41,9 +42,12 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import java.util.Set;
 
+import static akka.event.Logging.getLogger;
+
+//  TODO Refacto
 public class BrickConfigurationStarterActor extends AbstractActor {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(BrickConfigurationStarterActor.class);
+    private final LoggingAdapter LOGGER = getLogger(getContext().system(), this);
 
     private final BrickManager brickManager;
 

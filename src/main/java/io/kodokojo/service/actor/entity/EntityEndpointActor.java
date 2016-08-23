@@ -20,10 +20,15 @@ package io.kodokojo.service.actor.entity;
 import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
 import akka.actor.Props;
+import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
 import io.kodokojo.service.repository.EntityRepository;
 
+import static akka.event.Logging.getLogger;
+
 public class EntityEndpointActor extends AbstractActor {
+
+    private final LoggingAdapter LOGGER = getLogger(getContext().system(), this);
 
     public static Props PROPS(EntityRepository entityRepository, ActorRef eventEndpointActor) {
         return Props.create(EntityEndpointActor.class, entityRepository, eventEndpointActor);

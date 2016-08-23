@@ -19,12 +19,18 @@ package io.kodokojo.service.actor;
 
 import akka.actor.AbstractActor;
 import akka.actor.Props;
+import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
 import io.kodokojo.service.EmailSender;
 
+import java.util.Arrays;
 import java.util.List;
 
+import static akka.event.Logging.getLogger;
+
 public class EmailSenderActor extends AbstractActor {
+
+    private final LoggingAdapter LOGGER = getLogger(getContext().system(), this);
 
     public static Props PROPS(EmailSender emailSender) {
         if (emailSender == null) {
@@ -42,6 +48,9 @@ public class EmailSenderActor extends AbstractActor {
         this.emailSender = emailSender;
         receive(ReceiveBuilder.match(EmailSenderMsg.class, msg -> {
             emailSender.send(msg.to,msg.cc, msg.ci, msg.object, msg.content, msg.htmlContent);
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Email sent to '{}' with subject '{}'", Arrays.toString(msg.to.toArray()), msg.object);
+            }
             getContext().stop(self());
         }).matchAny(this::unhandled).build());
     }

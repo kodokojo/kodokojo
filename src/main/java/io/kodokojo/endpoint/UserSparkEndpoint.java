@@ -100,11 +100,13 @@ public class UserSparkEndpoint extends AbstractSparkEndpoint {
             if (requester != null) {
                 entityId = requester.getEntityIdentifier();
             } else {
+                /*
                 Entity entity = new Entity(email);
                 Future<Object> entityFuture
                         = ask(akkaEndpoint, new EntityCreatorActor.EntityCreateMsg(entity), new Timeout(duration));
                 EntityCreatorActor.EntityCreatedResultMsg result = (EntityCreatorActor.EntityCreatedResultMsg) Await.result(entityFuture, duration);
                 entityId = result.getEntityId();
+                */
             }
 
 
