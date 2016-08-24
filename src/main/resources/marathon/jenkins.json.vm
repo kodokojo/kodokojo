@@ -46,7 +46,7 @@
     "volumes": [
       {
         "containerPath": "/var/jenkins_home/",
-        "hostPath": "/data/glusterfs/global/$projectName/jenkins/",
+        "hostPath": "/data/glusterfs/global/env/$projectName/jenkins/",
         "mode": "RW"
       }
     ]
