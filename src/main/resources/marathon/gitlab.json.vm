@@ -6,7 +6,7 @@
   "type": "DOCKER",
   "container": {
     "docker": {
-      "image": "gitlab/gitlab-ce:8.10.1-ce.0",
+      "image": "gitlab/gitlab-ce:8.11.0-ce.1",
       "network": "BRIDGE",
       "portMappings": [
         {

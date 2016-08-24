@@ -45,8 +45,9 @@ public class BrickConfigurerIntTest extends ScenarioTest<BrickConfigurerGiven<?>
     public static Object[][] brickData() {
         return new Object[][]{
 
-                {"Gitlab", "gitlab/gitlab-ce:8.10.1-ce.0", 80, 180, new GitlabUserAuthenticator()},
+                {"Gitlab", "gitlab/gitlab-ce:8.11.0-ce.1", 80, 180, new GitlabUserAuthenticator()},
                 {"Jenkins", "jenkins:1.651.3-alpine", 8080, 120, new JenkinsUserAuthenticator()}
+
 
         };
     }
