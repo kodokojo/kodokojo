@@ -109,6 +109,8 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
                 }).collect(Collectors.toSet());
             }
 
+            List<User> admins = new ArrayList<>();
+            admins.add(owner);
             List<User> users = new ArrayList<>();
             users.add(owner);
             if (CollectionUtils.isNotEmpty(dto.getUserIdentifiers())) {
@@ -117,7 +119,7 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
                     users.add(user);
                 }
             }
-            ProjectConfiguration projectConfiguration = new ProjectConfiguration(entityId, dto.getName(), Collections.singletonList(owner), stackConfigurations, users);
+            ProjectConfiguration projectConfiguration = new ProjectConfiguration(entityId, dto.getName(), admins, stackConfigurations, users);
             String projectConfigIdentifier = projectRepository.addProjectConfiguration(projectConfiguration);
 
             response.status(201);
@@ -127,14 +129,17 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
 
 
         get(BASE_API + "/projectconfig/:id", JSON_CONTENT_TYPE, (request, response) -> {
+            User requester = getRequester(request);
             String identifier = request.params(":id");
             ProjectConfiguration projectConfiguration = projectRepository.getProjectConfigurationById(identifier);
             if (projectConfiguration == null) {
                 halt(404);
                 return "";
             }
-            SimpleCredential credential = extractCredential(request);
-            if (userRepository.userIsAdminOfProjectConfiguration(credential.getUsername(), projectConfiguration)) {
+            boolean isAnAdmin = IteratorUtils.toList(projectConfiguration.getAdmins()).stream()
+                    .filter(a -> a.getIdentifier().equals(requester.getIdentifier()))
+                    .findFirst().isPresent();
+            if (isAnAdmin) {
                 return new ProjectConfigDto(projectConfiguration);
             }
             halt(403);
