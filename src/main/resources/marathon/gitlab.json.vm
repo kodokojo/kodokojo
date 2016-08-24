@@ -49,7 +49,7 @@
     "volumes": [
       {
         "containerPath": "/var/opt/gitlab",
-        "hostPath": "/data/glusterfs/global/$projectName/gitlab/",
+        "hostPath": "/data/glusterfs/global/env/$projectName/gitlab/",
         "mode": "RW"
       }
     ]

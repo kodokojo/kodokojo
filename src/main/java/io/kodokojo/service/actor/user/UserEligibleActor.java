@@ -19,17 +19,20 @@ package io.kodokojo.service.actor.user;
 
 import akka.actor.AbstractActor;
 import akka.actor.Props;
+import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
 import io.kodokojo.service.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static akka.event.Logging.getLogger;
 
 /**
  * Defined if a given user id is valid for creation, and check if username respect the db policy.
  */
 public class UserEligibleActor extends AbstractActor {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(UserEligibleActor.class);
+    private final LoggingAdapter LOGGER = getLogger(getContext().system(), this);
 
     public static Props PROPS(UserRepository userRepository) {
         if (userRepository == null) {
@@ -43,11 +46,12 @@ public class UserEligibleActor extends AbstractActor {
             throw new IllegalArgumentException("userRepository must be defined.");
         }
         receive(ReceiveBuilder.match(UserCreatorActor.UserCreateMsg.class , msg -> {
-            LOGGER.debug("Check user is eligible.");
             boolean res = userRepository.identifierExpectedNewUser(msg.id);
-            LOGGER.debug("User {} is {}eligible", msg.getUsername(), res ? "" : "NOT ");
             if (res) {
                 res = userRepository.getUserByUsername(msg.username) == null;
+            }
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("User {} is {}eligible", msg.getUsername(), res ? "" : "NOT ");
             }
             sender().tell(new UserEligibleResultMsg(res), self());
             getContext().stop(self());

@@ -1,17 +1,17 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -20,27 +20,31 @@ package io.kodokojo.service.actor.user;
 import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
 import akka.actor.Props;
+import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
+import io.kodokojo.model.Entity;
 import io.kodokojo.model.User;
 import io.kodokojo.service.EmailSender;
 import io.kodokojo.service.RSAUtils;
 import io.kodokojo.service.actor.EmailSenderActor;
+import io.kodokojo.service.actor.EndpointActor;
+import io.kodokojo.service.actor.entity.AddUserToEntityActor;
+import io.kodokojo.service.actor.entity.EntityCreatorActor;
 import io.kodokojo.service.actor.message.UserRequestMessage;
 import io.kodokojo.service.repository.UserRepository;
 import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.security.KeyPair;
 import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
 import java.util.List;
 
+import static akka.event.Logging.getLogger;
 import static org.apache.commons.lang.StringUtils.isBlank;
 
 public class UserCreatorActor extends AbstractActor {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(UserCreatorActor.class);
+    private final LoggingAdapter LOGGER = getLogger(getContext().system(), this);
 
     public static Props PROPS(UserRepository userRepository, EmailSender emailSender) {
         if (userRepository == null) {
@@ -62,6 +66,8 @@ public class UserCreatorActor extends AbstractActor {
 
     private String password = "";
 
+    private String entityId;
+
     private UserCreateMsg message;
 
     private ActorRef originalActor;
@@ -80,13 +86,24 @@ public class UserCreatorActor extends AbstractActor {
             message = u;
             getContext().actorOf(UserGenerateSecurityData.PROPS()).tell(new UserGenerateSecurityData.GenerateSecurityMsg(), self());
             getContext().actorOf(UserEligibleActor.PROPS(userRepository)).tell(u, self());
+            if (StringUtils.isBlank(u.entityId)) {
+                Entity entity = new Entity(u.email);
+                getContext().actorSelection(EndpointActor.ACTOR_PATH).tell(new EntityCreatorActor.EntityCreateMsg(entity), self());
+                ;
+            } else {
+                entityId = u.entityId;
+            }
+        }).match(EntityCreatorActor.EntityCreatedResultMsg.class, msg -> {
+            entityId = msg.getEntityId();
+            getContext().actorSelection(EndpointActor.ACTOR_PATH).tell(new AddUserToEntityActor.AddUserToEntityMsg(null, message.id, entityId), self());
+            isReadyToStore();
         })
                 .match(UserEligibleActor.UserEligibleResultMsg.class, r -> {
                     isValid = r.isValid;
                     if (isValid) {
                         isReadyToStore();
                     } else {
-                        originalActor.forward(r,getContext());
+                        originalActor.forward(r, getContext());
                         getContext().stop(self());
                     }
                 })
@@ -99,10 +116,13 @@ public class UserCreatorActor extends AbstractActor {
     }
 
     private void isReadyToStore() {
-        if (isValid && keyPair != null && StringUtils.isNotBlank(password)) {
-            User user = new User(message.id, message.entityId, message.username, message.username, message.email, password, RSAUtils.encodePublicKey((RSAPublicKey) keyPair.getPublic(), message.email));
+        if (isValid && keyPair != null && StringUtils.isNotBlank(password) && StringUtils.isNotBlank(entityId)) {
+            User user = new User(message.id, entityId, message.username, message.username, message.email, password, RSAUtils.encodePublicKey((RSAPublicKey) keyPair.getPublic(), message.email));
             boolean added = userRepository.addUser(user);
             if (added) {
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("User {} successfully created.", message.getUsername());
+                }
                 originalActor.tell(new UserCreateResultMsg(message.getRequester(), user, keyPair), self());
                 List<String> to = new ArrayList<>();
                 to.add(message.getEmail());
@@ -113,7 +133,7 @@ public class UserCreatorActor extends AbstractActor {
                 String content = "<h1>Welcome on Kodo Kojo</h1>\n" +
                         "<p>You will find all information which is bind to your account '" + message.getUsername() + "'.</p>\n" +
                         "\n" +
-                        "<p>Password : <b>" +  password + "</b></p>\n" +
+                        "<p>Password : <b>" + password + "</b></p>\n" +
                         "<p>Your SSH private key generated:\n" +
                         "<br />\n" +
                         keyPair.getPrivate().toString() + "\n" +

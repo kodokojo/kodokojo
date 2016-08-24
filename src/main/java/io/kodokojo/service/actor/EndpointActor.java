@@ -20,6 +20,7 @@ package io.kodokojo.service.actor;
 import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
 import akka.actor.Props;
+import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
 import io.kodokojo.service.EmailSender;
 import io.kodokojo.service.actor.entity.AddUserToEntityActor;
@@ -37,9 +38,13 @@ import io.kodokojo.service.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static akka.event.Logging.getLogger;
+
 public class EndpointActor extends AbstractActor {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(EndpointActor.class);
+    public static final String ACTOR_PATH = "/user/endpoint";
+
+    private final LoggingAdapter LOGGER = getLogger(getContext().system(), this);
 
     public static Props PROPS(UserRepository userRepository, EntityRepository entityRepository, ProjectRepository projectRepository, EmailSender emailSender) {
         if (userRepository == null) {

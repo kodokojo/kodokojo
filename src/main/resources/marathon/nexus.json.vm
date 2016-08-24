@@ -47,7 +47,7 @@
     "volumes": [
       {
         "containerPath": "/sonatype-work/",
-        "hostPath": "/data/glusterfs/global/$projectName/nexus/",
+        "hostPath": "/data/glusterfs/global/env/$projectName/nexus/",
         "mode": "RW"
       }
     ]
