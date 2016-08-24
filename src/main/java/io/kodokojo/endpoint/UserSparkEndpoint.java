@@ -99,6 +99,8 @@ public class UserSparkEndpoint extends AbstractSparkEndpoint {
             String entityId = "";
             if (requester != null) {
                 entityId = requester.getEntityIdentifier();
+            } else if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Create a new User with a new Entity");
             }
 
             Future<Object> userCreationFuture = ask(
