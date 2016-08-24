@@ -197,6 +197,7 @@ public class RedisUserRepository extends AbstractRedisStore implements UserRepos
         }
     }
 
+    @Deprecated
     @Override
     public boolean userIsAdminOfProjectConfiguration(String username, ProjectConfiguration projectConfiguration) {
         boolean res = false;
