@@ -39,7 +39,7 @@ import io.kodokojo.service.repository.store.ProjectStore;
 import javax.crypto.SecretKey;
 import javax.inject.Named;
 
-public class RedisModule extends AbstractModule {
+public class DatabaseModule extends AbstractModule {
 
     @Override
     protected void configure() {

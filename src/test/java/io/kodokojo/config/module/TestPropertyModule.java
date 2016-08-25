@@ -1,49 +1,39 @@
-/**
- * Kodo Kojo - Software factory done right
- * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- */
 package io.kodokojo.config.module;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import io.kodokojo.config.KodokojoConfig;
+import io.kodokojo.commons.utils.DockerTestSupport;
+import io.kodokojo.config.*;
 import io.kodokojo.config.properties.PropertyConfig;
 import io.kodokojo.config.properties.PropertyResolver;
-import io.kodokojo.config.*;
-import io.kodokojo.config.properties.provider.RedisDockerLinkPropertyValueProvider;
 import io.kodokojo.config.properties.provider.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.LinkedList;
 
-public class PropertyModule extends AbstractModule {
-
-    public static final String APPLICATION_CONFIGURATION_PROPERTIES = "application.properties";
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(PropertyModule.class);
+public class TestPropertyModule extends AbstractModule {
 
     private final String[] args;
 
-    public PropertyModule(String[] args) {
+    private final DockerTestSupport dockerTestSupport;
+    private final int httpPort;
+    private final String redisHost;
+    private final int redisPort;
+
+    public TestPropertyModule(String[] args, DockerTestSupport dockerTestSupport, int httpPort, String redisHost, int redisPort) {
+        this.httpPort = httpPort;
+        this.redisHost = redisHost;
+        this.redisPort = redisPort;
         if (args == null) {
-            throw new IllegalArgumentException("args must be defined.");
+            this.args = new String[0];
+        } else {
+            this.args = args;
+
         }
-        this.args = args;
+        if (dockerTestSupport == null) {
+            throw new IllegalArgumentException("dockerTestSupport must be defined.");
+        }
+        this.dockerTestSupport = dockerTestSupport;
     }
 
     @Override
@@ -70,16 +60,6 @@ public class PropertyModule extends AbstractModule {
 
         RedisDockerLinkPropertyValueProvider redisDockerLinkPropertyValueProvider = new RedisDockerLinkPropertyValueProvider(systemEnvValueProvider);
         valueProviders.add(redisDockerLinkPropertyValueProvider);
-/*
-        try (InputStream in = getClass().getClassLoader().getResourceAsStream(APPLICATION_CONFIGURATION_PROPERTIES)) {
-            Properties properties = new Properties();
-            properties.load(in);
-            PropertiesValueProvider propertiesValueProvider = new PropertiesValueProvider(properties);
-            valueProviders.add(propertiesValueProvider);
-        } catch (IOException e) {
-            LOGGER.error("Unable to load properties file " + APPLICATION_CONFIGURATION_PROPERTIES, e);
-        }
-        */
         return valueProvider;
     }
 
@@ -91,8 +71,18 @@ public class PropertyModule extends AbstractModule {
 
     @Provides
     @Singleton
-    RedisConfig provideRedisConfig(PropertyValueProvider valueProvider) {
-        return createConfig(RedisConfig.class, valueProvider);
+    RedisConfig provideRedisConfig() {
+        return new RedisConfig() {
+            @Override
+            public String host() {
+                return redisHost;
+            }
+
+            @Override
+            public Integer port() {
+                return redisPort;
+            }
+        };
     }
 
     @Provides
@@ -103,8 +93,33 @@ public class PropertyModule extends AbstractModule {
 
     @Provides
     @Singleton
-    ApplicationConfig provideApplicationConfig(PropertyValueProvider valueProvider) {
-        return createConfig(ApplicationConfig.class, valueProvider);
+    ApplicationConfig provideApplicationConfig() {
+        return new ApplicationConfig() {
+            @Override
+            public int port() {
+                return httpPort;
+            }
+
+            @Override
+            public String domain() {
+                return "kodokojo.dev";
+            }
+
+            @Override
+            public String loadbalancerHost() {
+                return dockerTestSupport.getServerIp();
+            }
+
+            @Override
+            public int initialSshPort() {
+                return 1022;
+            }
+
+            @Override
+            public long sslCaDuration() {
+                return -1;
+            }
+        };
     }
 
     @Provides
@@ -121,8 +136,34 @@ public class PropertyModule extends AbstractModule {
 
     @Provides
     @Singleton
-    EmailConfig provideEmailConfig(PropertyValueProvider valueProvider) {
-        return createConfig(EmailConfig.class, valueProvider);
+    EmailConfig provideEmailConfig() {
+        return new EmailConfig() {
+            @Override
+            public String smtpHost() {
+                return null;
+            }
+
+            @Override
+            public int smtpPort() {
+                return 0;
+            }
+
+            @Override
+            public String smtpUsername() {
+                return null;
+            }
+
+            @Override
+            public String smtpPassword() {
+                return null;
+            }
+
+            @Override
+            public String smtpFrom() {
+                return "test@kodokojo.dev";
+            }
+
+        };
     }
 
     private <T extends PropertyConfig> T createConfig(Class<T> configClass, PropertyValueProvider valueProvider) {
@@ -131,3 +172,4 @@ public class PropertyModule extends AbstractModule {
     }
 
 }
+

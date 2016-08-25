@@ -413,13 +413,10 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         LOGGER.debug("redis.port: {}", System.getProperty("redis.port"));
 
         injector = Guice.createInjector(new PropertyModule(new String[]{}),
-                new RedisModule(),
+                new DatabaseModule(),
                 new SecurityModule(),
                 new ServiceModule(),
                 new AkkaModule(),
-                new ActorModule(),
-                new AwsModule(),
-                new EmailSenderModule(),
                 new UserEndpointModule(),
                 new ProjectEndpointModule(),
                 new AbstractModule() {
@@ -460,7 +457,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
                 injector.getInstance(BootstrapConfigurationProvider.class),
                 new NoOpDnsManager(),
                 new DefaultBrickConfigurerProvider(brickUrlFactory, new OkHttpClient()),
-                injector.getInstance(BrickConfigurationStarter.class),
+                null,
                 brickUrlFactory
         );
         httpUserSupport = new HttpUserSupport(new OkHttpClient(), restEntryPointHost + ":" + restEntryPointPort);

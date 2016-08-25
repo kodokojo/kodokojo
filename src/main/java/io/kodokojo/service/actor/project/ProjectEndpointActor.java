@@ -19,26 +19,93 @@ package io.kodokojo.service.actor.project;
 
 import akka.actor.AbstractActor;
 import akka.actor.Props;
+import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
+import io.kodokojo.brick.BrickFactory;
+import io.kodokojo.brick.BrickStartContext;
+import io.kodokojo.brick.BrickUrlFactory;
+import io.kodokojo.endpoint.dto.ProjectCreationDto;
+import io.kodokojo.service.BrickManager;
+import io.kodokojo.service.ConfigurationStore;
+import io.kodokojo.service.ProjectManager;
+import io.kodokojo.service.SSLCertificatProvider;
+import io.kodokojo.service.actor.BrickConfigurationStarterActor;
 import io.kodokojo.service.repository.ProjectRepository;
+import org.apache.commons.collections4.CollectionUtils;
+
+import static akka.event.Logging.getLogger;
 
 public class ProjectEndpointActor extends AbstractActor {
 
-    public static Props PROPS(ProjectRepository projectRepository) {
+    private final LoggingAdapter LOGGER = getLogger(getContext().system(), this);
+
+    public static Props PROPS(ProjectRepository projectRepository, ProjectManager projectManager, BrickFactory brickFactory, BrickManager brickManager, ConfigurationStore configurationStore, BrickUrlFactory brickUrlFactory, SSLCertificatProvider sslCertificatProvider) {
         if (projectRepository == null) {
             throw new IllegalArgumentException("projectRepository must be defined.");
         }
-        return Props.create(ProjectEndpointActor.class, projectRepository);
+        if (projectManager == null) {
+            throw new IllegalArgumentException("projectManager must be defined.");
+        }
+        if (brickFactory == null) {
+            throw new IllegalArgumentException("brickFactory must be defined.");
+        }
+        if (brickManager == null) {
+            throw new IllegalArgumentException("brickManager must be defined.");
+        }
+        if (configurationStore == null) {
+            throw new IllegalArgumentException("configurationStore must be defined.");
+        }
+        if (brickUrlFactory == null) {
+            throw new IllegalArgumentException("brickUrlFactory must be defined.");
+        }
+        if (sslCertificatProvider == null) {
+            throw new IllegalArgumentException("sslCertificatProvider must be defined.");
+        }
+        return Props.create(ProjectEndpointActor.class, projectRepository, projectManager, brickFactory, brickManager, configurationStore, brickUrlFactory, sslCertificatProvider);
     }
+
+    public static final String NAME = "projectEndpointProps";
 
     private final ProjectRepository projectRepository;
 
-    public ProjectEndpointActor(ProjectRepository projectRepository) {
+    private final ProjectManager projectManager;
+
+    private final BrickFactory brickFactory;
+
+    public ProjectEndpointActor(ProjectRepository projectRepository, ProjectManager projectManager, BrickFactory brickFactory,BrickManager brickManager, ConfigurationStore configurationStore, BrickUrlFactory brickUrlFactory, SSLCertificatProvider sslCertificatProvider) {
         if (projectRepository == null) {
             throw new IllegalArgumentException("projectRepository must be defined.");
         }
+        if (projectManager == null) {
+            throw new IllegalArgumentException("projectManager must be defined.");
+        }
+        if (brickFactory == null) {
+            throw new IllegalArgumentException("brickFactory must be defined.");
+        }
         this.projectRepository = projectRepository;
-        receive(ReceiveBuilder.matchAny(this::unhandled).build());
+        this.projectManager = projectManager;
+        this.brickFactory = brickFactory;
+
+        receive(ReceiveBuilder
+
+        .match(ProjectConfigurationBuilderActor.ProjectConfigurationBuildMsg.class, msg -> {
+            LOGGER.debug("Forward building of ProjectConfiguration to ProjectConfigurationBuilderActor.");
+            getContext().actorOf(ProjectConfigurationBuilderActor.PROPS(brickFactory)).forward(msg, getContext());
+
+        })
+                .match(ProjectConfigurationDtoCreatorActor.ProjectConfigurationDtoCreateMsg.class, msg -> {
+                    getContext().actorOf(ProjectConfigurationDtoCreatorActor.PROPS(projectRepository)).forward(msg, getContext());
+                })
+                .match(BootstrapStackActor.BootstrapStackMsg.class, msg -> {
+                    LOGGER.debug("Bootstrapping a project stack.");
+                    getContext().actorOf(BootstrapStackActor.PROPS(projectManager)).forward(msg, getContext());
+                })
+                .match(BrickStartContext.class, msg -> {
+                    getContext().actorOf(BrickConfigurationStarterActor.PROPS(brickManager, configurationStore, brickUrlFactory, sslCertificatProvider)).forward(msg, getContext());
+                })
+                .matchAny(this::unhandled).build());
     }
+
+
 
 }

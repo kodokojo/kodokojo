@@ -45,8 +45,10 @@ public class BasicAuthenticator implements Filter {
             String encoded = authorization.substring("Basic ".length());
             String decoded = new String(Base64.getDecoder().decode(encoded));
             String[] split = decoded.split(":");
-            username = split[0];
-            password = split[1];
+            if (split.length == 2) {
+                username = split[0];
+                password = split[1];
+            }
         }  else if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Basic Authorization header not found.");
             if (LOGGER.isTraceEnabled()) {

@@ -19,6 +19,7 @@ package io.kodokojo.service.actor;
 
 import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
+import akka.actor.Props;
 import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
 import io.kodokojo.brick.BrickUrlFactory;
@@ -49,6 +50,10 @@ public class BrickConfigurationStarterActor extends AbstractActor {
 
     private final LoggingAdapter LOGGER = getLogger(getContext().system(), this);
 
+    public static Props PROPS(BrickManager brickManager, ConfigurationStore configurationStore, BrickUrlFactory brickUrlFactory, SSLCertificatProvider sslCertificatProvider) {
+        return Props.create(BrickConfigurationStarterActor.class, brickManager, configurationStore, brickUrlFactory, sslCertificatProvider);
+    }
+
     private final BrickManager brickManager;
 
     private final ConfigurationStore configurationStore;
@@ -57,10 +62,8 @@ public class BrickConfigurationStarterActor extends AbstractActor {
 
     private final SSLCertificatProvider sslCertificatProvider;
 
-    private final ActorRef stateListener;
-
     @Inject
-    public BrickConfigurationStarterActor(BrickManager brickManager, ConfigurationStore configurationStore, BrickUrlFactory brickUrlFactory, SSLCertificatProvider sslCertificatProvider, ActorRef stateListener) {
+    public BrickConfigurationStarterActor(BrickManager brickManager, ConfigurationStore configurationStore, BrickUrlFactory brickUrlFactory, SSLCertificatProvider sslCertificatProvider) {
         if (brickManager == null) {
             throw new IllegalArgumentException("brickManager must be defined.");
         }
@@ -73,14 +76,10 @@ public class BrickConfigurationStarterActor extends AbstractActor {
         if (sslCertificatProvider == null) {
             throw new IllegalArgumentException("sslCertificatProvider must be defined.");
         }
-        if (stateListener == null) {
-            throw new IllegalArgumentException("stateMsgEndpointCreator must be defined.");
-        }
         this.brickManager = brickManager;
         this.brickUrlFactory = brickUrlFactory;
         this.configurationStore = configurationStore;
         this.sslCertificatProvider = sslCertificatProvider;
-        this.stateListener = stateListener;
 
         receive(ReceiveBuilder.match(BrickStartContext.class, this::start)
                 .matchAny(this::unhandled)
@@ -138,7 +137,6 @@ public class BrickConfigurationStarterActor extends AbstractActor {
 
     }
 
-
     private void generateMsgAndSend(BrickStartContext context,String url, BrickState.State state, String messageStr) {
         ProjectConfiguration projectConfiguration = context.getProjectConfiguration();
         StackConfiguration stackConfiguration = context.getStackConfiguration();
@@ -146,7 +144,7 @@ public class BrickConfigurationStarterActor extends AbstractActor {
         BrickType brickType = brickConfiguration.getType();
         String brickName = brickConfiguration.getName();
         BrickState message = new BrickState(projectConfiguration.getIdentifier(),stackConfiguration.getName(),  brickType.name(), brickName, state, url, messageStr, brickConfiguration.getVersion());
-        stateListener.tell(message, self());
+        getContext().actorSelection(EndpointActor.ACTOR_PATH).tell(message, self());
     }
 
     private void generateMsgAndSend(BrickStartContext context,String url, BrickState.State state) {

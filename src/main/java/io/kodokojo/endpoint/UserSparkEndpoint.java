@@ -1,17 +1,17 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -21,18 +21,20 @@ import akka.actor.ActorRef;
 import akka.util.Timeout;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.inject.name.Named;
 import io.kodokojo.endpoint.dto.UserCreationDto;
 import io.kodokojo.endpoint.dto.UserDto;
 import io.kodokojo.endpoint.dto.UserProjectConfigIdDto;
-import io.kodokojo.model.Entity;
 import io.kodokojo.model.User;
 import io.kodokojo.service.RSAUtils;
-import io.kodokojo.service.actor.entity.EntityCreatorActor;
+import io.kodokojo.service.actor.EndpointActor;
 import io.kodokojo.service.actor.user.UserCreatorActor;
 import io.kodokojo.service.actor.user.UserEligibleActor;
 import io.kodokojo.service.actor.user.UserGenerateIdentifierActor;
 import io.kodokojo.service.authentification.SimpleCredential;
+import io.kodokojo.service.repository.ProjectFetcher;
 import io.kodokojo.service.repository.ProjectRepository;
+import io.kodokojo.service.repository.UserFetcher;
 import io.kodokojo.service.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,25 +60,25 @@ public class UserSparkEndpoint extends AbstractSparkEndpoint {
 
     private final ActorRef akkaEndpoint;
 
-    private final UserRepository userRepository;
+    private final UserFetcher userFetcher;
 
-    private final ProjectRepository projectRepository;
+    private final ProjectFetcher projectFetcher;
 
     @Inject
-    public UserSparkEndpoint(UserAuthenticator<SimpleCredential> userAuthenticator, ActorRef akkaEndpoint, UserRepository userRepository, ProjectRepository projectRepository) {
+    public UserSparkEndpoint(UserAuthenticator<SimpleCredential> userAuthenticator, @Named(EndpointActor.NAME) ActorRef akkaEndpoint, UserRepository userFetcher, ProjectRepository projectFetcher) {
         super(userAuthenticator);
         if (akkaEndpoint == null) {
             throw new IllegalArgumentException("akkaEndpoint must be defined.");
         }
-        if (userRepository == null) {
-            throw new IllegalArgumentException("userRepository must be defined.");
+        if (userFetcher == null) {
+            throw new IllegalArgumentException("userFetcher must be defined.");
         }
-        if (projectRepository == null) {
-            throw new IllegalArgumentException("projectRepository must be defined.");
+        if (projectFetcher == null) {
+            throw new IllegalArgumentException("projectFetcher must be defined.");
         }
         this.akkaEndpoint = akkaEndpoint;
-        this.userRepository = userRepository;
-        this.projectRepository = projectRepository;
+        this.userFetcher = userFetcher;
+        this.projectFetcher = projectFetcher;
     }
 
     @Override
@@ -99,14 +101,8 @@ public class UserSparkEndpoint extends AbstractSparkEndpoint {
             String entityId = "";
             if (requester != null) {
                 entityId = requester.getEntityIdentifier();
-            } else {
-                /*
-                Entity entity = new Entity(email);
-                Future<Object> entityFuture
-                        = ask(akkaEndpoint, new EntityCreatorActor.EntityCreateMsg(entity), new Timeout(duration));
-                EntityCreatorActor.EntityCreatedResultMsg result = (EntityCreatorActor.EntityCreatedResultMsg) Await.result(entityFuture, duration);
-                entityId = result.getEntityId();
-                */
+            } else if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Create a new User with a new Entity");
             }
 
 
@@ -114,7 +110,7 @@ public class UserSparkEndpoint extends AbstractSparkEndpoint {
                     akkaEndpoint,
                     new UserCreatorActor.UserCreateMsg(requester, identifier, email, username, entityId),
                     new Timeout(duration));
-            Object result =  Await.result(userCreationFuture, duration);
+            Object result = Await.result(userCreationFuture, duration);
 
             if (result == null) {
                 String format = "An unexpected error occur while trying to create user %s.";
@@ -127,7 +123,7 @@ public class UserSparkEndpoint extends AbstractSparkEndpoint {
                     halt(428, "Identifier or username are not valid.");
                     return "";
                 }
-            } else if (result instanceof UserCreatorActor.UserCreateResultMsg ) {
+            } else if (result instanceof UserCreatorActor.UserCreateResultMsg) {
 
                 UserCreatorActor.UserCreateResultMsg userCreateResultMsg = (UserCreatorActor.UserCreateResultMsg) result;
 
@@ -168,7 +164,7 @@ public class UserSparkEndpoint extends AbstractSparkEndpoint {
         get(BASE_API + "/user/:id", JSON_CONTENT_TYPE, (request, response) -> {
             User requester = getRequester(request);
             String identifier = request.params(":id");
-            User user = userRepository.getUserByIdentifier(identifier);
+            User user = userFetcher.getUserByIdentifier(identifier);
             if (user != null) {
                 if (user.getEntityIdentifier().equals(requester.getEntityIdentifier())) {
                     if (!user.equals(requester)) {
@@ -186,10 +182,10 @@ public class UserSparkEndpoint extends AbstractSparkEndpoint {
 
     private UserDto getUserDto(User user) {
         UserDto res = new UserDto(user);
-        Set<String> projectConfigIds = projectRepository.getProjectConfigIdsByUserIdentifier(user.getIdentifier());
+        Set<String> projectConfigIds = projectFetcher.getProjectConfigIdsByUserIdentifier(user.getIdentifier());
         List<UserProjectConfigIdDto> userProjectConfigIdDtos = new ArrayList<>();
         projectConfigIds.forEach(id -> {
-            String projectId = projectRepository.getProjectIdByProjectConfigurationId(id);
+            String projectId = projectFetcher.getProjectIdByProjectConfigurationId(id);
             UserProjectConfigIdDto userProjectConfigIdDto = new UserProjectConfigIdDto(id);
             userProjectConfigIdDto.setProjectId(projectId);
             userProjectConfigIdDtos.add(userProjectConfigIdDto);

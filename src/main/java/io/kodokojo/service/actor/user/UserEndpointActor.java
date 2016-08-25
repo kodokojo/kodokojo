@@ -30,11 +30,19 @@ public class UserEndpointActor extends AbstractActor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserEndpointActor.class);
 
-    public static Props PROPS(UserRepository userRepository, EmailSender emailSender, ActorRef eventEndpointActor) {
-        return Props.create(UserEndpointActor.class, userRepository, emailSender, eventEndpointActor);
+    public static Props PROPS(UserRepository userRepository, EmailSender emailSender) {
+        if (userRepository == null) {
+            throw new IllegalArgumentException("userRepository must be defined.");
+        }
+        if (emailSender == null) {
+            throw new IllegalArgumentException("emailSender must be defined.");
+        }
+        return Props.create(UserEndpointActor.class, userRepository, emailSender);
     }
 
-    public UserEndpointActor(UserRepository userRepository, EmailSender emailSender, ActorRef eventEndpointActor) {
+    public static final String NAME = "userEndpointProps";
+
+    public UserEndpointActor(UserRepository userRepository, EmailSender emailSender) {
         if (userRepository == null) {
             throw new IllegalArgumentException("userRepository must be defined.");
         }
@@ -45,7 +53,10 @@ public class UserEndpointActor extends AbstractActor {
                 .match(UserCreatorActor.UserCreateMsg.class, msg -> {
                     getContext().actorOf(UserCreatorActor.PROPS(userRepository, emailSender)).forward(msg, getContext());
                 })
+                .match(UserFetcherActor.UserFetchMsg.class, msg -> {
+                    getContext().actorOf(UserFetcherActor.PROPS(userRepository)).forward(msg, getContext());
 
+                })
                 .matchAny(this::unhandled)
                 .build());
 

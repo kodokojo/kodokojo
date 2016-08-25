@@ -30,12 +30,12 @@ import java.util.stream.Collectors;
 
 import static spark.Spark.get;
 
-public class BrickEndpoint extends AbstractSparkEndpoint {
+public class BrickSparkEndpoint extends AbstractSparkEndpoint {
 
     private final BrickFactory brickFactory;
 
     @Inject
-    public BrickEndpoint(UserAuthenticator<SimpleCredential> userAuthenticator, BrickFactory brickFactory) {
+    public BrickSparkEndpoint(UserAuthenticator<SimpleCredential> userAuthenticator, BrickFactory brickFactory) {
         super(userAuthenticator);
         if (brickFactory == null) {
             throw new IllegalArgumentException("brickFactory must be defined.");

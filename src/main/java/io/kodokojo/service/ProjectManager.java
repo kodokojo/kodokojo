@@ -35,6 +35,7 @@ public interface ProjectManager {
      * @param stackType The typ of stack
      * @return The bootstrap information's generated.
      */
+    //TODO Split it in separate interface(/class)
     BootstrapStackData bootstrapStack(String projectName,String stackName, StackType stackType);
 
     /**

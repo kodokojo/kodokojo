@@ -30,16 +30,18 @@ public class EntityEndpointActor extends AbstractActor {
 
     private final LoggingAdapter LOGGER = getLogger(getContext().system(), this);
 
-    public static Props PROPS(EntityRepository entityRepository, ActorRef eventEndpointActor) {
-        return Props.create(EntityEndpointActor.class, entityRepository, eventEndpointActor);
-    }
-
-    public EntityEndpointActor(EntityRepository entityRepository, ActorRef eventEndpointActor) {
+    public static Props PROPS(EntityRepository entityRepository) {
         if (entityRepository == null) {
             throw new IllegalArgumentException("entityRepository must be defined.");
         }
-        if (eventEndpointActor == null) {
-            throw new IllegalArgumentException("eventEndpointActor must be defined.");
+        return Props.create(EntityEndpointActor.class, entityRepository);
+    }
+
+    public static final String NAME = "entityEndpointProps";
+
+    public EntityEndpointActor(EntityRepository entityRepository) {
+        if (entityRepository == null) {
+            throw new IllegalArgumentException("entityRepository must be defined.");
         }
 
         receive(ReceiveBuilder.match(AddUserToEntityActor.AddUserToEntityMsg.class, msg -> {
