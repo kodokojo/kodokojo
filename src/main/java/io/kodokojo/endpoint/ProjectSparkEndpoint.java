@@ -1,17 +1,17 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -28,9 +28,9 @@ import io.kodokojo.endpoint.dto.ProjectCreationDto;
 import io.kodokojo.endpoint.dto.ProjectDto;
 import io.kodokojo.model.*;
 import io.kodokojo.service.ProjectManager;
+import io.kodokojo.service.authentification.SimpleCredential;
 import io.kodokojo.service.repository.ProjectRepository;
 import io.kodokojo.service.repository.UserRepository;
-import io.kodokojo.service.authentification.SimpleCredential;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang.StringUtils;
@@ -109,6 +109,8 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
                 }).collect(Collectors.toSet());
             }
 
+            List<User> admins = new ArrayList<>();
+            admins.add(owner);
             List<User> users = new ArrayList<>();
             users.add(owner);
             if (CollectionUtils.isNotEmpty(dto.getUserIdentifiers())) {
@@ -117,7 +119,7 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
                     users.add(user);
                 }
             }
-            ProjectConfiguration projectConfiguration = new ProjectConfiguration(entityId, dto.getName(), Collections.singletonList(owner), stackConfigurations, users);
+            ProjectConfiguration projectConfiguration = new ProjectConfiguration(entityId, dto.getName(), admins, stackConfigurations, users);
             String projectConfigIdentifier = projectRepository.addProjectConfiguration(projectConfiguration);
 
             response.status(201);
@@ -127,14 +129,15 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
 
 
         get(BASE_API + "/projectconfig/:id", JSON_CONTENT_TYPE, (request, response) -> {
+            User requester = getRequester(request);
             String identifier = request.params(":id");
             ProjectConfiguration projectConfiguration = projectRepository.getProjectConfigurationById(identifier);
             if (projectConfiguration == null) {
                 halt(404);
                 return "";
             }
-            SimpleCredential credential = extractCredential(request);
-            if (userRepository.userIsAdminOfProjectConfiguration(credential.getUsername(), projectConfiguration)) {
+            boolean isAnAdmin = isAdmin(requester, projectConfiguration);
+            if (isAnAdmin) {
                 return new ProjectConfigDto(projectConfiguration);
             }
             halt(403);
@@ -142,7 +145,7 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
         }, jsonResponseTransformer);
 
         put(BASE_API + "/projectconfig/:id/user", JSON_CONTENT_TYPE, ((request, response) -> {
-            SimpleCredential credential = extractCredential(request);
+            User requester = getRequester(request);
 
             String identifier = request.params(":id");
             ProjectConfiguration projectConfiguration = projectRepository.getProjectConfigurationById(identifier);
@@ -150,7 +153,7 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
                 halt(404);
                 return "";
             }
-            if (userRepository.userIsAdminOfProjectConfiguration(credential.getUsername(), projectConfiguration)) {
+            if (isAdmin(requester, projectConfiguration)) {
                 JsonParser parser = new JsonParser();
                 JsonArray root = (JsonArray) parser.parse(request.body());
                 List<User> users = IteratorUtils.toList(projectConfiguration.getUsers());
@@ -169,38 +172,37 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
                 LOGGER.debug("Adding user {} to projectConfig {}", usersToAdd, projectConfiguration);
                 projectManager.addUsersToProject(projectConfiguration, usersToAdd);
             } else {
-                halt(403,"You have not right to add user to project configuration id " + identifier + ".");
+                halt(403, "You have not right to add user to project configuration id " + identifier + ".");
             }
 
             return "";
         }), jsonResponseTransformer);
 
         delete(BASE_API + "/projectconfig/:id/user", JSON_CONTENT_TYPE, ((request, response) -> {
-            SimpleCredential credential = extractCredential(request);
-            if (credential != null) {
-                String identifier = request.params(":id");
-                ProjectConfiguration projectConfiguration = projectRepository.getProjectConfigurationById(identifier);
-                if (projectConfiguration == null) {
-                    halt(404);
-                    return "";
-                }
-                if (userRepository.userIsAdminOfProjectConfiguration(credential.getUsername(), projectConfiguration)) {
-                    JsonParser parser = new JsonParser();
-                    JsonArray root = (JsonArray) parser.parse(request.body());
-                    List<User> users = IteratorUtils.toList(projectConfiguration.getUsers());
-                    for (JsonElement el : root) {
-                        String userToDeleteId = el.getAsJsonPrimitive().getAsString();
-                        User userToDelete = userRepository.getUserByIdentifier(userToDeleteId);
-                        if (userToDelete != null) {
-                            users.remove(userToDelete);
-                        }
-                    }
-                    projectConfiguration.setUsers(users);
-                    projectRepository.updateProjectConfiguration(projectConfiguration);
-                } else {
-                    halt(403,"You have not right to delete user to project configuration id " + identifier + ".");
-                }
+            User requester = getRequester(request);
+            String identifier = request.params(":id");
+            ProjectConfiguration projectConfiguration = projectRepository.getProjectConfigurationById(identifier);
+            if (projectConfiguration == null) {
+                halt(404);
+                return "";
             }
+            if (isAdmin(requester, projectConfiguration)) {
+                JsonParser parser = new JsonParser();
+                JsonArray root = (JsonArray) parser.parse(request.body());
+                List<User> users = IteratorUtils.toList(projectConfiguration.getUsers());
+                for (JsonElement el : root) {
+                    String userToDeleteId = el.getAsJsonPrimitive().getAsString();
+                    User userToDelete = userRepository.getUserByIdentifier(userToDeleteId);
+                    if (userToDelete != null) {
+                        users.remove(userToDelete);
+                    }
+                }
+                projectConfiguration.setUsers(users);
+                projectRepository.updateProjectConfiguration(projectConfiguration);
+            } else {
+                halt(403, "You have not right to delete user to project configuration id " + identifier + ".");
+            }
+
             return "";
         }), jsonResponseTransformer);
 
@@ -208,50 +210,47 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
 
         //  Start project
         post(BASE_API + "/project/:id", JSON_CONTENT_TYPE, ((request, response) -> {
-            SimpleCredential credential = extractCredential(request);
-            if (credential != null) {
-                User currentUser = userRepository.getUserByUsername(credential.getUsername());
-                String projectConfigurationId = request.params(":id");
-                ProjectConfiguration projectConfiguration = projectRepository.getProjectConfigurationById(projectConfigurationId);
-                if (projectConfiguration == null) {
-                    halt(404, "Project configuration not found.");
-                    return "";
-                }
-                if (userRepository.userIsAdminOfProjectConfiguration(credential.getUsername(), projectConfiguration)) {
-                    String projectId = projectRepository.getProjectIdByProjectConfigurationId(projectConfigurationId);
-                    if (StringUtils.isBlank(projectId)) {
-                     //   projectManager.bootstrapStack(projectConfiguration.getName(), projectConfiguration.getDefaultStackConfiguration().getName(), projectConfiguration.getDefaultStackConfiguration().getType());
-                        Project project = projectManager.start(projectConfiguration);
-                        response.status(201);
-                        String projectIdStarted = projectRepository.addProject(project, projectConfigurationId);
-                        return projectIdStarted;
-                    } else {
-                        halt(409, "Project already exist.");
-                    }
-                } else {
-                    halt(403,"You have not right to start project configuration id " + projectConfigurationId + ".");
-                }
+
+            User requester = getRequester(request);
+            String projectConfigurationId = request.params(":id");
+            ProjectConfiguration projectConfiguration = projectRepository.getProjectConfigurationById(projectConfigurationId);
+            if (projectConfiguration == null) {
+                halt(404, "Project configuration not found.");
+                return "";
             }
+            if (isAdmin(requester, projectConfiguration)) {
+                String projectId = projectRepository.getProjectIdByProjectConfigurationId(projectConfigurationId);
+                if (StringUtils.isBlank(projectId)) {
+                    //   projectManager.bootstrapStack(projectConfiguration.getName(), projectConfiguration.getDefaultStackConfiguration().getName(), projectConfiguration.getDefaultStackConfiguration().getType());
+                    Project project = projectManager.start(projectConfiguration);
+                    response.status(201);
+                    String projectIdStarted = projectRepository.addProject(project, projectConfigurationId);
+                    return projectIdStarted;
+                } else {
+                    halt(409, "Project already exist.");
+                }
+            } else {
+                halt(403, "You have not right to start project configuration id " + projectConfigurationId + ".");
+            }
+
             return "";
         }));
 
         get(BASE_API + "/project/:id", JSON_CONTENT_TYPE, ((request, response) -> {
-            SimpleCredential credential = extractCredential(request);
-            if (credential != null) {
-                User currentUser = userRepository.getUserByUsername(credential.getUsername());
-                String projectId = request.params(":id");
-                Project project = projectRepository.getProjectByIdentifier(projectId);
-                if (project == null) {
-                    halt(404);
-                    return "";
-                }
-                ProjectConfiguration projectConfiguration = projectRepository.getProjectConfigurationById(project.getProjectConfigurationIdentifier());
-                if (userRepository.userIsAdminOfProjectConfiguration(currentUser.getUsername(), projectConfiguration)) {
-                    return new ProjectDto(project);
-                } else {
-                    halt(403,"You have not right to lookup project id " + projectId + ".");
-                }
+            User requester = getRequester(request);
+            String projectId = request.params(":id");
+            Project project = projectRepository.getProjectByIdentifier(projectId);
+            if (project == null) {
+                halt(404);
+                return "";
             }
+            ProjectConfiguration projectConfiguration = projectRepository.getProjectConfigurationById(project.getProjectConfigurationIdentifier());
+            if (isAdmin(requester, projectConfiguration)) {
+                return new ProjectDto(project);
+            } else {
+                halt(403, "You have not right to lookup project id " + projectId + ".");
+            }
+
             return "";
         }), jsonResponseTransformer);
     }
@@ -266,6 +265,12 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
         BootstrapStackData bootstrapStackData = projectManager.bootstrapStack(projectName, stackName, StackType.BUILD);
         StackConfiguration stackConfiguration = new StackConfiguration(stackName, StackType.BUILD, bricksConfigurations, bootstrapStackData.getLoadBalancerHost(), bootstrapStackData.getSshPort());
         return Collections.singleton(stackConfiguration);
+    }
+
+    private static boolean isAdmin(User user, ProjectConfiguration projectConfiguration) {
+        return IteratorUtils.toList(projectConfiguration.getAdmins()).stream()
+                .filter(a -> a.getIdentifier().equals(user.getIdentifier()))
+                .findFirst().isPresent();
     }
 
 }

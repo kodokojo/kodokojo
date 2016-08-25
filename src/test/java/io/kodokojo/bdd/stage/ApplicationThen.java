@@ -33,8 +33,8 @@ import io.kodokojo.endpoint.dto.ProjectConfigDto;
 import io.kodokojo.endpoint.dto.UserLightDto;
 import io.kodokojo.model.Entity;
 import io.kodokojo.model.User;
-import io.kodokojo.service.redis.RedisUserRepository;
 import io.kodokojo.service.repository.EntityRepository;
+import io.kodokojo.service.repository.Repository;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 
@@ -48,11 +48,9 @@ import static org.assertj.core.api.Assertions.fail;
 
 public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF> {
 
-    @ExpectedScenarioState
-    RedisUserRepository userManager;
 
     @ExpectedScenarioState
-    EntityRepository entityRepository;
+    Repository repository;
 
     @ExpectedScenarioState
     CurrentStep currentStep;
@@ -78,7 +76,7 @@ public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF
     private ProjectConfigDto projectConfigDto;
 
     public SELF it_exist_a_valid_user_with_username_$(@Quoted String username) {
-        User user = userManager.getUserByUsername(username);
+        User user = repository.getUserByUsername(username);
 
         assertThat(user).isNotNull();
 
@@ -90,7 +88,7 @@ public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF
     }
 
     public SELF it_NOT_exist_a_valid_user_with_username_$(@Quoted String username) {
-        User user = userManager.getUserByUsername(username);
+        User user = repository.getUserByUsername(username);
 
         assertThat(user).isNull();
         return self();
@@ -113,11 +111,11 @@ public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF
 
     public SELF user_$_belong_to_entity_of_project_configuration(@Quoted  String username) {
         UserInfo requesterUserInfo = currentUsers.get(currentUserLogin);
-        User user = userManager.getUserByIdentifier(requesterUserInfo.getIdentifier());
+        User user = repository.getUserByIdentifier(requesterUserInfo.getIdentifier());
         String entityIdOfCurrentUser = user.getEntityIdentifier();
         assertThat(entityIdOfCurrentUser).isNotNull();
         UserInfo userToValidate = currentUsers.get(username);
-        user = userManager.getUserByIdentifier(userToValidate.getIdentifier());
+        user = repository.getUserByIdentifier(userToValidate.getIdentifier());
         String entityIdOfUserToValidate = user.getEntityIdentifier();
         assertThat(entityIdOfUserToValidate).isEqualTo(entityIdOfCurrentUser);
         return self();
@@ -175,9 +173,9 @@ public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF
 
     public SELF user_$_belong_to_entity_$(String username, String entityName) {
         UserInfo userInfo = currentUsers.get(username);
-        User user = userManager.getUserByIdentifier(userInfo.getIdentifier());
+        User user = repository.getUserByIdentifier(userInfo.getIdentifier());
         String entityIdOfUserId = user.getEntityIdentifier();
-        Entity entity = entityRepository.getEntityById(entityIdOfUserId);
+        Entity entity = repository.getEntityById(entityIdOfUserId);
         assertThat(entity).isNotNull();
         assertThat(entity.getName()).isEqualTo(entityName);
         return self();

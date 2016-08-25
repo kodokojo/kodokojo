@@ -18,9 +18,12 @@
 package io.kodokojo.service;
 
 
+import akka.actor.ActorRef;
+import akka.actor.ActorSystem;
 import io.kodokojo.brick.*;
 import io.kodokojo.model.*;
 import io.kodokojo.model.Stack;
+import io.kodokojo.service.actor.EndpointActor;
 import io.kodokojo.service.dns.DnsEntry;
 import io.kodokojo.service.dns.DnsManager;
 import io.kodokojo.service.repository.ProjectRepository;
@@ -54,7 +57,7 @@ public class DefaultProjectManager implements ProjectManager {
 
     private final BootstrapConfigurationProvider bootstrapConfigurationProvider;
 
-    private final BrickConfigurationStarter brickConfigurationStarter;
+    private final ActorSystem brickConfigurationStarter;
 
     private final BrickUrlFactory brickUrlFactory;
 
@@ -67,7 +70,7 @@ public class DefaultProjectManager implements ProjectManager {
                                  BootstrapConfigurationProvider bootstrapConfigurationProvider,
                                  DnsManager dnsManager,
                                  BrickConfigurerProvider brickConfigurerProvider,
-                                 BrickConfigurationStarter brickConfigurationStarter,
+                                 ActorSystem brickConfigurationStarter,
                                  BrickUrlFactory brickUrlFactory) {
 
         if (isBlank(domain)) {
@@ -152,7 +155,10 @@ public class DefaultProjectManager implements ProjectManager {
 
         }
         dnsManager.createOrUpdateDnsEntries(dnsEntries);
-        contexts.forEach(brickConfigurationStarter::start);
+        ActorRef endpointActor = brickConfigurationStarter.actorFor(EndpointActor.ACTOR_PATH);
+        contexts.forEach(c -> {
+            endpointActor.tell(c, ActorRef.noSender());
+        });
         Project project = new Project(projectConfiguration.getIdentifier(), projectName, new Date(), stacks);
         return project;
     }

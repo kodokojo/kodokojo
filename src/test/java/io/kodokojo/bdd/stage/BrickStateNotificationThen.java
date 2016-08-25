@@ -51,7 +51,7 @@ public class BrickStateNotificationThen<SELF extends BrickStateNotificationThen<
 
     public SELF i_receive_all_notification() {
         try {
-            nbMessageExpected.await(2, TimeUnit.MINUTES);
+            nbMessageExpected.await(30, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
@@ -60,6 +60,7 @@ public class BrickStateNotificationThen<SELF extends BrickStateNotificationThen<
         Gson gson = builder.create();
         LinkedList<String> srcMessages = new LinkedList<>(listener.getMessages());
         assertThat(srcMessages).isNotEmpty();
+        assertThat(srcMessages.size()).isGreaterThan(1);
 
         List<WebSocketMessage> webSocketMessages = srcMessages.stream().map(m -> gson.fromJson(m, WebSocketMessage.class)).collect(Collectors.toList());
         Map<String, List<WebSocketMessage>> messagePerBrick = new HashMap<>();

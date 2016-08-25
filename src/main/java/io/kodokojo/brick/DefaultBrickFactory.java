@@ -46,7 +46,7 @@ public class DefaultBrickFactory implements BrickFactory {
     public DefaultBrickFactory() {
         cache = new HashMap<>();
         cache.put(JENKINS, new Brick(JENKINS, BrickType.CI, "1.651.2"));
-        cache.put(GITLAB, new Brick(GITLAB, BrickType.SCM, "8.9.6-ce"));
+        cache.put(GITLAB, new Brick(GITLAB, BrickType.SCM, "8.11.0-ce.1"));
         cache.put(HAPROXY, new Brick(HAPROXY, BrickType.LOADBALANCER, "1.6"));
         cache.put(NEXUS, new Brick(NEXUS, BrickType.REPOSITORY, "2.13"));
      //   cache.put(DOCKER_REGISTRY, new Brick(DOCKER_REGISTRY, BrickType.REPOSITORY, "2"));

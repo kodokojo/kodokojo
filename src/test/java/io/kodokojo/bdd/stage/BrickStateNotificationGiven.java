@@ -17,7 +17,10 @@
  */
 package io.kodokojo.bdd.stage;
 
+import akka.actor.ActorRef;
+import akka.actor.ActorSystem;
 import com.google.inject.*;
+import com.google.inject.name.Names;
 import com.squareup.okhttp.OkHttpClient;
 import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.AfterScenario;
@@ -29,9 +32,9 @@ import io.kodokojo.brick.*;
 import io.kodokojo.commons.utils.DockerTestSupport;
 import io.kodokojo.config.ApplicationConfig;
 import io.kodokojo.config.EmailConfig;
-import io.kodokojo.config.module.ActorModule;
 import io.kodokojo.config.module.AkkaModule;
-import io.kodokojo.config.module.EmailSenderModule;
+import io.kodokojo.config.module.HttpModule;
+import io.kodokojo.config.module.endpoint.BrickEndpointModule;
 import io.kodokojo.config.module.endpoint.ProjectEndpointModule;
 import io.kodokojo.config.module.endpoint.UserEndpointModule;
 import io.kodokojo.endpoint.HttpEndpoint;
@@ -39,6 +42,7 @@ import io.kodokojo.endpoint.SparkEndpoint;
 import io.kodokojo.endpoint.UserAuthenticator;
 import io.kodokojo.model.Service;
 import io.kodokojo.service.*;
+import io.kodokojo.service.actor.EndpointActor;
 import io.kodokojo.service.authentification.SimpleCredential;
 import io.kodokojo.service.authentification.SimpleUserAuthenticator;
 import io.kodokojo.service.dns.DnsManager;
@@ -141,7 +145,7 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
         }
         SSLKeyPair caKey = SSLUtils.createSelfSignedSSLKeyPair("Fake CA", (RSAPrivateKey) keyPair.getPrivate(), (RSAPublicKey) keyPair.getPublic());
         Repository repository = new Repository(redisUserManager, redisUserManager, redisEntityStore, redisProjectStore);
-        Injector injector = Guice.createInjector(new EmailSenderModule(), new UserEndpointModule(), new ProjectEndpointModule(), new ActorModule(), new AkkaModule(), new AbstractModule() {
+        Injector injector = Guice.createInjector(new AbstractModule() {
             @Override
             protected void configure() {
                 bind(UserRepository.class).toInstance(redisUserManager);
@@ -155,6 +159,7 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
                 bind(DnsManager.class).toInstance(dnsManager);
                 bind(ConfigurationStore.class).toInstance(configurationStore);
                 bind(BrickFactory.class).toInstance(new DefaultBrickFactory());
+                bind(EmailSender.class).toInstance(new NoopEmailSender());
                 bind(Key.get(new TypeLiteral<UserAuthenticator<SimpleCredential>>() {
                 })).toInstance(new SimpleUserAuthenticator(redisUserManager));
                 DefaultBrickUrlFactory brickUrlFactory = new DefaultBrickUrlFactory("kodokojo.dev");
@@ -215,21 +220,32 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
                 bind(BrickUrlFactory.class).toInstance(brickUrlFactory);
             }
 
-            @Provides
-            @Singleton
-            ProjectManager provideProjectManager(BrickConfigurationStarter brickConfigurationStarter, BrickConfigurerProvider brickConfigurerProvider, BrickUrlFactory brickUrlFactory) {
-                return new DefaultProjectManager("kodokojo.dev", configurationStore, repository, bootstrapProvider, dnsManager, brickConfigurerProvider, brickConfigurationStarter, brickUrlFactory);
-            }
+
 
         });
-        //    DefaultProjectManager projectManager = new DefaultProjectManager(caKey, "kodokojo.dev", configurationStore, redisProjectStore, bootstrapProvider, dnsManager, injector.getInstance(BrickConfigurerProvider.class), injector.getInstance(BrickConfigurationStarter.class), new DefaultBrickUrlFactory("kodokojo.dev"), 10000000);
+        Injector akkaInjector = injector.createChildInjector(new AkkaModule(), new AbstractModule() {
+            @Override
+            protected void configure() {
 
-        Launcher.INJECTOR = injector;
+            }
+            @Provides
+            @Singleton
+            ProjectManager provideProjectManager(BrickConfigurerProvider brickConfigurerProvider,  ActorSystem brickConfigurationStarter,BrickUrlFactory brickUrlFactory) {
+                return new DefaultProjectManager("kodokojo.dev", configurationStore, repository, bootstrapProvider, dnsManager, brickConfigurerProvider, brickConfigurationStarter, brickUrlFactory);
+            }
+        });
+        ActorSystem actorSystem = akkaInjector.getInstance(ActorSystem.class);
+        ActorRef endpointActor = actorSystem.actorOf(EndpointActor.PROPS(akkaInjector), "endpoint");
+        Launcher.INJECTOR = akkaInjector.createChildInjector(new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(ActorRef.class).annotatedWith(Names.named(EndpointActor.NAME)).toInstance(endpointActor);
+            }
 
+
+        }, new HttpModule(), new UserEndpointModule(), new ProjectEndpointModule(), new BrickEndpointModule());
         entryPointUrl = "localhost:" + port;
-        Set<SparkEndpoint> sparkEndpoints = Launcher.INJECTOR.getInstance(Key.get(new TypeLiteral<Set<SparkEndpoint>>() {
-        }));
-        httpEndpoint = new HttpEndpoint(port, new SimpleUserAuthenticator(redisUserManager), sparkEndpoints);
+        httpEndpoint = Launcher.INJECTOR.getInstance(HttpEndpoint.class);
         httpUserSupport = new HttpUserSupport(new OkHttpClient(), entryPointUrl);
         httpEndpoint.start();
         return self();

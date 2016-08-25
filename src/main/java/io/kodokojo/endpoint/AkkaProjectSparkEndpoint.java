@@ -23,6 +23,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import com.google.inject.name.Named;
 import io.kodokojo.brick.BrickFactory;
 import io.kodokojo.endpoint.dto.ProjectConfigDto;
 import io.kodokojo.endpoint.dto.ProjectCreationDto;
@@ -31,6 +32,7 @@ import io.kodokojo.model.Project;
 import io.kodokojo.model.ProjectConfiguration;
 import io.kodokojo.model.User;
 import io.kodokojo.service.ProjectManager;
+import io.kodokojo.service.actor.EndpointActor;
 import io.kodokojo.service.actor.project.ProjectConfigurationDtoCreatorActor;
 import io.kodokojo.service.authentification.SimpleCredential;
 import io.kodokojo.service.repository.ProjectRepository;
@@ -69,7 +71,7 @@ public class AkkaProjectSparkEndpoint extends AbstractSparkEndpoint {
     private final BrickFactory brickFactory;
 
     @Inject
-    public AkkaProjectSparkEndpoint(UserAuthenticator<SimpleCredential> userAuthenticator, ActorRef akkaEndpoint, ProjectManager projectManager, UserRepository userFetcher, ProjectRepository projectFetcher, BrickFactory brickFactory) {
+    public AkkaProjectSparkEndpoint(UserAuthenticator<SimpleCredential> userAuthenticator, @Named(EndpointActor.NAME) ActorRef akkaEndpoint, ProjectManager projectManager, UserRepository userFetcher, ProjectRepository projectFetcher, BrickFactory brickFactory) {
         super(userAuthenticator);
         if (userFetcher == null) {
             throw new IllegalArgumentException("userFetcher must be defined.");

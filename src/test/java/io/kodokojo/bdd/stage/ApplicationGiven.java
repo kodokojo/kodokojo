@@ -1,17 +1,17 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -23,7 +23,9 @@ import akka.actor.ActorSystem;
 import akka.actor.Terminated;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Image;
-import com.google.inject.*;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import com.squareup.okhttp.OkHttpClient;
 import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.AfterScenario;
@@ -31,52 +33,29 @@ import com.tngtech.jgiven.annotation.Hidden;
 import com.tngtech.jgiven.annotation.ProvidedScenarioState;
 import com.tngtech.jgiven.annotation.Quoted;
 import io.kodokojo.Launcher;
-import io.kodokojo.brick.BrickFactory;
-import io.kodokojo.brick.BrickUrlFactory;
-import io.kodokojo.brick.DefaultBrickFactory;
-import io.kodokojo.brick.DefaultBrickUrlFactory;
-import io.kodokojo.config.DockerConfig;
-import io.kodokojo.config.module.ActorModule;
-import io.kodokojo.config.module.AkkaModule;
-import io.kodokojo.config.module.endpoint.AkkaProjectEndpointModule;
-import io.kodokojo.config.module.endpoint.UserEndpointModule;
-import io.kodokojo.config.properties.provider.*;
-import io.kodokojo.model.Service;
 import io.kodokojo.commons.utils.DockerTestSupport;
+import io.kodokojo.config.DockerConfig;
+import io.kodokojo.config.module.InjectorProvider;
 import io.kodokojo.config.properties.PropertyResolver;
-import io.kodokojo.config.ApplicationConfig;
-import io.kodokojo.config.EmailConfig;
-import io.kodokojo.config.module.EmailSenderModule;
-import io.kodokojo.config.module.endpoint.BrickEndpointModule;
-import io.kodokojo.config.module.endpoint.ProjectEndpointModule;
+import io.kodokojo.config.properties.provider.*;
 import io.kodokojo.endpoint.HttpEndpoint;
-import io.kodokojo.endpoint.SparkEndpoint;
-import io.kodokojo.endpoint.UserAuthenticator;
+import io.kodokojo.model.Service;
+import io.kodokojo.service.BrickManager;
+import io.kodokojo.service.ConfigurationStore;
 import io.kodokojo.service.ProjectManager;
 import io.kodokojo.service.actor.EndpointActor;
-import io.kodokojo.service.redis.RedisEntityStore;
-import io.kodokojo.service.redis.RedisProjectStore;
-import io.kodokojo.service.redis.RedisUserRepository;
-import io.kodokojo.service.repository.EntityRepository;
-import io.kodokojo.service.repository.ProjectRepository;
 import io.kodokojo.service.repository.Repository;
-import io.kodokojo.service.repository.UserRepository;
-import io.kodokojo.service.authentification.SimpleCredential;
-import io.kodokojo.service.authentification.SimpleUserAuthenticator;
 import io.kodokojo.test.utils.TestUtils;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.concurrent.Await;
 import scala.concurrent.duration.Duration;
 
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 
 public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SELF> {
@@ -111,7 +90,7 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
     int restEntryPointPort;
 
     @ProvidedScenarioState
-    RedisUserRepository userStore;
+    Repository repository;
 
     @ProvidedScenarioState
     String currentUserLogin;
@@ -124,12 +103,6 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
 
     @ProvidedScenarioState
     ProjectManager projectManager;
-
-    @ProvidedScenarioState
-    ProjectRepository projectRepository;
-
-    @ProvidedScenarioState
-    EntityRepository entityRepository;
 
     @ProvidedScenarioState
     HttpUserSupport httpUserSupport;
@@ -194,95 +167,20 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
     }
 
     public SELF kodokojo_restEntrypoint_is_available_on_port_$(int port) {
-        try {
-            KeyGenerator generator = KeyGenerator.getInstance("AES");
-            generator.init(128);
-            SecretKey aesKey = generator.generateKey();
-            userStore = new RedisUserRepository(aesKey, redisHost, redisPort);
-            DefaultBrickFactory brickFactory = new DefaultBrickFactory();
-            UserAuthenticator<SimpleCredential> userAuthenticator = new SimpleUserAuthenticator(userStore);
-            Repository repository = new Repository(userStore, userStore, new RedisEntityStore(aesKey, redisHost, redisPort), new RedisProjectStore(aesKey, redisHost, redisPort, brickFactory));
-            entityRepository = repository;
-            projectRepository = repository;
-            projectManager = mock(ProjectManager.class);
-            Launcher.INJECTOR = Guice.createInjector(new UserEndpointModule(), new AkkaModule(), new AkkaProjectEndpointModule(), new BrickEndpointModule(), new EmailSenderModule(), new AbstractModule() {
-                @Override
-                protected void configure() {
-                    bind(UserRepository.class).toInstance(userStore);
-                    bind(ProjectRepository.class).toInstance(projectRepository);
-                    bind(EntityRepository.class).toInstance(entityRepository);
-                    bind(Repository.class).toInstance(repository);
-                    bind(ProjectManager.class).toInstance(projectManager);
 
-                    bind(Key.get(new TypeLiteral<UserAuthenticator<SimpleCredential>>() {
-                    })).toInstance(userAuthenticator);
-                    bind(BrickFactory.class).toInstance(brickFactory);
-                    bind(ApplicationConfig.class).toInstance(new ApplicationConfig() {
-                        @Override
-                        public int port() {
-                            return 80;
-                        }
+        projectManager = mock(ProjectManager.class);
+        BrickManager brickManager = mock(BrickManager.class);
+        ConfigurationStore configurationStore = mock(ConfigurationStore.class);
+        InjectorProvider injectorProvider = new InjectorProvider(null, dockerTestSupport, port, redisHost, redisPort, projectManager, brickManager, configurationStore);
+        Launcher.INJECTOR = injectorProvider.provideInjector();
+        repository = Launcher.INJECTOR.getInstance(Repository.class);
+        httpEndpoint = Launcher.INJECTOR.getInstance(HttpEndpoint.class);
 
-                        @Override
-                        public String domain() {
-                            return "kodokojo.dev";
-                        }
+        httpUserSupport = new HttpUserSupport(new OkHttpClient(), "localhost:" + port);
+        httpEndpoint.start();
+        restEntryPointPort = port;
+        restEntryPointHost = "localhost";
 
-                        @Override
-                        public String loadbalancerHost() {
-                            return dockerTestSupport.getServerIp();
-                        }
-
-                        @Override
-                        public int initialSshPort() {
-                            return 1022;
-                        }
-
-                        @Override
-                        public long sslCaDuration() {
-                            return -1;
-                        }
-                    });
-                    bind(BrickUrlFactory.class).toInstance(new DefaultBrickUrlFactory("kodokojo.dev"));
-                    bind(EmailConfig.class).toInstance(new EmailConfig() {
-                        @Override
-                        public String smtpHost() {
-                            return null;
-                        }
-
-                        @Override
-                        public int smtpPort() {
-                            return 0;
-                        }
-
-                        @Override
-                        public String smtpUsername() {
-                            return null;
-                        }
-
-                        @Override
-                        public String smtpPassword() {
-                            return null;
-                        }
-
-                        @Override
-                        public String smtpFrom() {
-                            return null;
-                        }
-
-                    });
-                }
-            });
-            Set<SparkEndpoint> sparkEndpoints = Launcher.INJECTOR.getInstance(Key.get(new TypeLiteral<Set<SparkEndpoint>>() {
-            }));
-            httpEndpoint = new HttpEndpoint(port, new SimpleUserAuthenticator(userStore), sparkEndpoints);
-            httpUserSupport = new HttpUserSupport(new OkHttpClient(), "localhost:" + port);
-            httpEndpoint.start();
-            restEntryPointPort = port;
-            restEntryPointHost = "localhost";
-        } catch (NoSuchAlgorithmException e) {
-            fail(e.getMessage(), e);
-        }
         return self();
     }
 
@@ -306,10 +204,10 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
             httpEndpoint.stop();
             httpEndpoint = null;
         }
-
+/*
         ActorSystem actorSystem = Launcher.INJECTOR.getInstance(ActorSystem.class);
         if (actorSystem != null) {
-            actorSystem.actorSelection(EndpointActor.ACTOR_PATH).tell(new Terminated(ActorRef.noSender(),true, true), ActorRef.noSender());
+            actorSystem.actorSelection(EndpointActor.ACTOR_PATH).tell(new Terminated(ActorRef.noSender(), true, true), ActorRef.noSender());
             actorSystem.shutdown();
             try {
                 Await.ready(actorSystem.whenTerminated(), Duration.create(1, TimeUnit.MINUTES));
@@ -319,6 +217,7 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
                 e.printStackTrace();
             }
         }
+        */
 
     }
 

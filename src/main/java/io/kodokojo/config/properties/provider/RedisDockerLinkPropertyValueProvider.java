@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package io.kodokojo.config.module;
+package io.kodokojo.config.properties.provider;
 
 import io.kodokojo.config.properties.provider.PropertyValueProvider;
 import io.kodokojo.config.properties.provider.SystemEnvValueProvider;

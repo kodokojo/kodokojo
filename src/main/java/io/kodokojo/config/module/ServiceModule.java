@@ -17,12 +17,22 @@
  */
 package io.kodokojo.config.module;
 
+import akka.actor.ActorRef;
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.regions.Region;
+import com.amazonaws.regions.Regions;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.squareup.okhttp.OkHttpClient;
 import io.kodokojo.brick.*;
+import io.kodokojo.config.AwsConfig;
+import io.kodokojo.config.EmailConfig;
+import io.kodokojo.service.aws.Route53DnsManager;
+import io.kodokojo.service.aws.SesEmailSender;
+import io.kodokojo.service.dns.NoOpDnsManager;
 import io.kodokojo.service.repository.ProjectRepository;
 import io.kodokojo.service.ssl.SSLKeyPair;
 import io.kodokojo.config.ApplicationConfig;
@@ -35,6 +45,8 @@ import io.kodokojo.service.lifecycle.ApplicationLifeCycleManager;
 import io.kodokojo.service.ssl.SSLCertificatProviderFromCaSSLpaire;
 import io.kodokojo.service.ssl.WildcardSSLCertificatProvider;
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.*;
 import java.security.SecureRandom;
@@ -42,6 +54,8 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
 public class ServiceModule extends AbstractModule {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ServiceModule.class);
 
     @Override
     protected void configure() {
@@ -66,36 +80,44 @@ public class ServiceModule extends AbstractModule {
 
     @Provides
     @Singleton
-    BrickFactory provideBrickFactory() {
-        return new DefaultBrickFactory();
-    }
-
-    @Provides
-    @Singleton
-    BrickConfigurerProvider provideBrickConfigurerProvider(BrickUrlFactory brickUrlFactory, OkHttpClient httpClient) {
-        return new DefaultBrickConfigurerProvider(brickUrlFactory, httpClient);
-    }
-
-    @Provides
-    @Singleton
-    SSLCertificatProvider provideSslCertificatProvider(SecurityConfig securityConfig, ApplicationConfig applicationConfig, SSLKeyPair sslKeyPair, BrickUrlFactory brickUrlFactory) {
-        if (StringUtils.isNotBlank(securityConfig.wildcardPemPath())) {
-            return new WildcardSSLCertificatProvider(sslKeyPair);
+    DnsManager provideDnsManager(ApplicationConfig applicationConfig, AwsConfig awsConfig) {
+        AWSCredentials credentials = null;
+        try {
+            DefaultAWSCredentialsProviderChain defaultAWSCredentialsProviderChain = new DefaultAWSCredentialsProviderChain();
+            credentials = defaultAWSCredentialsProviderChain.getCredentials();
+        } catch (RuntimeException e) {
+            LOGGER.warn("Unable to retrieve AWS credentials.");
         }
-        return new SSLCertificatProviderFromCaSSLpaire(applicationConfig.domain(), applicationConfig.sslCaDuration(), sslKeyPair, brickUrlFactory);
+        if (StringUtils.isNotBlank(System.getenv("NO_DNS")) || credentials == null) {
+            LOGGER.info("Using NoOpDnsManager as DnsManger implementation");
+            return new NoOpDnsManager();
+        } else {
+            LOGGER.info("Using Route53DnsManager as DnsManger implementation");
+            return new Route53DnsManager(applicationConfig.domain(), Region.getRegion(Regions.fromName(awsConfig.region())));
+        }
     }
 
     @Provides
     @Singleton
-    ProjectManager provideProjectManager(ApplicationConfig applicationConfig, BrickConfigurationStarter brickConfigurationStarter, ConfigurationStore configurationStore, ProjectRepository projectRepository, BootstrapConfigurationProvider bootstrapConfigurationProvider, DnsManager dnsManager, BrickConfigurerProvider brickConfigurerProvider, BrickUrlFactory brickUrlFactory) {
-        return new DefaultProjectManager(applicationConfig.domain(), configurationStore, projectRepository, bootstrapConfigurationProvider,dnsManager, brickConfigurerProvider,  brickConfigurationStarter, brickUrlFactory);
+    EmailSender provideEmailSender(AwsConfig awsConfig, EmailConfig emailConfig) {
+        if (StringUtils.isBlank(emailConfig.smtpHost())) {
+            AWSCredentials credentials = null;
+            try {
+                DefaultAWSCredentialsProviderChain defaultAWSCredentialsProviderChain = new DefaultAWSCredentialsProviderChain();
+                credentials = defaultAWSCredentialsProviderChain.getCredentials();
+            } catch (RuntimeException e) {
+                LOGGER.warn("Unable to retrieve AWS credentials.");
+            }
+            if (credentials == null) {
+                return new NoopEmailSender();
+            } else {
+                return new SesEmailSender(emailConfig.smtpFrom(), Region.getRegion(Regions.fromName(awsConfig.region())));
+            }
+        } else {
+            return new SmtpEmailSender(emailConfig.smtpHost(), emailConfig.smtpPort(), emailConfig.smtpUsername(), emailConfig.smtpPassword(), emailConfig.smtpFrom());
+        }
     }
 
-    @Provides
-    @Singleton
-    BrickUrlFactory provideBrickUrlFactory(ApplicationConfig applicationConfig) {
-        return new DefaultBrickUrlFactory(applicationConfig.domain());
-    }
 
     @Provides
     @Singleton
@@ -137,6 +159,33 @@ public class ServiceModule extends AbstractModule {
         });
         httpClient.setSslSocketFactory(ctx.getSocketFactory());
         return httpClient;
+    }
+
+    @Provides
+    @Singleton
+    BrickFactory provideBrickFactory() {
+        return new DefaultBrickFactory();
+    }
+
+    @Provides
+    @Singleton
+    BrickConfigurerProvider provideBrickConfigurerProvider(BrickUrlFactory brickUrlFactory, OkHttpClient httpClient) {
+        return new DefaultBrickConfigurerProvider(brickUrlFactory, httpClient);
+    }
+
+    @Provides
+    @Singleton
+    SSLCertificatProvider provideSslCertificatProvider(SecurityConfig securityConfig, ApplicationConfig applicationConfig, SSLKeyPair sslKeyPair, BrickUrlFactory brickUrlFactory) {
+        if (StringUtils.isNotBlank(securityConfig.wildcardPemPath())) {
+            return new WildcardSSLCertificatProvider(sslKeyPair);
+        }
+        return new SSLCertificatProviderFromCaSSLpaire(applicationConfig.domain(), applicationConfig.sslCaDuration(), sslKeyPair, brickUrlFactory);
+    }
+
+    @Provides
+    @Singleton
+    BrickUrlFactory provideBrickUrlFactory(ApplicationConfig applicationConfig) {
+        return new DefaultBrickUrlFactory(applicationConfig.domain());
     }
 
 }

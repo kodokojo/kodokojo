@@ -22,8 +22,14 @@ import akka.actor.Props;
 import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
 import io.kodokojo.brick.BrickFactory;
+import io.kodokojo.brick.BrickStartContext;
+import io.kodokojo.brick.BrickUrlFactory;
 import io.kodokojo.endpoint.dto.ProjectCreationDto;
+import io.kodokojo.service.BrickManager;
+import io.kodokojo.service.ConfigurationStore;
 import io.kodokojo.service.ProjectManager;
+import io.kodokojo.service.SSLCertificatProvider;
+import io.kodokojo.service.actor.BrickConfigurationStarterActor;
 import io.kodokojo.service.repository.ProjectRepository;
 import org.apache.commons.collections4.CollectionUtils;
 
@@ -33,7 +39,7 @@ public class ProjectEndpointActor extends AbstractActor {
 
     private final LoggingAdapter LOGGER = getLogger(getContext().system(), this);
 
-    public static Props PROPS(ProjectRepository projectRepository, ProjectManager projectManager, BrickFactory brickFactory) {
+    public static Props PROPS(ProjectRepository projectRepository, ProjectManager projectManager, BrickFactory brickFactory, BrickManager brickManager, ConfigurationStore configurationStore, BrickUrlFactory brickUrlFactory, SSLCertificatProvider sslCertificatProvider) {
         if (projectRepository == null) {
             throw new IllegalArgumentException("projectRepository must be defined.");
         }
@@ -43,9 +49,22 @@ public class ProjectEndpointActor extends AbstractActor {
         if (brickFactory == null) {
             throw new IllegalArgumentException("brickFactory must be defined.");
         }
-        return Props.create(ProjectEndpointActor.class, projectRepository, projectManager, brickFactory);
-
+        if (brickManager == null) {
+            throw new IllegalArgumentException("brickManager must be defined.");
+        }
+        if (configurationStore == null) {
+            throw new IllegalArgumentException("configurationStore must be defined.");
+        }
+        if (brickUrlFactory == null) {
+            throw new IllegalArgumentException("brickUrlFactory must be defined.");
+        }
+        if (sslCertificatProvider == null) {
+            throw new IllegalArgumentException("sslCertificatProvider must be defined.");
+        }
+        return Props.create(ProjectEndpointActor.class, projectRepository, projectManager, brickFactory, brickManager, configurationStore, brickUrlFactory, sslCertificatProvider);
     }
+
+    public static final String NAME = "projectEndpointProps";
 
     private final ProjectRepository projectRepository;
 
@@ -53,7 +72,7 @@ public class ProjectEndpointActor extends AbstractActor {
 
     private final BrickFactory brickFactory;
 
-    public ProjectEndpointActor(ProjectRepository projectRepository, ProjectManager projectManager, BrickFactory brickFactory) {
+    public ProjectEndpointActor(ProjectRepository projectRepository, ProjectManager projectManager, BrickFactory brickFactory,BrickManager brickManager, ConfigurationStore configurationStore, BrickUrlFactory brickUrlFactory, SSLCertificatProvider sslCertificatProvider) {
         if (projectRepository == null) {
             throw new IllegalArgumentException("projectRepository must be defined.");
         }
@@ -80,6 +99,9 @@ public class ProjectEndpointActor extends AbstractActor {
                 .match(BootstrapStackActor.BootstrapStackMsg.class, msg -> {
                     LOGGER.debug("Bootstrapping a project stack.");
                     getContext().actorOf(BootstrapStackActor.PROPS(projectManager)).forward(msg, getContext());
+                })
+                .match(BrickStartContext.class, msg -> {
+                    getContext().actorOf(BrickConfigurationStarterActor.PROPS(brickManager, configurationStore, brickUrlFactory, sslCertificatProvider)).forward(msg, getContext());
                 })
                 .matchAny(this::unhandled).build());
     }

@@ -21,11 +21,13 @@ import akka.actor.ActorRef;
 import akka.util.Timeout;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.inject.name.Named;
 import io.kodokojo.endpoint.dto.UserCreationDto;
 import io.kodokojo.endpoint.dto.UserDto;
 import io.kodokojo.endpoint.dto.UserProjectConfigIdDto;
 import io.kodokojo.model.User;
 import io.kodokojo.service.RSAUtils;
+import io.kodokojo.service.actor.EndpointActor;
 import io.kodokojo.service.actor.user.UserCreatorActor;
 import io.kodokojo.service.actor.user.UserEligibleActor;
 import io.kodokojo.service.actor.user.UserGenerateIdentifierActor;
@@ -63,7 +65,7 @@ public class UserSparkEndpoint extends AbstractSparkEndpoint {
     private final ProjectFetcher projectFetcher;
 
     @Inject
-    public UserSparkEndpoint(UserAuthenticator<SimpleCredential> userAuthenticator, ActorRef akkaEndpoint, UserRepository userFetcher, ProjectRepository projectFetcher) {
+    public UserSparkEndpoint(UserAuthenticator<SimpleCredential> userAuthenticator, @Named(EndpointActor.NAME) ActorRef akkaEndpoint, UserRepository userFetcher, ProjectRepository projectFetcher) {
         super(userAuthenticator);
         if (akkaEndpoint == null) {
             throw new IllegalArgumentException("akkaEndpoint must be defined.");
@@ -102,6 +104,7 @@ public class UserSparkEndpoint extends AbstractSparkEndpoint {
             } else if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Create a new User with a new Entity");
             }
+
 
             Future<Object> userCreationFuture = ask(
                     akkaEndpoint,

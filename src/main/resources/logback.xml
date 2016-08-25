@@ -29,7 +29,8 @@
         </encoder>
     </appender>
 
-    <logger name="io.kodokojo" level="INFO"/>
+    <logger name="io.kodokojo" level="DEBUG"/>
+    <logger name="akka" level="DEBUG"/>
 
     <root level="WARN">
         <appender-ref ref="STDOUT" />

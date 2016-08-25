@@ -1,32 +1,42 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package io.kodokojo;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
+import akka.actor.ActorRef;
+import akka.actor.ActorSystem;
+import com.google.inject.*;
+import com.google.inject.name.Names;
+import io.kodokojo.brick.BrickFactory;
+import io.kodokojo.config.ApplicationConfig;
 import io.kodokojo.config.module.*;
-import io.kodokojo.config.module.endpoint.UserEndpointModule;
 import io.kodokojo.config.module.endpoint.BrickEndpointModule;
 import io.kodokojo.config.module.endpoint.ProjectEndpointModule;
-import io.kodokojo.endpoint.HttpEndpoint;
+import io.kodokojo.config.module.endpoint.UserEndpointModule;
+import io.kodokojo.endpoint.*;
+import io.kodokojo.service.ProjectManager;
+import io.kodokojo.service.actor.EndpointActor;
 import io.kodokojo.service.lifecycle.ApplicationLifeCycleManager;
+import io.kodokojo.service.repository.Repository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class Launcher {
 
@@ -40,20 +50,19 @@ public class Launcher {
 
         LOGGER.info("Starting Kodo Kojo.");
 
-        INJECTOR = Guice.createInjector(new PropertyModule(args),
-                new SecurityModule(),
-                new RedisModule(),
-                new ServiceModule(),
-                new ActorModule(),
-                new AkkaModule(),
-                new AwsModule(),
-                new MarathonModule(),
-                new UserEndpointModule(),
-                new BrickEndpointModule(),
-                new ProjectEndpointModule(),
-                new RestEndpointModule()
-        );
+        Injector propertyInjector = Guice.createInjector(new PropertyModule(args));
+        Injector servicesInjector = propertyInjector.createChildInjector(new ServiceModule(), new DatabaseModule(), new SecurityModule());
+        Injector akkaInjector = servicesInjector.createChildInjector(new AkkaModule(), new OrchestratorModule(), new MarathonModule());
+        ActorSystem actorSystem = akkaInjector.getInstance(ActorSystem.class);
+        ActorRef endpointActor = actorSystem.actorOf(EndpointActor.PROPS(akkaInjector), "endpoint");
+        INJECTOR = akkaInjector.createChildInjector(new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(ActorRef.class).annotatedWith(Names.named(EndpointActor.NAME)).toInstance(endpointActor);
+            }
+        }, new HttpModule(), new UserEndpointModule(), new ProjectEndpointModule(), new BrickEndpointModule());
 
+        HttpEndpoint httpEndpoint = INJECTOR.getInstance(HttpEndpoint.class);
         ApplicationLifeCycleManager applicationLifeCycleManager = INJECTOR.getInstance(ApplicationLifeCycleManager.class);
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -65,8 +74,7 @@ public class Launcher {
                 LOGGER.info("All services stopped.");
             }
         });
-
-        HttpEndpoint httpEndpoint = INJECTOR.getInstance(HttpEndpoint.class);
+        applicationLifeCycleManager.addService(httpEndpoint);
         httpEndpoint.start();
 
         LOGGER.info("Kodo Kojo started.");
