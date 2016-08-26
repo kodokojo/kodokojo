@@ -19,7 +19,6 @@ package io.kodokojo.config.module.endpoint;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import io.kodokojo.endpoint.AkkaProjectSparkEndpoint;
 import io.kodokojo.endpoint.ProjectSparkEndpoint;
 import io.kodokojo.endpoint.SparkEndpoint;
 
@@ -28,7 +27,7 @@ public class ProjectEndpointModule extends AbstractModule {
     @Override
     protected void configure() {
         Multibinder<SparkEndpoint> sparkEndpointBinder = Multibinder.newSetBinder(binder(), SparkEndpoint.class);
-        sparkEndpointBinder.addBinding().to(AkkaProjectSparkEndpoint.class);
+        sparkEndpointBinder.addBinding().to(ProjectSparkEndpoint.class);
     }
 
 }

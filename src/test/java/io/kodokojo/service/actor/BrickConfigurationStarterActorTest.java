@@ -23,9 +23,10 @@ import akka.actor.Props;
 import akka.testkit.JavaTestKit;
 import io.kodokojo.brick.BrickUrlFactory;
 import io.kodokojo.brick.DefaultBrickUrlFactory;
-import io.kodokojo.model.BrickState;
+import io.kodokojo.service.actor.message.BrickStateEvent;
 import io.kodokojo.model.Service;
 import io.kodokojo.service.RSAUtils;
+import io.kodokojo.service.actor.project.BrickConfigurationStarterActor;
 import io.kodokojo.service.ssl.SSLKeyPair;
 import io.kodokojo.service.ssl.SSLUtils;
 import io.kodokojo.model.*;
@@ -109,8 +110,8 @@ public class BrickConfigurationStarterActorTest {
 
                     Object[] objects = probe.receiveN(3);
                     assertThat(objects.length).isEqualTo(3);
-                    List<BrickState> brickStates = Arrays.asList(objects).stream().map(o -> (BrickState) o).collect(Collectors.toList());
-                    assertThat(brickStates).extracting("state.name").contains(BrickState.State.CONFIGURING.name(), BrickState.State.STARTING.name(), BrickState.State.RUNNING.name());
+                    List<BrickStateEvent> brickStateEvents = Arrays.asList(objects).stream().map(o -> (BrickStateEvent) o).collect(Collectors.toList());
+                    assertThat(brickStateEvents).extracting("state.name").contains(BrickStateEvent.State.CONFIGURING.name(), BrickStateEvent.State.STARTING.name(), BrickStateEvent.State.RUNNING.name());
 
                     verify(configurationStore).storeSSLKeys(eq("Acme"), eq("ci"), any(SSLKeyPair.class));
                     try {
@@ -145,11 +146,11 @@ public class BrickConfigurationStarterActorTest {
             new AwaitAssert(duration("10 seconds")) {
                 @Override
                 protected void check() {
-                    String[] states = new String[] {BrickState.State.STARTING.name(), BrickState.State.ALREADYEXIST.name()};
+                    String[] states = new String[] {BrickStateEvent.State.STARTING.name(), BrickStateEvent.State.ALREADYEXIST.name()};
                     Object[] objects = probe.receiveN(2);
                     assertThat(objects.length).isEqualTo(2);
-                    List<BrickState> brickStates = Arrays.asList(objects).stream().map(o -> (BrickState) o).collect(Collectors.toList());
-                    assertThat(brickStates).extracting("state.name").contains( states);
+                    List<BrickStateEvent> brickStateEvents = Arrays.asList(objects).stream().map(o -> (BrickStateEvent) o).collect(Collectors.toList());
+                    assertThat(brickStateEvents).extracting("state.name").contains( states);
 
                     verify(configurationStore).storeSSLKeys(eq("Acme"), eq("ci"), any(SSLKeyPair.class));
                 }

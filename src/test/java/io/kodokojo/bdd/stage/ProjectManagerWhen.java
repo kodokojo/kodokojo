@@ -64,7 +64,7 @@ public class ProjectManagerWhen<SELF extends ProjectManagerWhen<?>> extends Stag
         String stackName = "build-a";
         StackType stackType = StackType.BUILD;
 
-        BootstrapStackData bootstrapStackData = projectManager.bootstrapStack(projectName, stackName, stackType);
+        //BootstrapStackData bootstrapStackData = projectManager.bootstrapStack(projectName, stackName, stackType);
 
 
         if ("Default".equals(configurationName)) {
@@ -74,7 +74,7 @@ public class ProjectManagerWhen<SELF extends ProjectManagerWhen<?>> extends Stag
             brickConfigurations.add(new BrickConfiguration(brickFactory.createBrick("jenkins")));
             brickConfigurations.add(new BrickConfiguration(brickFactory.createBrick("gitlab")));
             brickConfigurations.add(new BrickConfiguration(brickFactory.createBrick("nexus")));
-            StackConfiguration stackConfiguration = new StackConfiguration(stackName, stackType, brickConfigurations, bootstrapStackData.getLoadBalancerHost(), bootstrapStackData.getSshPort());
+            StackConfiguration stackConfiguration = new StackConfiguration(stackName, stackType, brickConfigurations, "localhost", 22);
             stackConfigurations.add(stackConfiguration);
             List<User> users = Arrays.asList(user);
             projectConfiguration = new ProjectConfiguration("123456", "7890",configurationName, users, stackConfigurations, users);

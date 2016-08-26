@@ -6,7 +6,11 @@ import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
 import io.kodokojo.model.BootstrapStackData;
 import io.kodokojo.model.StackType;
+import io.kodokojo.service.BootstrapConfigurationProvider;
+import io.kodokojo.service.ConfigurationStore;
 import io.kodokojo.service.ProjectManager;
+import io.kodokojo.service.repository.ProjectFetcher;
+import io.kodokojo.service.repository.ProjectRepository;
 
 import static akka.event.Logging.getLogger;
 import static org.apache.commons.lang.StringUtils.isBlank;
@@ -15,18 +19,34 @@ public class BootstrapStackActor extends AbstractActor {
 
     private final LoggingAdapter LOGGER = getLogger(getContext().system(), this);
 
-    public static Props PROPS(ProjectManager projectManager) {
-        if (projectManager == null) {
-            throw new IllegalArgumentException("projectManager must be defined.");
+    public static Props PROPS( BootstrapConfigurationProvider bootstrapConfigurationProvider, ConfigurationStore configurationStore) {
+
+        if (bootstrapConfigurationProvider == null) {
+            throw new IllegalArgumentException("bootstrapConfigurationProvider must be defined.");
         }
-        return Props.create(BootstrapStackActor.class, projectManager);
+        if (configurationStore == null) {
+            throw new IllegalArgumentException("configurationStore must be defined.");
+        }
+        return Props.create(BootstrapStackActor.class, bootstrapConfigurationProvider, configurationStore);
     }
 
-    public BootstrapStackActor(ProjectManager projectManager) {
+    public BootstrapStackActor(BootstrapConfigurationProvider bootstrapConfigurationProvider, ConfigurationStore configurationStore) {
         receive(ReceiveBuilder.match(BootstrapStackMsg.class,  msg -> {
-            LOGGER.debug("Boostraping project '{}'", msg.projectName);
-            BootstrapStackData bootstrapStackData = projectManager.bootstrapStack(msg.projectName, msg.stackName, msg.stackType);
-            sender().tell(new BootstrapStackResultMsg(bootstrapStackData), self());
+            String projectName = msg.projectName;
+            String stackName = msg.stackName;
+            StackType stackType = msg.stackType;
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Boostraping project '{}'", msg.projectName);
+            }
+
+            String loadBalancerHost = bootstrapConfigurationProvider.provideLoadBalancerHost(projectName, stackName);
+            int sshPortEntrypoint = 0;
+            if (stackType == StackType.BUILD) {
+                sshPortEntrypoint = bootstrapConfigurationProvider.provideSshPortEntrypoint(projectName, stackName);
+            }
+            BootstrapStackData res = new BootstrapStackData(projectName, stackName, loadBalancerHost, sshPortEntrypoint);
+            configurationStore.storeBootstrapStackData(res);
+            sender().tell(new BootstrapStackResultMsg(res), self());
             getContext().stop(self());
         }).matchAny(this::unhandled).build());
 

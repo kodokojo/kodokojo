@@ -24,6 +24,7 @@ import io.kodokojo.commons.DockerPresentMethodRule;
 import io.kodokojo.model.Service;
 import io.kodokojo.commons.utils.DockerTestSupport;
 import io.kodokojo.service.RSAUtils;
+import io.kodokojo.service.actor.message.BrickStateEvent;
 import io.kodokojo.service.repository.store.ProjectConfigurationStoreModel;
 import io.kodokojo.service.ssl.SSLKeyPair;
 import io.kodokojo.service.ssl.SSLUtils;
@@ -135,9 +136,9 @@ public class RedisProjectStoreIntTest {
         KeyPair keyPair = RSAUtils.generateRsaKeyPair();
         SSLKeyPair sslKeyPair = SSLUtils.createSelfSignedSSLKeyPair("Acme", (RSAPrivateKey) keyPair.getPrivate(), (RSAPublicKey) keyPair.getPublic());
         Set<Stack> stacks = new HashSet<>();
-        Set<BrickState> brickStates = new HashSet<>();
-        brickStates.add(new BrickState("123456", "build-A", BrickType.CI.name(), "jenkins", BrickState.State.RUNNING, "1.651"));
-        stacks.add(new Stack("build-A", StackType.BUILD, brickStates));
+        Set<BrickStateEvent> brickStateEvents = new HashSet<>();
+        brickStateEvents.add(new BrickStateEvent("123456", "build-A", BrickType.CI.name(), "jenkins", BrickStateEvent.State.RUNNING, "1.651"));
+        stacks.add(new Stack("build-A", StackType.BUILD, brickStateEvents));
         return new Project("123456", "Acme", new Date(), stacks);
     }
 

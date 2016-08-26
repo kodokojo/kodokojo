@@ -15,13 +15,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package io.kodokojo.model;
+package io.kodokojo.service.actor.message;
 
 import java.io.Serializable;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
-public class BrickState implements Serializable {
+public class BrickStateEvent implements Serializable {
 
     public enum State {
         STARTING,
@@ -40,7 +40,9 @@ public class BrickState implements Serializable {
 
     private final String brickName;
 
-    private final State state;
+    private final State oldState;
+
+    private final State newState;
 
     private final String url;
 
@@ -48,7 +50,7 @@ public class BrickState implements Serializable {
 
     private final String version;
 
-    public BrickState(String projectConfigurationIdentifier, String stackName, String brickType, String brickName, State state, String url, String message, String version) {
+    public BrickStateEvent(String projectConfigurationIdentifier, String stackName, String brickType, String brickName, State oldState, State newState, String url, String message, String version) {
         if (isBlank(projectConfigurationIdentifier)) {
             throw new IllegalArgumentException("projectConfigurationIdentifier must be defined.");
         }
@@ -61,8 +63,8 @@ public class BrickState implements Serializable {
         if (isBlank(brickName)) {
             throw new IllegalArgumentException("brickName must be defined.");
         }
-        if (state == null) {
-            throw new IllegalArgumentException("state must be defined.");
+        if (newState == null) {
+            throw new IllegalArgumentException("newState must be defined.");
         }
         if (isBlank(version)) {
             throw new IllegalArgumentException("version must be defined.");
@@ -71,18 +73,19 @@ public class BrickState implements Serializable {
         this.brickType = brickType;
         this.stackName = stackName;
         this.brickName = brickName;
-        this.state = state;
+        this.oldState = oldState;
+        this.newState = newState;
         this.url = url;
         this.message = message;
         this.version = version;
     }
 
-    public BrickState(String projectConfigurationIdentifier, String stackName, String brickType, String brickName, State state, String url, String version) {
-        this(projectConfigurationIdentifier,stackName,  brickType, brickName, state, url, null, version);
+    public BrickStateEvent(String projectConfigurationIdentifier, String stackName, String brickType, String brickName, State newState, String url, String version) {
+        this(projectConfigurationIdentifier,stackName,  brickType, brickName,null, newState, url, null, version);
     }
 
-    public BrickState(String projectConfigurationIdentifier, String stackName, String brickType, String brickName, State state, String version) {
-        this(projectConfigurationIdentifier,stackName,  brickType, brickName, state, null, null, version);
+    public BrickStateEvent(String projectConfigurationIdentifier, String stackName, String brickType, String brickName, State newState, String version) {
+        this(projectConfigurationIdentifier,stackName,  brickType, brickName,null, newState, null, null, version);
     }
 
     public String getProjectConfigurationIdentifier() {
@@ -101,8 +104,12 @@ public class BrickState implements Serializable {
         return brickName;
     }
 
-    public State getState() {
-        return state;
+    public State getNewState() {
+        return newState;
+    }
+
+    public State getOldState() {
+        return oldState;
     }
 
     public String getUrl() {
@@ -119,15 +126,16 @@ public class BrickState implements Serializable {
 
     @Override
     public String toString() {
-        return "BrickState{" +
+        return "BrickStateEvent{" +
                 "projectConfigurationIdentifier='" + projectConfigurationIdentifier + '\'' +
-                ", stackName='" + stackName + '\'' +
                 ", brickType='" + brickType + '\'' +
+                ", stackName='" + stackName + '\'' +
                 ", brickName='" + brickName + '\'' +
-                ", version=" + version +
-                ", message=" + message +
-                ", url=" + url +
-                ", state=" + state +
+                ", oldState=" + oldState +
+                ", newState=" + newState +
+                ", url='" + url + '\'' +
+                ", message='" + message + '\'' +
+                ", version='" + version + '\'' +
                 '}';
     }
 
@@ -136,14 +144,14 @@ public class BrickState implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        BrickState that = (BrickState) o;
+        BrickStateEvent that = (BrickStateEvent) o;
 
         if (!projectConfigurationIdentifier.equals(that.projectConfigurationIdentifier)) return false;
         if (!brickType.equals(that.brickType)) return false;
         if (!brickName.equals(that.brickName)) return false;
         if (!stackName.equals(that.stackName)) return false;
         if (!version.equals(that.version)) return false;
-        return state == that.state;
+        return newState == that.newState;
 
     }
 
@@ -153,7 +161,7 @@ public class BrickState implements Serializable {
         result = 31 * result + brickType.hashCode();
         result = 31 * result + brickName.hashCode();
         result = 31 * result + stackName.hashCode();
-        result = 31 * result + state.hashCode();
+        result = 31 * result + newState.hashCode();
         result = 31 * result + version.hashCode();
         return result;
     }

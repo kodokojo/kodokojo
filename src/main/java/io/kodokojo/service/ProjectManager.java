@@ -29,16 +29,6 @@ import java.util.List;
 public interface ProjectManager {
 
     /**
-     * Allow to generate information required to bootstrap a project stack.
-     * @param projectName The name of the project to bootstrap
-     * @param stackName The name of stack to bootstrap
-     * @param stackType The typ of stack
-     * @return The bootstrap information's generated.
-     */
-    //TODO Split it in separate interface(/class)
-    BootstrapStackData bootstrapStack(String projectName,String stackName, StackType stackType);
-
-    /**
      * Start all stack and brick for a given ProjectConfiguration.
      * @param projectConfiguration The project configuration to start.
      * @return A snapshot state of Project

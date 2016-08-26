@@ -17,71 +17,86 @@
  */
 package io.kodokojo.endpoint;
 
+import akka.actor.ActorRef;
+import akka.util.Timeout;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import com.google.inject.name.Named;
 import io.kodokojo.brick.BrickFactory;
-import io.kodokojo.brick.DefaultBrickFactory;
 import io.kodokojo.endpoint.dto.ProjectConfigDto;
 import io.kodokojo.endpoint.dto.ProjectCreationDto;
 import io.kodokojo.endpoint.dto.ProjectDto;
-import io.kodokojo.model.*;
+import io.kodokojo.model.Project;
+import io.kodokojo.model.ProjectConfiguration;
+import io.kodokojo.model.User;
 import io.kodokojo.service.ProjectManager;
+import io.kodokojo.service.actor.EndpointActor;
+import io.kodokojo.service.actor.project.ProjectConfigurationDtoCreatorActor;
 import io.kodokojo.service.authentification.SimpleCredential;
 import io.kodokojo.service.repository.ProjectRepository;
+import io.kodokojo.service.repository.UserFetcher;
 import io.kodokojo.service.repository.UserRepository;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.concurrent.Await;
+import scala.concurrent.Future;
+import scala.concurrent.duration.Duration;
+import scala.concurrent.duration.FiniteDuration;
 
 import javax.inject.Inject;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
+import static akka.pattern.Patterns.ask;
 import static spark.Spark.*;
 
 public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProjectSparkEndpoint.class);
 
+    private final ActorRef akkaEndpoint;
+
     private final ProjectManager projectManager;
 
-    private final UserRepository userRepository;
+    private final UserFetcher userFetcher;
 
-    private final ProjectRepository projectRepository;
-
-    private final BrickFactory brickFactory;
+    private final ProjectRepository projectFetcher;
 
     @Inject
-    public ProjectSparkEndpoint(UserAuthenticator<SimpleCredential> userAuthenticator, UserRepository userRepository, ProjectRepository projectRepository, ProjectManager projectManager, BrickFactory brickFactory) {
+    public ProjectSparkEndpoint(UserAuthenticator<SimpleCredential> userAuthenticator, @Named(EndpointActor.NAME) ActorRef akkaEndpoint, ProjectManager projectManager, UserRepository userFetcher, ProjectRepository projectFetcher) {
         super(userAuthenticator);
-        if (userRepository == null) {
-            throw new IllegalArgumentException("userRepository must be defined.");
+        if (userFetcher == null) {
+            throw new IllegalArgumentException("userFetcher must be defined.");
+        }
+        if (akkaEndpoint == null) {
+            throw new IllegalArgumentException("akkaEndpoint must be defined.");
         }
         if (projectManager == null) {
             throw new IllegalArgumentException("projectManager must be defined.");
         }
-        if (projectRepository == null) {
-            throw new IllegalArgumentException("projectRepository must be defined.");
+        if (projectFetcher == null) {
+            throw new IllegalArgumentException("projectFetcher must be defined.");
         }
-        if (brickFactory == null) {
-            throw new IllegalArgumentException("brickFactory must be defined.");
-        }
-        this.userRepository = userRepository;
-        this.projectRepository = projectRepository;
+        this.userFetcher = userFetcher;
         this.projectManager = projectManager;
-        this.brickFactory = brickFactory;
+        this.projectFetcher = projectFetcher;
+        this.akkaEndpoint = akkaEndpoint;
     }
 
     @Override
     public void configure() {
         post(BASE_API + "/projectconfig", JSON_CONTENT_TYPE, (request, response) -> {
+            User requester = getRequester(request);
+
             String body = request.body();
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Try to create project {}", body);
+                LOGGER.debug("Try to create project configuration {}", body);
             }
             Gson gson = localGson.get();
             ProjectCreationDto dto = gson.fromJson(body, ProjectCreationDto.class);
@@ -89,38 +104,12 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
                 halt(400);
                 return "";
             }
-            User owner = userRepository.getUserByIdentifier(dto.getOwnerIdentifier());
-            String entityId = owner.getEntityIdentifier();
-            if (StringUtils.isBlank(entityId)) {
-                halt(400);
-                return "";
-            }
 
-            Set<StackConfiguration> stackConfigurations = createDefaultStackConfiguration(dto.getName());
-            if (CollectionUtils.isNotEmpty(dto.getStackConfigs())) {
-                stackConfigurations = dto.getStackConfigs().stream().map(stack -> {
-                    Set<BrickConfiguration> brickConfigurations = stack.getBrickConfigs().stream().map(b -> {
-                        Brick brick = brickFactory.createBrick(b.getName());
-                        return new BrickConfiguration(brick);
-                    }).collect(Collectors.toSet());
-                    StackType stackType = StackType.valueOf(stack.getType());
-                    BootstrapStackData bootstrapStackData = projectManager.bootstrapStack(dto.getName(), stack.getName(), stackType);
-                    return new StackConfiguration(stack.getName(), stackType, brickConfigurations, bootstrapStackData.getLoadBalancerHost(), bootstrapStackData.getSshPort());
-                }).collect(Collectors.toSet());
-            }
+            FiniteDuration duration = Duration.apply(30, TimeUnit.SECONDS);
 
-            List<User> admins = new ArrayList<>();
-            admins.add(owner);
-            List<User> users = new ArrayList<>();
-            users.add(owner);
-            if (CollectionUtils.isNotEmpty(dto.getUserIdentifiers())) {
-                for (String userId : dto.getUserIdentifiers()) {
-                    User user = userRepository.getUserByIdentifier(userId);
-                    users.add(user);
-                }
-            }
-            ProjectConfiguration projectConfiguration = new ProjectConfiguration(entityId, dto.getName(), admins, stackConfigurations, users);
-            String projectConfigIdentifier = projectRepository.addProjectConfiguration(projectConfiguration);
+            Future<Object> future = ask(akkaEndpoint, new ProjectConfigurationDtoCreatorActor.ProjectConfigurationDtoCreateMsg(requester, dto), new Timeout(duration));
+            ProjectConfigurationDtoCreatorActor.ProjectConfigurationDtoCreateResultMsg result = (ProjectConfigurationDtoCreatorActor.ProjectConfigurationDtoCreateResultMsg) Await.result(future, duration);
+            String projectConfigIdentifier = result.getProjectConfigurationId();
 
             response.status(201);
             response.header("Location", "/projectconfig/" + projectConfigIdentifier);
@@ -129,18 +118,19 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
 
 
         get(BASE_API + "/projectconfig/:id", JSON_CONTENT_TYPE, (request, response) -> {
-            User requester = getRequester(request);
             String identifier = request.params(":id");
-            ProjectConfiguration projectConfiguration = projectRepository.getProjectConfigurationById(identifier);
+            ProjectConfiguration projectConfiguration = projectFetcher.getProjectConfigurationById(identifier);
             if (projectConfiguration == null) {
                 halt(404);
                 return "";
             }
-            boolean isAnAdmin = isAdmin(requester, projectConfiguration);
-            if (isAnAdmin) {
+            User requester = getRequester(request);
+            List<User> admins = IteratorUtils.toList(projectConfiguration.getAdmins());
+            Optional<User> isAdmin = admins.stream().filter(a -> a.getIdentifier().equals(requester.getIdentifier())).findFirst();
+            if (isAdmin.isPresent()) {
                 return new ProjectConfigDto(projectConfiguration);
             }
-            halt(403);
+            halt(403, "Your are not admin of project configuration '" + projectConfiguration.getName() + "'.");
             return "";
         }, jsonResponseTransformer);
 
@@ -148,19 +138,19 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
             User requester = getRequester(request);
 
             String identifier = request.params(":id");
-            ProjectConfiguration projectConfiguration = projectRepository.getProjectConfigurationById(identifier);
+            ProjectConfiguration projectConfiguration = projectFetcher.getProjectConfigurationById(identifier);
             if (projectConfiguration == null) {
                 halt(404);
                 return "";
             }
-            if (isAdmin(requester, projectConfiguration)) {
+            if (userIsAdmin(requester, projectConfiguration)) {
                 JsonParser parser = new JsonParser();
                 JsonArray root = (JsonArray) parser.parse(request.body());
                 List<User> users = IteratorUtils.toList(projectConfiguration.getUsers());
                 List<User> usersToAdd = new ArrayList<>();
                 for (JsonElement el : root) {
                     String userToAddId = el.getAsJsonPrimitive().getAsString();
-                    User userToAdd = userRepository.getUserByIdentifier(userToAddId);
+                    User userToAdd = userFetcher.getUserByIdentifier(userToAddId);
                     if (userToAdd != null && !users.contains(userToAdd)) {
                         users.add(userToAdd);
                         usersToAdd.add(userToAdd);
@@ -168,7 +158,7 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
                 }
 
                 projectConfiguration.setUsers(users);
-                projectRepository.updateProjectConfiguration(projectConfiguration);
+                projectFetcher.updateProjectConfiguration(projectConfiguration);
                 LOGGER.debug("Adding user {} to projectConfig {}", usersToAdd, projectConfiguration);
                 projectManager.addUsersToProject(projectConfiguration, usersToAdd);
             } else {
@@ -181,24 +171,24 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
         delete(BASE_API + "/projectconfig/:id/user", JSON_CONTENT_TYPE, ((request, response) -> {
             User requester = getRequester(request);
             String identifier = request.params(":id");
-            ProjectConfiguration projectConfiguration = projectRepository.getProjectConfigurationById(identifier);
+            ProjectConfiguration projectConfiguration = projectFetcher.getProjectConfigurationById(identifier);
             if (projectConfiguration == null) {
                 halt(404);
                 return "";
             }
-            if (isAdmin(requester, projectConfiguration)) {
+            if (userIsAdmin(requester, projectConfiguration)) {
                 JsonParser parser = new JsonParser();
                 JsonArray root = (JsonArray) parser.parse(request.body());
                 List<User> users = IteratorUtils.toList(projectConfiguration.getUsers());
                 for (JsonElement el : root) {
                     String userToDeleteId = el.getAsJsonPrimitive().getAsString();
-                    User userToDelete = userRepository.getUserByIdentifier(userToDeleteId);
+                    User userToDelete = userFetcher.getUserByIdentifier(userToDeleteId);
                     if (userToDelete != null) {
                         users.remove(userToDelete);
                     }
                 }
                 projectConfiguration.setUsers(users);
-                projectRepository.updateProjectConfiguration(projectConfiguration);
+                projectFetcher.updateProjectConfiguration(projectConfiguration);
             } else {
                 halt(403, "You have not right to delete user to project configuration id " + identifier + ".");
             }
@@ -210,21 +200,20 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
 
         //  Start project
         post(BASE_API + "/project/:id", JSON_CONTENT_TYPE, ((request, response) -> {
-
             User requester = getRequester(request);
             String projectConfigurationId = request.params(":id");
-            ProjectConfiguration projectConfiguration = projectRepository.getProjectConfigurationById(projectConfigurationId);
+            ProjectConfiguration projectConfiguration = projectFetcher.getProjectConfigurationById(projectConfigurationId);
             if (projectConfiguration == null) {
                 halt(404, "Project configuration not found.");
                 return "";
             }
-            if (isAdmin(requester, projectConfiguration)) {
-                String projectId = projectRepository.getProjectIdByProjectConfigurationId(projectConfigurationId);
+            if (userIsAdmin(requester, projectConfiguration)) {
+                String projectId = projectFetcher.getProjectIdByProjectConfigurationId(projectConfigurationId);
                 if (StringUtils.isBlank(projectId)) {
                     //   projectManager.bootstrapStack(projectConfiguration.getName(), projectConfiguration.getDefaultStackConfiguration().getName(), projectConfiguration.getDefaultStackConfiguration().getType());
                     Project project = projectManager.start(projectConfiguration);
                     response.status(201);
-                    String projectIdStarted = projectRepository.addProject(project, projectConfigurationId);
+                    String projectIdStarted = projectFetcher.addProject(project, projectConfigurationId);
                     return projectIdStarted;
                 } else {
                     halt(409, "Project already exist.");
@@ -232,20 +221,20 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
             } else {
                 halt(403, "You have not right to start project configuration id " + projectConfigurationId + ".");
             }
-
             return "";
         }));
 
         get(BASE_API + "/project/:id", JSON_CONTENT_TYPE, ((request, response) -> {
+
             User requester = getRequester(request);
             String projectId = request.params(":id");
-            Project project = projectRepository.getProjectByIdentifier(projectId);
+            Project project = projectFetcher.getProjectByIdentifier(projectId);
             if (project == null) {
                 halt(404);
                 return "";
             }
-            ProjectConfiguration projectConfiguration = projectRepository.getProjectConfigurationById(project.getProjectConfigurationIdentifier());
-            if (isAdmin(requester, projectConfiguration)) {
+            ProjectConfiguration projectConfiguration = projectFetcher.getProjectConfigurationById(project.getProjectConfigurationIdentifier());
+            if (userIsAdmin(requester, projectConfiguration)) {
                 return new ProjectDto(project);
             } else {
                 halt(403, "You have not right to lookup project id " + projectId + ".");
@@ -255,23 +244,11 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
         }), jsonResponseTransformer);
     }
 
-    private Set<StackConfiguration> createDefaultStackConfiguration(String projectName) {
-        Set<BrickConfiguration> bricksConfigurations = new HashSet<>();
-        //bricksConfigurations.add(new BrickConfiguration(brickFactory.createBrick(DefaultBrickFactory.HAPROXY), false));
-        bricksConfigurations.add(new BrickConfiguration(brickFactory.createBrick(DefaultBrickFactory.JENKINS)));
-        bricksConfigurations.add(new BrickConfiguration(brickFactory.createBrick(DefaultBrickFactory.NEXUS)));
-        bricksConfigurations.add(new BrickConfiguration(brickFactory.createBrick(DefaultBrickFactory.GITLAB)));
-        String stackName = "build-A";
-        BootstrapStackData bootstrapStackData = projectManager.bootstrapStack(projectName, stackName, StackType.BUILD);
-        StackConfiguration stackConfiguration = new StackConfiguration(stackName, StackType.BUILD, bricksConfigurations, bootstrapStackData.getLoadBalancerHost(), bootstrapStackData.getSshPort());
-        return Collections.singleton(stackConfiguration);
+    private static boolean userIsAdmin(User user, ProjectConfiguration projectConfiguration) {
+        List<User> users = IteratorUtils.toList(projectConfiguration.getAdmins());
+        return users.stream().filter(u -> u.getIdentifier().equals(user.getIdentifier())).findFirst().isPresent();
     }
 
-    private static boolean isAdmin(User user, ProjectConfiguration projectConfiguration) {
-        return IteratorUtils.toList(projectConfiguration.getAdmins()).stream()
-                .filter(a -> a.getIdentifier().equals(user.getIdentifier()))
-                .findFirst().isPresent();
-    }
 
 }
 

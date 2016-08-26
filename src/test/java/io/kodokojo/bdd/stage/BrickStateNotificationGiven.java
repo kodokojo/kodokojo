@@ -38,7 +38,6 @@ import io.kodokojo.config.module.endpoint.BrickEndpointModule;
 import io.kodokojo.config.module.endpoint.ProjectEndpointModule;
 import io.kodokojo.config.module.endpoint.UserEndpointModule;
 import io.kodokojo.endpoint.HttpEndpoint;
-import io.kodokojo.endpoint.SparkEndpoint;
 import io.kodokojo.endpoint.UserAuthenticator;
 import io.kodokojo.model.Service;
 import io.kodokojo.service.*;
@@ -69,7 +68,6 @@ import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Matchers.anyString;
@@ -143,6 +141,10 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
         } catch (NoSuchAlgorithmException e) {
             fail(e.getMessage());
         }
+        BootstrapConfigurationProvider bootstrapConfigurationProvider = mock(BootstrapConfigurationProvider.class);
+        Mockito.when(bootstrapConfigurationProvider.provideLoadBalancerHost(anyString(),anyString())).thenReturn(dockerTestSupport.getServerIp());
+        Mockito.when(bootstrapConfigurationProvider.provideSshPortEntrypoint(anyString(),anyString())).thenReturn(10022);
+
         SSLKeyPair caKey = SSLUtils.createSelfSignedSSLKeyPair("Fake CA", (RSAPrivateKey) keyPair.getPrivate(), (RSAPublicKey) keyPair.getPublic());
         Repository repository = new Repository(redisUserManager, redisUserManager, redisEntityStore, redisProjectStore);
         Injector injector = Guice.createInjector(new AbstractModule() {
@@ -154,12 +156,13 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
                 bind(Repository.class).toInstance(repository);
                 bind(ProjectRepository.class).toInstance(repository);
                 bind(EntityRepository.class).toInstance(repository);
-                bind(BrickStateMsgDispatcher.class).toInstance(new BrickStateMsgDispatcher());
+                bind(BrickStateEventDispatcher.class).toInstance(new BrickStateEventDispatcher());
                 bind(BrickManager.class).toInstance(brickManager);
                 bind(DnsManager.class).toInstance(dnsManager);
                 bind(ConfigurationStore.class).toInstance(configurationStore);
                 bind(BrickFactory.class).toInstance(new DefaultBrickFactory());
                 bind(EmailSender.class).toInstance(new NoopEmailSender());
+                bind(BootstrapConfigurationProvider.class).toInstance(bootstrapConfigurationProvider);
                 bind(Key.get(new TypeLiteral<UserAuthenticator<SimpleCredential>>() {
                 })).toInstance(new SimpleUserAuthenticator(redisUserManager));
                 DefaultBrickUrlFactory brickUrlFactory = new DefaultBrickUrlFactory("kodokojo.dev");
