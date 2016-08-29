@@ -25,24 +25,35 @@ import com.tngtech.jgiven.annotation.ProvidedScenarioState;
 import io.kodokojo.brick.BrickStartContext;
 import io.kodokojo.brick.DefaultBrickConfigurerProvider;
 import io.kodokojo.brick.DefaultBrickUrlFactory;
+import io.kodokojo.model.Project;
+import io.kodokojo.model.ProjectBuilder;
+import io.kodokojo.model.Stack;
 import io.kodokojo.service.*;
 import io.kodokojo.service.dns.NoOpDnsManager;
 import io.kodokojo.service.repository.ProjectRepository;
 import io.kodokojo.service.ssl.SSLKeyPair;
 import io.kodokojo.service.ssl.SSLUtils;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+import org.mockito.verification.VerificationMode;
 
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class ProjectManagerGiven<SELF extends ProjectManagerGiven<?>> extends Stage<SELF> {
@@ -71,6 +82,9 @@ public class ProjectManagerGiven<SELF extends ProjectManagerGiven<?>> extends St
     @ProvidedScenarioState
     BootstrapConfigurationProvider configProvider;
 
+    @ProvidedScenarioState
+    Project project;
+
     public SELF i_bootstrap_project_$(String projectName) {
         KeyPair keyPair = null;
         try {
@@ -87,6 +101,7 @@ public class ProjectManagerGiven<SELF extends ProjectManagerGiven<?>> extends St
         configurationStore = mock(ConfigurationStore.class);
         projectRepository = mock(ProjectRepository.class);
         Mockito.when(projectRepository.projectNameIsValid(projectName)).thenReturn(true);
+
         configProvider = mock(BootstrapConfigurationProvider.class);
         Mockito.when(configProvider.provideLoadBalancerHost(anyString(), anyString())).thenReturn("127.0.0.1");
         Mockito.when(configProvider.provideSshPortEntrypoint(anyString(), anyString())).thenReturn(10022);
@@ -94,6 +109,18 @@ public class ProjectManagerGiven<SELF extends ProjectManagerGiven<?>> extends St
         brickCaptured = new ArrayList<>();
         ActorRef actor = actorSystem.actorOf(Props.create(TestActor.class, brickCaptured), "endpoint");
         //Mockito.when(actor.tell(any(), any()))
+        Mockito.when(projectRepository.addProject(any(), anyString())).then(new Answer<String>() {
+            @Override
+            public String answer(InvocationOnMock invocation) throws Throwable {
+                Project argProject = (Project) invocation.getArguments()[0];
+                ProjectBuilder builder = new ProjectBuilder(argProject);
+                builder.setIdentifier("1234");
+                ProjectManagerThen.project = builder.build();
+                return "1234";
+            }
+        });
+        Mockito.when(projectRepository.getProjectByIdentifier("1234")).thenReturn(project);
+
 
 
         projectManager = new DefaultProjectManager("kodokojo.dev", configurationStore, projectRepository, configProvider, new NoOpDnsManager(), new DefaultBrickConfigurerProvider(new DefaultBrickUrlFactory("kodokojo.dev"), new OkHttpClient()), actorSystem, new DefaultBrickUrlFactory("kodokojo.dev"));
@@ -109,6 +136,10 @@ public class ProjectManagerGiven<SELF extends ProjectManagerGiven<?>> extends St
             }).build());
         }
 
+    }
+
+    public Project getProject() {
+        return project;
     }
 }
 

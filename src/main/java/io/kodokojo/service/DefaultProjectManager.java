@@ -147,7 +147,8 @@ public class DefaultProjectManager implements ProjectManager {
         contexts.forEach(c -> {
             endpointActor.tell(c, ActorRef.noSender());
         });
-        return projectRepository.getProjectByIdentifier(projectId);
+        Project res = projectRepository.getProjectByIdentifier(projectId);
+        return res;
     }
 
     @Override

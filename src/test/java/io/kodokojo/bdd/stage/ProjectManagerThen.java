@@ -26,6 +26,7 @@ import io.kodokojo.brick.BrickStartContext;
 import io.kodokojo.model.Project;
 import io.kodokojo.model.ProjectConfiguration;
 import io.kodokojo.model.Stack;
+import io.kodokojo.service.repository.ProjectRepository;
 import org.mockito.ArgumentCaptor;
 
 import java.util.List;
@@ -33,6 +34,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -44,8 +46,9 @@ public class ProjectManagerThen<SELF extends ProjectManagerThen<?>> extends Stag
     @ExpectedScenarioState
     List<BrickStartContext> brickCaptured;
 
-    @ExpectedScenarioState
-    Project project;
+
+    public static Project project;
+
 
     public SELF brick_$_are_started(ExpectedProjectState projectState) {
         assertThat(project).isNotNull();
@@ -58,6 +61,9 @@ public class ProjectManagerThen<SELF extends ProjectManagerThen<?>> extends Stag
 
         assertThat(brickCaptured).extracting("brickConfiguration.type.name").contains(projectState.getBrickTypePresents().stream().map(Enum::name).collect(Collectors.toList()).toArray());
 
+
         return self();
     }
+
+
 }

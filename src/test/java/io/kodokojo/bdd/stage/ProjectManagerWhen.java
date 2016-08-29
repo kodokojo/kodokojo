@@ -27,6 +27,9 @@ import io.kodokojo.service.RSAUtils;
 import io.kodokojo.model.*;
 import io.kodokojo.service.DefaultProjectManager;
 import io.kodokojo.service.ProjectAlreadyExistException;
+import io.kodokojo.service.repository.ProjectRepository;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
@@ -50,7 +53,8 @@ public class ProjectManagerWhen<SELF extends ProjectManagerWhen<?>> extends Stag
     ProjectConfiguration projectConfiguration;
 
     @ProvidedScenarioState
-    Project project;
+    ProjectRepository projectRepository;
+
 
     public SELF i_start_project_with_the_project_configuration_$(@Quoted String configurationName) {
         KeyPair keyPair = null;
@@ -80,9 +84,9 @@ public class ProjectManagerWhen<SELF extends ProjectManagerWhen<?>> extends Stag
             projectConfiguration = new ProjectConfiguration("123456", "7890",configurationName, users, stackConfigurations, users);
         }
 
-
         try {
-            project = projectManager.start(projectConfiguration);
+            Project project = projectManager.start(projectConfiguration);
+            System.out.println(project);
         } catch (ProjectAlreadyExistException e) {
             fail(e.getMessage());
         }
