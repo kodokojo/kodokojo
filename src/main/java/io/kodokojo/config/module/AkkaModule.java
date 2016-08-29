@@ -1,6 +1,8 @@
 package io.kodokojo.config.module;
 
+import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
+import akka.actor.DeadLetter;
 import akka.actor.Props;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -9,6 +11,7 @@ import io.kodokojo.brick.BrickFactory;
 import io.kodokojo.brick.BrickStateEventDispatcher;
 import io.kodokojo.brick.BrickUrlFactory;
 import io.kodokojo.service.*;
+import io.kodokojo.service.actor.DeadLetterActor;
 import io.kodokojo.service.actor.entity.EntityEndpointActor;
 import io.kodokojo.service.actor.event.EventEndpointActor;
 import io.kodokojo.service.actor.project.ProjectEndpointActor;
@@ -22,6 +25,8 @@ public class AkkaModule extends AbstractModule {
     @Override
     protected void configure() {
         ActorSystem actorSystem = ActorSystem.apply("kodokojo");
+        ActorRef deadletterlistener = actorSystem.actorOf(DeadLetterActor.PROPS(), "deadletterlistener");
+        actorSystem.eventStream().subscribe(deadletterlistener, DeadLetter.class);
         bind(ActorSystem.class).toInstance(actorSystem);
     }
 
