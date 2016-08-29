@@ -90,6 +90,7 @@ public class EndpointActor extends AbstractActor {
         }).match(BrickStartContext.class, msg -> {
             projectEndpoint.forward(msg, getContext());
         }).match(BrickStateEvent.class, msg -> {
+            LOGGER.debug("Forward BrickStateEvent to EventEndpoint.");
             eventEndpointNotifier.forward(msg, getContext());
         }).match(ProjectUpdaterActor.ProjectUpdateMsg.class, msg -> {
             projectEndpoint.forward(msg, getContext());

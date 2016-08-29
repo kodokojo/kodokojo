@@ -38,6 +38,7 @@ public class BrickStateEventPersistenceActor extends AbstractActor {
 
     public BrickStateEventPersistenceActor(ProjectRepository projectRepository) {
         receive(ReceiveBuilder.match(BrickStateEvent.class, msg -> {
+            LOGGER.debug("Receive BrickStateEvent for project configuration identifier {}.", msg.getProjectConfigurationIdentifier());
             originalSender = sender();
             Project project = projectRepository.getProjectByProjectConfigurationId(msg.getProjectConfigurationIdentifier());
             if (project == null) {

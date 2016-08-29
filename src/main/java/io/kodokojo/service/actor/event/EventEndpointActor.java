@@ -2,6 +2,7 @@ package io.kodokojo.service.actor.event;
 
 import akka.actor.AbstractActor;
 import akka.actor.Props;
+import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
 import io.kodokojo.brick.BrickStateEventDispatcher;
 import io.kodokojo.model.User;
@@ -10,7 +11,11 @@ import io.kodokojo.service.actor.message.UserRequestMessage;
 import io.kodokojo.service.actor.project.BrickStateEventPersistenceActor;
 import io.kodokojo.service.repository.ProjectRepository;
 
+import static akka.event.Logging.getLogger;
+
 public class EventEndpointActor extends AbstractActor {
+
+    private final LoggingAdapter LOGGER = getLogger(getContext().system(), this);
 
     public static Props PROPS(BrickStateEventDispatcher brickStateEventDispatcher, ProjectRepository projectRepository) {
         if (brickStateEventDispatcher == null) {
@@ -29,6 +34,7 @@ public class EventEndpointActor extends AbstractActor {
                 .match(EventMsg.class, msg -> {
                 })
                 .match(BrickStateEvent.class, msg -> {
+                    LOGGER.debug("Receive  BrickStateEvent to BrickStateEventPersistenceActor.");
                     getContext().actorOf(BrickStateEventPersistenceActor.PROPS(projectRepository)).forward(msg, getContext());
                     brickStateEventDispatcher.receive(msg); // Legacy, must be removed when migrate WebsoketEntrypoint.
                 })
