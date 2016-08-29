@@ -45,6 +45,7 @@ public class ProjectUpdaterActor extends AbstractActor {
             } else {
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("Update project '{}' from unknown requester.", msg.project.getName());
+                    LOGGER.debug("Update project {}", msg.project);
                 }
                 projectRepository.updateProject(originalMsg.project);
                 getContext().stop(self());

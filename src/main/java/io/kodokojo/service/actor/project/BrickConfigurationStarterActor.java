@@ -95,14 +95,14 @@ public class BrickConfigurationStarterActor extends AbstractActor {
         }
 
         try {
-            generateMsgAndSend(brickStartContext, httpsUrl, BrickStateEvent.State.STARTING);
+            generateMsgAndSend(brickStartContext, httpsUrl, null, BrickStateEvent.State.STARTING);
 
 
             Set<Service> services = brickManager.start(projectConfiguration, brickType);
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("{} for project {} started : {}", brickType, projectName, StringUtils.join(services, ","));
             }
-            generateMsgAndSend(brickStartContext, httpsUrl, BrickStateEvent.State.CONFIGURING);
+            generateMsgAndSend(brickStartContext, httpsUrl, BrickStateEvent.State.STARTING, BrickStateEvent.State.CONFIGURING);
 
             boolean configured = false;
             try {
@@ -110,37 +110,37 @@ public class BrickConfigurationStarterActor extends AbstractActor {
                 configured = true;
             } catch (ProjectConfigurationException e) {
                 LOGGER.error("An error occure while trying to configure project {}", projectName, e);
-                generateMsgAndSend(brickStartContext, httpsUrl, BrickStateEvent.State.ONFAILURE, e.getMessage());
+                generateMsgAndSend(brickStartContext, httpsUrl, null, BrickStateEvent.State.ONFAILURE, e.getMessage());
             }
 
             if (configured) {
-                generateMsgAndSend(brickStartContext, httpsUrl, BrickStateEvent.State.RUNNING);
+                generateMsgAndSend(brickStartContext, httpsUrl, BrickStateEvent.State.CONFIGURING, BrickStateEvent.State.RUNNING);
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("{} for project {} configured", brickType, projectName);
                 }
             }
         } catch (BrickAlreadyExist brickAlreadyExist) {
             LOGGER.error("Brick {} already exist for project {}, not reconfigure it.", brickAlreadyExist.getBrickName(), brickAlreadyExist.getProjectName());
-            generateMsgAndSend(brickStartContext, httpsUrl, BrickStateEvent.State.ALREADYEXIST);
+            generateMsgAndSend(brickStartContext, httpsUrl, null, BrickStateEvent.State.ALREADYEXIST);
         } catch (RuntimeException e) {
             LOGGER.error("An error occurred while trying to start brick {} for project {}.", brickType, projectName, e);
-            generateMsgAndSend(brickStartContext, httpsUrl, BrickStateEvent.State.ONFAILURE, e.getMessage());
+            generateMsgAndSend(brickStartContext, httpsUrl, null, BrickStateEvent.State.ONFAILURE, e.getMessage());
         }
         getContext().stop(self());
 
     }
 
-    private void generateMsgAndSend(BrickStartContext context, String url, BrickStateEvent.State state, String messageStr) {
+    private void generateMsgAndSend(BrickStartContext context, String url, BrickStateEvent.State oldState, BrickStateEvent.State newState, String messageStr) {
         ProjectConfiguration projectConfiguration = context.getProjectConfiguration();
         StackConfiguration stackConfiguration = context.getStackConfiguration();
         BrickConfiguration brickConfiguration = context.getBrickConfiguration();
         BrickType brickType = brickConfiguration.getType();
         String brickName = brickConfiguration.getName();
-        BrickStateEvent message = new BrickStateEvent(projectConfiguration.getIdentifier(),stackConfiguration.getName(),  brickType.name(), brickName,null, state, url, messageStr, brickConfiguration.getVersion());
+        BrickStateEvent message = new BrickStateEvent(projectConfiguration.getIdentifier(),stackConfiguration.getName(),  brickType.name(), brickName, oldState, newState, url, messageStr, brickConfiguration.getVersion());
         getContext().actorSelection(EndpointActor.ACTOR_PATH).tell(message, self());
     }
 
-    private void generateMsgAndSend(BrickStartContext context,String url, BrickStateEvent.State state) {
-        generateMsgAndSend(context, url, state, null);
+    private void generateMsgAndSend(BrickStartContext context,String url, BrickStateEvent.State oldState, BrickStateEvent.State newState) {
+        generateMsgAndSend(context, url, oldState, newState);
     }
 }
