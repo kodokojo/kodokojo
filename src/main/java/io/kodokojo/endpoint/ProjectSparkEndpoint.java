@@ -235,7 +235,10 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
             }
             ProjectConfiguration projectConfiguration = projectFetcher.getProjectConfigurationById(project.getProjectConfigurationIdentifier());
             if (userIsAdmin(requester, projectConfiguration)) {
-                return new ProjectDto(project);
+                LOGGER.debug("Retrieve project following project {}");
+                ProjectDto projectDto = new ProjectDto(project);
+                LOGGER.debug("Sending project Ddto {}", projectDto);
+                return projectDto;
             } else {
                 halt(403, "You have not right to lookup project id " + projectId + ".");
             }
