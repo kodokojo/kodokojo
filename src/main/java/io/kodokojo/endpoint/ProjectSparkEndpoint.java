@@ -213,7 +213,7 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
                     //   projectManager.bootstrapStack(projectConfiguration.getName(), projectConfiguration.getDefaultStackConfiguration().getName(), projectConfiguration.getDefaultStackConfiguration().getType());
                     Project project = projectManager.start(projectConfiguration);
                     response.status(201);
-                    String projectIdStarted = projectFetcher.addProject(project, projectConfigurationId);
+                    String projectIdStarted = project.getIdentifier();
                     return projectIdStarted;
                 } else {
                     halt(409, "Project already exist.");

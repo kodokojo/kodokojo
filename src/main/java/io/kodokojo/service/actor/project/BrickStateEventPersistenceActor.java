@@ -49,6 +49,7 @@ public class BrickStateEventPersistenceActor extends AbstractActor {
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Following project may be updated: {}", project);
             }
+
             ProjectBuilder builder = new ProjectBuilder(project).setSnapshotDate(new Date());
             Stack stack = findOrCreateStack(project, msg.getStackName());
             Set<Stack> stacks = new HashSet<>(project.getStacks());

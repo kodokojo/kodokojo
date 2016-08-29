@@ -140,12 +140,14 @@ public class DefaultProjectManager implements ProjectManager {
 
         }
         dnsManager.createOrUpdateDnsEntries(dnsEntries);
+        Project project = new Project(projectConfiguration.getIdentifier(), projectName, new Date(), stacks);
+        String projectId = projectRepository.addProject(project, projectConfiguration.getIdentifier());
+
         ActorRef endpointActor = brickConfigurationStarter.actorFor(EndpointActor.ACTOR_PATH);
         contexts.forEach(c -> {
             endpointActor.tell(c, ActorRef.noSender());
         });
-        Project project = new Project(projectConfiguration.getIdentifier(), projectName, new Date(), stacks);
-        return project;
+        return projectRepository.getProjectByIdentifier(projectId);
     }
 
     @Override
