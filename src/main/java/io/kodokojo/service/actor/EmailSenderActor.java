@@ -19,8 +19,10 @@ package io.kodokojo.service.actor;
 
 import akka.actor.AbstractActor;
 import akka.actor.Props;
+import akka.dispatch.Futures;
 import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
+import hudson.model.Run;
 import io.kodokojo.service.EmailSender;
 
 import java.util.Arrays;
@@ -47,7 +49,12 @@ public class EmailSenderActor extends AbstractActor {
         }
         this.emailSender = emailSender;
         receive(ReceiveBuilder.match(EmailSenderMsg.class, msg -> {
-            emailSender.send(msg.to,msg.cc, msg.ci, msg.object, msg.content, msg.htmlContent);
+            try {
+                emailSender.send(msg.to, msg.cc, msg.ci, msg.object, msg.content, msg.htmlContent);
+            } catch (RuntimeException e) {
+                LOGGER.error("Unable to sent email to '{}', with subject '{}'", Arrays.toString(msg.to.toArray()), msg.object, e);
+                sender().tell(Futures.failed(e), self());
+            }
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Email sent to '{}' with subject '{}'", Arrays.toString(msg.to.toArray()), msg.object);
             }
