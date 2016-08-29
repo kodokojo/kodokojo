@@ -14,6 +14,8 @@ import io.kodokojo.service.actor.EndpointActor;
 import io.kodokojo.service.actor.message.BrickStateEvent;
 import io.kodokojo.service.repository.ProjectRepository;
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Date;
 import java.util.HashSet;
@@ -24,7 +26,7 @@ import static akka.event.Logging.getLogger;
 
 public class BrickStateEventPersistenceActor extends AbstractActor {
 
-    private final LoggingAdapter LOGGER = getLogger(getContext().system(), this);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BrickStateEventPersistenceActor.class);
 
     public static Props PROPS(ProjectRepository projectRepository) {
         if (projectRepository == null) {
@@ -37,6 +39,7 @@ public class BrickStateEventPersistenceActor extends AbstractActor {
 
 
     public BrickStateEventPersistenceActor(ProjectRepository projectRepository) {
+        LOGGER.debug("Create a new BrickStateEventPersistenceActor.");
         receive(ReceiveBuilder.match(BrickStateEvent.class, msg -> {
             LOGGER.debug("Receive BrickStateEvent for project configuration identifier {}.", msg.getProjectConfigurationIdentifier());
             originalSender = sender();
