@@ -141,6 +141,6 @@ public class BrickConfigurationStarterActor extends AbstractActor {
     }
 
     private void generateMsgAndSend(BrickStartContext context,String url, BrickStateEvent.State oldState, BrickStateEvent.State newState) {
-        generateMsgAndSend(context, url, oldState, newState);
+        generateMsgAndSend(context, url, oldState, newState, "");
     }
 }
