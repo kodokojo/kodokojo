@@ -466,7 +466,7 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         Key<UserAuthenticator<SimpleCredential>> authenticatorKey = Key.get(new TypeLiteral<UserAuthenticator<SimpleCredential>>() {
         });
         UserAuthenticator<SimpleCredential> userAuthenticator = injector.getInstance(authenticatorKey);
-        sparkEndpoints.add(new ProjectSparkEndpoint(userAuthenticator, userRepository, projectRepository, projectManager, injector.getInstance(BrickFactory.class)));
+        sparkEndpoints.add(new ProjectSparkEndpoint(userAuthenticator, null, projectManager, userRepository, projectRepository));
         httpEndpoint = new HttpEndpoint(restEntryPointPort, new SimpleUserAuthenticator(userRepository), sparkEndpoints);
         Semaphore semaphore = new Semaphore(1);
         try {

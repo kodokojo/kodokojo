@@ -24,29 +24,18 @@ import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
 import com.google.inject.Injector;
 import com.google.inject.Key;
-import com.google.inject.name.Named;
 import com.google.inject.name.Names;
-import io.kodokojo.brick.BrickFactory;
 import io.kodokojo.brick.BrickStartContext;
-import io.kodokojo.brick.BrickStateMsgDispatcher;
-import io.kodokojo.brick.BrickUrlFactory;
-import io.kodokojo.model.BrickState;
-import io.kodokojo.service.*;
+import io.kodokojo.service.actor.message.BrickStateEvent;
 import io.kodokojo.service.actor.entity.AddUserToEntityActor;
 import io.kodokojo.service.actor.entity.EntityCreatorActor;
 import io.kodokojo.service.actor.entity.EntityEndpointActor;
 import io.kodokojo.service.actor.event.EventEndpointActor;
-import io.kodokojo.service.actor.project.BootstrapStackActor;
-import io.kodokojo.service.actor.project.ProjectConfigurationBuilderActor;
-import io.kodokojo.service.actor.project.ProjectConfigurationDtoCreatorActor;
-import io.kodokojo.service.actor.project.ProjectEndpointActor;
+import io.kodokojo.service.actor.project.*;
 import io.kodokojo.service.actor.user.UserCreatorActor;
 import io.kodokojo.service.actor.user.UserEndpointActor;
 import io.kodokojo.service.actor.user.UserFetcherActor;
 import io.kodokojo.service.actor.user.UserGenerateIdentifierActor;
-import io.kodokojo.service.repository.Repository;
-
-import javax.naming.Name;
 
 import static akka.event.Logging.getLogger;
 
@@ -100,8 +89,10 @@ public class EndpointActor extends AbstractActor {
             projectEndpoint.forward(msg, getContext());
         }).match(BrickStartContext.class, msg -> {
             projectEndpoint.forward(msg, getContext());
-        }).match(BrickState.class, msg -> {
+        }).match(BrickStateEvent.class, msg -> {
             eventEndpointNotifier.forward(msg, getContext());
+        }).match(ProjectUpdaterActor.ProjectUpdateMsg.class, msg -> {
+            projectEndpoint.forward(msg, getContext());
         })
                 .matchAny(this::unhandled).build());
     }

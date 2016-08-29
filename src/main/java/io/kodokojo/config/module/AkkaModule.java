@@ -1,13 +1,12 @@
 package io.kodokojo.config.module;
 
-import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.name.Named;
 import io.kodokojo.brick.BrickFactory;
-import io.kodokojo.brick.BrickStateMsgDispatcher;
+import io.kodokojo.brick.BrickStateEventDispatcher;
 import io.kodokojo.brick.BrickUrlFactory;
 import io.kodokojo.service.*;
 import io.kodokojo.service.actor.entity.EntityEndpointActor;
@@ -34,8 +33,8 @@ public class AkkaModule extends AbstractModule {
 
     @Provides
     @Named(ProjectEndpointActor.NAME)
-    Props provideProjectEndpointProps(ProjectRepository projectRepository, ProjectManager projectManager, BrickFactory brickFactory, BrickManager brickManager, ConfigurationStore configurationStore, BrickUrlFactory brickUrlFactory, SSLCertificatProvider sslCertificatProvider) {
-        return ProjectEndpointActor.PROPS(projectRepository, projectManager, brickFactory, brickManager, configurationStore, brickUrlFactory, sslCertificatProvider);
+    Props provideProjectEndpointProps(ProjectRepository projectRepository, UserRepository userRepository, ProjectManager projectManager, BrickFactory brickFactory, BrickManager brickManager, BootstrapConfigurationProvider bootstrapConfigurationProvider, ConfigurationStore configurationStore, BrickUrlFactory brickUrlFactory, SSLCertificatProvider sslCertificatProvider) {
+        return ProjectEndpointActor.PROPS(projectRepository, userRepository, projectManager, brickFactory, brickManager, bootstrapConfigurationProvider, configurationStore, brickUrlFactory, sslCertificatProvider);
     }
 
     @Provides
@@ -46,8 +45,8 @@ public class AkkaModule extends AbstractModule {
 
     @Provides
     @Named(EventEndpointActor.NAME)
-    Props provideEventEndpointProps(BrickStateMsgDispatcher brickStateMsgDispatcher) {
-        return EventEndpointActor.PROPS(brickStateMsgDispatcher);
+    Props provideEventEndpointProps(BrickStateEventDispatcher brickStateEventDispatcher, ProjectRepository projectRepository) {
+        return EventEndpointActor.PROPS(brickStateEventDispatcher, projectRepository);
     }
 
 }

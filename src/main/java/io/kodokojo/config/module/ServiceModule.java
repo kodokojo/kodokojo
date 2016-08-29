@@ -17,7 +17,6 @@
  */
 package io.kodokojo.config.module;
 
-import akka.actor.ActorRef;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.regions.Region;
@@ -71,10 +70,10 @@ public class ServiceModule extends AbstractModule {
 
     @Provides
     @Singleton
-    BrickStateMsgDispatcher provideBrickStateMsgDispatcher(ProjectRepository projectRepository) {
-        BrickStateMsgDispatcher dispatcher = new BrickStateMsgDispatcher();
-        StoreBrickStateListener storeBrickStateListener = new StoreBrickStateListener(projectRepository);
-        dispatcher.addListener(storeBrickStateListener);
+    BrickStateEventDispatcher provideBrickStateMsgDispatcher(ProjectRepository projectRepository) {
+        BrickStateEventDispatcher dispatcher = new BrickStateEventDispatcher();
+        //StoreBrickStateListener storeBrickStateListener = new StoreBrickStateListener(projectRepository);
+        //dispatcher.addListener(storeBrickStateListener);
         return dispatcher;
     }
 

@@ -21,9 +21,9 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import io.kodokojo.Launcher;
-import io.kodokojo.model.BrickState;
-import io.kodokojo.brick.BrickStateMsgDispatcher;
-import io.kodokojo.brick.BrickStateMsgListener;
+import io.kodokojo.brick.BrickStateEventDispatcher;
+import io.kodokojo.service.actor.message.BrickStateEvent;
+import io.kodokojo.brick.BrickStateEventListener;
 import io.kodokojo.brick.BrickUrlFactory;
 import io.kodokojo.endpoint.dto.WebSocketMessage;
 import io.kodokojo.endpoint.dto.WebSocketMessageGsonAdapter;
@@ -45,7 +45,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 //  WebSocket close event code https://developer.mozilla.org/fr/docs/Web/API/CloseEvent
 @WebSocket
-public class WebSocketEntryPoint implements BrickStateMsgListener {
+public class WebSocketEntryPoint implements BrickStateEventListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketEntryPoint.class);
 
@@ -79,9 +79,8 @@ public class WebSocketEntryPoint implements BrickStateMsgListener {
         userRepository = Launcher.INJECTOR.getInstance(UserRepository.class);
         projectRepository = Launcher.INJECTOR.getInstance(ProjectRepository.class);
         brickUrlFactory = Launcher.INJECTOR.getInstance(BrickUrlFactory.class);
-        BrickStateMsgDispatcher msgDispatcher = Launcher.INJECTOR.getInstance(BrickStateMsgDispatcher.class);
+        BrickStateEventDispatcher msgDispatcher = Launcher.INJECTOR.getInstance(BrickStateEventDispatcher.class);
         msgDispatcher.addListener(this);
-
     }
 
     @OnWebSocketConnect
@@ -187,12 +186,12 @@ public class WebSocketEntryPoint implements BrickStateMsgListener {
     }
 
     @Override
-    public void receive(BrickState brickState) {
-        if (brickState == null) {
-            throw new IllegalArgumentException("brickState must be defined.");
+    public void receive(BrickStateEvent brickStateEvent) {
+        if (brickStateEvent == null) {
+            throw new IllegalArgumentException("brickStateEvent must be defined.");
         }
-        WebSocketMessage message = convertToWebSocketMessage(brickState);
-        String projectConfigurationIdentifier = brickState.getProjectConfigurationIdentifier();
+        WebSocketMessage message = convertToWebSocketMessage(brickStateEvent);
+        String projectConfigurationIdentifier = brickStateEvent.getProjectConfigurationIdentifier();
         ProjectConfiguration projectConfiguration = projectRepository.getProjectConfigurationById(projectConfigurationIdentifier);
         Iterator<User> admins = projectConfiguration.getAdmins();
         List<String> adminIds = new ArrayList<>();
@@ -226,18 +225,18 @@ public class WebSocketEntryPoint implements BrickStateMsgListener {
         }
     }
 
-    private WebSocketMessage convertToWebSocketMessage(BrickState brickState) {
+    private WebSocketMessage convertToWebSocketMessage(BrickStateEvent brickStateEvent) {
         JsonObject data = new JsonObject();
-        data.addProperty("projectConfiguration", brickState.getProjectConfigurationIdentifier());
-        data.addProperty("brickType", brickState.getBrickType());
-        data.addProperty("brickName", brickState.getBrickName());
-        data.addProperty("state", brickState.getState().name());
-        if (brickState.getState() == BrickState.State.RUNNING) {
-            ProjectConfiguration projectConfiguration = projectRepository.getProjectConfigurationById(brickState.getProjectConfigurationIdentifier());
-            data.addProperty("url", "https://" + brickUrlFactory.forgeUrl(projectConfiguration.getName(), brickState.getStackName() , brickState.getBrickType(), brickState.getBrickName()));
+        data.addProperty("projectConfiguration", brickStateEvent.getProjectConfigurationIdentifier());
+        data.addProperty("brickType", brickStateEvent.getBrickType());
+        data.addProperty("brickName", brickStateEvent.getBrickName());
+        data.addProperty("state", brickStateEvent.getNewState().name());
+        if (brickStateEvent.getNewState() == BrickStateEvent.State.RUNNING) {
+            ProjectConfiguration projectConfiguration = projectRepository.getProjectConfigurationById(brickStateEvent.getProjectConfigurationIdentifier());
+            data.addProperty("url", "https://" + brickUrlFactory.forgeUrl(projectConfiguration.getName(), brickStateEvent.getStackName() , brickStateEvent.getBrickType(), brickStateEvent.getBrickName()));
         }
-        if (brickState.getState() == BrickState.State.ONFAILURE) {
-            data.addProperty("message", brickState.getMessage());
+        if (brickStateEvent.getNewState() == BrickStateEvent.State.ONFAILURE) {
+            data.addProperty("message", brickStateEvent.getMessage());
         }
 
         return new WebSocketMessage("brick", "updateState", data);

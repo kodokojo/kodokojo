@@ -15,22 +15,30 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package io.kodokojo.service.actor;
+package io.kodokojo.brick;
 
-import akka.actor.AbstractActor;
-import akka.japi.pf.ReceiveBuilder;
-import io.kodokojo.model.BrickState;
-import io.kodokojo.brick.BrickStateMsgListener;
+import io.kodokojo.service.actor.message.BrickStateEvent;
 
-@Deprecated
-public class BrickStateMsgEndpoint extends AbstractActor {
+import java.util.HashSet;
+import java.util.Set;
 
-    public BrickStateMsgEndpoint(BrickStateMsgListener listener) {
+public class BrickStateEventDispatcher implements BrickStateEventListener {
+
+    private final Set<BrickStateEventListener> listeners;
+
+    public BrickStateEventDispatcher() {
+        this.listeners = new HashSet<>();
+    }
+
+    public void addListener(BrickStateEventListener listener) {
         if (listener == null) {
             throw new IllegalArgumentException("listener must be defined.");
         }
-        receive(ReceiveBuilder
-                .match(BrickState.class, listener::receive)
-                .build());
+        this.listeners.add(listener);
+    }
+
+    @Override
+    public void receive(BrickStateEvent brickStateEvent) {
+        listeners.forEach(listener -> listener.receive(brickStateEvent));
     }
 }

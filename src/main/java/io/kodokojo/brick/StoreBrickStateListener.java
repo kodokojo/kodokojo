@@ -17,7 +17,7 @@
  */
 package io.kodokojo.brick;
 
-import io.kodokojo.model.BrickState;
+import io.kodokojo.service.actor.message.BrickStateEvent;
 import io.kodokojo.model.Project;
 import io.kodokojo.model.ProjectBuilder;
 import io.kodokojo.model.Stack;
@@ -31,7 +31,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-public class StoreBrickStateListener implements BrickStateMsgListener {
+public class StoreBrickStateListener implements BrickStateEventListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StoreBrickStateListener.class);
 
@@ -46,15 +46,15 @@ public class StoreBrickStateListener implements BrickStateMsgListener {
     }
 
     @Override
-    public void receive(BrickState brickState) {
-        if (brickState == null) {
-            throw new IllegalArgumentException("brickState must be defined.");
+    public void receive(BrickStateEvent brickStateEvent) {
+        if (brickStateEvent == null) {
+            throw new IllegalArgumentException("brickStateEvent must be defined.");
         }
         if (LOGGER.isTraceEnabled()) {
-            LOGGER.trace("Receive following message : {}", brickState);
+            LOGGER.trace("Receive following message : {}", brickStateEvent);
         }
 
-        Project project = projectRepository.getProjectByProjectConfigurationId(brickState.getProjectConfigurationIdentifier());
+        Project project = projectRepository.getProjectByProjectConfigurationId(brickStateEvent.getProjectConfigurationIdentifier());
         if (project != null) {
             ProjectBuilder builder = new ProjectBuilder(project);
             Set<Stack> stacks = new HashSet<>();
@@ -62,20 +62,20 @@ public class StoreBrickStateListener implements BrickStateMsgListener {
             Iterator<Stack> stackIterator = projectStacks.iterator();
             boolean foundStack = false;
             boolean foundBrick = false;
-            Set<BrickState> states = new HashSet<>();
+            Set<BrickStateEvent> states = new HashSet<>();
             while (!foundStack && stackIterator.hasNext()) {
                 Stack stack = stackIterator.next();
-                if (stack.getName().equals(brickState.getStackName())) {
-                    Iterator<BrickState> brickStateIterator = stack.getBrickStates().iterator();
+                if (stack.getName().equals(brickStateEvent.getStackName())) {
+                    Iterator<BrickStateEvent> brickStateIterator = stack.getBrickStateEvents().iterator();
                     foundStack = true;
                     while (!foundBrick && brickStateIterator.hasNext()) {
-                        BrickState state = brickStateIterator.next();
-                        if (state.getBrickName().equals(brickState.getBrickName())) {
-                            states.add(brickState);
+                        BrickStateEvent state = brickStateIterator.next();
+                        if (state.getBrickName().equals(brickStateEvent.getBrickName())) {
+                            states.add(brickStateEvent);
                             builder.setSnapshotDate(new Date());
                             foundBrick = true;
                             if (LOGGER.isDebugEnabled()) {
-                                LOGGER.debug("State may change for project {}, override following state {}", project.getName(), brickState);
+                                LOGGER.debug("State may change for project {}, override following state {}", project.getName(), brickStateEvent);
                             }
                         } else {
                             states.add(state);
@@ -86,7 +86,7 @@ public class StoreBrickStateListener implements BrickStateMsgListener {
                         if (LOGGER.isDebugEnabled()) {
                             LOGGER.debug("Unable to found brick for this event, adding a new State.");
                         }
-                        states.add(brickState);
+                        states.add(brickStateEvent);
                     }
                 } else {
                     stacks.add(stack);
@@ -103,7 +103,7 @@ public class StoreBrickStateListener implements BrickStateMsgListener {
             project = builder.build();
             projectRepository.updateProject(project);
         } else if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Unable to find project with project configuration id '{}'.", brickState.getProjectConfigurationIdentifier());
+            LOGGER.debug("Unable to find project with project configuration id '{}'.", brickStateEvent.getProjectConfigurationIdentifier());
         }
 
     }

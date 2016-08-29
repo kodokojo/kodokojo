@@ -108,21 +108,6 @@ public class DefaultProjectManager implements ProjectManager {
     }
 
     @Override
-    public BootstrapStackData bootstrapStack(String projectName, String stackName, StackType stackType) {
-        if (!projectRepository.projectNameIsValid(projectName)) {
-            throw new IllegalArgumentException("project name " + projectName + " isn't valid.");
-        }
-        String loadBalancerHost = bootstrapConfigurationProvider.provideLoadBalancerHost(projectName, stackName);
-        int sshPortEntrypoint = 0;
-        if (stackType == StackType.BUILD) {
-            sshPortEntrypoint = bootstrapConfigurationProvider.provideSshPortEntrypoint(projectName, stackName);
-        }
-        BootstrapStackData res = new BootstrapStackData(projectName, stackName, loadBalancerHost, sshPortEntrypoint);
-        configurationStore.storeBootstrapStackData(res);
-        return res;
-    }
-
-    @Override
     public Project start(ProjectConfiguration projectConfiguration) throws ProjectAlreadyExistException {
         if (projectConfiguration == null) {
             throw new IllegalArgumentException("projectConfiguration must be defined.");

@@ -36,6 +36,7 @@ import io.kodokojo.model.*;
 import io.kodokojo.model.Stack;
 import io.kodokojo.service.ProjectAlreadyExistException;
 import io.kodokojo.service.ProjectManager;
+import io.kodokojo.service.actor.message.BrickStateEvent;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.mockito.Mockito;
@@ -184,7 +185,7 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
         }
         //  Mock behavior
         BootstrapStackData boostrapData = new BootstrapStackData(projectName, "build-A", "127.0.0.1", 10022);
-        Mockito.when(projectManager.bootstrapStack(projectName, "build-A", StackType.BUILD)).thenReturn(boostrapData);
+        //Mockito.when(projectManager.bootstrapStack(projectName, "build-A", StackType.BUILD)).thenReturn(boostrapData);
         KeyPair keyPair = null;
         try {
             keyPair = RSAUtils.generateRsaKeyPair();
@@ -192,7 +193,7 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
             fail(e.getMessage());
         }
         Set<Stack> stacks = new HashSet<>();
-        stacks.add(new Stack("build-A", StackType.BUILD, new HashSet<BrickState>()));
+        stacks.add(new Stack("build-A", StackType.BUILD, new HashSet<BrickStateEvent>()));
         Project project = new Project("1234567890", projectName, new Date(), stacks);
         try {
             Mockito.when(projectManager.start(Mockito.any())).thenReturn(project);

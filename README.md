@@ -50,7 +50,7 @@ The following diagram describes how Kodo Kojo and its components will be deploye
 ![Kodo Kojo Architecture](doc/images/kodokojo-architecture.png)
 
 HA Proxy will be managed by [kodokojo-haproxy-marathon](https://github.com/kodokojo/kodokojo-haproxy-marathon) which is registered on the Marathon event bus.
-This will allow the HA Proxy configuration to be updated when a Marathon state changes.
+This will allow the HA Proxy configuration to be updated when a Marathon newState changes.
 
 ## Roadmap
 
