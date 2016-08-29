@@ -230,12 +230,12 @@ public class WebSocketEntryPoint implements BrickStateEventListener {
         data.addProperty("projectConfiguration", brickStateEvent.getProjectConfigurationIdentifier());
         data.addProperty("brickType", brickStateEvent.getBrickType());
         data.addProperty("brickName", brickStateEvent.getBrickName());
-        data.addProperty("state", brickStateEvent.getNewState().name());
-        if (brickStateEvent.getNewState() == BrickStateEvent.State.RUNNING) {
+        data.addProperty("state", brickStateEvent.getState().name());
+        if (brickStateEvent.getState() == BrickStateEvent.State.RUNNING) {
             ProjectConfiguration projectConfiguration = projectRepository.getProjectConfigurationById(brickStateEvent.getProjectConfigurationIdentifier());
             data.addProperty("url", "https://" + brickUrlFactory.forgeUrl(projectConfiguration.getName(), brickStateEvent.getStackName() , brickStateEvent.getBrickType(), brickStateEvent.getBrickName()));
         }
-        if (brickStateEvent.getNewState() == BrickStateEvent.State.ONFAILURE) {
+        if (brickStateEvent.getState() == BrickStateEvent.State.ONFAILURE) {
             data.addProperty("message", brickStateEvent.getMessage());
         }
 

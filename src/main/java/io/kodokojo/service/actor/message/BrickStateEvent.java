@@ -104,7 +104,7 @@ public class BrickStateEvent implements Serializable {
         return brickName;
     }
 
-    public State getNewState() {
+    public State getState() {
         return newState;
     }
 
