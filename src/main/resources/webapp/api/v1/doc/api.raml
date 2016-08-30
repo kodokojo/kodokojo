@@ -285,7 +285,7 @@ schemas:
           description: Project already exist
   /{projectIdentifier}:
     get:
-      description: Get project newState details
+      description: Get project state details
       securedBy: [basic]
       body:
         application/json:
@@ -315,7 +315,7 @@ schemas:
                           "brickType": "CI",
                           "stackName": "build-A",
                           "brickName": "jenkins",
-                          "newState": "RUNNING",
+                          "state": "RUNNING",
                           "version": "1.651",
                           "url": "https://ci-jpascal.kodokojo.io"
                         },
@@ -324,7 +324,7 @@ schemas:
                           "brickType": "REPOSITORY",
                           "stackName": "build-A",
                           "brickName": "nexus",
-                          "newState": "RUNNING",
+                          "state": "RUNNING",
                           "version": "2",
                           "url": "https://repository-jpascal.kodokojo.io"
                         },
@@ -333,7 +333,7 @@ schemas:
                           "brickType": "SCM",
                           "stackName": "build-A",
                           "brickName": "gitlab",
-                          "newState": "ONFAILURE",
+                          "state": "ONFAILURE",
                           "version": "8.5.2-ce",
                           "url": "https://scm-jpascal.kodokojo.io"
                         }

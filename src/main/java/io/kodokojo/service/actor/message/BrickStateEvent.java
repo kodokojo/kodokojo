@@ -42,7 +42,7 @@ public class BrickStateEvent implements Serializable {
 
     private final State oldState;
 
-    private final State newState;
+    private final State state;
 
     private final String url;
 
@@ -50,7 +50,7 @@ public class BrickStateEvent implements Serializable {
 
     private final String version;
 
-    public BrickStateEvent(String projectConfigurationIdentifier, String stackName, String brickType, String brickName, State oldState, State newState, String url, String message, String version) {
+    public BrickStateEvent(String projectConfigurationIdentifier, String stackName, String brickType, String brickName, State oldState, State state, String url, String message, String version) {
         if (isBlank(projectConfigurationIdentifier)) {
             throw new IllegalArgumentException("projectConfigurationIdentifier must be defined.");
         }
@@ -63,8 +63,8 @@ public class BrickStateEvent implements Serializable {
         if (isBlank(brickName)) {
             throw new IllegalArgumentException("brickName must be defined.");
         }
-        if (newState == null) {
-            throw new IllegalArgumentException("newState must be defined.");
+        if (state == null) {
+            throw new IllegalArgumentException("state must be defined.");
         }
         if (isBlank(version)) {
             throw new IllegalArgumentException("version must be defined.");
@@ -74,18 +74,18 @@ public class BrickStateEvent implements Serializable {
         this.stackName = stackName;
         this.brickName = brickName;
         this.oldState = oldState;
-        this.newState = newState;
+        this.state = state;
         this.url = url;
         this.message = message;
         this.version = version;
     }
 
-    public BrickStateEvent(String projectConfigurationIdentifier, String stackName, String brickType, String brickName, State newState, String url, String version) {
-        this(projectConfigurationIdentifier,stackName,  brickType, brickName,null, newState, url, null, version);
+    public BrickStateEvent(String projectConfigurationIdentifier, String stackName, String brickType, String brickName, State state, String url, String version) {
+        this(projectConfigurationIdentifier,stackName,  brickType, brickName,null, state, url, null, version);
     }
 
-    public BrickStateEvent(String projectConfigurationIdentifier, String stackName, String brickType, String brickName, State newState, String version) {
-        this(projectConfigurationIdentifier,stackName,  brickType, brickName,null, newState, null, null, version);
+    public BrickStateEvent(String projectConfigurationIdentifier, String stackName, String brickType, String brickName, State state, String version) {
+        this(projectConfigurationIdentifier,stackName,  brickType, brickName,null, state, null, null, version);
     }
 
     public String getProjectConfigurationIdentifier() {
@@ -105,7 +105,7 @@ public class BrickStateEvent implements Serializable {
     }
 
     public State getState() {
-        return newState;
+        return state;
     }
 
     public State getOldState() {
@@ -132,7 +132,7 @@ public class BrickStateEvent implements Serializable {
                 ", stackName='" + stackName + '\'' +
                 ", brickName='" + brickName + '\'' +
                 ", oldState=" + oldState +
-                ", newState=" + newState +
+                ", state=" + state +
                 ", url='" + url + '\'' +
                 ", message='" + message + '\'' +
                 ", version='" + version + '\'' +
@@ -151,7 +151,7 @@ public class BrickStateEvent implements Serializable {
         if (!brickName.equals(that.brickName)) return false;
         if (!stackName.equals(that.stackName)) return false;
         if (!version.equals(that.version)) return false;
-        return newState == that.newState;
+        return state == that.state;
 
     }
 
@@ -161,7 +161,7 @@ public class BrickStateEvent implements Serializable {
         result = 31 * result + brickType.hashCode();
         result = 31 * result + brickName.hashCode();
         result = 31 * result + stackName.hashCode();
-        result = 31 * result + newState.hashCode();
+        result = 31 * result + state.hashCode();
         result = 31 * result + version.hashCode();
         return result;
     }
