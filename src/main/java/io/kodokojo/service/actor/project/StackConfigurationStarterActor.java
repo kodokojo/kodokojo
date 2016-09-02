@@ -6,11 +6,24 @@ import akka.actor.Props;
 import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
 import io.kodokojo.brick.BrickStartContext;
+import io.kodokojo.brick.BrickUrlFactory;
+import io.kodokojo.model.PortDefinition;
 import io.kodokojo.model.ProjectConfiguration;
 import io.kodokojo.model.StackConfiguration;
 import io.kodokojo.service.BootstrapConfigurationProvider;
 import io.kodokojo.service.actor.EndpointActor;
 import io.kodokojo.service.actor.message.BrickStateEvent;
+import io.kodokojo.service.dns.DnsEntry;
+import io.kodokojo.service.dns.DnsManager;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.Predicate;
+import org.apache.commons.lang.StringUtils;
+
+import java.util.HashSet;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static akka.event.Logging.getLogger;
 
@@ -18,10 +31,19 @@ public class StackConfigurationStarterActor extends AbstractActor {
 
     private final LoggingAdapter LOGGER = getLogger(getContext().system(), this);
 
-    public static Props PROPS() {
-        return Props.create(StackConfigurationStarterActor.class);
-    }
+    //  Source Regexp http://sroze.io/2008/10/09/regex-ipv4-et-ipv6/
+    private static final Pattern IP_PATTERN = Pattern.compile("^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
 
+
+    public static Props PROPS(DnsManager dnsManager, BrickUrlFactory brickUrlFactory) {
+        if (dnsManager == null) {
+            throw new IllegalArgumentException("dnsManager must be defined.");
+        }
+        if (brickUrlFactory == null) {
+            throw new IllegalArgumentException("brickUrlFactory must be defined.");
+        }
+        return Props.create(StackConfigurationStarterActor.class, dnsManager, brickUrlFactory);
+    }
 
     private StackConfigurationStartMsg intialMsg;
 
@@ -29,15 +51,22 @@ public class StackConfigurationStarterActor extends AbstractActor {
 
     private int nbResponse = 0;
 
-    public StackConfigurationStarterActor() {
+    public StackConfigurationStarterActor(DnsManager dnsManager, BrickUrlFactory brickUrlFactory) {
         receive(ReceiveBuilder.match(StackConfigurationStartMsg.class, msg -> {
             intialMsg = msg;
             originalSender = sender();
             ActorRef endpointActor = getContext().actorFor(EndpointActor.ACTOR_PATH);
+
+            Set<DnsEntry> dnsentries = new HashSet<>();
             msg.stackConfiguration.getBrickConfigurations().forEach(b -> {
                 endpointActor.tell(new BrickStartContext(msg.projectConfiguration, msg.stackConfiguration, b),  self());
+                dnsentries.addAll(b.getPortDefinitions().stream()
+                        .map(p -> {
+                            String entry = brickUrlFactory.forgeUrl(msg.projectConfiguration, msg.stackConfiguration.getName(), b);
+                            return new DnsEntry(entry, getDnsType(msg.stackConfiguration.getLoadBalancerHost()), msg.stackConfiguration.getLoadBalancerHost());
+                        }).collect(Collectors.toSet()));
             });
-
+            dnsManager.createOrUpdateDnsEntries(dnsentries);
         })
         .match(BrickStateEvent.class, msg -> {
             if(msg.getState() == BrickStateEvent.State.RUNNING ||
@@ -52,6 +81,12 @@ public class StackConfigurationStarterActor extends AbstractActor {
             }
         })
                 .matchAny(this::unhandled).build());
+    }
+
+    private static DnsEntry.Type getDnsType(String host) {
+        assert StringUtils.isNotBlank(host) : "host must be defined";
+        Matcher matcher = IP_PATTERN.matcher(host);
+        return matcher.matches() ? DnsEntry.Type.A : DnsEntry.Type.CNAME;
     }
 
     public static class StackConfigurationStartMsg {
