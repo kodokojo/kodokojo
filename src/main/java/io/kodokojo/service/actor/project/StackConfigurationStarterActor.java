@@ -10,13 +10,10 @@ import io.kodokojo.brick.BrickUrlFactory;
 import io.kodokojo.model.PortDefinition;
 import io.kodokojo.model.ProjectConfiguration;
 import io.kodokojo.model.StackConfiguration;
-import io.kodokojo.service.BootstrapConfigurationProvider;
 import io.kodokojo.service.actor.EndpointActor;
 import io.kodokojo.service.actor.message.BrickStateEvent;
 import io.kodokojo.service.dns.DnsEntry;
 import io.kodokojo.service.dns.DnsManager;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.Predicate;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.HashSet;
@@ -59,8 +56,9 @@ public class StackConfigurationStarterActor extends AbstractActor {
 
             Set<DnsEntry> dnsentries = new HashSet<>();
             msg.stackConfiguration.getBrickConfigurations().forEach(b -> {
-                endpointActor.tell(new BrickStartContext(msg.projectConfiguration, msg.stackConfiguration, b),  self());
+                endpointActor.tell(new BrickStartContext(msg.projectConfiguration, msg.stackConfiguration, b), self());
                 dnsentries.addAll(b.getPortDefinitions().stream()
+                        .filter(p -> p.getType() == PortDefinition.Type.HTTP || p.getType() == PortDefinition.Type.HTTPS)
                         .map(p -> {
                             String entry = brickUrlFactory.forgeUrl(msg.projectConfiguration, msg.stackConfiguration.getName(), b);
                             DnsEntry dnsEntry = new DnsEntry(entry, getDnsType(msg.stackConfiguration.getLoadBalancerHost()), msg.stackConfiguration.getLoadBalancerHost());
@@ -72,18 +70,18 @@ public class StackConfigurationStarterActor extends AbstractActor {
             });
             dnsManager.createOrUpdateDnsEntries(dnsentries);
         })
-        .match(BrickStateEvent.class, msg -> {
-            if(msg.getState() == BrickStateEvent.State.RUNNING ||
-                    msg.getState() == BrickStateEvent.State.ONFAILURE ||
-                    msg.getState() == BrickStateEvent.State.ALREADYEXIST
-                    ) {
-            nbResponse++;
-            }
-            if (nbResponse == intialMsg.stackConfiguration.getBrickConfigurations().size()) {
-                originalSender.tell(new StackConfigurationStartResultMsg(intialMsg.projectConfiguration, intialMsg.stackConfiguration, true), self());
-                getContext().stop(self());
-            }
-        })
+                .match(BrickStateEvent.class, msg -> {
+                    if (msg.getState() == BrickStateEvent.State.RUNNING ||
+                            msg.getState() == BrickStateEvent.State.ONFAILURE ||
+                            msg.getState() == BrickStateEvent.State.ALREADYEXIST
+                            ) {
+                        nbResponse++;
+                    }
+                    if (nbResponse == intialMsg.stackConfiguration.getBrickConfigurations().size()) {
+                        originalSender.tell(new StackConfigurationStartResultMsg(intialMsg.projectConfiguration, intialMsg.stackConfiguration, true), self());
+                        getContext().stop(self());
+                    }
+                })
                 .matchAny(this::unhandled).build());
     }
 
@@ -111,6 +109,7 @@ public class StackConfigurationStarterActor extends AbstractActor {
             this.stackConfiguration = stackConfiguration;
         }
     }
+
     public static class StackConfigurationStartResultMsg {
         private final ProjectConfiguration projectConfiguration;
 
