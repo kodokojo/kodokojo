@@ -87,6 +87,10 @@ public class Route53DnsManager implements DnsManager {
                     resourceRecordSet.setType(RRType.valueOf(dnsEntry.getType().toString()));
                     resourceRecordSet.setTTL(300L);
 
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug("Adding following record to route53 {}", resourceRecordSet.toString());
+                    }
+
                     resourceRecordSet.setResourceRecords(resourceRecords);
 
                     Change change = new Change();
