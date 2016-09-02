@@ -125,13 +125,13 @@ public class DefaultProjectManager implements ProjectManager {
             String lbHost = stackConfiguration.getLoadBalancerHost();
             DnsEntry.Type dnsType = getDnsType(lbHost);
             for (BrickConfiguration brickConfiguration : stackConfiguration.getBrickConfigurations()) {
-                Brick brick = brickConfiguration.getBrick();
-                BrickType brickType = brick.getType();
+
+                BrickType brickType = brickConfiguration.getType();
                 if (brickType.isRequiredHttpExposed()) {
                     String brickDomainName = brickUrlFactory.forgeUrl(projectConfiguration, stackConfiguration.getName(), brickConfiguration);
                     dnsEntries.add(new DnsEntry(brickDomainName, dnsType, lbHost));
                 }
-                BrickStartContext context = new BrickStartContext(projectConfiguration, stackConfiguration, brickConfiguration, domain, lbHost);
+                BrickStartContext context = new BrickStartContext(projectConfiguration, stackConfiguration, brickConfiguration);
                 contexts.add(context);
             }
 
@@ -162,7 +162,7 @@ public class DefaultProjectManager implements ProjectManager {
 
         projectConfiguration.getStackConfigurations().forEach(stackConfiguration -> {
             stackConfiguration.getBrickConfigurations().forEach(brickConfiguration -> {
-                BrickConfigurer brickConfigurer = brickConfigurerProvider.provideFromBrick(brickConfiguration.getBrick());
+                BrickConfigurer brickConfigurer = brickConfigurerProvider.provideFromBrick(brickConfiguration);
                 String entrypoint = "https://" + brickUrlFactory.forgeUrl(projectConfiguration, stackConfiguration.getName(), brickConfiguration);
                 BrickConfigurerData brickConfigurerData = new BrickConfigurerData(projectConfiguration.getName(),
                         stackConfiguration.getName(),
@@ -171,7 +171,7 @@ public class DefaultProjectManager implements ProjectManager {
                         IteratorUtils.toList(projectConfiguration.getAdmins()),
                         IteratorUtils.toList(projectConfiguration.getUsers())
                 );
-                brickConfigurerData.getContext().putAll(brickConfiguration.getCustomData());
+                brickConfigurerData.getContext().putAll(brickConfiguration.getProperties());
                 try {
                     if (LOGGER.isDebugEnabled()) {
                         LOGGER.debug("Try to add users {} on entrypoint {}.", org.apache.commons.lang.StringUtils.join(usersToAdd, ","), entrypoint);

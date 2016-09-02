@@ -18,6 +18,7 @@
 package io.kodokojo.endpoint;
 
 import akka.actor.ActorRef;
+import akka.pattern.Patterns;
 import akka.util.Timeout;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -34,6 +35,8 @@ import io.kodokojo.model.User;
 import io.kodokojo.service.ProjectManager;
 import io.kodokojo.service.actor.EndpointActor;
 import io.kodokojo.service.actor.project.ProjectConfigurationDtoCreatorActor;
+import io.kodokojo.service.actor.project.ProjectConfigurationStarterActor;
+import io.kodokojo.service.actor.project.ProjectCreatorActor;
 import io.kodokojo.service.authentification.SimpleCredential;
 import io.kodokojo.service.repository.ProjectRepository;
 import io.kodokojo.service.repository.UserFetcher;
@@ -211,9 +214,12 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
                 String projectId = projectFetcher.getProjectIdByProjectConfigurationId(projectConfigurationId);
                 if (StringUtils.isBlank(projectId)) {
                     //   projectManager.bootstrapStack(projectConfiguration.getName(), projectConfiguration.getDefaultStackConfiguration().getName(), projectConfiguration.getDefaultStackConfiguration().getType());
-                    Project project = projectManager.start(projectConfiguration);
+                    //   Project project = projectManager.start(projectConfiguration);
+                    Future<Object> locahost = Patterns.ask(akkaEndpoint, new ProjectConfigurationStarterActor.ProjectConfigurationStartMsg(requester, projectConfiguration), Timeout.apply(6, TimeUnit.MINUTES));
+                    ProjectCreatorActor.ProjectCreateResultMsg result = (ProjectCreatorActor.ProjectCreateResultMsg) Await.result(locahost, Duration.apply(6, TimeUnit.MINUTES));
+
                     response.status(201);
-                    String projectIdStarted = project.getIdentifier();
+                    String projectIdStarted = result.getProject().getIdentifier();
                     return projectIdStarted;
                 } else {
                     halt(409, "Project already exist.");

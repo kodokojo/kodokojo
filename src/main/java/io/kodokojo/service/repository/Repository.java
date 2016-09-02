@@ -142,20 +142,6 @@ public class Repository implements UserRepository, ProjectRepository, EntityRepo
     }
 
     @Override
-    public void setContextToBrickConfiguration(String projectConfigurationId, BrickConfiguration brickConfiguration, Map<String, Serializable> context) {
-        if (isBlank(projectConfigurationId)) {
-            throw new IllegalArgumentException("projectConfigurationId must be defined.");
-        }
-        if (brickConfiguration == null) {
-            throw new IllegalArgumentException("brickConfiguration must be defined.");
-        }
-        if (context == null) {
-            throw new IllegalArgumentException("context must be defined.");
-        }
-        projectStore.setContextToBrickConfiguration(projectConfigurationId, brickConfiguration, context);
-    }
-
-    @Override
     public ProjectConfiguration getProjectConfigurationById(String identifier) {
         if (isBlank(identifier)) {
             throw new IllegalArgumentException("identifier must be defined.");

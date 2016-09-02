@@ -119,7 +119,7 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
         configurationStore = mock(ConfigurationStore.class);
 
         Mockito.when(bootstrapProvider.provideLoadBalancerHost(anyString(), anyString())).thenReturn("192.168.22.3");
-        Mockito.when(bootstrapProvider.provideSshPortEntrypoint(anyString(), anyString())).thenReturn(10022);
+        Mockito.when(bootstrapProvider.provideTcpPortEntrypoint(anyString(), anyString())).thenReturn(10022);
 
         SecretKey tmpKey = null;
         try {
@@ -143,7 +143,7 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
         }
         BootstrapConfigurationProvider bootstrapConfigurationProvider = mock(BootstrapConfigurationProvider.class);
         Mockito.when(bootstrapConfigurationProvider.provideLoadBalancerHost(anyString(),anyString())).thenReturn(dockerTestSupport.getServerIp());
-        Mockito.when(bootstrapConfigurationProvider.provideSshPortEntrypoint(anyString(),anyString())).thenReturn(10022);
+        Mockito.when(bootstrapConfigurationProvider.provideTcpPortEntrypoint(anyString(),anyString())).thenReturn(10022);
 
         SSLKeyPair caKey = SSLUtils.createSelfSignedSSLKeyPair("Fake CA", (RSAPrivateKey) keyPair.getPrivate(), (RSAPublicKey) keyPair.getPublic());
         Repository repository = new Repository(redisUserManager, redisUserManager, redisEntityStore, redisProjectStore);

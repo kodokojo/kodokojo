@@ -21,14 +21,11 @@ public class RightEndpointActor extends AbstractActor {
 
     public static final String NAME = "rightEndpointProps";
 
-    public static final Props PROPS(UserFetcher userFetcher) {
-        if (userFetcher == null) {
-            throw new IllegalArgumentException("userFetcher must be defined.");
-        }
-        return Props.create(RightEndpointActor.class, userFetcher);
+    public static Props PROPS() {
+        return Props.create(RightEndpointActor.class);
     }
 
-    public RightEndpointActor(UserFetcher userFetcher) {
+    public RightEndpointActor() {
         receive(ReceiveBuilder.match(UserAdminRightRequestMsg.class, msg -> {
             ProjectConfiguration projectConfiguration = msg.projectConfiguration;
             User user = msg.getRequester();

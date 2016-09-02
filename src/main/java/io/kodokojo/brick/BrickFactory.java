@@ -17,13 +17,13 @@
  */
 package io.kodokojo.brick;
 
-import io.kodokojo.model.Brick;
+import io.kodokojo.model.BrickConfiguration;
 
 import java.util.List;
 
 public interface BrickFactory {
 
-    Brick createBrick(String name);
+    BrickConfiguration createBrick(String name);
 
-    List<Brick> listBrickAvailable();
+    List<BrickConfiguration> listBrickAvailable();
 }

@@ -46,7 +46,7 @@ public interface BrickUrlFactory {
         if (brickConfiguration == null) {
             throw new IllegalArgumentException("brickConfiguration must be defined.");
         }
-        return forgeUrl(projectConfiguration.getName().toLowerCase(),stackName, brickConfiguration.getType().name().toLowerCase(), brickConfiguration.getBrick().getName().toLowerCase());
+        return forgeUrl(projectConfiguration.getName().toLowerCase(),stackName, brickConfiguration.getType().name().toLowerCase(), brickConfiguration.getName().toLowerCase());
     }
 
 }

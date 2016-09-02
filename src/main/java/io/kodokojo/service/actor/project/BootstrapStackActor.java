@@ -8,9 +8,6 @@ import io.kodokojo.model.BootstrapStackData;
 import io.kodokojo.model.StackType;
 import io.kodokojo.service.BootstrapConfigurationProvider;
 import io.kodokojo.service.ConfigurationStore;
-import io.kodokojo.service.ProjectManager;
-import io.kodokojo.service.repository.ProjectFetcher;
-import io.kodokojo.service.repository.ProjectRepository;
 
 import static akka.event.Logging.getLogger;
 import static org.apache.commons.lang.StringUtils.isBlank;
@@ -42,7 +39,7 @@ public class BootstrapStackActor extends AbstractActor {
             String loadBalancerHost = bootstrapConfigurationProvider.provideLoadBalancerHost(projectName, stackName);
             int sshPortEntrypoint = 0;
             if (stackType == StackType.BUILD) {
-                sshPortEntrypoint = bootstrapConfigurationProvider.provideSshPortEntrypoint(projectName, stackName);
+                sshPortEntrypoint = bootstrapConfigurationProvider.provideTcpPortEntrypoint(projectName, stackName);
             }
             BootstrapStackData res = new BootstrapStackData(projectName, stackName, loadBalancerHost, sshPortEntrypoint);
             configurationStore.storeBootstrapStackData(res);

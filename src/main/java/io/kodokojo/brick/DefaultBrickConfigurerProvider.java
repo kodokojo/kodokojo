@@ -19,7 +19,7 @@ package io.kodokojo.brick;
 
 import com.squareup.okhttp.OkHttpClient;
 import io.kodokojo.brick.dockerregistry.DockerRegistryConfigurer;
-import io.kodokojo.model.Brick;
+import io.kodokojo.model.BrickConfiguration;
 import io.kodokojo.brick.gitlab.GitlabConfigurer;
 import io.kodokojo.brick.jenkins.JenkinsConfigurer;
 import io.kodokojo.brick.nexus.NexusConfigurer;
@@ -45,11 +45,11 @@ public class DefaultBrickConfigurerProvider implements BrickConfigurerProvider {
     }
 
     @Override
-    public BrickConfigurer provideFromBrick(Brick brick) {
-        if (brick == null) {
-            throw new IllegalArgumentException("brick must be defined.");
+    public BrickConfigurer provideFromBrick(BrickConfiguration brickConfiguration) {
+        if (brickConfiguration == null) {
+            throw new IllegalArgumentException("brickConfiguration must be defined.");
         }
-        switch (brick.getName()) {
+        switch (brickConfiguration.getName()) {
             case DefaultBrickFactory.GITLAB:
                 return new GitlabConfigurer(brickUrlFactory);
             case DefaultBrickFactory.JENKINS:

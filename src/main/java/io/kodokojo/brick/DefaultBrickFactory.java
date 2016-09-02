@@ -17,14 +17,12 @@
  */
 package io.kodokojo.brick;
 
-import io.kodokojo.model.Brick;
+import io.kodokojo.model.BrickConfiguration;
 import io.kodokojo.model.BrickType;
+import io.kodokojo.model.PortDefinition;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
@@ -40,20 +38,23 @@ public class DefaultBrickFactory implements BrickFactory {
 
     public static final String DOCKER_REGISTRY = "dockerregistry";
 
-    private final Map<String, Brick> cache ;
+    private final Map<String, BrickConfiguration> cache ;
 
     @Inject
     public DefaultBrickFactory() {
         cache = new HashMap<>();
-        cache.put(JENKINS, new Brick(JENKINS, BrickType.CI, "1.651.2"));
-        cache.put(GITLAB, new Brick(GITLAB, BrickType.SCM, "8.11.0-ce.1"));
-        cache.put(HAPROXY, new Brick(HAPROXY, BrickType.LOADBALANCER, "1.6"));
-        cache.put(NEXUS, new Brick(NEXUS, BrickType.REPOSITORY, "2.13"));
-     //   cache.put(DOCKER_REGISTRY, new Brick(DOCKER_REGISTRY, BrickType.REPOSITORY, "2"));
+        cache.put(JENKINS, new BrickConfiguration(JENKINS, BrickType.CI, "1.651.2", Collections.singleton(new PortDefinition(8080))));
+        Set<PortDefinition> gitlbaPorts  = new HashSet<>();
+        gitlbaPorts.add(new PortDefinition(PortDefinition.Type.HTTP, -1, 80, -1));
+        gitlbaPorts.add(new PortDefinition(PortDefinition.Type.SSH, -1, 22, -1));
+        cache.put(GITLAB, new BrickConfiguration(GITLAB, BrickType.SCM, "8.11.0-ce.1", gitlbaPorts));
+        cache.put(HAPROXY, new BrickConfiguration(HAPROXY, BrickType.LOADBALANCER, "1.6",  Collections.singleton(new PortDefinition(80))));
+        cache.put(NEXUS, new BrickConfiguration(NEXUS, BrickType.REPOSITORY, "2.13",  Collections.singleton(new PortDefinition(80))));
+     //   cache.put(DOCKER_REGISTRY, new BrickConfiguration(DOCKER_REGISTRY,  Collections.singleton(new PortDefinition(80))))
     }
 
     @Override
-    public Brick createBrick(String name) {
+    public BrickConfiguration createBrick(String name) {
         if (isBlank(name)) {
             throw new IllegalArgumentException("name must be defined.");
         }
@@ -61,7 +62,7 @@ public class DefaultBrickFactory implements BrickFactory {
     }
 
     @Override
-    public List<Brick> listBrickAvailable() {
+    public List<BrickConfiguration> listBrickAvailable() {
         return new ArrayList<>(cache.values());
     }
 }

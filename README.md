@@ -57,7 +57,7 @@ This will allow the HA Proxy configuration to be updated when a Marathon state c
 ### Summer change planned
 
 ### Features and Bricks
-* Add (UI)/ Remove(UI and Back) User on all brick of software factory.
+* Add (UI)/ Remove(UI and Back) User on all brickConfiguration of software factory.
 * Upgrade version of Gitlab to the latest and test Gitlab Docker registry. [Issue #2](https://github.com/kodokojo/kodokojo/issues/2)
 * Upgrade version og Jenkins to 2.x. [Issue #7](https://github.com/kodokojo/kodokojo/issues/7)
 

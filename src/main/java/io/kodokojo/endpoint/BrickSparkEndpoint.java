@@ -19,9 +19,8 @@ package io.kodokojo.endpoint;
 
 import io.kodokojo.brick.BrickFactory;
 import io.kodokojo.endpoint.dto.BrickConfigDto;
-import io.kodokojo.model.Brick;
+import io.kodokojo.model.BrickConfiguration;
 import io.kodokojo.service.authentification.SimpleCredential;
-import spark.Spark;
 
 import javax.inject.Inject;
 
@@ -47,8 +46,8 @@ public class BrickSparkEndpoint extends AbstractSparkEndpoint {
     public void configure() {
 
         get(BASE_API + "/brick", JSON_CONTENT_TYPE, ((request, response) -> {
-            List<Brick> bricks = brickFactory.listBrickAvailable();
-            List<BrickConfigDto> result = bricks.stream().map(b -> new BrickConfigDto(b.getName(), b.getType().name(), b.getVersion())).collect(Collectors.toList());
+            List<BrickConfiguration> brickConfigurations = brickFactory.listBrickAvailable();
+            List<BrickConfigDto> result = brickConfigurations.stream().map(b -> new BrickConfigDto(b.getName(), b.getType().name(), b.getVersion())).collect(Collectors.toList());
             return result;
         }), jsonResponseTransformer);
 

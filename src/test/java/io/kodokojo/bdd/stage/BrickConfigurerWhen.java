@@ -25,7 +25,7 @@ import com.tngtech.jgiven.annotation.ProvidedScenarioState;
 import io.kodokojo.brick.*;
 import io.kodokojo.commons.utils.DockerTestSupport;
 import io.kodokojo.service.RSAUtils;
-import io.kodokojo.model.Brick;
+import io.kodokojo.model.BrickConfiguration;
 import io.kodokojo.model.User;
 import io.kodokojo.brick.gitlab.GitlabConfigurer;
 import org.slf4j.Logger;
@@ -74,8 +74,8 @@ public class BrickConfigurerWhen<SELF extends BrickConfigurerWhen<?>> extends St
 
     public SELF i_create_a_default_user() {
         defaultUserInfo = new UserInfo("jpthiery", "123456", "67899","jpthiery", "jpthiery@kodokojo.io");
-        Brick brick = brickFactory.createBrick(brickName);
-        brickConfigurer = brickConfigurerProvider.provideFromBrick(brick);
+        BrickConfiguration brickConfiguration = brickFactory.createBrick(brickName);
+        brickConfigurer = brickConfigurerProvider.provideFromBrick(brickConfiguration);
         KeyPair keyPair = null;
         try {
             keyPair = RSAUtils.generateRsaKeyPair();

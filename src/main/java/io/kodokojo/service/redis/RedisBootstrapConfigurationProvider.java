@@ -76,7 +76,7 @@ public class RedisBootstrapConfigurationProvider implements BootstrapConfigurati
     }
 
     @Override
-    public int provideSshPortEntrypoint(String projectName, String stackName) {
+    public int provideTcpPortEntrypoint(String projectName, String stackName) {
         if (isBlank(projectName)) {
             throw new IllegalArgumentException("projectName must be defined.");
         }

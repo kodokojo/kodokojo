@@ -24,20 +24,20 @@ import io.kodokojo.model.User;
 import java.util.List;
 
 /**
- * Allow to configure a Brick from data contain in a given {@link BrickConfigurerData}.
+ * Allow to configure a BrickConfiguration from data contain in a given {@link BrickConfigurerData}.
  */
 public interface BrickConfigurer {
 
     /**
      * This step may remove default admin password, configure security policy, etc...
-     * @param brickConfigurerData All data which may useful to configure the Brick, like th admin configuration or Brick endpoint.
-     * @return The configurationData which may be modify when configuring the Brick.
+     * @param brickConfigurerData All data which may useful to configure the BrickConfiguration, like th admin configuration or BrickConfiguration endpoint.
+     * @return The configurationData which may be modify when configuring the BrickConfiguration.
      */
     BrickConfigurerData configure(BrickConfigurerData brickConfigurerData) throws BrickConfigurationException;
 
     /**
-     * Add users with informations defined in ConfigurationData on the given Brick.
-     * @param brickConfigurerData All data which may useful to configure the Brick, like th admin configuration or Brick endpoint.
+     * Add users with informations defined in ConfigurationData on the given BrickConfiguration.
+     * @param brickConfigurerData All data which may useful to configure the BrickConfiguration, like th admin configuration or BrickConfiguration endpoint.
      * @param users The list of users to add.
      * @return The configurationData which may be modify when adding users.
      */

@@ -33,11 +33,8 @@ public class BrickStartContext implements Serializable {
 
     private final BrickConfiguration brickConfiguration;
 
-    private final String domain;
 
-    private final String lbHost;
-
-    public BrickStartContext(ProjectConfiguration projectConfiguration, StackConfiguration stackConfiguration, BrickConfiguration brickConfiguration, String domain, String lbHost) {
+    public BrickStartContext(ProjectConfiguration projectConfiguration, StackConfiguration stackConfiguration, BrickConfiguration brickConfiguration) {
         if (projectConfiguration == null) {
             throw new IllegalArgumentException("projectConfiguration must be defined.");
         }
@@ -47,17 +44,9 @@ public class BrickStartContext implements Serializable {
         if (stackConfiguration == null) {
             throw new IllegalArgumentException("stackConfiguration must be defined.");
         }
-        if (isBlank(domain)) {
-            throw new IllegalArgumentException("domain must be defined.");
-        }
-        if (isBlank(lbHost)) {
-            throw new IllegalArgumentException("lbHost must be defined.");
-        }
         this.projectConfiguration = projectConfiguration;
         this.stackConfiguration = stackConfiguration;
         this.brickConfiguration = brickConfiguration;
-        this.domain = domain;
-        this.lbHost = lbHost;
     }
 
     public ProjectConfiguration getProjectConfiguration() {
@@ -72,22 +61,13 @@ public class BrickStartContext implements Serializable {
         return brickConfiguration;
     }
 
-    public String getDomain() {
-        return domain;
-    }
-
-    public String getLbHost() {
-        return lbHost;
-    }
 
     @Override
     public String toString() {
         return "BrickStartContext{" +
                 "projectConfiguration=" + projectConfiguration +
-                "stackConfiguration=" + stackConfiguration +
+                ", stackConfiguration=" + stackConfiguration +
                 ", brickConfiguration=" + brickConfiguration +
-                ", domain='" + domain + '\'' +
-                ", lbHost='" + lbHost + '\'' +
                 '}';
     }
 }

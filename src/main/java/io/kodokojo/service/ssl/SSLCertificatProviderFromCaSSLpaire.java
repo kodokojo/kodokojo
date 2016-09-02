@@ -76,6 +76,6 @@ public class SSLCertificatProviderFromCaSSLpaire implements SSLCertificatProvide
                 cache.put(projectName, sslKeyPair);
             }
         }
-        return SSLUtils.createSSLKeyPair(brickUrlFactory.forgeUrl(projectName, stackName, brickConfiguration.getBrick().getName(), brickConfiguration.getName()), sslKeyPair.getPrivateKey(), sslKeyPair.getPublicKey(), sslKeyPair.getCertificates());
+        return SSLUtils.createSSLKeyPair(brickUrlFactory.forgeUrl(projectName, stackName, brickConfiguration.getName(), brickConfiguration.getName()), sslKeyPair.getPrivateKey(), sslKeyPair.getPublicKey(), sslKeyPair.getCertificates());
     }
 }

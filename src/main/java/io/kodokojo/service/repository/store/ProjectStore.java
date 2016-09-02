@@ -47,5 +47,4 @@ public interface ProjectStore {
 
     void updateProjectConfiguration(ProjectConfigurationStoreModel projectConfiguration);
 
-    void setContextToBrickConfiguration(String projectConfigurationId, BrickConfiguration brickConfiguration, Map<String, Serializable> context);
 }

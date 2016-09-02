@@ -18,7 +18,9 @@
 package io.kodokojo.service.actor.project;
 
 import akka.actor.AbstractActor;
+import akka.actor.ActorRef;
 import akka.actor.Props;
+import akka.dispatch.Futures;
 import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
 import io.kodokojo.brick.BrickUrlFactory;
@@ -75,14 +77,14 @@ public class BrickConfigurationStarterActor extends AbstractActor {
         this.configurationStore = configurationStore;
         this.sslCertificatProvider = sslCertificatProvider;
 
-        receive(ReceiveBuilder.match(BrickStartContext.class, this::start)
+        receive(ReceiveBuilder.match(BrickStartContext.class, msg -> this.start(msg, sender()))
                 .matchAny(this::unhandled)
                 .build()
         );
 
     }
 
-    protected final void start(BrickStartContext brickStartContext) {
+    protected final void start(BrickStartContext brickStartContext, ActorRef sender) {
         BrickConfiguration brickConfiguration = brickStartContext.getBrickConfiguration();
         ProjectConfiguration projectConfiguration = brickStartContext.getProjectConfiguration();
         BrickType brickType = brickConfiguration.getType();
@@ -91,7 +93,7 @@ public class BrickConfigurationStarterActor extends AbstractActor {
         String httpsUrl = "https://" + url;
         if (brickType.isRequiredHttpExposed()) {
             SSLKeyPair brickSslKeyPair = sslCertificatProvider.provideCertificat(projectName, brickStartContext.getStackConfiguration().getName(), brickConfiguration);
-            configurationStore.storeSSLKeys(projectName, brickStartContext.getBrickConfiguration().getBrick().getName().toLowerCase(), brickSslKeyPair);
+            configurationStore.storeSSLKeys(projectName, brickStartContext.getBrickConfiguration().getName().toLowerCase(), brickSslKeyPair);
         }
 
         try {
@@ -115,16 +117,20 @@ public class BrickConfigurationStarterActor extends AbstractActor {
 
             if (configured) {
                 generateMsgAndSend(brickStartContext, httpsUrl, BrickStateEvent.State.CONFIGURING, BrickStateEvent.State.RUNNING);
+                BrickStateEvent brickStateEvent = new BrickStateEvent(projectConfiguration.getIdentifier(), brickStartContext.getStackConfiguration().getName(), brickType.name(), brickStartContext.getBrickConfiguration().getName(), null, BrickStateEvent.State.RUNNING, url, "", brickConfiguration.getVersion());
+                sender.tell(brickStateEvent, self());
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("{} for project {} configured", brickType, projectName);
                 }
             }
         } catch (BrickAlreadyExist brickAlreadyExist) {
-            LOGGER.error("Brick {} already exist for project {}, not reconfigure it.", brickAlreadyExist.getBrickName(), brickAlreadyExist.getProjectName());
+            LOGGER.error("BrickConfiguration {} already exist for project {}, not reconfigure it.", brickAlreadyExist.getBrickName(), brickAlreadyExist.getProjectName());
             generateMsgAndSend(brickStartContext, httpsUrl, null, BrickStateEvent.State.ALREADYEXIST);
+            sender.tell(Futures.failed(brickAlreadyExist), self());
         } catch (RuntimeException e) {
             LOGGER.error("An error occurred while trying to start brick {} for project {}.", brickType, projectName, e);
             generateMsgAndSend(brickStartContext, httpsUrl, null, BrickStateEvent.State.ONFAILURE, e.getMessage());
+            sender.tell(Futures.failed(e), self());
         }
         getContext().stop(self());
 
@@ -137,7 +143,7 @@ public class BrickConfigurationStarterActor extends AbstractActor {
         BrickType brickType = brickConfiguration.getType();
         String brickName = brickConfiguration.getName();
         BrickStateEvent message = new BrickStateEvent(projectConfiguration.getIdentifier(),stackConfiguration.getName(),  brickType.name(), brickName, oldState, newState, url, messageStr, brickConfiguration.getVersion());
-        getContext().actorSelection(EndpointActor.ACTOR_PATH).tell(message, self());
+        getContext().actorFor(EndpointActor.ACTOR_PATH).tell(message, self());
     }
 
     private void generateMsgAndSend(BrickStartContext context,String url, BrickStateEvent.State oldState, BrickStateEvent.State newState) {

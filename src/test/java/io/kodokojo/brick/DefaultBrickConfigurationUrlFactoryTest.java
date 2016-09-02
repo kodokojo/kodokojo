@@ -20,23 +20,22 @@ package io.kodokojo.brick;
 import io.kodokojo.model.*;
 import org.junit.Test;
 
+import java.util.Collections;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class DefaultBrickUrlFactoryTest {
+public class DefaultBrickConfigurationUrlFactoryTest {
 
     @Test
     public void object_without_entity_upper_case() {
         BrickUrlFactory brickUrlFactory = new DefaultBrickUrlFactory("kodokojo.dev");
 
         ProjectConfiguration projectConfiguration = mock(ProjectConfiguration.class);
-        BrickConfiguration brickConfiguration = mock(BrickConfiguration.class);
+        BrickConfiguration brickConfiguration = new BrickConfiguration("jenkins", BrickType.CI, "1.651", Collections.singleton(new PortDefinition(8080)));
 
         when(projectConfiguration.getName()).thenReturn("ACME");
-        when(brickConfiguration.getType()).thenReturn(BrickType.CI);
-        when(brickConfiguration.getBrick()).thenReturn(new Brick("jenkins", BrickType.CI, "1.651"));
-
         String forgedUrl = brickUrlFactory.forgeUrl(projectConfiguration, "build-A", brickConfiguration);
         assertThat(forgedUrl).isEqualTo("jenkins-acme.kodokojo.dev");
     }
@@ -53,12 +52,9 @@ public class DefaultBrickUrlFactoryTest {
         BrickUrlFactory brickUrlFactory = new DefaultBrickUrlFactory("kodokojo.dev");
 
         ProjectConfiguration projectConfiguration = mock(ProjectConfiguration.class);
-        BrickConfiguration brickConfiguration = mock(BrickConfiguration.class);
+        BrickConfiguration brickConfiguration = new BrickConfiguration("jenkins", BrickType.CI, "1.651", Collections.singleton(new PortDefinition(8080)));
 
         when(projectConfiguration.getName()).thenReturn("acme");
-        when(brickConfiguration.getType()).thenReturn(BrickType.CI);
-        when(brickConfiguration.getBrick()).thenReturn(new Brick("jenkins", BrickType.CI, "1.651"));
-
         String forgedUrl = brickUrlFactory.forgeUrl(projectConfiguration, "build-A", brickConfiguration);
         assertThat(forgedUrl).isEqualTo("jenkins-acme.kodokojo.dev");
     }

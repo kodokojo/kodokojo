@@ -173,8 +173,8 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
 
     public SELF create_a_small_custom_project_configuration_with_name_$_and_only_brick_type_$(String projectName, String brickName) {
         BrickFactory brickFactory = new DefaultBrickFactory();
-        Brick brick = brickFactory.createBrick(brickName);
-        BrickConfigDto brickConfigDto = new BrickConfigDto(brickName, brick.getType().name(), brick.getVersion());
+        BrickConfiguration brickConfiguration = brickFactory.createBrick(brickName);
+        BrickConfigDto brickConfigDto = new BrickConfigDto(brickName, brickConfiguration.getType().name(), brickConfiguration.getVersion());
         StackConfigDto stackConfigDto = new StackConfigDto("build-A", StackType.BUILD.name(), Collections.singletonList(brickConfigDto));
         return createProjectConfiguration(projectName, stackConfigDto);
     }

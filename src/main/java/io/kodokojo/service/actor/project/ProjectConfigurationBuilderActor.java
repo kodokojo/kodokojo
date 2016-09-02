@@ -12,11 +12,9 @@ import io.kodokojo.endpoint.dto.BrickConfigDto;
 import io.kodokojo.endpoint.dto.ProjectCreationDto;
 import io.kodokojo.endpoint.dto.StackConfigDto;
 import io.kodokojo.model.*;
-import io.kodokojo.service.ProjectManager;
 import io.kodokojo.service.actor.EndpointActor;
 import io.kodokojo.service.actor.message.UserRequestMessage;
 import io.kodokojo.service.actor.user.UserFetcherActor;
-import io.kodokojo.service.repository.ProjectRepository;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 
@@ -117,7 +115,7 @@ public class ProjectConfigurationBuilderActor extends AbstractActor {
 
             Set<StackConfiguration> stackConfiguration = stackConfigDtos.stream().map(stackConfigDto -> {
                 Set<BrickConfiguration> brickConfigurations = stackConfigDto.getBrickConfigs().stream()
-                        .map(brickConfigDto -> new BrickConfiguration(brickFactory.createBrick(brickConfigDto.getName())))
+                        .map(brickConfigDto -> brickFactory.createBrick(brickConfigDto.getName()))
                         .collect(Collectors.toSet());
                 return new StackConfiguration(stackConfigDto.getName(), StackType.valueOf(stackConfigDto.getType()), brickConfigurations, loadBalancerHost, scmSshPort);
             }).collect(Collectors.toSet());
@@ -135,8 +133,8 @@ public class ProjectConfigurationBuilderActor extends AbstractActor {
     }
 
     private void addBrick(String name, List<BrickConfigDto> brickConfigDtos) {
-        Brick brick = brickFactory.createBrick(name);
-        brickConfigDtos.add(new BrickConfigDto(brick.getName(), brick.getType().toString(), brick.getVersion()));
+        BrickConfiguration brickConfiguration = brickFactory.createBrick(name);
+        brickConfigDtos.add(new BrickConfigDto(brickConfiguration.getName(), brickConfiguration.getType().toString(), brickConfiguration.getVersion()));
     }
 
     public static class ProjectConfigurationBuildMsg extends UserRequestMessage {

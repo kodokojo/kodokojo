@@ -27,7 +27,8 @@ public enum BrickType {
     MONITORING(false, StackType.RUN, true),
     ALTERTING(false, StackType.RUN, true),
     AUTHENTIFICATOR(false, StackType.RUN, false),
-    LOADBALANCER(true, StackType.RUN, false);
+    LOADBALANCER(true, StackType.RUN, false),
+    DEPENDENCY(false, null, false);
 
     private final boolean requiered;
 
@@ -41,11 +42,12 @@ public enum BrickType {
         this.requiredHttpExposed = requiredHttpExposed;
     }
 
-
+    @Deprecated
     public boolean isRequiredHttpExposed() {
         return requiredHttpExposed;
     }
 
+    @Deprecated
     public boolean isRequiered() {
         return requiered;
     }

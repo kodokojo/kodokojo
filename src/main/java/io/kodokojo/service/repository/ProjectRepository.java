@@ -36,6 +36,4 @@ public interface ProjectRepository extends ProjectFetcher {
 
     void updateProjectConfiguration(ProjectConfiguration projectConfiguration);
 
-    void setContextToBrickConfiguration(String projectConfigurationId, BrickConfiguration brickConfiguration, Map<String, Serializable> context);
-
 }

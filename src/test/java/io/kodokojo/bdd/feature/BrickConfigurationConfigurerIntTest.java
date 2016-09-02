@@ -36,7 +36,7 @@ import org.junit.runner.RunWith;
 
 
 @RunWith(DataProviderRunner.class)
-public class BrickConfigurerIntTest extends ScenarioTest<BrickConfigurerGiven<?>, BrickConfigurerWhen<?>, BrickConfigurerThen<?>> {
+public class BrickConfigurationConfigurerIntTest extends ScenarioTest<BrickConfigurerGiven<?>, BrickConfigurerWhen<?>, BrickConfigurerThen<?>> {
 
     @Rule
     public DockerPresentMethodRule dockerPresentMethodRule = new DockerPresentMethodRule();
