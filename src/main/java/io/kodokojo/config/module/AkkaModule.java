@@ -16,6 +16,7 @@ import io.kodokojo.service.actor.entity.EntityEndpointActor;
 import io.kodokojo.service.actor.event.EventEndpointActor;
 import io.kodokojo.service.actor.project.ProjectEndpointActor;
 import io.kodokojo.service.actor.user.UserEndpointActor;
+import io.kodokojo.service.dns.DnsManager;
 import io.kodokojo.service.repository.EntityRepository;
 import io.kodokojo.service.repository.ProjectRepository;
 import io.kodokojo.service.repository.UserRepository;
@@ -38,8 +39,8 @@ public class AkkaModule extends AbstractModule {
 
     @Provides
     @Named(ProjectEndpointActor.NAME)
-    Props provideProjectEndpointProps(ProjectRepository projectRepository, UserRepository userRepository, ProjectManager projectManager, BrickFactory brickFactory, BrickManager brickManager, BootstrapConfigurationProvider bootstrapConfigurationProvider, ConfigurationStore configurationStore, BrickUrlFactory brickUrlFactory, SSLCertificatProvider sslCertificatProvider) {
-        return ProjectEndpointActor.PROPS(projectRepository, userRepository, projectManager, brickFactory, brickManager, bootstrapConfigurationProvider, configurationStore, brickUrlFactory, sslCertificatProvider);
+    Props provideProjectEndpointProps(ProjectRepository projectRepository, UserRepository userRepository, ProjectManager projectManager, DnsManager dnsManager, BrickFactory brickFactory, BrickManager brickManager, BootstrapConfigurationProvider bootstrapConfigurationProvider, ConfigurationStore configurationStore, BrickUrlFactory brickUrlFactory, SSLCertificatProvider sslCertificatProvider) {
+        return ProjectEndpointActor.PROPS(projectRepository, userRepository, projectManager, dnsManager, brickFactory, brickManager, bootstrapConfigurationProvider, configurationStore, brickUrlFactory, sslCertificatProvider);
     }
 
     @Provides

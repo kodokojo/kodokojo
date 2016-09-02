@@ -25,6 +25,7 @@ import io.kodokojo.brick.BrickFactory;
 import io.kodokojo.brick.BrickStartContext;
 import io.kodokojo.brick.BrickUrlFactory;
 import io.kodokojo.service.*;
+import io.kodokojo.service.dns.DnsManager;
 import io.kodokojo.service.repository.ProjectRepository;
 import io.kodokojo.service.repository.UserRepository;
 
@@ -34,7 +35,7 @@ public class ProjectEndpointActor extends AbstractActor {
 
     private final LoggingAdapter LOGGER = getLogger(getContext().system(), this);
 
-    public static Props PROPS(ProjectRepository projectRepository, UserRepository userRepository , ProjectManager projectManager, BrickFactory brickFactory, BrickManager brickManager, BootstrapConfigurationProvider bootstrapConfigurationProvider, ConfigurationStore configurationStore, BrickUrlFactory brickUrlFactory, SSLCertificatProvider sslCertificatProvider) {
+    public static Props PROPS(ProjectRepository projectRepository, UserRepository userRepository , ProjectManager projectManager, DnsManager dnsManager,  BrickFactory brickFactory, BrickManager brickManager, BootstrapConfigurationProvider bootstrapConfigurationProvider, ConfigurationStore configurationStore, BrickUrlFactory brickUrlFactory, SSLCertificatProvider sslCertificatProvider) {
         if (projectRepository == null) {
             throw new IllegalArgumentException("projectRepository must be defined.");
         }
@@ -50,6 +51,9 @@ public class ProjectEndpointActor extends AbstractActor {
         if (brickManager == null) {
             throw new IllegalArgumentException("brickManager must be defined.");
         }
+        if (dnsManager == null) {
+            throw new IllegalArgumentException("dnsManager must be defined.");
+        }
         if (bootstrapConfigurationProvider == null) {
             throw new IllegalArgumentException("bootstrapConfigurationProvider must be defined.");
         }
@@ -62,12 +66,12 @@ public class ProjectEndpointActor extends AbstractActor {
         if (sslCertificatProvider == null) {
             throw new IllegalArgumentException("sslCertificatProvider must be defined.");
         }
-        return Props.create(ProjectEndpointActor.class, projectRepository, userRepository, projectManager, brickFactory, brickManager, bootstrapConfigurationProvider, configurationStore, brickUrlFactory, sslCertificatProvider);
+        return Props.create(ProjectEndpointActor.class, projectRepository, userRepository, projectManager, dnsManager, brickFactory, brickManager, bootstrapConfigurationProvider, configurationStore, brickUrlFactory, sslCertificatProvider);
     }
 
     public static final String NAME = "projectEndpointProps";
 
-    public ProjectEndpointActor(ProjectRepository projectRepository, UserRepository userRepository,  ProjectManager projectManager, BrickFactory brickFactory, BrickManager brickManager, BootstrapConfigurationProvider bootstrapConfigurationProvider, ConfigurationStore configurationStore, BrickUrlFactory brickUrlFactory, SSLCertificatProvider sslCertificatProvider) {
+    public ProjectEndpointActor(ProjectRepository projectRepository, UserRepository userRepository,  ProjectManager projectManager, DnsManager dnsManager ,BrickFactory brickFactory, BrickManager brickManager, BootstrapConfigurationProvider bootstrapConfigurationProvider, ConfigurationStore configurationStore, BrickUrlFactory brickUrlFactory, SSLCertificatProvider sslCertificatProvider) {
         if (projectRepository == null) {
             throw new IllegalArgumentException("projectRepository must be defined.");
         }
@@ -104,7 +108,7 @@ public class ProjectEndpointActor extends AbstractActor {
                 }).match(ProjectConfigurationStarterActor.ProjectConfigurationStartMsg.class, msg -> {
                     getContext().actorOf(ProjectConfigurationStarterActor.PROPS(projectRepository)).forward(msg, getContext());
                 }).match(StackConfigurationStarterActor.StackConfigurationStartMsg.class, msg -> {
-                    getContext().actorOf(StackConfigurationStarterActor.PROPS()).forward(msg, getContext());
+                    getContext().actorOf(StackConfigurationStarterActor.PROPS(dnsManager, brickUrlFactory)).forward(msg, getContext());
                 })
                 .matchAny(this::unhandled).build());
     }
