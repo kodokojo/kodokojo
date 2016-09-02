@@ -63,7 +63,11 @@ public class StackConfigurationStarterActor extends AbstractActor {
                 dnsentries.addAll(b.getPortDefinitions().stream()
                         .map(p -> {
                             String entry = brickUrlFactory.forgeUrl(msg.projectConfiguration, msg.stackConfiguration.getName(), b);
-                            return new DnsEntry(entry, getDnsType(msg.stackConfiguration.getLoadBalancerHost()), msg.stackConfiguration.getLoadBalancerHost());
+                            DnsEntry dnsEntry = new DnsEntry(entry, getDnsType(msg.stackConfiguration.getLoadBalancerHost()), msg.stackConfiguration.getLoadBalancerHost());
+                            if (LOGGER.isDebugEnabled()) {
+                                LOGGER.debug("Add following DNS Entry {}", dnsEntry);
+                            }
+                            return dnsEntry;
                         }).collect(Collectors.toSet()));
             });
             dnsManager.createOrUpdateDnsEntries(dnsentries);
