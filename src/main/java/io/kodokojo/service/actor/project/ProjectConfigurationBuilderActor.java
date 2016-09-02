@@ -125,6 +125,8 @@ public class ProjectConfigurationBuilderActor extends AbstractActor {
             originalSender.tell(new ProjectConfigurationBuildResultMsg(initialMsg.getRequester(), projectConfiguration), self());
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Return a built ProjectConfiguration for project {}.", initialMsg.getProjectCreationDto().getName());
+                LOGGER.debug("Loadbalancer host {}", loadBalancerHost);
+                LOGGER.debug("sshPort {}", scmSshPort);
             }
 
         } else if (LOGGER.isDebugEnabled()) {
