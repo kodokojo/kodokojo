@@ -19,17 +19,20 @@ package io.kodokojo.service;
 
 import com.squareup.okhttp.OkHttpClient;
 import io.kodokojo.brick.*;
-import io.kodokojo.model.Brick;
+import io.kodokojo.model.BrickConfiguration;
 import io.kodokojo.model.BrickType;
 import io.kodokojo.brick.gitlab.GitlabConfigurer;
 import io.kodokojo.brick.jenkins.JenkinsConfigurer;
 import io.kodokojo.brick.nexus.NexusConfigurer;
+import io.kodokojo.model.PortDefinition;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Collections;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class DefaultBrickConfigurerProviderTest {
+public class DefaultBrickConfigurationConfigurerProviderTest {
 
     private BrickFactory brickFactory;
 
@@ -43,7 +46,7 @@ public class DefaultBrickConfigurerProviderTest {
 
     @Test
     public void unexpected_brick_type() {
-        BrickConfigurer unknow = brickConfigurerProvider.provideFromBrick(new Brick("unknow", BrickType.ALTERTING, "1.0"));
+        BrickConfigurer unknow = brickConfigurerProvider.provideFromBrick(new BrickConfiguration("unknow", BrickType.ALTERTING, "1.0", Collections.singleton(new PortDefinition(80))));
         assertThat(unknow).isNull();
     }
 

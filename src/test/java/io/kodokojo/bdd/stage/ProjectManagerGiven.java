@@ -27,25 +27,20 @@ import io.kodokojo.brick.DefaultBrickConfigurerProvider;
 import io.kodokojo.brick.DefaultBrickUrlFactory;
 import io.kodokojo.model.Project;
 import io.kodokojo.model.ProjectBuilder;
-import io.kodokojo.model.Stack;
 import io.kodokojo.service.*;
 import io.kodokojo.service.dns.NoOpDnsManager;
 import io.kodokojo.service.repository.ProjectRepository;
 import io.kodokojo.service.ssl.SSLKeyPair;
 import io.kodokojo.service.ssl.SSLUtils;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.mockito.verification.VerificationMode;
 
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -54,7 +49,6 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 public class ProjectManagerGiven<SELF extends ProjectManagerGiven<?>> extends Stage<SELF> {
 
@@ -104,7 +98,7 @@ public class ProjectManagerGiven<SELF extends ProjectManagerGiven<?>> extends St
 
         configProvider = mock(BootstrapConfigurationProvider.class);
         Mockito.when(configProvider.provideLoadBalancerHost(anyString(), anyString())).thenReturn("127.0.0.1");
-        Mockito.when(configProvider.provideSshPortEntrypoint(anyString(), anyString())).thenReturn(10022);
+        Mockito.when(configProvider.provideTcpPortEntrypoint(anyString(), anyString())).thenReturn(10022);
         actorSystem = ActorSystem.create("test");
         brickCaptured = new ArrayList<>();
         ActorRef actor = actorSystem.actorOf(Props.create(TestActor.class, brickCaptured), "endpoint");

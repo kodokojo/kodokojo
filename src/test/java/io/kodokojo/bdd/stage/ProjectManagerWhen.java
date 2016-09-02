@@ -75,9 +75,9 @@ public class ProjectManagerWhen<SELF extends ProjectManagerWhen<?>> extends Stag
             Set<StackConfiguration> stackConfigurations = new HashSet<>();
             Set<BrickConfiguration> brickConfigurations = new HashSet<>();
             BrickFactory brickFactory = new DefaultBrickFactory();
-            brickConfigurations.add(new BrickConfiguration(brickFactory.createBrick("jenkins")));
-            brickConfigurations.add(new BrickConfiguration(brickFactory.createBrick("gitlab")));
-            brickConfigurations.add(new BrickConfiguration(brickFactory.createBrick("nexus")));
+            brickConfigurations.add(brickFactory.createBrick("jenkins"));
+            brickConfigurations.add(brickFactory.createBrick("gitlab"));
+            brickConfigurations.add(brickFactory.createBrick("nexus"));
             StackConfiguration stackConfiguration = new StackConfiguration(stackName, stackType, brickConfigurations, "localhost", 22);
             stackConfigurations.add(stackConfiguration);
             List<User> users = Arrays.asList(user);

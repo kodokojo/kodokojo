@@ -112,33 +112,6 @@ public class RedisProjectStore extends AbstractRedisStore implements ProjectStor
     }
 
     @Override
-    public void setContextToBrickConfiguration(String projectConfigurationId, BrickConfiguration brickConfiguration, Map<String, Serializable> context) {
-        if (isBlank(projectConfigurationId)) {
-            throw new IllegalArgumentException("projectConfigurationId must be defined.");
-        }
-        if (brickConfiguration == null) {
-            throw new IllegalArgumentException("brickConfiguration must be defined.");
-        }
-        if (context == null) {
-            throw new IllegalArgumentException("context must be defined.");
-        }
-        ProjectConfigurationStoreModel projectConfiguration = getProjectConfigurationById(projectConfigurationId);
-        BrickConfiguration current = null;
-        Iterator<BrickConfiguration> defaultBrickConfigurations = projectConfiguration.getStackConfigurations().iterator().next().getBrickConfigurations().iterator();
-        while(defaultBrickConfigurations.hasNext() && current == null) {
-            BrickConfiguration tmp = defaultBrickConfigurations.next();
-            if (brickConfiguration.getName().equals(tmp.getName()) && brickConfiguration.getType() == tmp.getType()) {
-                current = tmp;
-            }
-        }
-        if(current != null) {
-            current.setCustomData(context);
-            updateProjectConfiguration(projectConfiguration);
-        }
-
-    }
-
-    @Override
     public ProjectConfigurationStoreModel getProjectConfigurationById(String identifier) {
         if (isBlank(identifier)) {
             throw new IllegalArgumentException("identifier must be defined.");
@@ -148,24 +121,12 @@ public class RedisProjectStore extends AbstractRedisStore implements ProjectStor
             if (jedis.exists(projectConfigKey)) {
                 byte[] encrypted = jedis.get(projectConfigKey);
                 ProjectConfigurationStoreModel projectConfiguration = (ProjectConfigurationStoreModel) RSAUtils.decryptObjectWithAES(key, encrypted);
-                projectConfiguration.getStackConfigurations().forEach(this::fillStackConfigurationBrick);
                 return projectConfiguration;
             }
         }
         return null;
     }
 
-    private void fillStackConfigurationBrick(StackConfiguration stackConfiguration) {
-        List<BrickConfiguration> brickConfigurationUpdated = new ArrayList<>();
-        if (CollectionUtils.isNotEmpty(stackConfiguration.getBrickConfigurations())) {
-            brickConfigurationUpdated.addAll(stackConfiguration.getBrickConfigurations().stream().map(brickConfiguration -> {
-                Brick brick = brickFactory.createBrick(brickConfiguration.getName());
-                return new BrickConfiguration(brick, brickConfiguration.getName(), brickConfiguration.getType(), brickConfiguration.getUrl(), brick.getVersion(), brickConfiguration.isWaitRunning());
-            }).collect(Collectors.toList()));
-        }
-        stackConfiguration.getBrickConfigurations().clear();
-        stackConfiguration.getBrickConfigurations().addAll(brickConfigurationUpdated);
-    }
 
     @Override
     public String addProject(Project project, String projectConfigurationIdentifier) {

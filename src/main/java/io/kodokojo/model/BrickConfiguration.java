@@ -18,29 +18,31 @@
 package io.kodokojo.model;
 
 
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.map.HashedMap;
+
 import java.io.Serializable;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
 public class BrickConfiguration implements Serializable {
 
-    private final Brick brick;
-
     private final String name;
 
     private final BrickType type;
 
-    private final String url;
-
     private final String version;
 
-    private final boolean waitRunning;
+    private final Set<PortDefinition> portDefinitions;
 
-    private Map<String, Serializable> customData;
+    private final Set<BrickConfiguration> dependencies;
 
-    public BrickConfiguration(Brick brick, String name, BrickType type, String url, String version, boolean waitRunning) {
+    private final Map<String, Serializable> properties;
+
+    public BrickConfiguration(String name, BrickType type, String version, Set<PortDefinition> portDefinitions, Set<BrickConfiguration> dependencies, Map<String, Serializable> properties) {
         if (isBlank(name)) {
             throw new IllegalArgumentException("name must be defined.");
         }
@@ -50,51 +52,26 @@ public class BrickConfiguration implements Serializable {
         if (isBlank(version)) {
             throw new IllegalArgumentException("version must be defined.");
         }
-        if (brick == null) {
-            if (isBlank(url)) {
-                throw new IllegalArgumentException("url must be defined.");
-            }
+        if (CollectionUtils.isEmpty(portDefinitions)) {
+            throw new IllegalArgumentException("portDefinitions must be defined.");
         }
-        this.brick = brick;
+        if (dependencies == null) {
+            throw new IllegalArgumentException("dependencies must be defined.");
+        }
         this.name = name;
         this.type = type;
-        this.url = url;
         this.version = version;
-        this.waitRunning = waitRunning;
-        this.customData = new HashMap<>();
-    }
-    public BrickConfiguration(Brick brick, String name, BrickType type, String url, String version) {
-        this(brick, name, type, url, version, true);
+        this.portDefinitions = portDefinitions;
+        this.dependencies = dependencies;
+        this.properties = properties;
     }
 
-    public BrickConfiguration(String name, BrickType type, String url, String version) {
-        this(null, name, type, url, version);
+    public BrickConfiguration(String name, BrickType type, String version, Set<PortDefinition> portDefinitions, Map<String, Serializable> properties) {
+        this(name,type,version,portDefinitions, new HashSet<>(), properties);
     }
 
-    public BrickConfiguration(Brick brick, boolean waitRunning, String version) {
-        this(brick, brick.getName(), brick.getType(), null, version, waitRunning);
-    }
-    public BrickConfiguration(Brick brick) {
-        this(brick, brick.getName(), brick.getType(), null, brick.getVersion());
-    }
-
-    public String getVersion() {
-        return version;
-    }
-
-    public Map<String, Serializable> getCustomData() {
-        return customData;
-    }
-
-    public void setCustomData(Map<String, Serializable> customData) {
-        if (customData == null) {
-            throw new IllegalArgumentException("customData must be defined.");
-        }
-        this.customData.putAll(customData);
-    }
-
-    public Brick getBrick() {
-        return brick;
+    public BrickConfiguration(String name, BrickType type, String version, Set<PortDefinition> portDefinitions) {
+        this(name, type, version, portDefinitions, new HashSet<>(), new HashedMap<>());
     }
 
     public String getName() {
@@ -105,49 +82,31 @@ public class BrickConfiguration implements Serializable {
         return type;
     }
 
-    public String getUrl() {
-        return url;
+    public String getVersion() {
+        return version;
     }
 
-    public boolean isWaitRunning() {
-        return waitRunning;
+    public Set<PortDefinition> getPortDefinitions() {
+        return new HashSet<>(portDefinitions);
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        BrickConfiguration that = (BrickConfiguration) o;
-
-        if (brick != that.brick) return false;
-        if (!name.equals(that.name)) return false;
-        if (type != that.type) return false;
-        if (url != null ? !url.equals(that.url) : that.url != null) return false;
-        if (version != null ? !version.equals(that.version) : that.version != null) return false;
-        return true;
-
+    public Set<BrickConfiguration> getDependencies() {
+        return new HashSet<>(dependencies);
     }
 
-    @Override
-    public int hashCode() {
-        int result = brick != null ? brick.hashCode() : 0;
-        result = 31 * result + name.hashCode();
-        result = 31 * result + type.hashCode();
-        result = 31 * result + (url != null ? url.hashCode() : 0);
-        result = 31 * result + (version != null ? version.hashCode() : 0);
-        return result;
+    public Map<String, Serializable> getProperties() {
+        return properties;
     }
 
     @Override
     public String toString() {
         return "BrickConfiguration{" +
-                "brick=" + brick +
-                ", name='" + name + '\'' +
+                "name='" + name + '\'' +
                 ", type=" + type +
-                ", url='" + url + '\'' +
-                ", waitRunning='" + waitRunning + '\'' +
                 ", version='" + version + '\'' +
+                ", portDefinitions=" + portDefinitions +
+                ", dependencies=" + dependencies +
+                ", properties=" + properties +
                 '}';
     }
 }

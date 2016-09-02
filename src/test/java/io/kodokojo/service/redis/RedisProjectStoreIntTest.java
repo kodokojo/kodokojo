@@ -127,7 +127,7 @@ public class RedisProjectStoreIntTest {
     private ProjectConfigurationStoreModel createProjectConfiguration(List<String> users) {
         Set<StackConfiguration> stackConfigurations = new HashSet<>();
         Set<BrickConfiguration> brickConfigurations = new HashSet<>();
-        brickConfigurations.add(new BrickConfiguration(new Brick("jenkins", BrickType.CI, "1.651")));
+        brickConfigurations.add(new BrickConfiguration("jenkins", BrickType.CI, "1.651", Collections.singleton(new PortDefinition(8080))));
         stackConfigurations.add(new StackConfiguration("build-A", StackType.BUILD, brickConfigurations, "127.0.0.1", 10022));
         return new ProjectConfigurationStoreModel("123456",null, "acme-a", users, stackConfigurations, users);
     }

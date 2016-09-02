@@ -53,7 +53,7 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
 
 @Ignore
-public class BrickConfigurationStarterActorTest {
+public class BrickConfigurationConfigurationStarterActorTest {
 
     private static ActorSystem system;
 
@@ -101,7 +101,7 @@ public class BrickConfigurationStarterActorTest {
 
 
             ActorRef ref = system.actorOf(props);
-            BrickStartContext context = createBrickStartContext(new BrickConfiguration(new Brick("test", BrickType.CI, "1.0")));
+            BrickStartContext context = createBrickStartContext(new BrickConfiguration("test", BrickType.CI, "1.0", Collections.singleton(new PortDefinition(8080))));
 
             ref.tell(context, getRef());
             new AwaitAssert(duration("10000 millis")) {
@@ -140,7 +140,7 @@ public class BrickConfigurationStarterActorTest {
             final Props props = Props.create(BrickConfigurationStarterActor.class, brickManager, configurationStore, brickUrlFactory, sslCertificatProvider, probe.getRef());
 
             ActorRef ref = system.actorOf(props);
-            BrickStartContext context = createBrickStartContext(new BrickConfiguration(new Brick("test", BrickType.CI, "1.0")));
+            BrickStartContext context = createBrickStartContext(new BrickConfiguration("test", BrickType.CI, "1.0", Collections.singleton(new PortDefinition(8080))));
 
             ref.tell(context, getRef());
             new AwaitAssert(duration("10 seconds")) {
@@ -178,7 +178,7 @@ public class BrickConfigurationStarterActorTest {
         stackConfigurations.add(stackConfiguration);
         List<User> users = Collections.singletonList(owner);
         ProjectConfiguration projectConfiguration = new ProjectConfiguration("123456","7890", "Acme", users, stackConfigurations, users);
-        return new BrickStartContext(projectConfiguration, stackConfiguration, brickConfiguration, "kodokojo.dev", "127.0.0.1");
+        return new BrickStartContext(projectConfiguration, stackConfiguration, brickConfiguration);
     }
 
 

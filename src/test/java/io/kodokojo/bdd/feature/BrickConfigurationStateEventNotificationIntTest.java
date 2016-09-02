@@ -26,7 +26,7 @@ import io.kodokojo.commons.DockerPresentMethodRule;
 import org.junit.Rule;
 import org.junit.Test;
 
-public class BrickStateEventNotificationIntTest extends ScenarioTest<BrickStateNotificationGiven<?>, BrickStateNotificationWhen<?>, BrickStateNotificationThen<?>> {
+public class BrickConfigurationStateEventNotificationIntTest extends ScenarioTest<BrickStateNotificationGiven<?>, BrickStateNotificationWhen<?>, BrickStateNotificationThen<?>> {
 
     @Rule
     public DockerPresentMethodRule dockerPresentMethodRule = new DockerPresentMethodRule();

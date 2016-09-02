@@ -33,7 +33,7 @@ import io.kodokojo.bdd.stage.WebSocketEventsListener;
 import io.kodokojo.brick.DefaultBrickFactory;
 import io.kodokojo.endpoint.dto.BrickConfigDto;
 import io.kodokojo.endpoint.dto.StackConfigDto;
-import io.kodokojo.model.Brick;
+import io.kodokojo.model.BrickConfiguration;
 import io.kodokojo.model.ProjectConfiguration;
 import io.kodokojo.model.StackType;
 import io.kodokojo.service.ProjectManager;
@@ -163,9 +163,9 @@ public class ClusterApplicationWhen<SELF extends ClusterApplicationWhen<?>> exte
 
     public SELF i_configure_a_project_with_name_$_and_only_brick_$(String projectName, String brickName) {
 
-        Brick brick = new DefaultBrickFactory().createBrick(brickName);
-        String brickType = brick.getType().name();
-        BrickConfigDto brickConfig = new BrickConfigDto(brickName, brickType, brick.getVersion());
+        BrickConfiguration brickConfiguration = new DefaultBrickFactory().createBrick(brickName);
+        String brickType = brickConfiguration.getType().name();
+        BrickConfigDto brickConfig = new BrickConfigDto(brickName, brickType, brickConfiguration.getVersion());
         StackConfigDto stackConfig = new StackConfigDto("build-A", StackType.BUILD.name(), Collections.singletonList(brickConfig));
         String projectConfigurationId = httpUserSupport.createProjectConfiguration(projectName, stackConfig, currentUser);
         try {

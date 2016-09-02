@@ -1,17 +1,17 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -19,13 +19,11 @@ package io.kodokojo.service.marathon;
 
 import io.kodokojo.brick.*;
 import io.kodokojo.config.MarathonConfig;
-import io.kodokojo.model.Service;
-import io.kodokojo.service.repository.ProjectRepository;
-import io.kodokojo.service.servicelocator.marathon.MarathonServiceLocator;
 import io.kodokojo.model.*;
-import io.kodokojo.brick.BrickConfigurerData;
 import io.kodokojo.service.BrickManager;
 import io.kodokojo.service.ProjectConfigurationException;
+import io.kodokojo.service.repository.ProjectRepository;
+import io.kodokojo.service.servicelocator.marathon.MarathonServiceLocator;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang.StringUtils;
@@ -139,29 +137,28 @@ public class MarathonBrickManager implements BrickManager {
             marathonRestApi.startApplication(input);
         } catch (RetrofitError e) {
             if (e.getResponse().getStatus() == 409) {
-                throw new BrickAlreadyExist(e,type, name);
+                throw new BrickAlreadyExist(e, type, name);
             }
         }
         Set<Service> res = new HashSet<>();
-        if (brickConfiguration.isWaitRunning()) {
-            marathonServiceLocator.getService(type, name);
-            boolean haveHttpService = getAnHttpService(res);
-            // TODO remove this, listen the Marathon event bus instead
-            int nbTry = 0;
-            int maxNbTry = 10000;
-            while (nbTry < maxNbTry && !haveHttpService) {
-                nbTry++;
-                res = marathonServiceLocator.getService(type, name);
-                haveHttpService = getAnHttpService(res);
-                if (!haveHttpService) {
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                    }
+        marathonServiceLocator.getService(type, name);
+        boolean haveHttpService = getAnHttpService(res);
+        // TODO remove this, listen the Marathon event bus instead
+        int nbTry = 0;
+        int maxNbTry = 10000;
+        while (nbTry < maxNbTry && !haveHttpService) {
+            nbTry++;
+            res = marathonServiceLocator.getService(type, name);
+            haveHttpService = getAnHttpService(res);
+            if (!haveHttpService) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
                 }
             }
         }
+
         return res;
     }
 
@@ -182,7 +179,7 @@ public class MarathonBrickManager implements BrickManager {
         }
         String name = projectConfiguration.getName().toLowerCase();
         String type = brickType.name().toLowerCase();
-        BrickConfigurer configurer = brickConfigurerProvider.provideFromBrick(brickConfiguration.getBrick());
+        BrickConfigurer configurer = brickConfigurerProvider.provideFromBrick(brickConfiguration);
         if (configurer != null) {
             Set<Service> services = marathonServiceLocator.getService(type, name);
             if (CollectionUtils.isNotEmpty(services)) {
@@ -194,13 +191,19 @@ public class MarathonBrickManager implements BrickManager {
                     try {
                         BrickConfigurerData brickConfigurerData = configurer.configure(new BrickConfigurerData(projectConfiguration.getName(), projectConfiguration.getDefaultStackConfiguration().getName(), entrypoint, domain, IteratorUtils.toList(projectConfiguration.getAdmins()), users));
                         brickConfigurerData = configurer.addUsers(brickConfigurerData, users);
-                        projectRepository.setContextToBrickConfiguration(projectConfiguration.getIdentifier(), brickConfiguration, brickConfigurerData.getContext());
+                        BrickConfigurationBuilder builder = new BrickConfigurationBuilder(brickConfiguration);
+                        builder.setProperties(brickConfigurerData.getContext());
+
+                        projectConfiguration.getDefaultStackConfiguration().getBrickConfigurations().remove(brickConfiguration);
+                        projectConfiguration.getDefaultStackConfiguration().getBrickConfigurations().add(builder.build());
+
+                        projectRepository.updateProjectConfiguration(projectConfiguration);
 
                         if (LOGGER.isDebugEnabled()) {
                             LOGGER.debug("Adding users {} to brick {}", StringUtils.join(users, ","), brickType);
                         }
                     } catch (BrickConfigurationException e) {
-                        throw  new ProjectConfigurationException("En error occur while trying to configure brick " + brickType.name() + " on project " +projectConfiguration.getName(), e);
+                        throw new ProjectConfigurationException("En error occur while trying to configure brick " + brickType.name() + " on project " + projectConfiguration.getName(), e);
                     }
                 }
             } else {
@@ -226,7 +229,7 @@ public class MarathonBrickManager implements BrickManager {
     }
 
     @Override
-    public boolean stop(BrickDeploymentState brickDeploymentState) {
+    public boolean stop(BrickConfiguration brickDeploymentState) {
         if (brickDeploymentState == null) {
             throw new IllegalArgumentException("brickDeploymentState must be defined.");
         }
@@ -248,7 +251,7 @@ public class MarathonBrickManager implements BrickManager {
         VelocityEngine ve = new VelocityEngine();
         ve.init(VE_PROPERTIES);
 
-        Template template = ve.getTemplate("marathon/" + brickConfiguration.getBrick().getName().toLowerCase() + ".json.vm");
+        Template template = ve.getTemplate("marathon/" + brickConfiguration.getName().toLowerCase() + ".json.vm");
 
         VelocityContext context = new VelocityContext();
         context.put("ID", id);
@@ -257,7 +260,7 @@ public class MarathonBrickManager implements BrickManager {
         context.put("projectName", projectConfiguration.getName().toLowerCase());
         context.put("stack", projectConfiguration.getDefaultStackConfiguration());
         context.put("brick", brickConfiguration);
-        context.put("brickUrl", brickUrlFactory.forgeUrl(projectConfiguration.getName(),stackName, brickConfiguration.getType().name(), brickConfiguration.getBrick().getName()));
+        context.put("brickUrl", brickUrlFactory.forgeUrl(projectConfiguration.getName(), stackName, brickConfiguration.getType().name(), brickConfiguration.getName()));
         context.put("constrainByTypeAttribute", this.constrainByTypeAttribute);
         StringWriter sw = new StringWriter();
         template.merge(context, sw);

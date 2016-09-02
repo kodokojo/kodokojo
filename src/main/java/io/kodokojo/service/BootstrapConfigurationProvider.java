@@ -36,6 +36,6 @@ public interface BootstrapConfigurationProvider {
      * @param stackName The stack name
      * @return SSH port to access to the project stack
      */
-    int provideSshPortEntrypoint(String projectName, String stackName);
+    int provideTcpPortEntrypoint(String projectName, String stackName);
 
 }
