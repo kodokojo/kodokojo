@@ -166,6 +166,12 @@ public class TestPropertyModule extends AbstractModule {
         };
     }
 
+    @Provides
+    @Singleton
+    ReCaptchaConfig provideReCaptchaConfig(){
+        return () -> "";
+    }
+
     private <T extends PropertyConfig> T createConfig(Class<T> configClass, PropertyValueProvider valueProvider) {
         PropertyResolver resolver = new PropertyResolver(valueProvider);
         return resolver.createProxy(configClass);

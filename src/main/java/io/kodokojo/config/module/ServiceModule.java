@@ -27,15 +27,12 @@ import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.squareup.okhttp.OkHttpClient;
 import io.kodokojo.brick.*;
-import io.kodokojo.config.AwsConfig;
-import io.kodokojo.config.EmailConfig;
+import io.kodokojo.config.*;
 import io.kodokojo.service.aws.Route53DnsManager;
 import io.kodokojo.service.aws.SesEmailSender;
 import io.kodokojo.service.dns.NoOpDnsManager;
 import io.kodokojo.service.repository.ProjectRepository;
 import io.kodokojo.service.ssl.SSLKeyPair;
-import io.kodokojo.config.ApplicationConfig;
-import io.kodokojo.config.SecurityConfig;
 import io.kodokojo.endpoint.UserAuthenticator;
 import io.kodokojo.service.*;
 import io.kodokojo.service.authentification.SimpleCredential;
@@ -117,6 +114,11 @@ public class ServiceModule extends AbstractModule {
         }
     }
 
+    @Provides
+    @Singleton
+    ReCaptchaService provideReCaptchaService(ReCaptchaConfig reCaptchaConfig, OkHttpClient httpClient) {
+        return new ReCaptchaService(reCaptchaConfig, httpClient);
+    }
 
     @Provides
     @Singleton

@@ -125,6 +125,12 @@ public class PropertyModule extends AbstractModule {
         return createConfig(EmailConfig.class, valueProvider);
     }
 
+    @Provides
+    @Singleton
+    ReCaptchaConfig provideReCaptchaConfig(PropertyValueProvider valueProvider) {
+        return createConfig(ReCaptchaConfig.class, valueProvider);
+    }
+
     private <T extends PropertyConfig> T createConfig(Class<T> configClass, PropertyValueProvider valueProvider) {
         PropertyResolver resolver = new PropertyResolver(valueProvider);
         return resolver.createProxy(configClass);

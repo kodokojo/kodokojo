@@ -27,6 +27,7 @@ import io.kodokojo.endpoint.dto.UserDto;
 import io.kodokojo.endpoint.dto.UserProjectConfigIdDto;
 import io.kodokojo.model.User;
 import io.kodokojo.service.RSAUtils;
+import io.kodokojo.service.ReCaptchaService;
 import io.kodokojo.service.actor.EndpointActor;
 import io.kodokojo.service.actor.user.UserCreatorActor;
 import io.kodokojo.service.actor.user.UserEligibleActor;
@@ -36,12 +37,14 @@ import io.kodokojo.service.repository.ProjectFetcher;
 import io.kodokojo.service.repository.ProjectRepository;
 import io.kodokojo.service.repository.UserFetcher;
 import io.kodokojo.service.repository.UserRepository;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.concurrent.Await;
 import scala.concurrent.Future;
 import scala.concurrent.duration.Duration;
 import scala.concurrent.duration.FiniteDuration;
+import spark.Request;
 
 import javax.inject.Inject;
 import java.io.StringWriter;
@@ -64,8 +67,10 @@ public class UserSparkEndpoint extends AbstractSparkEndpoint {
 
     private final ProjectFetcher projectFetcher;
 
+    private final ReCaptchaService reCaptchaService;
+
     @Inject
-    public UserSparkEndpoint(UserAuthenticator<SimpleCredential> userAuthenticator, @Named(EndpointActor.NAME) ActorRef akkaEndpoint, UserRepository userFetcher, ProjectRepository projectFetcher) {
+    public UserSparkEndpoint(UserAuthenticator<SimpleCredential> userAuthenticator, @Named(EndpointActor.NAME) ActorRef akkaEndpoint, UserRepository userFetcher, ProjectRepository projectFetcher, ReCaptchaService reCaptchaService) {
         super(userAuthenticator);
         if (akkaEndpoint == null) {
             throw new IllegalArgumentException("akkaEndpoint must be defined.");
@@ -76,9 +81,13 @@ public class UserSparkEndpoint extends AbstractSparkEndpoint {
         if (projectFetcher == null) {
             throw new IllegalArgumentException("projectFetcher must be defined.");
         }
+        if (reCaptchaService == null) {
+            throw new IllegalArgumentException("reCaptchaService must be defined.");
+        }
         this.akkaEndpoint = akkaEndpoint;
         this.userFetcher = userFetcher;
         this.projectFetcher = projectFetcher;
+        this.reCaptchaService = reCaptchaService;
     }
 
     @Override
@@ -90,6 +99,7 @@ public class UserSparkEndpoint extends AbstractSparkEndpoint {
             }
 
             User requester = getRequester(request);
+            if (!validateThrowCaptcha(request, requester)) return "";
 
             FiniteDuration duration = Duration.apply(30, TimeUnit.SECONDS);
 
@@ -178,6 +188,27 @@ public class UserSparkEndpoint extends AbstractSparkEndpoint {
             halt(404);
             return "";
         }, jsonResponseTransformer);
+    }
+
+    private boolean validateThrowCaptcha(Request request, User requester) {
+        if (requester == null) {
+            if (reCaptchaService.isConfigured()) {
+                String captcha = request.headers("g-recaptcha-response");
+                if (StringUtils.isBlank(captcha)) {
+                    halt(428, "Unable to retrieve a valid user or Captcha.");
+                    return false;
+                } else if (reCaptchaService.validToken(captcha, request.ip())) {
+                    return true;
+                }
+                halt(428, "Unable to retrieve a validate captcha.");
+                return false;
+
+            } else {
+                LOGGER.warn("No Captcha configured, requet not block until reCaptcha.secret isn't configured.");
+                return true;
+            }
+        }
+        return true;
     }
 
     private UserDto getUserDto(User user) {
