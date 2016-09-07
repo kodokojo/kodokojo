@@ -101,7 +101,6 @@ public class UserSparkEndpoint extends AbstractSparkEndpoint {
             User requester = getRequester(request);
             if (!validateThrowCaptcha(request, requester)) return "";
 
-            FiniteDuration duration = Duration.apply(30, TimeUnit.SECONDS);
 
             JsonParser parser = new JsonParser();
             JsonObject json = (JsonObject) parser.parse(request.body());
@@ -116,6 +115,7 @@ public class UserSparkEndpoint extends AbstractSparkEndpoint {
             }
 
 
+            FiniteDuration duration = Duration.apply(30, TimeUnit.SECONDS);
             Future<Object> userCreationFuture = ask(
                     akkaEndpoint,
                     new UserCreatorActor.UserCreateMsg(requester, identifier, email, username, entityId),
@@ -140,8 +140,8 @@ public class UserSparkEndpoint extends AbstractSparkEndpoint {
                 User user = userCreateResultMsg.getUser();
                 response.status(201);
                 StringWriter sw = new StringWriter();
-                RSAUtils.writeRsaPrivateKey((RSAPrivateKey) userCreateResultMsg.getKeyPair().getPrivate(), sw);
                 response.header("Location", "/user/" + user.getIdentifier());
+                RSAUtils.writeRsaPrivateKey((RSAPrivateKey) userCreateResultMsg.getKeyPair().getPrivate(), sw);
                 UserCreationDto userCreationDto = new UserCreationDto(user, sw.toString());
                 return userCreationDto;
             }
@@ -198,13 +198,14 @@ public class UserSparkEndpoint extends AbstractSparkEndpoint {
                     halt(428, "Unable to retrieve a valid user or Captcha.");
                     return false;
                 } else if (reCaptchaService.validToken(captcha, request.ip())) {
+
                     return true;
                 }
                 halt(428, "Unable to retrieve a validate captcha.");
                 return false;
 
             } else {
-                LOGGER.warn("No Captcha configured, requet not block until reCaptcha.secret isn't configured.");
+                LOGGER.warn("No Captcha configured, request not block until reCaptcha.secret isn't configured.");
                 return true;
             }
         }

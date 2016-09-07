@@ -89,7 +89,7 @@ public class UserCreatorActor extends AbstractActor {
             if (StringUtils.isBlank(u.entityId)) {
                 Entity entity = new Entity(u.email);
                 getContext().actorSelection(EndpointActor.ACTOR_PATH).tell(new EntityCreatorActor.EntityCreateMsg(entity), self());
-                ;
+
             } else {
                 entityId = u.entityId;
             }

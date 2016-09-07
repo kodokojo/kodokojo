@@ -57,7 +57,11 @@ public class ReCaptchaService {
             if (response.code() == 200) {
                 JsonParser parser = new JsonParser();
                 JsonObject json = (JsonObject) parser.parse(response.body().charStream());
-                return json.getAsJsonPrimitive("success").getAsBoolean();
+                boolean success = json.getAsJsonPrimitive("success").getAsBoolean();
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("User with IP {} successfully validate her Captcha.", userIp);
+                }
+                return success;
             }
         } catch (IOException e) {
             LOGGER.error("Unable to request ReCaptcha to validate the user Token", e);
