@@ -59,7 +59,7 @@ public class ReCaptchaService {
                 JsonObject json = (JsonObject) parser.parse(response.body().charStream());
                 boolean success = json.getAsJsonPrimitive("success").getAsBoolean();
                 if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("User with IP {} successfully validate her Captcha.", userIp);
+                    LOGGER.debug("User with IP {} successfully validate her Captcha.", userIp   );
                 }
                 return success;
             }

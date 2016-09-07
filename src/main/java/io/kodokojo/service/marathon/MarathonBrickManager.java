@@ -189,7 +189,8 @@ public class MarathonBrickManager implements BrickManager {
                 } else {
                     List<User> users = IteratorUtils.toList(projectConfiguration.getUsers());
                     try {
-                        BrickConfigurerData brickConfigurerData = configurer.configure(new BrickConfigurerData(projectConfiguration.getName(), projectConfiguration.getDefaultStackConfiguration().getName(), entrypoint, domain, IteratorUtils.toList(projectConfiguration.getAdmins()), users));
+                        BrickConfigurerData brickConfigurerData = new BrickConfigurerData(projectConfiguration.getName(), projectConfiguration.getDefaultStackConfiguration().getName(), entrypoint, domain, IteratorUtils.toList(projectConfiguration.getAdmins()), users);
+                        brickConfigurerData = configurer.configure(brickConfigurerData);
                         brickConfigurerData = configurer.addUsers(brickConfigurerData, users);
                         BrickConfigurationBuilder builder = new BrickConfigurationBuilder(brickConfiguration);
                         builder.setProperties(brickConfigurerData.getContext());
@@ -201,6 +202,7 @@ public class MarathonBrickManager implements BrickManager {
 
                         if (LOGGER.isDebugEnabled()) {
                             LOGGER.debug("Adding users {} to brick {}", StringUtils.join(users, ","), brickType);
+                            LOGGER.trace("Save project configuration {}", projectConfiguration);
                         }
                     } catch (BrickConfigurationException e) {
                         throw new ProjectConfigurationException("En error occur while trying to configure brick " + brickType.name() + " on project " + projectConfiguration.getName(), e);

@@ -68,6 +68,14 @@ public class ProjectConfigurationStarterActor extends AbstractActor {
                     StackConfiguration defaultStackConfiguration = projectConfiguration.getDefaultStackConfiguration();
                     getContext().actorFor(EndpointActor.ACTOR_PATH).tell(new StackConfigurationStarterActor.StackConfigurationStartMsg(projectConfiguration, defaultStackConfiguration), ActorRef.noSender());
                 })
+                .match(StackConfigurationStarterActor.StackConfigurationStartResultMsg.class, msg -> {
+                    if (msg.isSuccess()) {
+                        LOGGER.info("Project {} successfully started.", msg.getProjectConfiguration().getName());
+                    } else {
+                        LOGGER.error("Project {} failed to start.", msg.getProjectConfiguration().getName());
+                    }
+                    getContext().stop(self());
+                })
                 .matchAny(this::unhandled).build());
     }
 
