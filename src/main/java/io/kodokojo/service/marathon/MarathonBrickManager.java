@@ -44,6 +44,10 @@ import java.util.*;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
+/*TODO Refacto :
+    Move this class to Akka Actor
+    Remove projectRepoitory
+ */
 public class MarathonBrickManager implements BrickManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MarathonBrickManager.class);
@@ -202,7 +206,7 @@ public class MarathonBrickManager implements BrickManager {
 
                         if (LOGGER.isDebugEnabled()) {
                             LOGGER.debug("Adding users {} to brick {}", StringUtils.join(users, ","), brickType);
-                            LOGGER.trace("Save project configuration {}", projectConfiguration);
+                            LOGGER.debug("Save project configuration {}", projectConfiguration);
                         }
                     } catch (BrickConfigurationException e) {
                         throw new ProjectConfigurationException("En error occur while trying to configure brick " + brickType.name() + " on project " + projectConfiguration.getName(), e);
