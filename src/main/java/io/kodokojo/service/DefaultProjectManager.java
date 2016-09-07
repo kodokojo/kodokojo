@@ -40,6 +40,7 @@ import java.util.regex.Pattern;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
+@Deprecated
 public class DefaultProjectManager implements ProjectManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultProjectManager.class);

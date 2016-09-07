@@ -32,6 +32,7 @@ import io.kodokojo.brick.*;
 import io.kodokojo.commons.utils.DockerTestSupport;
 import io.kodokojo.config.ApplicationConfig;
 import io.kodokojo.config.EmailConfig;
+import io.kodokojo.config.ReCaptchaConfig;
 import io.kodokojo.config.module.AkkaModule;
 import io.kodokojo.config.module.HttpModule;
 import io.kodokojo.config.module.endpoint.BrickEndpointModule;
@@ -162,6 +163,7 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
                 bind(ConfigurationStore.class).toInstance(configurationStore);
                 bind(BrickFactory.class).toInstance(new DefaultBrickFactory());
                 bind(EmailSender.class).toInstance(new NoopEmailSender());
+                bind(ReCaptchaService.class).toInstance(new ReCaptchaService(() -> "", new OkHttpClient()));
                 bind(BootstrapConfigurationProvider.class).toInstance(bootstrapConfigurationProvider);
                 bind(Key.get(new TypeLiteral<UserAuthenticator<SimpleCredential>>() {
                 })).toInstance(new SimpleUserAuthenticator(redisUserManager));
