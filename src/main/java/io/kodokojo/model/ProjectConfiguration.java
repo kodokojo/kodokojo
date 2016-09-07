@@ -131,6 +131,18 @@ public class ProjectConfiguration implements Cloneable, Serializable {
     }
 
     @Override
+    public String toString() {
+        return "ProjectConfiguration{" +
+                "identifier='" + identifier + '\'' +
+                ", entityIdentifier='" + entityIdentifier + '\'' +
+                ", name='" + name + '\'' +
+                ", admins=" + admins +
+                ", stackConfigurations=" + stackConfigurations +
+                ", users=" + users +
+                '}';
+    }
+
+    @Override
     protected Object clone() throws CloneNotSupportedException {
         return new ProjectConfiguration(entityIdentifier, name, admins, new HashSet<>(stackConfigurations), new ArrayList<>(users));
     }

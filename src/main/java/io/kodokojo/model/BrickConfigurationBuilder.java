@@ -61,7 +61,7 @@ public class BrickConfigurationBuilder {
     }
 
     public BrickConfigurationBuilder setProperties(Map<String, Serializable> properties) {
-        this.properties = properties;
+        this.properties.putAll(properties);
         return this;
     }
 }
