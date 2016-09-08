@@ -114,22 +114,21 @@ public class MarathonBrickManager implements BrickManager {
     }
 
     @Override
-    public Set<Service> start(ProjectConfiguration projectConfiguration, BrickType brickType) throws BrickAlreadyExist {
+    public Set<Service> start(ProjectConfiguration projectConfiguration, StackConfiguration stackConfiguration, BrickConfiguration brickConfiguration) throws BrickAlreadyExist {
         if (projectConfiguration == null) {
             throw new IllegalArgumentException("projectConfiguration must be defined.");
         }
-        if (brickType == null) {
-            throw new IllegalArgumentException("brickType must be defined.");
+        /*
+        if (stackConfiguration == null) {
+            throw new IllegalArgumentException("stackConfiguration must be defined.");
         }
-
-        Iterator<BrickConfiguration> brickConfigurations = projectConfiguration.getDefaultBrickConfigurations();
-        BrickConfiguration brickConfiguration = getBrickConfiguration(brickType, brickConfigurations);
-
+        */
         if (brickConfiguration == null) {
-            throw new IllegalStateException("Unable to find brickConfiguration for " + brickType);
+            throw new IllegalArgumentException("brickConfiguration must be defined.");
         }
+
         String name = projectConfiguration.getName().toLowerCase();
-        String type = brickType.name().toLowerCase();
+        String type = brickConfiguration.getType().name().toLowerCase();
 
         String id = "/" + name.toLowerCase() + "/" + brickConfiguration.getType().name().toLowerCase();
         String body = provideStartAppBody(projectConfiguration, projectConfiguration.getDefaultStackConfiguration().getName(), brickConfiguration, id);
@@ -167,21 +166,19 @@ public class MarathonBrickManager implements BrickManager {
     }
 
     @Override
-    public void configure(ProjectConfiguration projectConfiguration, BrickType brickType) throws ProjectConfigurationException {
+    public BrickConfigurerData configure(ProjectConfiguration projectConfiguration , StackConfiguration stackConfiguration, BrickConfiguration brickConfiguration) throws ProjectConfigurationException {
         if (projectConfiguration == null) {
             throw new IllegalArgumentException("projectConfiguration must be defined.");
         }
-        if (brickType == null) {
-            throw new IllegalArgumentException("brickType must be defined.");
+        if (stackConfiguration == null) {
+            throw new IllegalArgumentException("stackConfiguration must be defined.");
         }
-
-        Iterator<BrickConfiguration> brickConfigurations = projectConfiguration.getDefaultBrickConfigurations();
-        BrickConfiguration brickConfiguration = getBrickConfiguration(brickType, brickConfigurations);
-
         if (brickConfiguration == null) {
-            throw new IllegalStateException("Unable to find brickConfiguration for " + brickType);
+            throw new IllegalArgumentException("brickConfiguration must be defined.");
         }
+
         String name = projectConfiguration.getName().toLowerCase();
+        BrickType brickType = brickConfiguration.getType();
         String type = brickType.name().toLowerCase();
         BrickConfigurer configurer = brickConfigurerProvider.provideFromBrick(brickConfiguration);
         if (configurer != null) {
@@ -196,6 +193,11 @@ public class MarathonBrickManager implements BrickManager {
                         BrickConfigurerData brickConfigurerData = new BrickConfigurerData(projectConfiguration.getName(), projectConfiguration.getDefaultStackConfiguration().getName(), entrypoint, domain, IteratorUtils.toList(projectConfiguration.getAdmins()), users);
                         brickConfigurerData = configurer.configure(brickConfigurerData);
                         brickConfigurerData = configurer.addUsers(brickConfigurerData, users);
+                        if (LOGGER.isDebugEnabled()) {
+                            LOGGER.debug("Adding users {} to brick {}", StringUtils.join(users, ","), brickType);
+                        }
+                        return  brickConfigurerData;
+                        /*
                         BrickConfigurationBuilder builder = new BrickConfigurationBuilder(brickConfiguration);
                         builder.setProperties(brickConfigurerData.getContext());
 
@@ -208,17 +210,16 @@ public class MarathonBrickManager implements BrickManager {
                             LOGGER.debug("Adding users {} to brick {}", StringUtils.join(users, ","), brickType);
                             LOGGER.debug("Save project configuration {}", projectConfiguration);
                         }
+                        */
                     } catch (BrickConfigurationException e) {
                         throw new ProjectConfigurationException("En error occur while trying to configure brick " + brickType.name() + " on project " + projectConfiguration.getName(), e);
                     }
                 }
             } else {
-                LOGGER.error("Unable to find http service for brick '{}' on project {}.", type, name);
+                throw  new RuntimeException("Unable to find a valid HTTP service for brick " + type + " on project " + name);
             }
-        } else if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Configurer Not defined for brick {}", brickType);
         }
-
+        throw new RuntimeException("Unable to find a BrickConfigurer for brick type " + brickType);
     }
 
     private String getEntryPoint(Set<Service> services) {
