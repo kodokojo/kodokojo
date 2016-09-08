@@ -62,6 +62,11 @@ public class ProjectConfigurationBuilder {
         this.stackConfigurations = stackConfigurations;
     }
 
+    public ProjectConfigurationBuilder addStackConfiguration(StackConfiguration stackConfiguration) {
+        this.stackConfigurations.add(stackConfiguration);
+        return this;
+    }
+
     public void setUsers(List<User> users) {
         this.users = users;
     }

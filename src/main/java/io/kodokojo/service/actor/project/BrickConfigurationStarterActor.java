@@ -126,17 +126,23 @@ public class BrickConfigurationStarterActor extends AbstractActor {
             }
 
             if (brickConfigurerData != null) {
+                projectConfiguration.getStackConfigurations().remove(stackConfiguration);
+                stackConfiguration.getBrickConfigurations().remove(brickConfiguration);
+
+                ProjectConfigurationBuilder builder = new ProjectConfigurationBuilder(projectConfiguration);
+                StackConfigurationBuilder stackConfigurationBuilder = new StackConfigurationBuilder(stackConfiguration);
+
                 BrickConfigurationBuilder brickConfigurationBuilder = new BrickConfigurationBuilder(brickConfiguration);
                 brickConfigurationBuilder.setProperties(brickConfigurerData.getContext());
 
-                stackConfiguration.getBrickConfigurations().remove(brickConfiguration);
                 BrickConfiguration brickConfigurationToSave = brickConfigurationBuilder.build();
+                stackConfigurationBuilder.addBrickConfiguration(brickConfigurationToSave);
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("Saving brick context {}", brickConfigurationToSave.getProperties());
                 }
-                stackConfiguration.getBrickConfigurations().add(brickConfigurationToSave);
 
-                ProjectConfigurationBuilder builder = new ProjectConfigurationBuilder(projectConfiguration);
+                builder.addStackConfiguration(stackConfigurationBuilder.build());
+
 
                 Future<Object> future = Patterns.ask(getContext().actorFor(EndpointActor.ACTOR_PATH), new ProjectConfigurationUpdaterActor.ProjectConfigurationUpdaterMsg(null, builder.build()), Timeout.apply(10, TimeUnit.SECONDS));
                 try {
