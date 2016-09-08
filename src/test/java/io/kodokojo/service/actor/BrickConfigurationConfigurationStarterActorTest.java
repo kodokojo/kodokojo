@@ -103,10 +103,8 @@ public class BrickConfigurationConfigurationStarterActorTest {
 
             JavaTestKit probe = new JavaTestKit(system);
 
-            final Props props = Props.create(BrickConfigurationStarterActor.class, brickManager, configurationStore, brickUrlFactory,sslCertificatProvider,  probe.getRef());
 
-
-            ActorRef ref = system.actorOf(props);
+            ActorRef ref = system.actorOf(BrickConfigurationStarterActor.PROPS(brickManager, configurationStore, brickUrlFactory, sslCertificatProvider));
 
             ref.tell(context, getRef());
             new AwaitAssert(duration("10000 millis")) {

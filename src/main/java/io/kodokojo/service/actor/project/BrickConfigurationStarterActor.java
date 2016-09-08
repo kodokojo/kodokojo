@@ -126,7 +126,8 @@ public class BrickConfigurationStarterActor extends AbstractActor {
             }
 
             if (brickConfigurerData != null) {
-                projectConfiguration.getStackConfigurations().remove(stackConfiguration);
+                Set<StackConfiguration> stackConfigurations = projectConfiguration.getStackConfigurations();
+                stackConfigurations.remove(stackConfiguration);
                 stackConfiguration.getBrickConfigurations().remove(brickConfiguration);
 
                 ProjectConfigurationBuilder builder = new ProjectConfigurationBuilder(projectConfiguration);
@@ -141,6 +142,7 @@ public class BrickConfigurationStarterActor extends AbstractActor {
                     LOGGER.debug("Saving brick context {}", brickConfigurationToSave.getProperties());
                 }
 
+                builder.setStackConfigurations(stackConfigurations);
                 builder.addStackConfiguration(stackConfigurationBuilder.build());
 
 
