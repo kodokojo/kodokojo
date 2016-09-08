@@ -132,7 +132,7 @@ public class BrickConfigurationStarterActor extends AbstractActor {
                 stackConfiguration.getBrickConfigurations().remove(brickConfiguration);
                 BrickConfiguration brickConfigurationToSave = brickConfigurationBuilder.build();
                 if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("Saving brick context {}", brickConfiguration.getProperties());
+                    LOGGER.debug("Saving brick context {}", brickConfigurationToSave.getProperties());
                 }
                 stackConfiguration.getBrickConfigurations().add(brickConfigurationToSave);
 
