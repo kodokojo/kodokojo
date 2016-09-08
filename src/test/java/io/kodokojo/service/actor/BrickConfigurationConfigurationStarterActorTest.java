@@ -21,8 +21,7 @@ import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
 import akka.testkit.JavaTestKit;
-import io.kodokojo.brick.BrickUrlFactory;
-import io.kodokojo.brick.DefaultBrickUrlFactory;
+import io.kodokojo.brick.*;
 import io.kodokojo.service.actor.message.BrickStateEvent;
 import io.kodokojo.model.Service;
 import io.kodokojo.service.RSAUtils;
@@ -31,11 +30,10 @@ import io.kodokojo.service.ssl.SSLKeyPair;
 import io.kodokojo.service.ssl.SSLUtils;
 import io.kodokojo.model.*;
 import io.kodokojo.service.BrickManager;
-import io.kodokojo.brick.BrickAlreadyExist;
-import io.kodokojo.brick.BrickStartContext;
 import io.kodokojo.service.ConfigurationStore;
 import io.kodokojo.service.ProjectConfigurationException;
 import io.kodokojo.service.SSLCertificatProvider;
+import org.apache.commons.collections4.IteratorUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.*;
 
@@ -85,10 +83,18 @@ public class BrickConfigurationConfigurationStarterActorTest {
 
     @Test
     public void brick_configure_and_start_successfully() {
+        BrickStartContext context = createBrickStartContext(new BrickConfiguration("test", BrickType.CI, "1.0", Collections.singleton(new PortDefinition(8080))));
         try {
             Set<Service> services = new HashSet<>();
             services.add(new Service("acme-ci", "192.168.1.22", 42090));
-            when(brickManager.start(any(ProjectConfiguration.class), eq(BrickType.CI))).thenReturn(services);
+            when(brickManager.start(any(ProjectConfiguration.class), any(StackConfiguration.class), any(BrickConfiguration.class))).thenReturn(services);
+
+            try {
+                List<User> users = IteratorUtils.toList(context.getProjectConfiguration().getUsers());
+                when(brickManager.configure(any(ProjectConfiguration.class), any(StackConfiguration.class), any(BrickConfiguration.class))).thenReturn(new BrickConfigurerData("projectTest", "build", "localhost", "kodokojo.dev", users, users));
+            } catch (ProjectConfigurationException e) {
+                fail(e.getMessage());
+            }
         } catch (BrickAlreadyExist e) {
             fail(e.getMessage());
         }
@@ -101,7 +107,6 @@ public class BrickConfigurationConfigurationStarterActorTest {
 
 
             ActorRef ref = system.actorOf(props);
-            BrickStartContext context = createBrickStartContext(new BrickConfiguration("test", BrickType.CI, "1.0", Collections.singleton(new PortDefinition(8080))));
 
             ref.tell(context, getRef());
             new AwaitAssert(duration("10000 millis")) {
@@ -115,7 +120,7 @@ public class BrickConfigurationConfigurationStarterActorTest {
 
                     verify(configurationStore).storeSSLKeys(eq("Acme"), eq("ci"), any(SSLKeyPair.class));
                     try {
-                        verify(brickManager).configure(any(ProjectConfiguration.class), eq(BrickType.CI));
+                        verify(brickManager).configure(any(ProjectConfiguration.class), any(StackConfiguration.class), any(BrickConfiguration.class));
                     } catch (ProjectConfigurationException e) {
                         fail(e.getMessage());
                     }
@@ -128,7 +133,7 @@ public class BrickConfigurationConfigurationStarterActorTest {
     @Test
     public void brick_already_exist() {
         try {
-            when(brickManager.start(any(ProjectConfiguration.class), eq(BrickType.CI))).thenThrow(new BrickAlreadyExist("test", "Acme"));
+            when(brickManager.start(any(ProjectConfiguration.class), any(StackConfiguration.class), any(BrickConfiguration.class))).thenThrow(new BrickAlreadyExist("test", "Acme"));
         } catch (BrickAlreadyExist e) {
             fail(e.getMessage());
         }

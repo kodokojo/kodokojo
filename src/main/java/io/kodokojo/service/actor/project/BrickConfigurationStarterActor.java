@@ -143,10 +143,8 @@ public class BrickConfigurationStarterActor extends AbstractActor {
                         LOGGER.debug("{} for project {} configured", brickType, projectName);
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    LOGGER.error("Unable to update projectConfiguration {}", projectConfiguration, e);
                 }
-
-
             }
         } catch (BrickAlreadyExist brickAlreadyExist) {
             LOGGER.error("BrickConfiguration {} already exist for project {}, not reconfigure it.", brickAlreadyExist.getBrickName(), brickAlreadyExist.getProjectName());

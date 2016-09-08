@@ -40,7 +40,7 @@ import io.kodokojo.config.module.endpoint.ProjectEndpointModule;
 import io.kodokojo.config.module.endpoint.UserEndpointModule;
 import io.kodokojo.endpoint.HttpEndpoint;
 import io.kodokojo.endpoint.UserAuthenticator;
-import io.kodokojo.model.Service;
+import io.kodokojo.model.*;
 import io.kodokojo.service.*;
 import io.kodokojo.service.actor.EndpointActor;
 import io.kodokojo.service.authentification.SimpleCredential;
@@ -69,8 +69,12 @@ import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 
@@ -121,6 +125,17 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
 
         Mockito.when(bootstrapProvider.provideLoadBalancerHost(anyString(), anyString())).thenReturn("192.168.22.3");
         Mockito.when(bootstrapProvider.provideTcpPortEntrypoint(anyString(), anyString())).thenReturn(10022);
+
+        try {
+            Mockito.when(brickManager.start(any(ProjectConfiguration.class), any(StackConfiguration.class), any(BrickConfiguration.class))).thenReturn(new HashSet<>());
+            List<User> users = new ArrayList<>();
+            users.add(new User("1234", "5678", "Jean-Pascal THIEYR", "jpthiery", "jpthiery@xebia.fr", "password", "sshKey"));
+            Mockito.when(brickManager.configure(any(ProjectConfiguration.class), any(StackConfiguration.class), any(BrickConfiguration.class))).thenReturn(new BrickConfigurerData("test", "test", "localhost", "kodokojo.dev", users, users));
+        } catch (BrickAlreadyExist brickAlreadyExist) {
+            fail(brickAlreadyExist.getMessage());
+        } catch (ProjectConfigurationException e) {
+            fail(e.getMessage());
+        }
 
         SecretKey tmpKey = null;
         try {

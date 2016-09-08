@@ -241,18 +241,7 @@ public class MarathonBrickManager implements BrickManager {
             throw new IllegalArgumentException("brickDeploymentState must be defined.");
         }
         throw new UnsupportedOperationException("Not yet implemented");
-    }
-
-    private BrickConfiguration getBrickConfiguration(BrickType brickType, Iterator<BrickConfiguration> iterator) {
-        BrickConfiguration brickConfiguration = null;
-        while (brickConfiguration == null && iterator.hasNext()) {
-            BrickConfiguration configuration = iterator.next();
-            if (configuration.getType().equals(brickType)) {
-                brickConfiguration = configuration;
-            }
-        }
-        return brickConfiguration;
-    }
+    }   
 
     private String provideStartAppBody(ProjectConfiguration projectConfiguration, String stackName, BrickConfiguration brickConfiguration, String id) {
         VelocityEngine ve = new VelocityEngine();
