@@ -1,17 +1,17 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -19,7 +19,6 @@ package io.kodokojo.service.aws;
 
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
-import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.route53.AmazonRoute53Client;
@@ -42,17 +41,14 @@ public class Route53DnsManager implements DnsManager {
 
     private final String domainName;
 
-    private final AmazonRoute53Client client;
+    private final Region region;
 
     public Route53DnsManager(String domainName, Region region) {
         if (isBlank(domainName)) {
             throw new IllegalArgumentException("domainName must be defined.");
         }
         this.domainName = domainName.endsWith(".") ? domainName : domainName + ".";
-
-        AWSCredentials credentials = new DefaultAWSCredentialsProviderChain().getCredentials();
-        client = new AmazonRoute53Client(credentials);
-        client.setRegion(region == null ? Region.getRegion(Regions.EU_WEST_1) : region);
+        this.region = region;
     }
 
     @Override
@@ -107,9 +103,10 @@ public class Route53DnsManager implements DnsManager {
                 request.setHostedZoneId(getHostedZoneID(hostedZone));
                 //ChangeResourceRecordSetsResult result =
                 try {
+                    AmazonRoute53Client client = createClient();
                     client.changeResourceRecordSets(request);
                 } catch (PriorRequestNotCompleteException e) {
-                    LOGGER.error("Unable to create or update follwing entry in Route53 {}.", StringUtils.join(dnsEntries, ","));
+                    LOGGER.error("Unable to create or update following entry in Route53 {}.", StringUtils.join(dnsEntries, ","));
                 }
             }
         }
@@ -169,7 +166,16 @@ public class Route53DnsManager implements DnsManager {
     }
 
 
+    private AmazonRoute53Client createClient() {
+        AWSCredentials credentials = new DefaultAWSCredentialsProviderChain().getCredentials();
+        AmazonRoute53Client client = new AmazonRoute53Client(credentials);
+        client.setRegion(region == null ? Region.getRegion(Regions.EU_WEST_1) : region);
+        return client;
+    }
+
+
     private HostedZone getHostedZone() {
+        AmazonRoute53Client client = createClient();
         ListHostedZonesByNameRequest listHostedZonesByNameRequest = new ListHostedZonesByNameRequest();
         listHostedZonesByNameRequest.setDNSName(domainName);
         ListHostedZonesByNameResult result = client.listHostedZonesByName(listHostedZonesByNameRequest);
@@ -184,6 +190,7 @@ public class Route53DnsManager implements DnsManager {
     }
 
     private List<ResourceRecordSet> getResourceRecordSet(HostedZone hostedZone) {
+        AmazonRoute53Client client = createClient();
         ListResourceRecordSetsRequest listResourceRecordSetsRequest = new ListResourceRecordSetsRequest();
         listResourceRecordSetsRequest.setHostedZoneId(getHostedZoneID(hostedZone));
         ListResourceRecordSetsResult recordSetsResult = client.listResourceRecordSets(listResourceRecordSetsRequest);
