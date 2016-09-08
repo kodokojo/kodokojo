@@ -88,7 +88,7 @@ public class BrickConfigurerWhen<SELF extends BrickConfigurerWhen<?>> extends St
         List<User> users = Collections.singletonList(defaultUser);
 
         BrickConfigurerData configurationData = new BrickConfigurerData("Acme", "build-A", brickUrl, "kodokojo.dev", users, users);
-        configurationData.getContext().put(GitlabConfigurer.GITLAB_FORCE_ENTRYPOINT_KEY, Boolean.TRUE); //Specific config for Gitlab.
+        configurationData.addInContext(GitlabConfigurer.GITLAB_FORCE_ENTRYPOINT_KEY, Boolean.TRUE); //Specific config for Gitlab.
         try {
             configurationData = brickConfigurer.configure(configurationData);
             this.brickConfigurerData = brickConfigurer.addUsers(configurationData, users);

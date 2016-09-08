@@ -133,11 +133,7 @@ public class GitlabConfigurer implements BrickConfigurer {
                     LOGGER.error("Unable to retrieve account page", e);
                 } finally {
                     if (response != null) {
-                        try {
-                            response.body().close();
-                        } catch (IOException e) {
-                            LOGGER.debug("Unable to close body response", e);
-                        }
+                        IOUtils.closeQuietly(response.body());
                     }
                 }
             } else {

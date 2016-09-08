@@ -241,7 +241,7 @@ public class MarathonBrickManager implements BrickManager {
             throw new IllegalArgumentException("brickDeploymentState must be defined.");
         }
         throw new UnsupportedOperationException("Not yet implemented");
-    }   
+    }
 
     private String provideStartAppBody(ProjectConfiguration projectConfiguration, String stackName, BrickConfiguration brickConfiguration, String id) {
         VelocityEngine ve = new VelocityEngine();

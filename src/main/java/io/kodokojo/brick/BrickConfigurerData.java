@@ -110,7 +110,7 @@ public class BrickConfigurerData {
     }
 
     public Map<String, Serializable> getContext() {
-        return context;
+        return new HashMap<>(context);
     }
 
     @Override

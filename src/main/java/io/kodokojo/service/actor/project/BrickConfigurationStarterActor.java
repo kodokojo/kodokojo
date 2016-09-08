@@ -37,6 +37,7 @@ import io.kodokojo.brick.BrickStartContext;
 import io.kodokojo.service.ConfigurationStore;
 import io.kodokojo.service.ProjectConfigurationException;
 import io.kodokojo.service.SSLCertificatProvider;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import scala.concurrent.Await;
 import scala.concurrent.Future;
@@ -129,7 +130,11 @@ public class BrickConfigurationStarterActor extends AbstractActor {
                 brickConfigurationBuilder.setProperties(brickConfigurerData.getContext());
 
                 stackConfiguration.getBrickConfigurations().remove(brickConfiguration);
-                stackConfiguration.getBrickConfigurations().add(brickConfigurationBuilder.build());
+                BrickConfiguration brickConfigurationToSave = brickConfigurationBuilder.build();
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("Saving brick context {}", brickConfiguration.getProperties());
+                }
+                stackConfiguration.getBrickConfigurations().add(brickConfigurationToSave);
 
                 ProjectConfigurationBuilder builder = new ProjectConfigurationBuilder(projectConfiguration);
 
