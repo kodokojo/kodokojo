@@ -127,7 +127,10 @@ public class GitlabConfigurer implements BrickConfigurer {
                         throw new BrickConfigurationException("Unable to get private token of root account for gitlab  for project " + brickConfigurerData.getProjectName() + " on url " + gitlabUrl);
                     }
                     brickConfigurerData.addInContext(GITLAB_ADMIN_TOKEN_KEY, authenticityToken);
-
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug("return {}={}", GITLAB_ADMIN_TOKEN_KEY, authenticityToken);
+                        LOGGER.debug("return BrickConfigurerData: {}", brickConfigurerData);
+                    }
                     return brickConfigurerData;
                 } catch (IOException e) {
                     LOGGER.error("Unable to retrieve account page", e);
@@ -140,6 +143,8 @@ public class GitlabConfigurer implements BrickConfigurer {
                 LOGGER.error("Unable to log on Gitlab with new password");
                 throw new BrickConfigurationException("Unable to log on Gitlab with new password for project " + brickConfigurerData.getProjectName() + " on url " + gitlabUrl);
             }
+        } else if (LOGGER.isDebugEnabled()) {
+            LOGGER.warn("Unable to change admin password on Gitabl for url {}.", gitlabUrl);
         }
         return brickConfigurerData;
     }
