@@ -102,6 +102,8 @@ public class EndpointActor extends AbstractActor {
             projectEndpoint.forward(msg, getContext());
         }).match(ProjectConfigurationUpdaterActor.ProjectConfigurationUpdaterMsg.class, msg -> {
             projectEndpoint.forward(msg, getContext());
+        }).match(BrickPropertyToBrickConfigurationActor.BrickPropertyToBrickConfigurationMsg.class, msg -> {
+            projectEndpoint.forward(msg, getContext());
         })
                 .matchAny(this::unhandled).build());
     }

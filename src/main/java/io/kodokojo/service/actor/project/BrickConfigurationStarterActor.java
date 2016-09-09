@@ -126,27 +126,8 @@ public class BrickConfigurationStarterActor extends AbstractActor {
             }
 
             if (brickConfigurerData != null) {
-                Set<StackConfiguration> stackConfigurations = projectConfiguration.getStackConfigurations();
-                stackConfigurations.remove(stackConfiguration);
-                stackConfiguration.getBrickConfigurations().remove(brickConfiguration);
-
-                ProjectConfigurationBuilder builder = new ProjectConfigurationBuilder(projectConfiguration);
-                StackConfigurationBuilder stackConfigurationBuilder = new StackConfigurationBuilder(stackConfiguration);
-
-                BrickConfigurationBuilder brickConfigurationBuilder = new BrickConfigurationBuilder(brickConfiguration);
-                brickConfigurationBuilder.setProperties(brickConfigurerData.getContext());
-
-                BrickConfiguration brickConfigurationToSave = brickConfigurationBuilder.build();
-                stackConfigurationBuilder.addBrickConfiguration(brickConfigurationToSave);
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("Saving brick context {}", brickConfigurationToSave.getProperties());
-                }
-
-                builder.setStackConfigurations(stackConfigurations);
-                builder.addStackConfiguration(stackConfigurationBuilder.build());
-
-
-                Future<Object> future = Patterns.ask(getContext().actorFor(EndpointActor.ACTOR_PATH), new ProjectConfigurationUpdaterActor.ProjectConfigurationUpdaterMsg(null, builder.build()), Timeout.apply(10, TimeUnit.SECONDS));
+                
+                Future<Object> future = Patterns.ask(getContext().actorFor(EndpointActor.ACTOR_PATH), new BrickPropertyToBrickConfigurationActor.BrickPropertyToBrickConfigurationMsg(projectConfiguration.getIdentifier(), stackConfiguration.getName(), brickConfiguration.getName(), brickConfigurerData.getContext()), Timeout.apply(10, TimeUnit.SECONDS));
                 try {
                     Await.result(future, Duration.apply(10, TimeUnit.SECONDS));
                     generateMsgAndSend(brickStartContext, httpsUrl, BrickStateEvent.State.CONFIGURING, BrickStateEvent.State.RUNNING);
