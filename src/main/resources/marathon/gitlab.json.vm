@@ -13,13 +13,19 @@
           "containerPort": 80,
           "hostPort": 0,
           "protocol": "tcp",
-          "servicePort": 0
+          "servicePort": 0,
+          "labels": {
+            "applicationProtocol": "HTTPS"
+          }
         },
         {
           "containerPort": 22,
           "hostPort": 0,
           "protocol": "tcp",
-          "servicePort": 0
+          "servicePort": 0,
+          "labels": {
+            "applicationProtocol": "SSH"
+          }
         }
       ],
       "parameters": [
@@ -73,6 +79,7 @@
   ],
   "labels": {
     "project": "$projectName",
+    "managedByKodoKojoHa": "true",
     "componentType": "scm",
     "component": "gitlab"
   }
