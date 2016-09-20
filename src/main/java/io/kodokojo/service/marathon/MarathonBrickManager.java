@@ -130,7 +130,7 @@ public class MarathonBrickManager implements BrickManager {
         String name = projectConfiguration.getName().toLowerCase();
         String type = brickConfiguration.getType().name().toLowerCase();
 
-        String id = "/" + name.toLowerCase() + "/" + brickConfiguration.getType().name().toLowerCase();
+        String id = "/" + name.toLowerCase() + "/" + brickConfiguration.getName().toLowerCase();
         String body = provideStartAppBody(projectConfiguration, projectConfiguration.getDefaultStackConfiguration().getName(), brickConfiguration, id);
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace("Push new Application configuration to Marathon :\n{}", body);
