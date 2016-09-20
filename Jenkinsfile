@@ -1,6 +1,6 @@
 node() {
     stage('Building kodokojo back JAR') {
-        docker.image('maven:3.3.3-jdk-8').inside(' -v /var/run/docker.sock:/var/tmp/docker.sock:rw -e "DOCKER_HOST=unix:///var/tmp/docker.sock" ') {
+        docker.image('maven:3.3.3-jdk-8').inside(" -v /tmp/kodokojo/.m2:/root/.m2 -v /var/run/docker.sock:/var/tmp/docker.sock:rw -e \"DOCKER_HOST=unix:///var/tmp/docker.sock\"  -e \"DOCKER_HOST_IP=${env.DOCKER_HOST_IP}\"") {
             checkout scm
             def version = version()
             def commit = commitSha1()
