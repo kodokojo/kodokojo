@@ -32,10 +32,7 @@ import io.kodokojo.service.actor.entity.EntityCreatorActor;
 import io.kodokojo.service.actor.entity.EntityEndpointActor;
 import io.kodokojo.service.actor.event.EventEndpointActor;
 import io.kodokojo.service.actor.project.*;
-import io.kodokojo.service.actor.user.UserCreatorActor;
-import io.kodokojo.service.actor.user.UserEndpointActor;
-import io.kodokojo.service.actor.user.UserFetcherActor;
-import io.kodokojo.service.actor.user.UserGenerateIdentifierActor;
+import io.kodokojo.service.actor.user.*;
 
 import static akka.event.Logging.getLogger;
 
@@ -74,6 +71,8 @@ public class EndpointActor extends AbstractActor {
             //eventEndpointNotifier.tell(new EventEndpointActor.EventMsg(msg.getRequester(), ""));
             userEndpoint.forward(msg, getContext());
         }).match(UserFetcherActor.UserFetchMsg.class, msg -> {
+            userEndpoint.forward(msg, getContext());
+        }).match(UserServiceCreatorActor.UserServiceCreateMsg.class, msg -> {
             userEndpoint.forward(msg, getContext());
         }).match(EntityCreatorActor.EntityCreateMsg.class, msg -> {
             entityEndpoint.forward(msg, getContext());

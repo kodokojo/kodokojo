@@ -56,6 +56,8 @@ public class UserEndpointActor extends AbstractActor {
                 .match(UserFetcherActor.UserFetchMsg.class, msg -> {
                     getContext().actorOf(UserFetcherActor.PROPS(userRepository)).forward(msg, getContext());
 
+                }).match(UserServiceCreatorActor.UserServiceCreateMsg.class, msg -> {
+                    getContext().actorOf(UserServiceCreatorActor.PROPS(userRepository)).forward(msg, getContext());
                 })
                 .matchAny(this::unhandled)
                 .build());

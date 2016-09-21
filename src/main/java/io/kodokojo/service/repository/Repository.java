@@ -224,15 +224,21 @@ public class Repository implements UserRepository, ProjectRepository, EntityRepo
     }
 
     @Override
+    public UserService getUserServiceByIdentifier(String identifier) {
+        return userRepository.getUserServiceByIdentifier(identifier);
+    }
+
+    @Override
     public UserService getUserServiceByName(String name) {
         return userRepository.getUserServiceByName(name);
     }
 
     private ProjectConfiguration convertToProjectConfiguration(ProjectConfigurationStoreModel model) {
+        UserService userService = userFetcher.getUserServiceByIdentifier(model.getUserService());
         List<User> adminsProjectConfig = model.getAdmins().stream().map(
                 userFetcher::getUserByIdentifier
         ).collect(Collectors.toList());
         List<User> usersProjectConfig = model.getUsers().stream().map(userFetcher::getUserByIdentifier).collect(Collectors.toList());
-        return new ProjectConfiguration(model.getEntityIdentifier(), model.getIdentifier(), model.getName(), adminsProjectConfig,model.getStackConfigurations(),usersProjectConfig);
+        return new ProjectConfiguration(model.getEntityIdentifier(), model.getIdentifier(), model.getName(), userService, adminsProjectConfig,model.getStackConfigurations(),usersProjectConfig);
     }
 }

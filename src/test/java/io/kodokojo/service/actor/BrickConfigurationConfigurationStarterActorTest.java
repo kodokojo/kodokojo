@@ -180,7 +180,8 @@ public class BrickConfigurationConfigurationStarterActorTest {
         StackConfiguration stackConfiguration = new StackConfiguration("build-A", StackType.BUILD, brickConfigurations, "127.0.0.1", 10022);
         stackConfigurations.add(stackConfiguration);
         List<User> users = Collections.singletonList(owner);
-        ProjectConfiguration projectConfiguration = new ProjectConfiguration("123456","7890", "Acme", users, stackConfigurations, users);
+        UserService userService = new UserService("1244", "Acme-service", "Acme-service", "abcd",  (RSAPrivateKey) keyPair.getPrivate(), (RSAPublicKey) keyPair.getPublic());
+        ProjectConfiguration projectConfiguration = new ProjectConfiguration("123456","7890", "Acme", userService, users, stackConfigurations, users);
         return new BrickStartContext(projectConfiguration, stackConfiguration, brickConfiguration);
     }
 

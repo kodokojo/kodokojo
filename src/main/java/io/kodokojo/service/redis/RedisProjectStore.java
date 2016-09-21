@@ -100,7 +100,7 @@ public class RedisProjectStore extends AbstractRedisStore implements ProjectStor
             throw new IllegalArgumentException("ProjectConfiguration " + projectConfiguration.getName() + " already exist");
         }
         String identifier = generateId();
-        return writeProjectConfiguration(new ProjectConfigurationStoreModel(projectConfiguration.getEntityIdentifier(), identifier, projectConfiguration.getName(), projectConfiguration.getAdmins(), projectConfiguration.getStackConfigurations(), projectConfiguration.getUsers()));
+        return writeProjectConfiguration(new ProjectConfigurationStoreModel(projectConfiguration.getEntityIdentifier(), identifier, projectConfiguration.getName(), projectConfiguration.getUserService(), projectConfiguration.getAdmins(), projectConfiguration.getStackConfigurations(), projectConfiguration.getUsers()));
     }
 
     @Override
@@ -227,7 +227,7 @@ public class RedisProjectStore extends AbstractRedisStore implements ProjectStor
         try (Jedis jedis = pool.getResource()) {
             String identifier = projectConfiguration.getIdentifier();
 
-            ProjectConfigurationStoreModel toInsert = new ProjectConfigurationStoreModel(projectConfiguration.getEntityIdentifier(), identifier, projectConfiguration.getName(), projectConfiguration.getAdmins(), projectConfiguration.getStackConfigurations(), projectConfiguration.getUsers());
+            ProjectConfigurationStoreModel toInsert = new ProjectConfigurationStoreModel(projectConfiguration.getEntityIdentifier(), identifier, projectConfiguration.getName(), projectConfiguration.getUserService(), projectConfiguration.getAdmins(), projectConfiguration.getStackConfigurations(), projectConfiguration.getUsers());
             byte[] encryptedObject = RSAUtils.encryptObjectWithAES(key, toInsert);
             jedis.set(RedisUtils.aggregateKey(PROJECTCONFIGURATION_PREFIX, identifier), encryptedObject);
             writeUserToProjectConfigurationId(jedis, toInsert.getAdmins(), toInsert.getIdentifier());
