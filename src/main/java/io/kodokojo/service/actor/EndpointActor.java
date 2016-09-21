@@ -26,6 +26,7 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.name.Names;
 import io.kodokojo.brick.BrickStartContext;
+import io.kodokojo.service.EmailSender;
 import io.kodokojo.service.actor.message.BrickStateEvent;
 import io.kodokojo.service.actor.entity.AddUserToEntityActor;
 import io.kodokojo.service.actor.entity.EntityCreatorActor;
@@ -103,6 +104,8 @@ public class EndpointActor extends AbstractActor {
             projectEndpoint.forward(msg, getContext());
         }).match(BrickPropertyToBrickConfigurationActor.BrickPropertyToBrickConfigurationMsg.class, msg -> {
             projectEndpoint.forward(msg, getContext());
+        }).match(EmailSenderActor.EmailSenderMsg.class, msg -> {
+            getContext().actorOf(EmailSenderActor.PROPS(injector.getInstance(EmailSender.class))).forward(msg, getContext());
         })
                 .matchAny(this::unhandled).build());
     }

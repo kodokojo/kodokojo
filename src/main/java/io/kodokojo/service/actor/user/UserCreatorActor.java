@@ -143,7 +143,7 @@ public class UserCreatorActor extends AbstractActor {
                         user.getSshPublicKey() + "\n" +
                         "</p>";
                 EmailSenderActor.EmailSenderMsg emailSenderMsg = new EmailSenderActor.EmailSenderMsg(to, String.format("Kodo Kojo user %s created", user.getUsername()), content);
-                getContext().actorOf(EmailSenderActor.PROPS(emailSender)).tell(emailSenderMsg, self());
+                getContext().actorFor(EndpointActor.ACTOR_PATH).tell(emailSenderMsg, self());
                 getContext().stop(self());
             } else if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Unable to store user {}", user);
