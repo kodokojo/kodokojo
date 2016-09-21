@@ -28,4 +28,6 @@ public interface UserFetcher {
     User getUserByIdentifier(String identifier);
 
     UserService getUserServiceByName(String name);
+
+    UserService getUserServiceByIdentifier(String identifier);
 }

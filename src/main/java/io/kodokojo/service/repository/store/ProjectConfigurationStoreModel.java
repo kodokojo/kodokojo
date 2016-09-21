@@ -20,6 +20,7 @@ package io.kodokojo.service.repository.store;
 import io.kodokojo.model.ProjectConfiguration;
 import io.kodokojo.model.StackConfiguration;
 import io.kodokojo.model.User;
+import io.kodokojo.model.UserService;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -35,16 +36,19 @@ public class ProjectConfigurationStoreModel implements Serializable {
 
     private final String name;
 
+    private final String userService;
+
     private final List<String> admins;
 
     private final Set<StackConfiguration> stackConfigurations;
 
     private final List<String> users;
 
-    public ProjectConfigurationStoreModel( String entityIdentifier, String identifier, String name, List<String> admins, Set<StackConfiguration> stackConfigurations, List<String> users) {
+    public ProjectConfigurationStoreModel( String entityIdentifier, String identifier, String name,String userService,  List<String> admins, Set<StackConfiguration> stackConfigurations, List<String> users) {
         this.identifier = identifier;
         this.entityIdentifier = entityIdentifier;
         this.name = name;
+        this.userService = userService;
         this.admins = admins;
         this.stackConfigurations = stackConfigurations;
         this.users = users;
@@ -55,6 +59,7 @@ public class ProjectConfigurationStoreModel implements Serializable {
         this.entityIdentifier = projectConfiguration.getEntityIdentifier();
         this.name = projectConfiguration.getName();
         this.stackConfigurations = new HashSet<>(projectConfiguration.getStackConfigurations());
+        this.userService = projectConfiguration.getUserService().getIdentifier();
         this.admins = new ArrayList<>();
         projectConfiguration.getAdmins().forEachRemaining(a -> this.admins.add(a.getIdentifier()));
         this.users = new ArrayList<>();
@@ -71,6 +76,10 @@ public class ProjectConfigurationStoreModel implements Serializable {
 
     public String getName() {
         return name;
+    }
+
+    public String getUserService() {
+        return userService;
     }
 
     public List<String> getAdmins() {

@@ -33,18 +33,23 @@ public class ProjectConfiguration implements Cloneable, Serializable {
 
     private final String name;
 
+    private final UserService userService;
+
     private final List<User> admins;
 
     private final Set<StackConfiguration> stackConfigurations;
 
     private final List<User> users;
 
-    public ProjectConfiguration(String entityIdentifier, String identifier, String name, List<User> admins, Set<StackConfiguration> stackConfigurations, List<User> users) {
+    public ProjectConfiguration(String entityIdentifier, String identifier, String name,UserService userService,  List<User> admins, Set<StackConfiguration> stackConfigurations, List<User> users) {
         if (isBlank(entityIdentifier)) {
             throw new IllegalArgumentException("entityIdentifier must be defined.");
         }
         if (isBlank(name)) {
             throw new IllegalArgumentException("name must be defined.");
+        }
+        if (userService == null) {
+            throw new IllegalArgumentException("userService must be defined.");
         }
         if (CollectionUtils.isEmpty(admins)) {
             throw new IllegalArgumentException("admins must be defined.");
@@ -56,13 +61,14 @@ public class ProjectConfiguration implements Cloneable, Serializable {
         this.identifier = identifier;
         this.entityIdentifier = entityIdentifier;
         this.name = name;
+        this.userService = userService;
         this.admins = admins;
         this.stackConfigurations = stackConfigurations;
         this.users = users;
     }
 
-    public ProjectConfiguration(String entityIdentifier, String name, List<User> admins, Set<StackConfiguration> stackConfigurations, List<User> users) {
-        this(entityIdentifier, null,name, admins, stackConfigurations, users);
+    public ProjectConfiguration(String entityIdentifier, String name, UserService userService,List<User> admins, Set<StackConfiguration> stackConfigurations, List<User> users) {
+        this(entityIdentifier, null,name, userService, admins, stackConfigurations, users);
     }
 
     public String getIdentifier() {
@@ -71,6 +77,10 @@ public class ProjectConfiguration implements Cloneable, Serializable {
 
     public String getEntityIdentifier() {
         return entityIdentifier;
+    }
+
+    public UserService getUserService() {
+        return userService;
     }
 
     public Iterator<User> getAdmins() {
@@ -136,6 +146,7 @@ public class ProjectConfiguration implements Cloneable, Serializable {
                 "identifier='" + identifier + '\'' +
                 ", entityIdentifier='" + entityIdentifier + '\'' +
                 ", name='" + name + '\'' +
+                ", userService=" + userService +
                 ", admins=" + admins +
                 ", stackConfigurations=" + stackConfigurations +
                 ", users=" + users +
@@ -144,7 +155,7 @@ public class ProjectConfiguration implements Cloneable, Serializable {
 
     @Override
     protected Object clone() throws CloneNotSupportedException {
-        return new ProjectConfiguration(entityIdentifier, name, admins, new HashSet<>(stackConfigurations), new ArrayList<>(users));
+        return new ProjectConfiguration(entityIdentifier, name, userService, admins, new HashSet<>(stackConfigurations), new ArrayList<>(users));
     }
 
 

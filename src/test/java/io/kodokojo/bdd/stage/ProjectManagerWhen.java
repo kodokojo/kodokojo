@@ -33,6 +33,7 @@ import org.mockito.Mockito;
 
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
+import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -81,7 +82,9 @@ public class ProjectManagerWhen<SELF extends ProjectManagerWhen<?>> extends Stag
             StackConfiguration stackConfiguration = new StackConfiguration(stackName, stackType, brickConfigurations, "localhost", 22);
             stackConfigurations.add(stackConfiguration);
             List<User> users = Arrays.asList(user);
-            projectConfiguration = new ProjectConfiguration("123456", "7890",configurationName, users, stackConfigurations, users);
+
+            UserService userService = new UserService("1244", "Acme-service", "Acme-service", "abcd",  (RSAPrivateKey) keyPair.getPrivate(), (RSAPublicKey) keyPair.getPublic());
+            projectConfiguration = new ProjectConfiguration("123456", "7890",configurationName, userService, users, stackConfigurations, users);
         }
 
         try {

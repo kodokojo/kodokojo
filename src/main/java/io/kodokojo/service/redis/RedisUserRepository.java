@@ -185,15 +185,7 @@ public class RedisUserRepository extends AbstractRedisStore implements UserRepos
             if (isBlank(identifier)) {
                 return null;
             }
-            UserServiceValue userServiceValue = (UserServiceValue) RedisUtils.readFromRedis(pool, RedisUtils.aggregateKey(USERSERVICE_PREFIX, identifier));
-            if (userServiceValue == null) {
-                return null;
-            }
-            String password = RSAUtils.decryptWithAES(key, userServiceValue.getPassword());
-            RSAPrivateKey privateKey = RSAUtils.unwrapPrivateRsaKey(key, userServiceValue.getPrivateKey());
-            RSAPublicKey publicKey = RSAUtils.unwrapPublicRsaKey(key, userServiceValue.getPublicKey());
-            RSAUtils.unwrap(key, userServiceValue.getPublicKey());
-            return new UserService(userServiceValue.getLogin(), userServiceValue.getName(), userServiceValue.getLogin(), password, privateKey, publicKey);
+            return getUserServiceByIdentifier(identifier);
         }
     }
 
@@ -224,4 +216,19 @@ public class RedisUserRepository extends AbstractRedisStore implements UserRepos
         return new User(identifier,userValue.getEntityId() , userValue.getName(), userValue.getUsername(), userValue.getEmail(), password, userValue.getSshPublicKey());
     }
 
+    @Override
+    public UserService getUserServiceByIdentifier(String identifier) {
+        if (isBlank(identifier)) {
+            throw new IllegalArgumentException("identifier must be defined.");
+        }
+        UserServiceValue userServiceValue = (UserServiceValue) RedisUtils.readFromRedis(pool, RedisUtils.aggregateKey(USERSERVICE_PREFIX, identifier));
+        if (userServiceValue == null) {
+            return null;
+        }
+        String password = RSAUtils.decryptWithAES(key, userServiceValue.getPassword());
+        RSAPrivateKey privateKey = RSAUtils.unwrapPrivateRsaKey(key, userServiceValue.getPrivateKey());
+        RSAPublicKey publicKey = RSAUtils.unwrapPublicRsaKey(key, userServiceValue.getPublicKey());
+        UserService res = new UserService(identifier, userServiceValue.getName(), userServiceValue.getLogin(), password, privateKey, publicKey);
+        return res;
+    }
 }

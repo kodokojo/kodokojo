@@ -1,17 +1,17 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -32,6 +32,7 @@ import io.kodokojo.model.*;
 import io.kodokojo.service.actor.EndpointActor;
 import io.kodokojo.service.actor.message.UserRequestMessage;
 import io.kodokojo.service.actor.user.UserFetcherActor;
+import io.kodokojo.service.actor.user.UserServiceCreatorActor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 
@@ -58,6 +59,8 @@ public class ProjectConfigurationBuilderActor extends AbstractActor {
 
     private ProjectConfigurationBuildMsg initialMsg;
 
+    private UserService userService;
+
     private Set<User> admins;
 
     private Set<User> users;
@@ -83,6 +86,7 @@ public class ProjectConfigurationBuilderActor extends AbstractActor {
 
             ActorSelection akkaEndpoint = getContext().actorSelection(EndpointActor.ACTOR_PATH);
             akkaEndpoint.tell(new UserFetcherActor.UserFetchMsg(msg.getRequester(), userRequested), self());
+            akkaEndpoint.tell(new UserServiceCreatorActor.UserServiceCreateMsg(msg.getRequester(), msg.getProjectCreationDto().getName() + "-service"), self());
 
             stackConfigDtos = CollectionUtils.isEmpty(projectCreationDto.getStackConfigs()) ? new ArrayList<>() : projectCreationDto.getStackConfigs();
             if (CollectionUtils.isEmpty(stackConfigDtos)) {
@@ -107,13 +111,17 @@ public class ProjectConfigurationBuilderActor extends AbstractActor {
                     .collect(Collectors.toSet());
             users.addAll(admins);
             tryToBuild();
-        }).match(BootstrapStackActor.BootstrapStackResultMsg.class, msg -> {
-
-            BootstrapStackData bootstrapStackData = msg.getBootstrapStackData();
-            loadBalancerHost = bootstrapStackData.getLoadBalancerHost();
-            scmSshPort = bootstrapStackData.getSshPort();
+        }).match(UserServiceCreatorActor.UserServiceCreateResultMsg.class, msg -> {
+            userService = msg.getUserService();
             tryToBuild();
         })
+                .match(BootstrapStackActor.BootstrapStackResultMsg.class, msg -> {
+
+                    BootstrapStackData bootstrapStackData = msg.getBootstrapStackData();
+                    loadBalancerHost = bootstrapStackData.getLoadBalancerHost();
+                    scmSshPort = bootstrapStackData.getSshPort();
+                    tryToBuild();
+                })
                 .matchAny(this::unhandled).build());
     }
 
@@ -125,7 +133,8 @@ public class ProjectConfigurationBuilderActor extends AbstractActor {
 
         if (CollectionUtils.isNotEmpty(admins) &&
                 StringUtils.isNotBlank(loadBalancerHost) &&
-                scmSshPort > 0) {
+                scmSshPort > 0 &&
+                userService != null) {
 
             User requester = initialMsg.getRequester();
             ProjectCreationDto projectCreationDto = initialMsg.getProjectCreationDto();
@@ -138,7 +147,7 @@ public class ProjectConfigurationBuilderActor extends AbstractActor {
             }).collect(Collectors.toSet());
 
 
-            ProjectConfiguration projectConfiguration = new ProjectConfiguration(requester.getEntityIdentifier(), projectCreationDto.getName(), new ArrayList<>(admins), stackConfiguration, new ArrayList<>(users));
+            ProjectConfiguration projectConfiguration = new ProjectConfiguration(requester.getEntityIdentifier(), projectCreationDto.getName(), userService, new ArrayList<>(admins), stackConfiguration, new ArrayList<>(users));
             originalSender.tell(new ProjectConfigurationBuildResultMsg(initialMsg.getRequester(), projectConfiguration), self());
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Return a built ProjectConfiguration for project {}.", initialMsg.getProjectCreationDto().getName());

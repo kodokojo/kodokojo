@@ -1,17 +1,17 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -27,23 +27,26 @@ import java.util.Set;
 public class ProjectConfigurationBuilder {
 
 
-    private  String identifier;
+    private String identifier;
 
-    private  String entityIdentifier;
+    private String entityIdentifier;
 
-    private  String name;
+    private String name;
 
-    private  List<User> admins;
+    private UserService userService;
 
-    private  Set<StackConfiguration> stackConfigurations;
+    private List<User> admins;
 
-    private  List<User> users;
+    private Set<StackConfiguration> stackConfigurations;
+
+    private List<User> users;
 
     public ProjectConfigurationBuilder(ProjectConfiguration projectConfiguration) {
         if (projectConfiguration != null) {
             identifier = projectConfiguration.getIdentifier();
             entityIdentifier = projectConfiguration.getEntityIdentifier();
             name = projectConfiguration.getName();
+            userService = projectConfiguration.getUserService();
             admins = IteratorUtils.toList(projectConfiguration.getAdmins());
             users = IteratorUtils.toList(projectConfiguration.getUsers());
             stackConfigurations = new HashSet<>(projectConfiguration.getStackConfigurations());
@@ -56,7 +59,7 @@ public class ProjectConfigurationBuilder {
     }
 
     public ProjectConfiguration build() {
-        return new ProjectConfiguration(entityIdentifier, identifier, name, admins, stackConfigurations, users);
+        return new ProjectConfiguration(entityIdentifier, identifier, name, userService, admins, stackConfigurations, users);
     }
 
     public void setIdentifier(String identifier) {
