@@ -46,7 +46,7 @@ public class UserFetcherActor extends AbstractActor {
                             .map(userFetcher::getUserByIdentifier)
                             .map(u -> new User(u.getIdentifier(), u.getEntityIdentifier(), u.getFirstName(), u.getLastName(), u.getUsername(), u.getEmail(), "", u.getSshPublicKey()))
                             .collect(Collectors.toSet());
-                    sender().tell(new UserFetchResultMsg(msg.getRequester(), users), self());
+                    sender().tell(new UserFetchResultMsg(msg.getRequester(),msg.userIds,  users), self());
                     getContext().stop(self());
                 })
                 .matchAny(this::unhandled).build());
@@ -68,11 +68,18 @@ public class UserFetcherActor extends AbstractActor {
 
     public static class UserFetchResultMsg extends UserRequestMessage {
 
+        private final Set<String> userIdRequeted;
+
         private final Set<User> users;
 
-        public UserFetchResultMsg(User requester, Set<User> users) {
+        public UserFetchResultMsg(User requester, Set<String> userIdRequeted, Set<User> users) {
             super(requester);
+            this.userIdRequeted = userIdRequeted;
             this.users = users;
+        }
+
+        public Set<String> getUserIdRequeted() {
+            return userIdRequeted;
         }
 
         public Set<User> getUsers() {

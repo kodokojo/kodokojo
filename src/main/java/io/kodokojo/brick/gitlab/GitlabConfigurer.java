@@ -175,6 +175,11 @@ public class GitlabConfigurer implements BrickConfigurer {
         return brickConfigurerData;
     }
 
+    @Override
+    public BrickConfigurerData removeUsers(BrickConfigurerData brickConfigurationData, List<User> users) {
+        return brickConfigurationData;
+    }
+
     private String getGitlabEntryPoint(BrickConfigurerData brickConfigurerData) {
         Boolean forceDefault = (Boolean) brickConfigurerData.getContext().get(GITLAB_FORCE_ENTRYPOINT_KEY);
         if (forceDefault != null && forceDefault) {

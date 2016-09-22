@@ -43,11 +43,11 @@ public class DefaultBrickFactory implements BrickFactory {
     @Inject
     public DefaultBrickFactory() {
         cache = new HashMap<>();
-        cache.put(JENKINS, new BrickConfiguration(JENKINS, BrickType.CI, "1.651.2", Collections.singleton(new PortDefinition(8080))));
+        cache.put(JENKINS, new BrickConfiguration(JENKINS, BrickType.CI, "1.651.3", Collections.singleton(new PortDefinition(8080))));
         Set<PortDefinition> gitlbaPorts  = new HashSet<>();
         gitlbaPorts.add(new PortDefinition(PortDefinition.Type.HTTP, -1, 80, -1));
         gitlbaPorts.add(new PortDefinition(PortDefinition.Type.SSH, -1, 22, -1));
-        cache.put(GITLAB, new BrickConfiguration(GITLAB, BrickType.SCM, "8.11.0-ce.1", gitlbaPorts));
+        cache.put(GITLAB, new BrickConfiguration(GITLAB, BrickType.SCM, "8.11.7-ce.0", gitlbaPorts));
         cache.put(HAPROXY, new BrickConfiguration(HAPROXY, BrickType.LOADBALANCER, "1.6",  Collections.singleton(new PortDefinition(80))));
         cache.put(NEXUS, new BrickConfiguration(NEXUS, BrickType.REPOSITORY, "2.13",  Collections.singleton(new PortDefinition(80))));
      //   cache.put(DOCKER_REGISTRY, new BrickConfiguration(DOCKER_REGISTRY,  Collections.singleton(new PortDefinition(80))))

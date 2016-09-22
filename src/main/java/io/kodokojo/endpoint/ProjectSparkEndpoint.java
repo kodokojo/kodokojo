@@ -1,17 +1,17 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -25,7 +25,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.inject.name.Named;
-import io.kodokojo.brick.BrickFactory;
 import io.kodokojo.endpoint.dto.ProjectConfigDto;
 import io.kodokojo.endpoint.dto.ProjectCreationDto;
 import io.kodokojo.endpoint.dto.ProjectDto;
@@ -34,9 +33,7 @@ import io.kodokojo.model.ProjectConfiguration;
 import io.kodokojo.model.User;
 import io.kodokojo.service.ProjectManager;
 import io.kodokojo.service.actor.EndpointActor;
-import io.kodokojo.service.actor.project.ProjectConfigurationDtoCreatorActor;
-import io.kodokojo.service.actor.project.ProjectConfigurationStarterActor;
-import io.kodokojo.service.actor.project.ProjectCreatorActor;
+import io.kodokojo.service.actor.project.*;
 import io.kodokojo.service.authentification.SimpleCredential;
 import io.kodokojo.service.repository.ProjectRepository;
 import io.kodokojo.service.repository.UserFetcher;
@@ -53,7 +50,6 @@ import scala.concurrent.duration.FiniteDuration;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static akka.pattern.Patterns.ask;
@@ -128,11 +124,11 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
                 return "";
             }
             User requester = getRequester(request);
-            List<User> admins = IteratorUtils.toList(projectConfiguration.getAdmins());
-            Optional<User> isAdmin = admins.stream().filter(a -> a.getIdentifier().equals(requester.getIdentifier())).findFirst();
-            if (isAdmin.isPresent()) {
+
+            if (userIsAdmin(requester, projectConfiguration)) {
                 return new ProjectConfigDto(projectConfiguration);
             }
+
             halt(403, "Your are not admin of project configuration '" + projectConfiguration.getName() + "'.");
             return "";
         }, jsonResponseTransformer);
@@ -141,62 +137,63 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
             User requester = getRequester(request);
 
             String identifier = request.params(":id");
+
             ProjectConfiguration projectConfiguration = projectFetcher.getProjectConfigurationById(identifier);
+
             if (projectConfiguration == null) {
                 halt(404);
                 return "";
             }
-            //TODO Call an Actor
+
             if (userIsAdmin(requester, projectConfiguration)) {
+
+                List<String> userIdsToAdd = new ArrayList<>();
                 JsonParser parser = new JsonParser();
                 JsonArray root = (JsonArray) parser.parse(request.body());
-                List<User> users = IteratorUtils.toList(projectConfiguration.getUsers());
-                List<User> usersToAdd = new ArrayList<>();
                 for (JsonElement el : root) {
                     String userToAddId = el.getAsJsonPrimitive().getAsString();
-                    User userToAdd = userFetcher.getUserByIdentifier(userToAddId);
-                    if (userToAdd != null && !users.contains(userToAdd)) {
-                        users.add(userToAdd);
-                        usersToAdd.add(userToAdd);
-                    }
+                    userIdsToAdd.add(userToAddId);
                 }
-
-                projectConfiguration.setUsers(users);
-                projectFetcher.updateProjectConfiguration(projectConfiguration);
-                LOGGER.debug("Adding user {} to projectConfig {}", usersToAdd, projectConfiguration);
-                projectManager.addUsersToProject(projectConfiguration, usersToAdd);
+                akkaEndpoint.tell(new ProjectConfigurationChangeUserActor.ProjectConfigurationChangeUserMsg(requester, TypeChange.ADD, identifier, userIdsToAdd), ActorRef.noSender());
+/*
+            projectConfiguration.setUsers(users);
+            projectFetcher.updateProjectConfiguration(projectConfiguration);
+            LOGGER.debug("Adding user {} to projectConfig {}", usersToAdd, projectConfiguration);
+            projectManager.addUsersToProject(projectConfiguration, usersToAdd);
+*/
             } else {
                 halt(403, "You have not right to add user to project configuration id " + identifier + ".");
-            }
 
+            }
             return "";
         }), jsonResponseTransformer);
 
         delete(BASE_API + "/projectconfig/:id/user", JSON_CONTENT_TYPE, ((request, response) -> {
             User requester = getRequester(request);
+
             String identifier = request.params(":id");
+
             ProjectConfiguration projectConfiguration = projectFetcher.getProjectConfigurationById(identifier);
             if (projectConfiguration == null) {
                 halt(404);
                 return "";
             }
+
             if (userIsAdmin(requester, projectConfiguration)) {
+
+                List<String> userIdsToAdd = new ArrayList<>();
                 JsonParser parser = new JsonParser();
                 JsonArray root = (JsonArray) parser.parse(request.body());
-                List<User> users = IteratorUtils.toList(projectConfiguration.getUsers());
                 for (JsonElement el : root) {
-                    String userToDeleteId = el.getAsJsonPrimitive().getAsString();
-                    User userToDelete = userFetcher.getUserByIdentifier(userToDeleteId);
-                    if (userToDelete != null) {
-                        users.remove(userToDelete);
-                    }
+                    String userToAddId = el.getAsJsonPrimitive().getAsString();
+                    userIdsToAdd.add(userToAddId);
                 }
-                projectConfiguration.setUsers(users);
-                projectFetcher.updateProjectConfiguration(projectConfiguration);
-            } else {
-                halt(403, "You have not right to delete user to project configuration id " + identifier + ".");
-            }
+                akkaEndpoint.tell(new ProjectConfigurationChangeUserActor.ProjectConfigurationChangeUserMsg(requester, TypeChange.REMOVE, identifier, userIdsToAdd), ActorRef.noSender());
 
+            } else {
+                halt(403, "You have not right to add user to project configuration id " + identifier + ".");
+
+            }
             return "";
         }), jsonResponseTransformer);
 

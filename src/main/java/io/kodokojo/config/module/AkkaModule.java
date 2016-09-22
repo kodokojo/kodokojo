@@ -24,9 +24,11 @@ import akka.actor.Props;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.name.Named;
+import io.kodokojo.brick.BrickConfigurerProvider;
 import io.kodokojo.brick.BrickFactory;
 import io.kodokojo.brick.BrickStateEventDispatcher;
 import io.kodokojo.brick.BrickUrlFactory;
+import io.kodokojo.config.ApplicationConfig;
 import io.kodokojo.service.*;
 import io.kodokojo.service.actor.DeadLetterActor;
 import io.kodokojo.service.actor.entity.EntityEndpointActor;
@@ -56,8 +58,8 @@ public class AkkaModule extends AbstractModule {
 
     @Provides
     @Named(ProjectEndpointActor.NAME)
-    Props provideProjectEndpointProps(ProjectRepository projectRepository, UserRepository userRepository, ProjectManager projectManager, DnsManager dnsManager, BrickFactory brickFactory, BrickManager brickManager, BootstrapConfigurationProvider bootstrapConfigurationProvider, ConfigurationStore configurationStore, BrickUrlFactory brickUrlFactory, SSLCertificatProvider sslCertificatProvider) {
-        return ProjectEndpointActor.PROPS(projectRepository, userRepository, projectManager, dnsManager, brickFactory, brickManager, bootstrapConfigurationProvider, configurationStore, brickUrlFactory, sslCertificatProvider);
+    Props provideProjectEndpointProps(ApplicationConfig applicationConfig, ProjectRepository projectRepository, UserRepository userRepository, ProjectManager projectManager, DnsManager dnsManager, BrickFactory brickFactory, BrickManager brickManager, BootstrapConfigurationProvider bootstrapConfigurationProvider, ConfigurationStore configurationStore, BrickUrlFactory brickUrlFactory, SSLCertificatProvider sslCertificatProvider, BrickConfigurerProvider brickConfigurerProvider) {
+        return ProjectEndpointActor.PROPS(applicationConfig, projectRepository, userRepository, projectManager, dnsManager, brickFactory, brickManager, bootstrapConfigurationProvider, configurationStore, brickUrlFactory, sslCertificatProvider, brickConfigurerProvider);
     }
 
     @Provides

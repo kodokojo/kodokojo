@@ -80,6 +80,11 @@ public class NexusConfigurer implements BrickConfigurer {
         return brickConfigurerData;
     }
 
+    @Override
+    public BrickConfigurerData removeUsers(BrickConfigurerData brickConfigurationData, List<User> users) {
+        return brickConfigurationData;
+    }
+
     private boolean executeRequest(OkHttpClient httpClient, String url, String xmlBody, String login, String password) {
         RequestBody requestBody = RequestBody.create(MediaType.parse("application/xml"), xmlBody);
         Request request = new Request.Builder().url(url)

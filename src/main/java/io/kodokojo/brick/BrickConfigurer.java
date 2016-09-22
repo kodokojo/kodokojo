@@ -43,4 +43,5 @@ public interface BrickConfigurer {
      */
     BrickConfigurerData addUsers(BrickConfigurerData brickConfigurerData, List<User> users) throws BrickConfigurationException;
 
+    BrickConfigurerData removeUsers(BrickConfigurerData brickConfigurationData, List<User> users);
 }

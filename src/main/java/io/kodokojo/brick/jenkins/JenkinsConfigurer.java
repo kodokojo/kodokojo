@@ -87,6 +87,10 @@ public class JenkinsConfigurer implements BrickConfigurer {
         return executeGroovyScript(brickConfigurerData, context, templatePath);
     }
 
+    @Override
+    public BrickConfigurerData removeUsers(BrickConfigurerData brickConfigurationData, List<User> users) {
+        return brickConfigurationData;
+    }
 
     private BrickConfigurerData executeGroovyScript(BrickConfigurerData brickConfigurerData, VelocityContext context, String templatePath) {
         String url = brickConfigurerData.getEntrypoint() + SCRIPT_URL_SUFFIX;
