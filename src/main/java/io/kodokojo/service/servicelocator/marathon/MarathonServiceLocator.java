@@ -63,10 +63,9 @@ public class MarathonServiceLocator implements ServiceLocator {
             JsonObject app = (JsonObject) apps.get(i);
             String id = app.getAsJsonPrimitive("id").getAsString();
             JsonObject labels = app.getAsJsonObject("labels");
-            if (labels.has("project")) {
-                String project = labels.getAsJsonPrimitive("project").getAsString();
-                String apptype = labels.getAsJsonPrimitive("componentType").getAsString();
-                if (type.equals(apptype) && name.equals(project)) {
+            if (labels.has("endpoint")) {
+                String project = labels.getAsJsonPrimitive("endpoint").getAsString();
+                if (name.equals(project)) {
                     appIds.add(id);
                 }
             }
