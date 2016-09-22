@@ -1,5 +1,5 @@
-${owner} - ${endpoint.description}
-Copyright © ${endpoint.inceptionYear} ${owner} (${email})
+Kodo Kojo - Software factory done right
+Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
