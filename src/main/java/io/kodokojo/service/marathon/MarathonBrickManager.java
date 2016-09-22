@@ -128,7 +128,7 @@ public class MarathonBrickManager implements BrickManager {
         }
 
         String name = projectConfiguration.getName().toLowerCase();
-        String type = brickConfiguration.getType().name().toLowerCase();
+        String type = brickConfiguration.getName().toLowerCase();
 
         String id = "/" + name.toLowerCase() + "/" + brickConfiguration.getName().toLowerCase();
         String body = provideStartAppBody(projectConfiguration, projectConfiguration.getDefaultStackConfiguration().getName(), brickConfiguration, id);
@@ -146,7 +146,7 @@ public class MarathonBrickManager implements BrickManager {
         Set<Service> res = new HashSet<>();
         marathonServiceLocator.getService(type, name);
         boolean haveHttpService = getAnHttpService(res);
-        // TODO remove this, listen the Marathon event bus instead
+        // TODO remove this, listen Zookeeper instead
         int nbTry = 0;
         int maxNbTry = 10000;
         while (nbTry < maxNbTry && !haveHttpService) {
