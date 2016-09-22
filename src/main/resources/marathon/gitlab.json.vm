@@ -78,7 +78,7 @@
     }
   ],
   "labels": {
-    "project": "$projectName",
+    "endpoint": "$projectName",
     "managedByKodoKojoHa": "true",
     "componentType": "scm",
     "component": "gitlab"
