@@ -50,6 +50,8 @@ public class JenkinsConfigurer implements BrickConfigurer {
 
     private static final String ADD_USER_JENKINS_GROOVY_VM = "add_user_jenkins.groovy.vm";
 
+    private static final String DELETE_USER_JENKINS_GROOVY_VM = "delete_user_jenkins.groovy.vm";
+
     private static final String USERS_KEY = "users";
 
     private static final String SCRIPT_KEY = "script";
@@ -88,8 +90,11 @@ public class JenkinsConfigurer implements BrickConfigurer {
     }
 
     @Override
-    public BrickConfigurerData removeUsers(BrickConfigurerData brickConfigurationData, List<User> users) {
-        return brickConfigurationData;
+    public BrickConfigurerData removeUsers(BrickConfigurerData brickConfigurerData, List<User> users) {
+        VelocityContext context = new VelocityContext();
+        context.put(USERS_KEY, brickConfigurerData.getUsers());
+        String templatePath = DELETE_USER_JENKINS_GROOVY_VM;
+        return executeGroovyScript(brickConfigurerData, context, templatePath);
     }
 
     private BrickConfigurerData executeGroovyScript(BrickConfigurerData brickConfigurerData, VelocityContext context, String templatePath) {

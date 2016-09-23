@@ -35,7 +35,9 @@ public interface GitlabRest {
     Response addSshKey(@Header("PRIVATE-TOKEN") String privateToken, @Path("id") String id, @Field("title") String title, @Field("key") String key);
 
 
-    @GET("/api/v3/users")
+    @GET("/api/v3/users?username={username}")
     JsonArray searchByUsername(@Header("PRIVATE-TOKEN") String privateToken, @Query("username") String username);
 
+    @DELETE("/api/v3//users/{id}")
+    Response deleteUser(@Header("PRIVATE-TOKEN") String privateToken, @Query("id") String id);
 }

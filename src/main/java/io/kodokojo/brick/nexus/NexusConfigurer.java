@@ -81,8 +81,34 @@ public class NexusConfigurer implements BrickConfigurer {
     }
 
     @Override
-    public BrickConfigurerData removeUsers(BrickConfigurerData brickConfigurationData, List<User> users) {
-        return brickConfigurationData;
+    public BrickConfigurerData removeUsers(BrickConfigurerData brickConfigurerData, List<User> users) {
+        if (brickConfigurerData == null) {
+            throw new IllegalArgumentException("brickConfigurerData must be defined.");
+        }
+        if (users == null) {
+            throw new IllegalArgumentException("users must be defined.");
+        }
+        OkHttpClient httpClient = this.httpClient;
+        String adminPassword = brickConfigurerData.getDefaultAdmin().getPassword();
+        String url = brickConfigurerData.getEntrypoint() +"/service/local/users/";
+        for (User user : users) {
+            Request request = new Request.Builder().url(url+ user.getUsername())
+                    .addHeader("Authorization", encodeBasicAuth(ADMIN_ACCOUNT_NAME, adminPassword))
+                    .delete().build();
+
+            Response response = null;
+            try {
+                response = httpClient.newCall(request).execute();
+            } catch (IOException e) {
+                LOGGER.error("Unable to delete userId {} on Nexus.", user.getUsername());
+            } finally {
+                if (response != null) {
+                    IOUtils.closeQuietly(response.body());
+                }
+            }
+
+        }
+        return brickConfigurerData;
     }
 
     private boolean executeRequest(OkHttpClient httpClient, String url, String xmlBody, String login, String password) {

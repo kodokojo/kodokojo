@@ -176,8 +176,35 @@ public class GitlabConfigurer implements BrickConfigurer {
     }
 
     @Override
-    public BrickConfigurerData removeUsers(BrickConfigurerData brickConfigurationData, List<User> users) {
-        return brickConfigurationData;
+    public BrickConfigurerData removeUsers(BrickConfigurerData brickConfigurerData, List<User> users) {
+        if (brickConfigurerData == null) {
+            throw new IllegalArgumentException("brickConfigurerData must be defined.");
+        }
+        if (users == null) {
+            throw new IllegalArgumentException("users must be defined.");
+        }
+
+        String gitlabEntryPoint = getGitlabEntryPoint(brickConfigurerData);
+
+        OkHttpClient httpClient = provideDefaultOkHttpClient();
+        RestAdapter adapter = new RestAdapter.Builder().setEndpoint(gitlabEntryPoint).setClient(new OkClient(httpClient)).build();
+        GitlabRest gitlabRest = adapter.create(GitlabRest.class);
+
+        String privateToken = (String) brickConfigurerData.getContext().get(GITLAB_ADMIN_TOKEN_KEY);
+        for (User user : users) {
+            JsonArray results = gitlabRest.searchByUsername(privateToken, user.getUsername());
+            Iterator<JsonElement> it = results.iterator();
+            String id = null;
+            while(id == null && it.hasNext()) {
+                JsonObject json = (JsonObject) it.next();
+                if( json.has("id")) {
+                    id = json.getAsJsonPrimitive("id").getAsString();
+                }
+            }
+            gitlabRest.deleteUser(privateToken, id);
+
+        }
+        return brickConfigurerData;
     }
 
     private String getGitlabEntryPoint(BrickConfigurerData brickConfigurerData) {
