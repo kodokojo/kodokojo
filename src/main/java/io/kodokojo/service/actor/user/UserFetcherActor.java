@@ -44,7 +44,6 @@ public class UserFetcherActor extends AbstractActor {
                 .match(UserFetchMsg.class, msg -> {
                     Set<User> users = msg.userIds.stream()
                             .map(userFetcher::getUserByIdentifier)
-                            .map(u -> new User(u.getIdentifier(), u.getEntityIdentifier(), u.getFirstName(), u.getLastName(), u.getUsername(), u.getEmail(), "", u.getSshPublicKey()))
                             .collect(Collectors.toSet());
                     sender().tell(new UserFetchResultMsg(msg.getRequester(),msg.userIds,  users), self());
                     getContext().stop(self());

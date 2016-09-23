@@ -1,17 +1,17 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -166,7 +166,7 @@ public class MarathonBrickManager implements BrickManager {
     }
 
     @Override
-    public BrickConfigurerData configure(ProjectConfiguration projectConfiguration , StackConfiguration stackConfiguration, BrickConfiguration brickConfiguration) throws ProjectConfigurationException {
+    public BrickConfigurerData configure(ProjectConfiguration projectConfiguration, StackConfiguration stackConfiguration, BrickConfiguration brickConfiguration) throws ProjectConfigurationException {
         if (projectConfiguration == null) {
             throw new IllegalArgumentException("projectConfiguration must be defined.");
         }
@@ -191,17 +191,17 @@ public class MarathonBrickManager implements BrickManager {
                     List<User> users = IteratorUtils.toList(projectConfiguration.getUsers());
                     try {
                         BrickConfigurerData brickConfigurerData = new BrickConfigurerData(projectConfiguration.getName(), projectConfiguration.getDefaultStackConfiguration().getName(), entrypoint, domain, IteratorUtils.toList(projectConfiguration.getAdmins()), users);
-                        brickConfigurerData = configurer.configure(brickConfigurerData);
-                        if(LOGGER.isDebugEnabled()) {
+                        brickConfigurerData = configurer.configure(projectConfiguration, brickConfigurerData);
+                        if (LOGGER.isDebugEnabled()) {
                             LOGGER.debug("Receive following BrickConfigurerData when configure {} {} : {}", projectConfiguration.getName(), brickConfiguration.getName(), brickConfigurerData);
                         }
-                        brickConfigurerData = configurer.addUsers(brickConfigurerData, users);
+                        brickConfigurerData = configurer.addUsers(projectConfiguration, brickConfigurerData, users);
                         if (LOGGER.isDebugEnabled()) {
                             LOGGER.debug("Adding users {} to brick {}", StringUtils.join(users, ","), brickType);
                             LOGGER.debug("Receive following BrickConfigurerData when add user on {} {} : {}", projectConfiguration.getName(), brickConfiguration.getName(), brickConfigurerData);
 
                         }
-                        return  brickConfigurerData;
+                        return brickConfigurerData;
                         /*
                         BrickConfigurationBuilder builder = new BrickConfigurationBuilder(brickConfiguration);
                         builder.setProperties(brickConfigurerData.getContext());
@@ -221,7 +221,7 @@ public class MarathonBrickManager implements BrickManager {
                     }
                 }
             } else {
-                throw  new RuntimeException("Unable to find a valid HTTP service for brick " + type + " on project " + name);
+                throw new RuntimeException("Unable to find a valid HTTP service for brick " + type + " on project " + name);
             }
         }
         throw new RuntimeException("Unable to find a BrickConfigurer for brick type " + brickType);

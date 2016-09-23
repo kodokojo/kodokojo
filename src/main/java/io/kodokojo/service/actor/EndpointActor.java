@@ -108,6 +108,8 @@ public class EndpointActor extends AbstractActor {
             getContext().actorOf(EmailSenderActor.PROPS(injector.getInstance(EmailSender.class))).forward(msg, getContext());
         }).match(ProjectConfigurationChangeUserActor.ProjectConfigurationChangeUserMsg.class, msg -> {
             projectEndpoint.forward(msg, getContext());
+        }).match(BrickUpdateUserActor.BrickUpdateUserMsg.class, msg -> {
+            projectEndpoint.forward(msg, getContext());
         })
                 .matchAny(this::unhandled).build());
     }

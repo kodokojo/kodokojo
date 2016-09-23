@@ -103,10 +103,12 @@ public class ProjectConfigurationChangeUserActor extends AbstractActor {
                                 endpoint.tell(msgUpdate, self());
                             });
                         });
+                        LOGGER.debug("Request add user {} on project {} for {} bricks.", StringUtils.join(users.stream().map(User::getUsername).collect(Collectors.toList()), ", "), projectConfiguration.getName(), nbBrickUpdateRequested);
                     }
                 })
                 .match(BrickUpdateUserActor.BrickUpdateUserResultMsg.class, msg -> {
                     nbBrickUpdateResponse++;
+                    LOGGER.debug("Receive {}/{} brick update user result message.", nbBrickUpdateResponse, nbBrickUpdateRequested);
                     if (nbBrickUpdateRequested == nbBrickUpdateResponse) {
                         originalSender.tell(new ProjectConfigurationChangeUserResultMsg(true), self());
                         getContext().stop(self());

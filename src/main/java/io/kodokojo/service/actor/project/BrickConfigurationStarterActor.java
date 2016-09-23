@@ -121,7 +121,7 @@ public class BrickConfigurationStarterActor extends AbstractActor {
                 brickConfigurerData = brickManager.configure(projectConfiguration,stackConfiguration, brickConfiguration);
 
             } catch (ProjectConfigurationException e) {
-                LOGGER.error("An error occur while trying to configure project {}: {}", projectName, e);
+                LOGGER.error("An error occur while trying to configure project {}: {}", projectName, e.getMessage());
                 generateMsgAndSend(brickStartContext, httpsUrl, null, BrickStateEvent.State.ONFAILURE, e.getMessage());
             }
 

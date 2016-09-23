@@ -14,8 +14,10 @@ import io.kodokojo.model.ProjectConfiguration;
 import io.kodokojo.model.StackConfiguration;
 import io.kodokojo.model.User;
 import org.apache.commons.collections4.IteratorUtils;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static akka.event.Logging.getLogger;
 
@@ -39,6 +41,7 @@ public class BrickUpdateUserActor extends AbstractActor {
     public BrickUpdateUserActor(ApplicationConfig applicationConfig, BrickUrlFactory brickUrlFactory, BrickConfigurerProvider brickConfigurerProvider) {
         receive(ReceiveBuilder.match(BrickUpdateUserMsg.class, msg -> {
             String url = "https://" + brickUrlFactory.forgeUrl(msg.projectConfiguration, msg.stackConfiguration.getName(), msg.brickConfiguration);
+            LOGGER.debug("Try to {} user {} on brick url {}.",msg.typeChange.toString(), StringUtils.join(msg.users.stream().map(User::getUsername).collect(Collectors.toList()),", "), url);
             BrickConfigurer brickConfigurer = brickConfigurerProvider.provideFromBrick(msg.brickConfiguration);
             BrickConfigurerData brickConfigurationData = new BrickConfigurerData(msg.projectConfiguration.getName(),
                     msg.stackConfiguration.getName(),
@@ -46,13 +49,14 @@ public class BrickUpdateUserActor extends AbstractActor {
                     applicationConfig.domain(),
                     IteratorUtils.toList(msg.projectConfiguration.getUsers()),
                     IteratorUtils.toList(msg.projectConfiguration.getAdmins()));
-            brickConfigurationData.getContext().putAll(brickConfigurationData.getContext());
+            brickConfigurationData.getContext().putAll(msg.brickConfiguration.getProperties());
+            LOGGER.debug("brickConfigurationData context: {}", brickConfigurationData.getContext());
             switch (msg.typeChange) {
                 case ADD:
-                    brickConfigurationData = brickConfigurer.addUsers(brickConfigurationData, msg.users);
+                    brickConfigurationData = brickConfigurer.addUsers(msg.projectConfiguration, brickConfigurationData, msg.users);
                     break;
                 case REMOVE:
-                    brickConfigurationData = brickConfigurer.removeUsers(brickConfigurationData, msg.users);
+                    brickConfigurationData = brickConfigurer.removeUsers(msg.projectConfiguration, brickConfigurationData, msg.users);
                     break;
             }
             sender().tell(new BrickUpdateUserResultMsg(msg, true), self());
