@@ -185,6 +185,27 @@ public class TestPropertyModule extends AbstractModule {
 
     @Provides
     @Singleton
+    VersionConfig provideVersionConfig() {
+        return new VersionConfig() {
+            @Override
+            public String version() {
+                return "1.0.0";
+            }
+
+            @Override
+            public String gitSha1() {
+                return "123456";
+            }
+
+            @Override
+            public String branch() {
+                return "dev";
+            }
+        };
+    }
+
+    @Provides
+    @Singleton
     ReCaptchaConfig provideReCaptchaConfig(){
         return () -> "";
     }

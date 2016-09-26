@@ -33,6 +33,7 @@ import io.kodokojo.commons.utils.DockerTestSupport;
 import io.kodokojo.config.ApplicationConfig;
 import io.kodokojo.config.EmailConfig;
 import io.kodokojo.config.ReCaptchaConfig;
+import io.kodokojo.config.VersionConfig;
 import io.kodokojo.config.module.AkkaModule;
 import io.kodokojo.config.module.HttpModule;
 import io.kodokojo.config.module.endpoint.BrickEndpointModule;
@@ -234,6 +235,22 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
                     @Override
                     public String smtpFrom() {
                         return null;
+                    }
+                });
+                bind(VersionConfig.class).toInstance(new VersionConfig() {
+                    @Override
+                    public String version() {
+                        return "1.0.0";
+                    }
+
+                    @Override
+                    public String gitSha1() {
+                        return "123456";
+                    }
+
+                    @Override
+                    public String branch() {
+                        return "dev";
                     }
                 });
                 bind(SSLCertificatProvider.class).toInstance(new WildcardSSLCertificatProvider(caKey));
