@@ -21,6 +21,7 @@ import com.squareup.okhttp.*;
 import io.kodokojo.brick.BrickConfigurationException;
 import io.kodokojo.brick.BrickConfigurer;
 import io.kodokojo.brick.BrickConfigurerData;
+import io.kodokojo.model.ProjectConfiguration;
 import io.kodokojo.model.User;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -50,7 +51,7 @@ public class NexusConfigurer implements BrickConfigurer {
     }
 
     @Override
-    public BrickConfigurerData configure(BrickConfigurerData brickConfigurerData) throws BrickConfigurationException {
+    public BrickConfigurerData configure(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurerData) throws BrickConfigurationException {
         String adminPassword = brickConfigurerData.getDefaultAdmin().getPassword();
         String xmlBody = getChangePasswordXmlBody(ADMIN_ACCOUNT_NAME, OLD_ADMIN_PASSWORD, adminPassword);
 
@@ -62,7 +63,7 @@ public class NexusConfigurer implements BrickConfigurer {
     }
 
     @Override
-    public BrickConfigurerData addUsers(BrickConfigurerData brickConfigurerData, List<User> users) throws BrickConfigurationException {
+    public BrickConfigurerData addUsers(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurerData, List<User> users) throws BrickConfigurationException {
         if (brickConfigurerData == null) {
             throw new IllegalArgumentException("brickConfigurerData must be defined.");
         }
@@ -80,6 +81,37 @@ public class NexusConfigurer implements BrickConfigurer {
         return brickConfigurerData;
     }
 
+    @Override
+    public BrickConfigurerData removeUsers(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurerData, List<User> users) {
+        if (brickConfigurerData == null) {
+            throw new IllegalArgumentException("brickConfigurerData must be defined.");
+        }
+        if (users == null) {
+            throw new IllegalArgumentException("users must be defined.");
+        }
+        OkHttpClient httpClient = this.httpClient;
+        String adminPassword = brickConfigurerData.getDefaultAdmin().getPassword();
+        String url = brickConfigurerData.getEntrypoint() +"/service/local/users/";
+        for (User user : users) {
+            Request request = new Request.Builder().url(url+ user.getUsername())
+                    .addHeader("Authorization", encodeBasicAuth(ADMIN_ACCOUNT_NAME, adminPassword))
+                    .delete().build();
+
+            Response response = null;
+            try {
+                response = httpClient.newCall(request).execute();
+            } catch (IOException e) {
+                LOGGER.error("Unable to delete userId {} on Nexus.", user.getUsername());
+            } finally {
+                if (response != null) {
+                    IOUtils.closeQuietly(response.body());
+                }
+            }
+
+        }
+        return brickConfigurerData;
+    }
+
     private boolean executeRequest(OkHttpClient httpClient, String url, String xmlBody, String login, String password) {
         RequestBody requestBody = RequestBody.create(MediaType.parse("application/xml"), xmlBody);
         Request request = new Request.Builder().url(url)
@@ -89,6 +121,7 @@ public class NexusConfigurer implements BrickConfigurer {
         Response response = null;
         try {
             response = httpClient.newCall(request).execute();
+            LOGGER.debug("Request on URL {} return code {}.", url, response.code());
             return response.code() >= 200 && response.code() < 300;
         } catch (IOException e) {
             LOGGER.error("Unable to complete request on Nexus url {}", url, e);

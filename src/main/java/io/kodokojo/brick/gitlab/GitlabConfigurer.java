@@ -26,6 +26,7 @@ import io.kodokojo.brick.BrickConfigurationException;
 import io.kodokojo.brick.BrickConfigurer;
 import io.kodokojo.brick.BrickConfigurerData;
 import io.kodokojo.brick.BrickUrlFactory;
+import io.kodokojo.model.ProjectConfiguration;
 import io.kodokojo.model.User;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -82,7 +83,7 @@ public class GitlabConfigurer implements BrickConfigurer {
     }
 
     @Override
-    public BrickConfigurerData configure(BrickConfigurerData brickConfigurerData) throws BrickConfigurationException {
+    public BrickConfigurerData configure(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurerData) throws BrickConfigurationException {
         String gitlabUrl = getGitlabEntryPoint(brickConfigurerData);
         OkHttpClient httpClient = provideDefaultOkHttpClient();
 
@@ -112,7 +113,7 @@ public class GitlabConfigurer implements BrickConfigurer {
         if (StringUtils.isBlank(resetToken)) {
             throw new BrickConfigurationException("Unable to get the reset token for gitlab  for project " + brickConfigurerData.getProjectName() + " on url " + gitlabUrl);
         }
-        String newPassword = brickConfigurerData.getDefaultAdmin().getPassword();
+        String newPassword = projectConfiguration.getUserService().getPassword();
 
         String authenticityToken = getAuthenticityToken(httpClient, changePasswordUrl, FORM_TOKEN_PATTERN);
         if (changeDefaultPassword(httpClient, gitlabUrl + PASSWORD_URL, resetToken, authenticityToken, newPassword)) {
@@ -124,7 +125,9 @@ public class GitlabConfigurer implements BrickConfigurer {
                     response = httpClient.newCall(request).execute();
                     authenticityToken = getAuthenticityToken(response.body().string(), PRIVATE_TOKEN_PATTERN);
                     if (StringUtils.isBlank(authenticityToken)) {
-                        throw new BrickConfigurationException("Unable to get private token of root account for gitlab  for project " + brickConfigurerData.getProjectName() + " on url " + gitlabUrl);
+                        String message = "Unable to get private token of root account for gitlab  for project " + brickConfigurerData.getProjectName() + " on url " + gitlabUrl;
+                        LOGGER.error(message);
+                        throw new BrickConfigurationException(message);
                     }
                     brickConfigurerData.addInContext(GITLAB_ADMIN_TOKEN_KEY, authenticityToken);
                     if (LOGGER.isDebugEnabled()) {
@@ -141,17 +144,53 @@ public class GitlabConfigurer implements BrickConfigurer {
                 }
             } else {
                 LOGGER.error("Unable to log on Gitlab with new password");
-                throw new BrickConfigurationException("Unable to log on Gitlab with new password for project " + brickConfigurerData.getProjectName() + " on url " + gitlabUrl);
+                String message = "Unable to log on Gitlab with new password for project " + brickConfigurerData.getProjectName() + " on url " + gitlabUrl;
+                LOGGER.error(message);
+                throw new BrickConfigurationException(message);
             }
         } else if (LOGGER.isDebugEnabled()) {
             LOGGER.warn("Unable to change admin password on Gitabl for url {}.", gitlabUrl);
         }
+
+
         return brickConfigurerData;
     }
 
 
     @Override
-    public BrickConfigurerData addUsers(BrickConfigurerData brickConfigurerData, List<User> users) throws BrickConfigurationException {
+    public BrickConfigurerData addUsers(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurerData, List<User> users) throws BrickConfigurationException {
+        if (brickConfigurerData == null) {
+            throw new IllegalArgumentException("brickConfigurerData must be defined.");
+        }
+        if (users == null) {
+            throw new IllegalArgumentException("users must be defined.");
+        }
+
+        String gitlabEntryPoint = getGitlabEntryPoint(brickConfigurerData);
+
+        OkHttpClient httpClient = provideDefaultOkHttpClient();
+        RestAdapter adapter = new RestAdapter.Builder().setEndpoint(gitlabEntryPoint).setClient(new OkClient(httpClient)).build();
+        GitlabRest gitlabRest = adapter.create(GitlabRest.class);
+
+        String privateToken = (String) brickConfigurerData.getContext().get(GITLAB_ADMIN_TOKEN_KEY);
+
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Using private Token {}.", privateToken);
+        }
+
+        for (User user : users) {
+            if (!createUser(gitlabRest, httpClient, gitlabEntryPoint, privateToken, user)) {
+                String message = "Unable to create user '" + user.getUsername() + "' for project " + brickConfigurerData.getProjectName() + " on url " + gitlabEntryPoint;
+                LOGGER.error(message);
+                //throw new BrickConfigurationException(message);
+            }
+        }
+
+        return brickConfigurerData;
+    }
+
+    @Override
+    public BrickConfigurerData removeUsers(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurerData, List<User> users) {
         if (brickConfigurerData == null) {
             throw new IllegalArgumentException("brickConfigurerData must be defined.");
         }
@@ -167,11 +206,18 @@ public class GitlabConfigurer implements BrickConfigurer {
 
         String privateToken = (String) brickConfigurerData.getContext().get(GITLAB_ADMIN_TOKEN_KEY);
         for (User user : users) {
-            if (!createUser(gitlabRest, httpClient, gitlabEntryPoint, privateToken, user)) {
-                throw new BrickConfigurationException("Unable to create user '" + user.getUsername() + "' for project " + brickConfigurerData.getProjectName() + " on url " + gitlabEntryPoint);
+            JsonArray results = gitlabRest.searchByUsername(privateToken, user.getUsername());
+            Iterator<JsonElement> it = results.iterator();
+            String id = null;
+            while(id == null && it.hasNext()) {
+                JsonObject json = (JsonObject) it.next();
+                if( json.has("id")) {
+                    id = json.getAsJsonPrimitive("id").getAsString();
+                }
             }
-        }
+            gitlabRest.deleteUser(privateToken, id);
 
+        }
         return brickConfigurerData;
     }
 
@@ -292,26 +338,59 @@ public class GitlabConfigurer implements BrickConfigurer {
     private boolean createUser(GitlabRest gitlabRest, OkHttpClient httpClient, String gitlabUrl, String privateToken, User user) {
         Response response = null;
         int id = -1;
+
+        RequestBody formBody = new FormEncodingBuilder()
+                .add("username", user.getUsername())
+                .add("password", user.getPassword())
+                .add("name", user.getName())
+                .add("email", user.getEmail())
+                .add("confirm", "true")
+                .build();
+        Request request = new Request.Builder().url(gitlabUrl + "/api/v3/users").header("PRIVATE-TOKEN", privateToken).post(formBody).build();
+
         try {
+            LOGGER.debug("Try to add following user to Gitlab: {}", user);
+
+            response = httpClient.newCall(request).execute();
+
+            LOGGER.debug("Create user on Gitlab on url {}; response {} .", gitlabUrl, response.code());
+            if (response.code() != 201) {
+                LOGGER.debug("Not able to create user ? {}", response.body().string());
+            }
+
+            JsonParser parser = new JsonParser();
+            JsonObject jsonObject = (JsonObject) parser.parse(response.body().string());
+            /*
             JsonObject jsonObject = gitlabRest.createUser(privateToken, user.getUsername(), user.getPassword(), user.getEmail(), user.getName(), "false");
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace(jsonObject.toString());
             }
+            */
+
             id = jsonObject.getAsJsonPrimitive("id").getAsInt();
 
         } catch (RetrofitError e) {
             LOGGER.error("Unable to complete creation of user : ", e);
+            LOGGER.debug(e.getResponse().getBody().toString());
             return false;
+        } catch (IOException e) {
+            LOGGER.error("Unable to create user on Gitlab {}.", gitlabUrl, e);
+            return  false;
+        } finally {
+            if (response != null) {
+                IOUtils.closeQuietly(response.body());
+            }
         }
 
-        RequestBody formBody = new FormEncodingBuilder()
+
+        formBody = new FormEncodingBuilder()
                 .add("title", "SSH Key")
                 .add("key", user.getSshPublicKey())
                 .build();
-        Request request = new Request.Builder().post(formBody).url(gitlabUrl + "/api/v3/users/" + id + "/keys").addHeader("PRIVATE-TOKEN", privateToken).build();
+        request = new Request.Builder().post(formBody).url(gitlabUrl + "/api/v3/users/" + id + "/keys").addHeader("PRIVATE-TOKEN", privateToken).build();
         try {
             response = httpClient.newCall(request).execute();
-            boolean res = response.code() >= 200 && response.code() < 300;
+            boolean sshKeyAdded = response.code() >= 200 && response.code() < 300;
             if (response.code() == 500) {
                 LOGGER.warn("Gitlab return a 500 while trying to add SSH key for user {} on Gitlab {}.", user.getUsername(), gitlabUrl);
                 IOUtils.closeQuietly(response.body());
@@ -323,9 +402,9 @@ public class GitlabConfigurer implements BrickConfigurer {
                 JsonElement json = parser.parse(body);
                 if (response.code() == 200) {
                     JsonArray keys = (JsonArray) json;
-                    res = keys.size() > 0;
-                    long timeout = System.currentTimeMillis() + 180000;
-                    while (!res && System.currentTimeMillis() < timeout) {
+                    sshKeyAdded = keys.size() > 0;
+                    long timeout = System.currentTimeMillis() + 240000;
+                    while (!sshKeyAdded && System.currentTimeMillis() < timeout) {
                         try {
                             Thread.sleep(60000);
                         } catch (InterruptedException e) {
@@ -340,8 +419,8 @@ public class GitlabConfigurer implements BrickConfigurer {
                         response = httpClient.newCall(request).execute();
                         LOGGER.debug(response.toString());
                         LOGGER.debug(response.body().string());
-                        res = response.code() == 201 || (response.code() == 400 && body.contains("has already been taken"));
-                        if (!res) {
+                        sshKeyAdded = response.code() == 201 || (response.code() == 400 && body.contains("has already been taken"));
+                        if (!sshKeyAdded) {
                             try {
                                 Thread.sleep(1000);
                             } catch (InterruptedException e) {
@@ -351,7 +430,6 @@ public class GitlabConfigurer implements BrickConfigurer {
                     }
                 }
             }
-            return res;
         } catch (IOException e) {
             LOGGER.error("Unable to request gitlab at url {}.", gitlabUrl, e);
         } finally {
@@ -360,7 +438,7 @@ public class GitlabConfigurer implements BrickConfigurer {
             }
         }
 
-        return false;
+        return true;
     }
 
     private static String getAuthenticityToken(String bodyReponse, Pattern pattern) {

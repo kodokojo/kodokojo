@@ -1,22 +1,21 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package io.kodokojo.bdd.stage;
-
 
 
 import com.google.gson.*;
@@ -33,7 +32,6 @@ import io.kodokojo.endpoint.dto.ProjectConfigDto;
 import io.kodokojo.endpoint.dto.UserLightDto;
 import io.kodokojo.model.Entity;
 import io.kodokojo.model.User;
-import io.kodokojo.service.repository.EntityRepository;
 import io.kodokojo.service.repository.Repository;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -109,7 +107,7 @@ public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF
         return self();
     }
 
-    public SELF user_$_belong_to_entity_of_project_configuration(@Quoted  String username) {
+    public SELF user_$_belong_to_entity_of_project_configuration(@Quoted String username) {
         UserInfo requesterUserInfo = currentUsers.get(currentUserLogin);
         User user = repository.getUserByIdentifier(requesterUserInfo.getIdentifier());
         String entityIdOfCurrentUser = user.getEntityIdentifier();
@@ -122,7 +120,6 @@ public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF
     }
 
 
-
     public SELF it_exist_a_valid_project_configuration_in_store() {
         projectConfigDto = getProjectConfigurationFromCurrentProjectConfigId();
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -131,6 +128,11 @@ public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF
     }
 
     public SELF it_exist_a_valid_project_configuration_in_store_which_contain_user(@Quoted String username) {
+        try {
+            Thread.sleep(500); // We badly wait actor done there jobs.
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
         boolean found = lookupUsernameInProjectConfiguration(username);
         assertThat(found).isTrue();
         return self();
@@ -138,6 +140,11 @@ public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF
 
 
     public SELF it_exist_NOT_a_valid_project_configuration_in_store_which_contain_user(@Quoted String usernameToNotFound) {
+        try {
+            Thread.sleep(500); // We badly wait actor done there jobs.
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
         boolean found = lookupUsernameInProjectConfiguration(usernameToNotFound);
         assertThat(found).isFalse();
         return self();
@@ -284,7 +291,7 @@ public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF
                 jsonStackConfigIsValid(stackConf);
             }
 
-                return projectConfigDto;
+            return projectConfigDto;
         } catch (IOException e) {
             fail(e.getMessage());
         } finally {
@@ -313,7 +320,7 @@ public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF
     }
 
     private void jsonUserAreValid(Iterator<JsonElement> userIterator) {
-        while(userIterator.hasNext()) {
+        while (userIterator.hasNext()) {
             JsonObject user = (JsonObject) userIterator.next();
             assertThat(user.has("identifier"));
             assertThat(user.has("username"));

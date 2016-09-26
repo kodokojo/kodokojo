@@ -177,7 +177,7 @@ public class DefaultProjectManager implements ProjectManager {
                     if (LOGGER.isDebugEnabled()) {
                         LOGGER.debug("Try to add users {} on entrypoint {}.", org.apache.commons.lang.StringUtils.join(usersToAdd, ","), entrypoint);
                     }
-                    brickConfigurer.addUsers(brickConfigurerData, usersToAdd);
+                    brickConfigurer.addUsers(projectConfiguration, brickConfigurerData, usersToAdd);
                 } catch (BrickConfigurationException e) {
                     LOGGER.error("An error occure while add users to brick " + brickConfiguration.getName() + "[" + entrypoint + "] on project " + projectConfiguration.getName() + ".", e);
                 }
