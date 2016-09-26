@@ -41,6 +41,7 @@ import io.kodokojo.bdd.MarathonBrickUrlFactory;
 import io.kodokojo.bdd.stage.*;
 import io.kodokojo.brick.*;
 import io.kodokojo.commons.DockerPresentMethodRule;
+import io.kodokojo.config.VersionConfig;
 import io.kodokojo.model.Service;
 import io.kodokojo.commons.utils.DockerTestSupport;
 import io.kodokojo.service.redis.RedisUserRepository;
@@ -467,7 +468,22 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         });
         UserAuthenticator<SimpleCredential> userAuthenticator = injector.getInstance(authenticatorKey);
         sparkEndpoints.add(new ProjectSparkEndpoint(userAuthenticator, null, projectManager, userRepository, projectRepository));
-        httpEndpoint = new HttpEndpoint(restEntryPointPort, new SimpleUserAuthenticator(userRepository), sparkEndpoints);
+        httpEndpoint = new HttpEndpoint(restEntryPointPort, new SimpleUserAuthenticator(userRepository), sparkEndpoints, new VersionConfig() {
+            @Override
+            public String version() {
+                return "1.0.0";
+            }
+
+            @Override
+            public String gitSha1() {
+                return "12244";
+            }
+
+            @Override
+            public String branch() {
+                return "test";
+            }
+        });
         Semaphore semaphore = new Semaphore(1);
         try {
             semaphore.acquire();
