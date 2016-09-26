@@ -126,7 +126,7 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
                 bind(VersionConfig.class).toInstance(new VersionConfig() {
                     @Override
                     public String version() {
-                        return "1.0.0"
+                        return "1.0.0";
                     }
 
                     @Override
