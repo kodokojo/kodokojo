@@ -35,6 +35,7 @@ import com.tngtech.jgiven.annotation.Quoted;
 import io.kodokojo.Launcher;
 import io.kodokojo.commons.utils.DockerTestSupport;
 import io.kodokojo.config.DockerConfig;
+import io.kodokojo.config.VersionConfig;
 import io.kodokojo.config.module.InjectorProvider;
 import io.kodokojo.config.properties.PropertyResolver;
 import io.kodokojo.config.properties.provider.*;
@@ -122,6 +123,22 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
                 PropertyResolver resolver = new PropertyResolver(new DockerConfigValueProvider(valueProvider));
 
                 bind(DockerConfig.class).toInstance(resolver.createProxy(DockerConfig.class));
+                bind(VersionConfig.class).toInstance(new VersionConfig() {
+                    @Override
+                    public String version() {
+                        return "1.0.0"
+                    }
+
+                    @Override
+                    public String gitSha1() {
+                        return "1234";
+                    }
+
+                    @Override
+                    public String branch() {
+                        return "test";
+                    }
+                });
 
 
             }
