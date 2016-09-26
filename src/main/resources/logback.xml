@@ -31,6 +31,7 @@
 
     <logger name="io.kodokojo" level="DEBUG"/>
     <logger name="akka" level="DEBUG"/>
+    <logger name="io.kodokojo.endpoint.HttpEndpoint" level="TRACE"/>
 
     <root level="WARN">
         <appender-ref ref="STDOUT" />
