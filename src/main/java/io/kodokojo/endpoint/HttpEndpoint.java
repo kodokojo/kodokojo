@@ -107,7 +107,7 @@ public class HttpEndpoint extends AbstractSparkEndpoint implements ApplicationLi
             return "{" +
                     "\"version\":\""+versionConfig.version()+"\"," +
                     "\"branch\":\""+versionConfig.branch()+"\"," +
-                    "\"commit\":\""+versionConfig.gitSha1()+"\"," +
+                    "\"commit\":\""+versionConfig.gitSha1()+"\"" +
                     "}";
         });
 

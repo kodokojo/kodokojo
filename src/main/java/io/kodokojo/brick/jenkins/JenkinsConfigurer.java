@@ -82,11 +82,10 @@ public class JenkinsConfigurer implements BrickConfigurer {
     public BrickConfigurerData configure(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurerData) {
 
         try {
-            Thread.sleep(30000);
+            Thread.sleep(60000);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-
 
         VelocityContext context = new VelocityContext();
         List<User> users =new ArrayList<>();
@@ -140,6 +139,9 @@ public class JenkinsConfigurer implements BrickConfigurer {
             Request request = builder.build();
             response = httpClient.newCall(request).execute();
             String bodyResponse = response.body().string();
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace("Jenkins response: \n", bodyResponse);
+            }
             //if (response.code() >= 200 && response.code() < 300) {
             return brickConfigurerData;
             //}
