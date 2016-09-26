@@ -29,11 +29,16 @@ import io.kodokojo.config.properties.provider.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.LinkedList;
+import java.util.Properties;
 
 public class PropertyModule extends AbstractModule {
 
     public static final String APPLICATION_CONFIGURATION_PROPERTIES = "application.properties";
+
+    public static final String VERSION_CONFIGURATION_PROPERTIES = "version.properties";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PropertyModule.class);
 
@@ -70,16 +75,16 @@ public class PropertyModule extends AbstractModule {
 
         RedisDockerLinkPropertyValueProvider redisDockerLinkPropertyValueProvider = new RedisDockerLinkPropertyValueProvider(systemEnvValueProvider);
         valueProviders.add(redisDockerLinkPropertyValueProvider);
-/*
-        try (InputStream in = getClass().getClassLoader().getResourceAsStream(APPLICATION_CONFIGURATION_PROPERTIES)) {
+
+        try (InputStream in = getClass().getClassLoader().getResourceAsStream(VERSION_CONFIGURATION_PROPERTIES)) {
             Properties properties = new Properties();
             properties.load(in);
             PropertiesValueProvider propertiesValueProvider = new PropertiesValueProvider(properties);
             valueProviders.add(propertiesValueProvider);
         } catch (IOException e) {
-            LOGGER.error("Unable to load properties file " + APPLICATION_CONFIGURATION_PROPERTIES, e);
+            LOGGER.error("Unable to load properties file " + VERSION_CONFIGURATION_PROPERTIES, e);
         }
-        */
+
         return valueProvider;
     }
 

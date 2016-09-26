@@ -88,12 +88,12 @@ public class GitlabConfigurer implements BrickConfigurer {
         OkHttpClient httpClient = provideDefaultOkHttpClient();
 
         try {
-            Thread.sleep(60000);    // Waiting for Gitlab fully start. We don't have any strong way to defined if Gitlab is ready or not.
+            Thread.sleep(120000);    // Waiting for Gitlab fully start. We don't have any strong way to defined if Gitlab is ready or not.
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
 
-        long end = System.currentTimeMillis() + 60000;
+        long end = System.currentTimeMillis() + 180000;
         String changePasswordUrl = "";
         String resetToken = "";
 

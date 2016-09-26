@@ -104,11 +104,11 @@ public class HttpEndpoint extends AbstractSparkEndpoint implements ApplicationLi
 
         get(BASE_API, JSON_CONTENT_TYPE, (request, response) -> {
             response.type(JSON_CONTENT_TYPE);
-            return "{\"" +
-                    "version\":\""+versionConfig.version()+"," +
-                    "branch\":\""+versionConfig.branch()+"," +
-                    "commit\":\""+versionConfig.gitSha1()+"," +
-                    "\"}";
+            return "{" +
+                    "\"version\":\""+versionConfig.version()+"\"," +
+                    "\"branch\":\""+versionConfig.branch()+"\"," +
+                    "\"commit\":\""+versionConfig.gitSha1()+"\"," +
+                    "}";
         });
 
         Spark.awaitInitialization();
