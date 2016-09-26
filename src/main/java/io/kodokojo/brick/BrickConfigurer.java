@@ -19,6 +19,7 @@ package io.kodokojo.brick;
 
 
 
+import io.kodokojo.model.ProjectConfiguration;
 import io.kodokojo.model.User;
 
 import java.util.List;
@@ -33,7 +34,7 @@ public interface BrickConfigurer {
      * @param brickConfigurerData All data which may useful to configure the BrickConfiguration, like th admin configuration or BrickConfiguration endpoint.
      * @return The configurationData which may be modify when configuring the BrickConfiguration.
      */
-    BrickConfigurerData configure(BrickConfigurerData brickConfigurerData) throws BrickConfigurationException;
+    BrickConfigurerData configure(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurerData) throws BrickConfigurationException;
 
     /**
      * Add users with informations defined in ConfigurationData on the given BrickConfiguration.
@@ -41,6 +42,7 @@ public interface BrickConfigurer {
      * @param users The list of users to add.
      * @return The configurationData which may be modify when adding users.
      */
-    BrickConfigurerData addUsers(BrickConfigurerData brickConfigurerData, List<User> users) throws BrickConfigurationException;
+    BrickConfigurerData addUsers(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurerData, List<User> users) throws BrickConfigurationException;
 
+    BrickConfigurerData removeUsers(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurationData, List<User> users);
 }

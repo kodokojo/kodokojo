@@ -38,6 +38,10 @@ import java.util.Base64;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
+@Deprecated
+/**
+ * See {@link ConfigurationStore}. Must store SSLKey to Zookeeper instead.
+ */
 public class MarathonConfigurationStore implements ConfigurationStore {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MarathonConfigurationStore.class);

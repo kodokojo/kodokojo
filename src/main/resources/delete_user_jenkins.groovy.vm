@@ -1,0 +1,18 @@
+import jenkins.model.*;
+
+
+/////////////////////////
+// create or update user
+/////////////////////////
+void delete_user(String user_name) {
+    def user = hudson.model.User.get(user_name)
+    user.delete()
+}
+
+
+#foreach( $user in $users )
+delete_user("$user.username")
+#end
+
+
+

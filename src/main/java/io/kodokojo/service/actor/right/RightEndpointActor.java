@@ -35,7 +35,6 @@ public class RightEndpointActor extends AbstractActor {
 
     private final LoggingAdapter LOGGER = getLogger(getContext().system(), this);
 
-
     public static final String NAME = "rightEndpointProps";
 
     public static Props PROPS() {
