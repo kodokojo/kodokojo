@@ -24,6 +24,7 @@ import static org.apache.commons.lang.StringUtils.isBlank;
 public class BrickStateEvent implements Serializable {
 
     public enum State {
+        UNKNOWN,
         STARTING,
         CONFIGURING,
         RUNNING,
