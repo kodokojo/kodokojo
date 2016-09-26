@@ -125,6 +125,13 @@ public class PropertyModule extends AbstractModule {
         return createConfig(EmailConfig.class, valueProvider);
     }
 
+
+    @Provides
+    @Singleton
+    VersionConfig provideVersionConfig(PropertyValueProvider valueProvider) {
+        return createConfig(VersionConfig.class, valueProvider);
+    }
+
     @Provides
     @Singleton
     ReCaptchaConfig provideReCaptchaConfig(PropertyValueProvider valueProvider) {

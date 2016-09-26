@@ -21,6 +21,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import io.kodokojo.config.ApplicationConfig;
+import io.kodokojo.config.VersionConfig;
 import io.kodokojo.endpoint.HttpEndpoint;
 import io.kodokojo.endpoint.SparkEndpoint;
 import io.kodokojo.endpoint.UserAuthenticator;
@@ -38,8 +39,8 @@ public class HttpModule extends AbstractModule {
 
     @Provides
     @Singleton
-    HttpEndpoint provideHttpEndpoint(ApplicationConfig applicationConfig, ApplicationLifeCycleManager applicationLifeCycleManager, UserAuthenticator<SimpleCredential> userAuthenticator, Set<SparkEndpoint> sparkEndpoints) {
-        HttpEndpoint httpEndpoint = new HttpEndpoint(applicationConfig.port(), userAuthenticator, sparkEndpoints);
+    HttpEndpoint provideHttpEndpoint(ApplicationConfig applicationConfig, ApplicationLifeCycleManager applicationLifeCycleManager, UserAuthenticator<SimpleCredential> userAuthenticator, Set<SparkEndpoint> sparkEndpoints, VersionConfig versionConfig) {
+        HttpEndpoint httpEndpoint = new HttpEndpoint(applicationConfig.port(), userAuthenticator, sparkEndpoints, versionConfig);
         applicationLifeCycleManager.addService(httpEndpoint);
         return httpEndpoint;
     }

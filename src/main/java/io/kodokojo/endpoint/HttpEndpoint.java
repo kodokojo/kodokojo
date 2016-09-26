@@ -18,6 +18,7 @@
 package io.kodokojo.endpoint;
 
 
+import io.kodokojo.config.VersionConfig;
 import io.kodokojo.model.User;
 import io.kodokojo.service.lifecycle.ApplicationLifeCycleListener;
 import io.kodokojo.service.authentification.SimpleCredential;
@@ -40,14 +41,20 @@ public class HttpEndpoint extends AbstractSparkEndpoint implements ApplicationLi
 
     private final Set<SparkEndpoint> sparkEndpoints;
 
+    private final VersionConfig versionConfig;
+
     @Inject
-    public HttpEndpoint(int port, UserAuthenticator<SimpleCredential> userAuthenticator, Set<SparkEndpoint> sparkEndpoints) {
+    public HttpEndpoint(int port, UserAuthenticator<SimpleCredential> userAuthenticator, Set<SparkEndpoint> sparkEndpoints, VersionConfig versionConfig) {
         super(userAuthenticator);
         if (sparkEndpoints == null) {
             throw new IllegalArgumentException("sparkEndpoints must be defined.");
         }
+        if (versionConfig == null) {
+            throw new IllegalArgumentException("versionConfig must be defined.");
+        }
         this.port = port;
         this.sparkEndpoints = sparkEndpoints;
+        this.versionConfig = versionConfig;
     }
 
     @Override
@@ -97,7 +104,11 @@ public class HttpEndpoint extends AbstractSparkEndpoint implements ApplicationLi
 
         get(BASE_API, JSON_CONTENT_TYPE, (request, response) -> {
             response.type(JSON_CONTENT_TYPE);
-            return "{\"version\":\"1.0.0\"}";
+            return "{\"" +
+                    "version\":\""+versionConfig.version()+"," +
+                    "branch\":\""+versionConfig.branch()+"," +
+                    "commit\":\""+versionConfig.gitSha1()+"," +
+                    "\"}";
         });
 
         Spark.awaitInitialization();
