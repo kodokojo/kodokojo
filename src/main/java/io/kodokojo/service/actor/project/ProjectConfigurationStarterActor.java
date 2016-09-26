@@ -26,6 +26,7 @@ import akka.japi.pf.ReceiveBuilder;
 import io.kodokojo.model.*;
 import io.kodokojo.service.ProjectAlreadyExistException;
 import io.kodokojo.service.actor.EndpointActor;
+import io.kodokojo.service.actor.message.BrickStateEvent;
 import io.kodokojo.service.actor.message.UserRequestMessage;
 import io.kodokojo.service.actor.right.RightEndpointActor;
 import io.kodokojo.service.repository.ProjectRepository;
@@ -33,6 +34,7 @@ import io.kodokojo.service.repository.ProjectRepository;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static akka.event.Logging.getLogger;
 
@@ -66,6 +68,15 @@ public class ProjectConfigurationStarterActor extends AbstractActor {
 
                                     StackConfiguration defaultStackConfiguration = projectConfiguration.getDefaultStackConfiguration();
                                     Stack stack = new Stack(defaultStackConfiguration.getName(), defaultStackConfiguration.getType(), new HashSet<>());
+                                    Set<BrickStateEvent> brickStateEvents = defaultStackConfiguration.getBrickConfigurations().stream()
+                                            .map(b -> new BrickStateEvent(projectConfiguration.getIdentifier(),
+                                                    stack.getName(),
+                                                    b.getType().toString(),
+                                                    b.getName(),
+                                                    BrickStateEvent.State.UNKNOWN,
+                                                    b.getVersion())
+                                            ).collect(Collectors.toSet());
+                                    stack.getBrickStateEvents().addAll(brickStateEvents);
                                     stacks.add(stack);
                                     Project res = new Project(projectConfiguration.getIdentifier(), projectConfiguration.getName(), new Date(), stacks);
                                     getContext().actorFor(EndpointActor.ACTOR_PATH).tell(new ProjectCreatorActor.ProjectCreateMsg(initialMsg.getRequester(), res, projectConfiguration.getIdentifier()), self());
