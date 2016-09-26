@@ -24,6 +24,8 @@ import io.kodokojo.bdd.stage.HttpUserSupport;
 import io.kodokojo.bdd.stage.StageUtils;
 import io.kodokojo.bdd.stage.UserInfo;
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -31,6 +33,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 public class JenkinsUserAuthenticator implements UserAuthenticator {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(JenkinsUserAuthenticator.class);
+
     @Override
     public boolean authenticate(String url, UserInfo userInfo) {
         OkHttpClient httpClient = new OkHttpClient();
@@ -47,6 +52,7 @@ public class JenkinsUserAuthenticator implements UserAuthenticator {
         try {
             response = httpClient.newCall(request).execute();
             assertThat(response.code()).isBetween(200, 299);
+            LOGGER.debug(response.body().string());
             return true;
         } catch (IOException e) {
             fail(e.getMessage());
