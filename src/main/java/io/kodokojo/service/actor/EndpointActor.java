@@ -94,7 +94,7 @@ public class EndpointActor extends AbstractActor {
             eventEndpointNotifier.forward(msg, getContext());
         }).match(ProjectCreatorActor.ProjectCreateMsg.class, msg -> {
             projectEndpoint.forward(msg, getContext());
-        }).match(ProjectUpdaterActor.ProjectUpdateMsg.class, msg -> {
+        }).match(ProjectUpdaterMessages.ProjectUpdateMsg.class, msg -> {
             projectEndpoint.forward(msg, getContext());
         }).match(StackConfigurationStarterActor.StackConfigurationStartMsg.class, msg -> {
             projectEndpoint.forward(msg, getContext());

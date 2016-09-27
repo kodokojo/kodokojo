@@ -138,19 +138,18 @@ public class BrickConfigurationConfigurationStarterActorTest {
 
         new JavaTestKit(system) {{
 
-            JavaTestKit probe = new JavaTestKit(system);
-
-            final Props props = Props.create(BrickConfigurationStarterActor.class, brickManager, configurationStore, brickUrlFactory, sslCertificatProvider, probe.getRef());
+            final Props props = BrickConfigurationStarterActor.PROPS(brickManager, configurationStore, brickUrlFactory, sslCertificatProvider);
 
             ActorRef ref = system.actorOf(props);
             BrickStartContext context = createBrickStartContext(new BrickConfiguration("test", BrickType.CI, "1.0", Collections.singleton(new PortDefinition(8080))));
 
             ref.tell(context, getRef());
+
             new AwaitAssert(duration("10 seconds")) {
                 @Override
                 protected void check() {
                     String[] states = new String[] {BrickStateEvent.State.STARTING.name(), BrickStateEvent.State.ALREADYEXIST.name()};
-                    Object[] objects = probe.receiveN(2);
+                    Object[] objects = receiveN(2);
                     assertThat(objects.length).isEqualTo(2);
                     List<BrickStateEvent> brickStateEvents = Arrays.asList(objects).stream().map(o -> (BrickStateEvent) o).collect(Collectors.toList());
                     assertThat(brickStateEvents).extracting("state.name").contains( states);
