@@ -86,14 +86,17 @@ public class BrickConfigurationStarterActor extends AbstractActor {
         this.configurationStore = configurationStore;
         this.sslCertificatProvider = sslCertificatProvider;
 
-        receive(ReceiveBuilder.match(BrickStartContext.class, msg -> this.start(msg, sender()))
-                .matchAny(this::unhandled)
+        receive(
+                ReceiveBuilder
+                        .match(BrickStartContext.class, this::start)
+                        .matchAny(this::unhandled)
                 .build()
         );
 
     }
 
-    protected final void start(BrickStartContext brickStartContext, ActorRef sender) {
+    protected final void start(BrickStartContext brickStartContext) {
+        ActorRef sender = sender();
         ProjectConfiguration projectConfiguration = brickStartContext.getProjectConfiguration();
         StackConfiguration stackConfiguration = brickStartContext.getStackConfiguration();
         BrickConfiguration brickConfiguration = brickStartContext.getBrickConfiguration();
