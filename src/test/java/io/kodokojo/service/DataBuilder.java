@@ -26,7 +26,7 @@ public interface DataBuilder {
         return stacks;
     }
 
-    default User aUser() {
+    default User anUser() {
         return new User("1234", "5678", "John Doe", "jdoe", "jdoe@inconnu.com", "jdoe4ever", "ssh key");
     }
 }
