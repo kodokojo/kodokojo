@@ -106,8 +106,8 @@ public class ProjectEndpointActor extends AbstractActor {
                 .match(BrickStartContext.class, msg -> {
                     getContext().actorOf(BrickConfigurationStarterActor.PROPS(brickManager, configurationStore, brickUrlFactory, sslCertificatProvider)).forward(msg, getContext());
                 })
-                .match(ProjectUpdaterActor.ProjectUpdateMsg.class, msg -> {
-                    getContext().actorOf(ProjectUpdaterActor.PROPS(projectRepository)).forward(msg, getContext());
+                .match(ProjectUpdaterMessages.ProjectUpdateMsg.class, msg -> {
+                    getContext().actorOf(ProjectUpdaterActor.props(projectRepository)).forward(msg, getContext());
                 })
                 .match(ProjectCreatorActor.ProjectCreateMsg.class, msg -> {
                     getContext().actorOf(ProjectCreatorActor.PROPS(projectRepository)).forward(msg, getContext());

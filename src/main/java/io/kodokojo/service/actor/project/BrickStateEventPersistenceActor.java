@@ -21,7 +21,6 @@ import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.dispatch.Futures;
-import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
 import io.kodokojo.model.Project;
 import io.kodokojo.model.ProjectBuilder;
@@ -91,12 +90,12 @@ public class BrickStateEventPersistenceActor extends AbstractActor {
             stacks.add(stack);
 
             builder.setStacks(stacks);
-            getContext().actorFor(EndpointActor.ACTOR_PATH).tell(new ProjectUpdaterActor.ProjectUpdateMsg(null, builder.build()), self());
+            getContext().actorFor(EndpointActor.ACTOR_PATH).tell(new ProjectUpdaterMessages.ProjectUpdateMsg(null, builder.build()), self());
 
-        }).match(ProjectUpdaterActor.ProjectUpdateResultMsg.class, msg -> {
+        }).match(ProjectUpdaterMessages.ProjectUpdateResultMsg.class, msg -> {
             originalSender.tell(Futures.successful(Boolean.TRUE), self());
             getContext().stop(self());
-        }).match(ProjectUpdaterActor.ProjectUpdateNotAuthoriseMsg.class, msg -> {
+        }).match(ProjectUpdaterMessages.ProjectUpdateNotAuthoriseMsg.class, msg -> {
             LOGGER.error("Unexpected behavior happened when trying to update a project state from an brick state change notification.");
             getContext().stop(self());
         })
