@@ -61,9 +61,9 @@ def buildAndPushDocker() {
             sh "cp target/kodokojo-${version}-runnable.jar target/docker/kodokojo.jar"
             sh "docker build -t=\"${imageName}\" target/docker/ && docker push ${imageName}"
 
-            slackSend channel: '#dev', color: '#6CBDEC', message: "Build and push Docker image ${imageName} from branch *${env.BRANCH_NAME}* on commit `${commit}` *SUCCESS*."
+            slackSend channel: '#dev', color: '#6CBDEC', message: "Build and push Docker image *${imageName}* from branch *${env.BRANCH_NAME}* on commit `${commit}` *SUCCESS*."
         } catch (Exception e) {
-            slackSend channel: '#dev', color: 'danger', message: "Build and push Docker image ${imageName} from branch *${env.BRANCH_NAME}* on commit `${commit}` *FAILED*:\n```${e.getMessage()}```"
+            slackSend channel: '#dev', color: 'danger', message: "Build and push Docker image *${imageName}* from branch *${env.BRANCH_NAME}* on commit `${commit}` *FAILED*:\n```${e.getMessage()}```"
         }
     }
 }
