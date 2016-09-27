@@ -32,7 +32,6 @@ import scala.concurrent.Await;
 import scala.concurrent.Future;
 
 import java.util.Collections;
-import java.util.HashSet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -66,7 +65,7 @@ public class ProjectUpdaterActorTest implements DataBuilder {
     @Test
     public void update_project_from_authorized_requester() {
         // Given
-        User user = aUser();
+        User user = anUser();
         ProjectRepository projectRepository = mock(ProjectRepository.class);
         ProjectConfiguration projectConfiguration = mock(ProjectConfiguration.class);
         when(projectRepository.getProjectConfigurationById("1234")).thenReturn(projectConfiguration);
