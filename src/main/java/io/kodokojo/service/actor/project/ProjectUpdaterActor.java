@@ -28,6 +28,7 @@ import io.kodokojo.service.actor.right.RightEndpointActor;
 import io.kodokojo.service.repository.ProjectRepository;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import static akka.event.Logging.getLogger;
 
@@ -36,7 +37,6 @@ public class ProjectUpdaterActor extends AbstractActor {
     private final LoggingAdapter LOGGER = getLogger(getContext().system(), this);
     private ProjectUpdaterMessages.ProjectUpdateMsg originalMsg;
     private ActorRef originalSender;
-    private ProjectConfiguration projectConfiguration;
     private ProjectRepository projectRepository;
 
     public ProjectUpdaterActor(ProjectRepository projectRepository) {
@@ -64,7 +64,7 @@ public class ProjectUpdaterActor extends AbstractActor {
                 LOGGER.debug("User {} isn't authorised to update project {}.", originalMsg.getRequester().getUsername(), originalMsg.project.getName());
             }
         }
-        originalSender.tell(result, self());
+        Optional.ofNullable(originalSender).ifPresent((sender) -> originalSender.tell(result, self()));
         getContext().stop(self());
     }
 
@@ -72,7 +72,7 @@ public class ProjectUpdaterActor extends AbstractActor {
         originalMsg = msg;
         originalSender = sender();
         if (msg.getRequester() != null) {
-            projectConfiguration = projectRepository.getProjectConfigurationById(msg.project.getProjectConfigurationIdentifier());
+            ProjectConfiguration projectConfiguration = projectRepository.getProjectConfigurationById(msg.project.getProjectConfigurationIdentifier());
             getContext().actorOf(RightEndpointActor.PROPS()).tell(new RightEndpointActor.UserAdminRightRequestMsg(msg.getRequester(), projectConfiguration), self());
         } else {
             if (LOGGER.isDebugEnabled()) {
