@@ -50,7 +50,7 @@
     "volumes": [
       {
         "containerPath": "/sonatype-work/",
-        "hostPath": "/data/glusterfs/global/env/$projectName/nexus/",
+        "hostPath": "/kodokojo/env/$projectName/nexus/",
         "mode": "RW"
       }
     ]
