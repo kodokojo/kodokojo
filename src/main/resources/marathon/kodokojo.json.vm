@@ -18,7 +18,11 @@
       ],
       "parameters": [
         { "key": "env", "value": "redis.host=$REDISHOST" },
-        { "key": "env", "value": "redis.port=$REDISPORT" }
+        { "key": "env", "value": "redis.port=$REDISPORT" },
+        {
+          "key": "log-opt",
+          "value": "tag=kodokojo-back"
+        }
       ]
     }
   },

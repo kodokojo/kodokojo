@@ -49,6 +49,10 @@
         {
           "key": "user",
           "value": "root"
+        },
+        {
+          "key": "log-opt",
+          "value": "tag=gitlab-${projectName}"
         }
       ]
     },
