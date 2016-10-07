@@ -1,17 +1,17 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -31,7 +31,6 @@ import io.kodokojo.endpoint.dto.ProjectDto;
 import io.kodokojo.model.Project;
 import io.kodokojo.model.ProjectConfiguration;
 import io.kodokojo.model.User;
-import io.kodokojo.service.ProjectManager;
 import io.kodokojo.service.actor.EndpointActor;
 import io.kodokojo.service.actor.project.*;
 import io.kodokojo.service.authentification.SimpleCredential;
@@ -61,14 +60,12 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
 
     private final ActorRef akkaEndpoint;
 
-    private final ProjectManager projectManager;
-
     private final UserFetcher userFetcher;
 
     private final ProjectRepository projectFetcher;
 
     @Inject
-    public ProjectSparkEndpoint(UserAuthenticator<SimpleCredential> userAuthenticator, @Named(EndpointActor.NAME) ActorRef akkaEndpoint, ProjectManager projectManager, UserRepository userFetcher, ProjectRepository projectFetcher) {
+    public ProjectSparkEndpoint(UserAuthenticator<SimpleCredential> userAuthenticator, @Named(EndpointActor.NAME) ActorRef akkaEndpoint, UserRepository userFetcher, ProjectRepository projectFetcher) {
         super(userAuthenticator);
         if (userFetcher == null) {
             throw new IllegalArgumentException("userFetcher must be defined.");
@@ -76,14 +73,10 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
         if (akkaEndpoint == null) {
             throw new IllegalArgumentException("akkaEndpoint must be defined.");
         }
-        if (projectManager == null) {
-            throw new IllegalArgumentException("projectManager must be defined.");
-        }
         if (projectFetcher == null) {
             throw new IllegalArgumentException("projectFetcher must be defined.");
         }
         this.userFetcher = userFetcher;
-        this.projectManager = projectManager;
         this.projectFetcher = projectFetcher;
         this.akkaEndpoint = akkaEndpoint;
     }

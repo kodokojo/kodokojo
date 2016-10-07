@@ -121,9 +121,6 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
     int restEntryPointPort;
 
     @ProvidedScenarioState
-    ProjectManager projectManager;
-
-    @ProvidedScenarioState
     EntityRepository entityRepository;
 
     @ProvidedScenarioState
@@ -452,22 +449,14 @@ public class ClusterApplicationGiven<SELF extends ClusterApplicationGiven<?>> ex
         //BrickFactory brickFactory = injector.getInstance(BrickFactory.class);
         restEntryPointHost = "localhost";
         restEntryPointPort = TestUtils.getEphemeralPort();
-        projectManager = new DefaultProjectManager(domain,
-                injector.getInstance(ConfigurationStore.class),
-                projectRepository,
-                injector.getInstance(BootstrapConfigurationProvider.class),
-                new NoOpDnsManager(),
-                new DefaultBrickConfigurerProvider(brickUrlFactory, new OkHttpClient()),
-                null,
-                brickUrlFactory
-        );
+
         httpUserSupport = new HttpUserSupport(new OkHttpClient(), restEntryPointHost + ":" + restEntryPointPort);
         Set<SparkEndpoint> sparkEndpoints = new HashSet<>(injector.getInstance(Key.get(new TypeLiteral<Set<SparkEndpoint>>() {
         })));
         Key<UserAuthenticator<SimpleCredential>> authenticatorKey = Key.get(new TypeLiteral<UserAuthenticator<SimpleCredential>>() {
         });
         UserAuthenticator<SimpleCredential> userAuthenticator = injector.getInstance(authenticatorKey);
-        sparkEndpoints.add(new ProjectSparkEndpoint(userAuthenticator, null, projectManager, userRepository, projectRepository));
+        sparkEndpoints.add(new ProjectSparkEndpoint(userAuthenticator, null, userRepository, projectRepository));
         httpEndpoint = new HttpEndpoint(restEntryPointPort, new SimpleUserAuthenticator(userRepository), sparkEndpoints, new VersionConfig() {
             @Override
             public String version() {

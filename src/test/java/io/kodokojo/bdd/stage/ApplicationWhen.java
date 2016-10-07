@@ -1,17 +1,17 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -29,17 +29,14 @@ import com.tngtech.jgiven.annotation.Quoted;
 import com.tngtech.jgiven.attachment.Attachment;
 import io.kodokojo.brick.BrickFactory;
 import io.kodokojo.brick.DefaultBrickFactory;
-import io.kodokojo.service.RSAUtils;
 import io.kodokojo.endpoint.dto.BrickConfigDto;
 import io.kodokojo.endpoint.dto.StackConfigDto;
 import io.kodokojo.model.*;
 import io.kodokojo.model.Stack;
-import io.kodokojo.service.ProjectAlreadyExistException;
-import io.kodokojo.service.ProjectManager;
+import io.kodokojo.service.RSAUtils;
 import io.kodokojo.service.actor.message.BrickStateEvent;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
-import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.security.KeyPair;
@@ -64,9 +61,6 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
 
     @ProvidedScenarioState
     String projectConfigurationId;
-
-    @ExpectedScenarioState
-    ProjectManager projectManager;
 
     @ExpectedScenarioState
     Map<String, UserInfo> currentUsers;
@@ -95,7 +89,7 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
 
         } catch (IOException e) {
             fail(e.getMessage(), e);
-        }  finally {
+        } finally {
             if (response != null) {
                 IOUtils.closeQuietly(response.body());
             }
@@ -195,11 +189,7 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
         Set<Stack> stacks = new HashSet<>();
         stacks.add(new Stack("build-A", StackType.BUILD, new HashSet<BrickStateEvent>()));
         Project project = new Project("1234567890", projectName, new Date(), stacks);
-        try {
-            Mockito.when(projectManager.start(Mockito.any())).thenReturn(project);
-        } catch (ProjectAlreadyExistException e) {
-            fail(e.getMessage());
-        }
+
 
         projectConfigurationId = httpUserSupport.createProjectConfiguration(projectName, stackConfigDto, currentUsers.get(currentUserLogin));
 
