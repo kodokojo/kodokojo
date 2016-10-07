@@ -26,6 +26,8 @@ import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.ResponseTransformer;
 
+import static java.util.Objects.requireNonNull;
+
 public abstract class AbstractSparkEndpoint implements SparkEndpoint {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractSparkEndpoint.class);
@@ -48,9 +50,7 @@ public abstract class AbstractSparkEndpoint implements SparkEndpoint {
     protected final UserAuthenticator<SimpleCredential> userAuthenticator;
 
     protected AbstractSparkEndpoint(UserAuthenticator<SimpleCredential> userAuthenticator) {
-        if (userAuthenticator == null) {
-            throw new IllegalArgumentException("userAuthenticator must be defined.");
-        }
+        requireNonNull(userAuthenticator, "userAuthenticator must be defined.");
         this.userAuthenticator = userAuthenticator;
     }
 
