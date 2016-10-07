@@ -1,26 +1,23 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package io.kodokojo.bdd.stage;
 
 
-import akka.actor.ActorRef;
-import akka.actor.ActorSystem;
-import akka.actor.Terminated;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Image;
 import com.google.inject.AbstractModule;
@@ -43,19 +40,12 @@ import io.kodokojo.endpoint.HttpEndpoint;
 import io.kodokojo.model.Service;
 import io.kodokojo.service.BrickManager;
 import io.kodokojo.service.ConfigurationStore;
-import io.kodokojo.service.ProjectManager;
-import io.kodokojo.service.actor.EndpointActor;
 import io.kodokojo.service.repository.Repository;
 import io.kodokojo.test.utils.TestUtils;
-import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.concurrent.Await;
-import scala.concurrent.duration.Duration;
 
 import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import static org.mockito.Mockito.mock;
 
@@ -102,8 +92,6 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
     @ProvidedScenarioState
     Map<String, UserInfo> currentUsers = new HashMap<>();
 
-    @ProvidedScenarioState
-    ProjectManager projectManager;
 
     @ProvidedScenarioState
     HttpUserSupport httpUserSupport;
@@ -185,10 +173,9 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
 
     public SELF kodokojo_restEntrypoint_is_available_on_port_$(int port) {
 
-        projectManager = mock(ProjectManager.class);
         BrickManager brickManager = mock(BrickManager.class);
         ConfigurationStore configurationStore = mock(ConfigurationStore.class);
-        InjectorProvider injectorProvider = new InjectorProvider(null, dockerTestSupport, port, redisHost, redisPort, projectManager, brickManager, configurationStore);
+        InjectorProvider injectorProvider = new InjectorProvider(null, dockerTestSupport, port, redisHost, redisPort, brickManager, configurationStore);
         Launcher.INJECTOR = injectorProvider.provideInjector();
         repository = Launcher.INJECTOR.getInstance(Repository.class);
         httpEndpoint = Launcher.INJECTOR.getInstance(HttpEndpoint.class);
@@ -221,20 +208,6 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
             httpEndpoint.stop();
             httpEndpoint = null;
         }
-/*
-        ActorSystem actorSystem = Launcher.INJECTOR.getInstance(ActorSystem.class);
-        if (actorSystem != null) {
-            actorSystem.actorSelection(EndpointActor.ACTOR_PATH).tell(new Terminated(ActorRef.noSender(), true, true), ActorRef.noSender());
-            actorSystem.shutdown();
-            try {
-                Await.ready(actorSystem.whenTerminated(), Duration.create(1, TimeUnit.MINUTES));
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (TimeoutException e) {
-                e.printStackTrace();
-            }
-        }
-        */
 
     }
 

@@ -1,17 +1,17 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -26,7 +26,10 @@ import io.kodokojo.brick.BrickFactory;
 import io.kodokojo.brick.BrickStartContext;
 import io.kodokojo.brick.BrickUrlFactory;
 import io.kodokojo.config.ApplicationConfig;
-import io.kodokojo.service.*;
+import io.kodokojo.service.BootstrapConfigurationProvider;
+import io.kodokojo.service.BrickManager;
+import io.kodokojo.service.ConfigurationStore;
+import io.kodokojo.service.SSLCertificatProvider;
 import io.kodokojo.service.dns.DnsManager;
 import io.kodokojo.service.repository.ProjectRepository;
 import io.kodokojo.service.repository.UserRepository;
@@ -37,7 +40,7 @@ public class ProjectEndpointActor extends AbstractActor {
 
     private final LoggingAdapter LOGGER = getLogger(getContext().system(), this);
 
-    public static Props PROPS(ApplicationConfig applicationConfig, ProjectRepository projectRepository, UserRepository userRepository, ProjectManager projectManager, DnsManager dnsManager, BrickFactory brickFactory, BrickManager brickManager, BootstrapConfigurationProvider bootstrapConfigurationProvider, ConfigurationStore configurationStore, BrickUrlFactory brickUrlFactory, SSLCertificatProvider sslCertificatProvider, BrickConfigurerProvider brickConfigurerProvider) {
+    public static Props PROPS(ApplicationConfig applicationConfig, ProjectRepository projectRepository, UserRepository userRepository, DnsManager dnsManager, BrickFactory brickFactory, BrickManager brickManager, BootstrapConfigurationProvider bootstrapConfigurationProvider, ConfigurationStore configurationStore, BrickUrlFactory brickUrlFactory, SSLCertificatProvider sslCertificatProvider, BrickConfigurerProvider brickConfigurerProvider) {
         if (applicationConfig == null) {
             throw new IllegalArgumentException("applicationConfig must be defined.");
         }
@@ -46,9 +49,6 @@ public class ProjectEndpointActor extends AbstractActor {
         }
         if (userRepository == null) {
             throw new IllegalArgumentException("userRepository must be defined.");
-        }
-        if (projectManager == null) {
-            throw new IllegalArgumentException("projectManager must be defined.");
         }
         if (brickFactory == null) {
             throw new IllegalArgumentException("brickFactory must be defined.");
@@ -74,17 +74,14 @@ public class ProjectEndpointActor extends AbstractActor {
         if (brickConfigurerProvider == null) {
             throw new IllegalArgumentException("brickConfigurerProvider must be defined.");
         }
-        return Props.create(ProjectEndpointActor.class, applicationConfig,  projectRepository, userRepository, projectManager, dnsManager, brickFactory, brickManager, bootstrapConfigurationProvider, configurationStore, brickUrlFactory, sslCertificatProvider, brickConfigurerProvider);
+        return Props.create(ProjectEndpointActor.class, applicationConfig, projectRepository, userRepository, dnsManager, brickFactory, brickManager, bootstrapConfigurationProvider, configurationStore, brickUrlFactory, sslCertificatProvider, brickConfigurerProvider);
     }
 
     public static final String NAME = "projectEndpointProps";
 
-    public ProjectEndpointActor(ApplicationConfig applicationConfig, ProjectRepository projectRepository, UserRepository userRepository, ProjectManager projectManager, DnsManager dnsManager, BrickFactory brickFactory, BrickManager brickManager, BootstrapConfigurationProvider bootstrapConfigurationProvider, ConfigurationStore configurationStore, BrickUrlFactory brickUrlFactory, SSLCertificatProvider sslCertificatProvider, BrickConfigurerProvider brickConfigurerProvider) {
+    public ProjectEndpointActor(ApplicationConfig applicationConfig, ProjectRepository projectRepository, UserRepository userRepository, DnsManager dnsManager, BrickFactory brickFactory, BrickManager brickManager, BootstrapConfigurationProvider bootstrapConfigurationProvider, ConfigurationStore configurationStore, BrickUrlFactory brickUrlFactory, SSLCertificatProvider sslCertificatProvider, BrickConfigurerProvider brickConfigurerProvider) {
         if (projectRepository == null) {
             throw new IllegalArgumentException("projectRepository must be defined.");
-        }
-        if (projectManager == null) {
-            throw new IllegalArgumentException("projectManager must be defined.");
         }
         if (brickFactory == null) {
             throw new IllegalArgumentException("brickFactory must be defined.");

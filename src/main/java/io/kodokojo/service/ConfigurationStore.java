@@ -25,7 +25,6 @@ import io.kodokojo.model.BootstrapStackData;
  */
 public interface ConfigurationStore {
 
-    @Deprecated //Deprecated since haproxy-agent use zookeeper to persist those data.
     boolean storeBootstrapStackData(BootstrapStackData bootstrapStackData);
 
     boolean storeSSLKeys(String projectName, String brickTypeName, SSLKeyPair sslKeyPair);
