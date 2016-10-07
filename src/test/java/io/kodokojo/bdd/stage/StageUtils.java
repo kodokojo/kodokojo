@@ -85,29 +85,4 @@ public class StageUtils {
         return new Service("redis", redisHost, redisPort);
     }
 
-    public static User createUser(String username, UserRepository userRepository, EntityRepository entityRepository) {
-        String identifier = userRepository.generateId();
-        String password = new BigInteger(130, new SecureRandom()).toString(32);
-        User user = null;
-
-        try {
-            KeyPair keyPair = RSAUtils.generateRsaKeyPair();
-            RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
-            String email = username + "@kodokojo.io";
-            String sshPublicKey = RSAUtils.encodePublicKey(publicKey, email);
-            String entityId = entityRepository.addEntity(new Entity(username));
-            user = new User(identifier, entityId, username, username, email, password, sshPublicKey);
-            entityRepository.addUserToEntity(identifier, entityId);
-            boolean userAdded = userRepository.addUser(new User(user.getIdentifier(), entityId, username, username, email, password, sshPublicKey));
-            assertThat(userAdded).isTrue();
-
-        } catch (NoSuchAlgorithmException e) {
-            fail(e.getMessage());
-        }
-        return user;
-    }
-
-
-
-
 }

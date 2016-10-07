@@ -260,17 +260,7 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
 
 
         });
-        Injector akkaInjector = injector.createChildInjector(new AkkaModule(), new AbstractModule() {
-            @Override
-            protected void configure() {
-
-            }
-            @Provides
-            @Singleton
-            ProjectManager provideProjectManager(BrickConfigurerProvider brickConfigurerProvider,  ActorSystem brickConfigurationStarter,BrickUrlFactory brickUrlFactory) {
-                return new DefaultProjectManager("kodokojo.dev", configurationStore, repository, bootstrapProvider, dnsManager, brickConfigurerProvider, brickConfigurationStarter, brickUrlFactory);
-            }
-        });
+        Injector akkaInjector = injector.createChildInjector(new AkkaModule());
         ActorSystem actorSystem = akkaInjector.getInstance(ActorSystem.class);
         ActorRef endpointActor = actorSystem.actorOf(EndpointActor.PROPS(akkaInjector), "endpoint");
         Launcher.INJECTOR = akkaInjector.createChildInjector(new AbstractModule() {

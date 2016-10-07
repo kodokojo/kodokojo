@@ -17,10 +17,12 @@
  */
 package io.kodokojo.service;
 
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.squareup.okhttp.*;
+import com.squareup.okhttp.FormEncodingBuilder;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 import io.kodokojo.config.ReCaptchaConfig;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
