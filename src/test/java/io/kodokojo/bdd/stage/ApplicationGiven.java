@@ -208,20 +208,6 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
             httpEndpoint.stop();
             httpEndpoint = null;
         }
-/*
-        ActorSystem actorSystem = Launcher.INJECTOR.getInstance(ActorSystem.class);
-        if (actorSystem != null) {
-            actorSystem.actorSelection(EndpointActor.ACTOR_PATH).tell(new Terminated(ActorRef.noSender(), true, true), ActorRef.noSender());
-            actorSystem.shutdown();
-            try {
-                Await.ready(actorSystem.whenTerminated(), Duration.create(1, TimeUnit.MINUTES));
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (TimeoutException e) {
-                e.printStackTrace();
-            }
-        }
-        */
 
     }
 

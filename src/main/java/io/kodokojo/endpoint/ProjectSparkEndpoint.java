@@ -35,8 +35,6 @@ import io.kodokojo.service.actor.EndpointActor;
 import io.kodokojo.service.actor.project.*;
 import io.kodokojo.service.authentification.SimpleCredential;
 import io.kodokojo.service.repository.ProjectRepository;
-import io.kodokojo.service.repository.UserFetcher;
-import io.kodokojo.service.repository.UserRepository;
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -52,6 +50,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static akka.pattern.Patterns.ask;
+import static java.util.Objects.requireNonNull;
 import static spark.Spark.*;
 
 public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
@@ -60,23 +59,13 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
 
     private final ActorRef akkaEndpoint;
 
-    private final UserFetcher userFetcher;
-
     private final ProjectRepository projectFetcher;
 
     @Inject
-    public ProjectSparkEndpoint(UserAuthenticator<SimpleCredential> userAuthenticator, @Named(EndpointActor.NAME) ActorRef akkaEndpoint, UserRepository userFetcher, ProjectRepository projectFetcher) {
+    public ProjectSparkEndpoint(UserAuthenticator<SimpleCredential> userAuthenticator, @Named(EndpointActor.NAME) ActorRef akkaEndpoint, ProjectRepository projectFetcher) {
         super(userAuthenticator);
-        if (userFetcher == null) {
-            throw new IllegalArgumentException("userFetcher must be defined.");
-        }
-        if (akkaEndpoint == null) {
-            throw new IllegalArgumentException("akkaEndpoint must be defined.");
-        }
-        if (projectFetcher == null) {
-            throw new IllegalArgumentException("projectFetcher must be defined.");
-        }
-        this.userFetcher = userFetcher;
+        requireNonNull(akkaEndpoint, "akkaEndpoint must be defined.");
+        requireNonNull(projectFetcher, "projectFetcher must be defined.");
         this.projectFetcher = projectFetcher;
         this.akkaEndpoint = akkaEndpoint;
     }
@@ -148,15 +137,9 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
                     userIdsToAdd.add(userToAddId);
                 }
                 akkaEndpoint.tell(new ProjectConfigurationChangeUserActor.ProjectConfigurationChangeUserMsg(requester, TypeChange.ADD, identifier, userIdsToAdd), ActorRef.noSender());
-/*
-            projectConfiguration.setUsers(users);
-            projectFetcher.updateProjectConfiguration(projectConfiguration);
-            LOGGER.debug("Adding user {} to projectConfig {}", usersToAdd, projectConfiguration);
-            projectManager.addUsersToProject(projectConfiguration, usersToAdd);
-*/
+
             } else {
                 halt(403, "You have not right to add user to project configuration id " + identifier + ".");
-
             }
             return "";
         }), jsonResponseTransformer);
@@ -204,10 +187,9 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
             if (userIsAdmin(requester, projectConfiguration)) {
                 String projectId = projectFetcher.getProjectIdByProjectConfigurationId(projectConfigurationId);
                 if (StringUtils.isBlank(projectId)) {
-                    //   projectManager.bootstrapStack(projectConfiguration.getName(), projectConfiguration.getDefaultStackConfiguration().getName(), projectConfiguration.getDefaultStackConfiguration().getType());
-                    //   Project project = projectManager.start(projectConfiguration);
-                    Future<Object> locahost = Patterns.ask(akkaEndpoint, new ProjectConfigurationStarterActor.ProjectConfigurationStartMsg(requester, projectConfiguration), Timeout.apply(6, TimeUnit.MINUTES));
-                    ProjectCreatorActor.ProjectCreateResultMsg result = (ProjectCreatorActor.ProjectCreateResultMsg) Await.result(locahost, Duration.apply(6, TimeUnit.MINUTES));
+
+                    Future<Object> localhost = Patterns.ask(akkaEndpoint, new ProjectConfigurationStarterActor.ProjectConfigurationStartMsg(requester, projectConfiguration), Timeout.apply(6, TimeUnit.MINUTES));
+                    ProjectCreatorActor.ProjectCreateResultMsg result = (ProjectCreatorActor.ProjectCreateResultMsg) Await.result(localhost, Duration.apply(6, TimeUnit.MINUTES));
 
                     response.status(201);
                     String projectIdStarted = result.getProject().getIdentifier();
