@@ -107,6 +107,11 @@ public class JenkinsConfigurer implements BrickConfigurer {
     }
 
     @Override
+    public BrickConfigurerData updateUsers(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurerData, List<User> users) {
+        return null;
+    }
+
+    @Override
     public BrickConfigurerData removeUsers(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurerData, List<User> users) {
         VelocityContext context = new VelocityContext();
         context.put(USERS_KEY, brickConfigurerData.getUsers());

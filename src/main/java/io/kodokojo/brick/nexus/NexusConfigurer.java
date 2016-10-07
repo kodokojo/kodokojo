@@ -82,6 +82,11 @@ public class NexusConfigurer implements BrickConfigurer {
     }
 
     @Override
+    public BrickConfigurerData updateUsers(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurerData, List<User> users) {
+        return null;
+    }
+
+    @Override
     public BrickConfigurerData removeUsers(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurerData, List<User> users) {
         if (brickConfigurerData == null) {
             throw new IllegalArgumentException("brickConfigurerData must be defined.");
