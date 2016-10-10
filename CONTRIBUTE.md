@@ -1,4 +1,4 @@
-The Collective Code Construction Contract (C4) is an evolution of the github.com [http://help.github.com/send-pull-requests/ Fork + Pull Model], aimed at providing an optimal collaboration model for free software projects. This is revision 1 of the C4 specification.
+The Collective Code Construction Contract (C4) is an evolution of the github.com [Fork + Pull Model](http://help.github.com/send-pull-requests/), aimed at providing an optimal collaboration model for free software projects. This is revision 1 of the C4 specification.
 
 * Name: rfc.zeromq.org/spec:22/C4.1
 * Editor: Pieter Hintjens <ph@imatix.com>
@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License along with thi
 
 ## Language
 
-The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [http://tools.ietf.org/html/rfc2119 RFC 2119].
+The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC 2119](http://tools.ietf.org/html/rfc2119).
 
 ## Goals
 
@@ -174,12 +174,12 @@ C4 is meant to provide a reusable optimal collaboration model for open source so
 
 ## Further Reading
 
-* [http://en.wikipedia.org/wiki/Chris_Argyris Argyris' Models 1 and 2] - the goals of C4.1 are consistent with Argyris' Model 2.
+* [Argyris' Models 1 and 2](http://en.wikipedia.org/wiki/Chris_Argyris) - the goals of C4.1 are consistent with Argyris' Model 2.
 
-* [http://en.wikipedia.org/wiki/Toyota_Kata Toyota Kata] - covering the Improvement Kata (fixing problems one at a time) and the Coaching Kata (helping others to learn the Improvement Kata).
+* [Toyota Kata](http://en.wikipedia.org/wiki/Toyota_Kata) - covering the Improvement Kata (fixing problems one at a time) and the Coaching Kata (helping others to learn the Improvement Kata).
 
 ## Implementations
 
-* The [http://zeromq.org ZeroMQ community] uses the C4.1 process for many projects.
-* [http://www.ossec.net/ OSSEC] [http://ossec-docs.readthedocs.org/en/latest/oRFC/orfc-1.html uses the C4.1 process].
-* The [http://www.machinekit.io/ Machinekit] community [http://www.machinekit.io/about/ uses the C4.1 process]. 
+* The [ZeroMQ community](http://zeromq.org) uses the C4.1 process for many projects.
+* [OSSEC](http://www.ossec.net/) [uses the C4.1 process](http://ossec-docs.readthedocs.org/en/latest/oRFC/orfc-1.html).
+* The [Machinekit](http://www.machinekit.io/) community [uses the C4.1 process](http://www.machinekit.io/about/).
