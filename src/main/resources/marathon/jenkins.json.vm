@@ -1,7 +1,7 @@
 {
   "id": "$ID",
   "instance": 1,
-  "cpus": 0.4,
+  "cpus": 0.75,
   "mem": 1024,
   "type": "DOCKER",
   "container": {

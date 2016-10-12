@@ -1,17 +1,17 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -24,12 +24,15 @@ import io.kodokojo.brick.BrickConfigurerData;
 import io.kodokojo.model.ProjectConfiguration;
 import io.kodokojo.model.User;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Base64;
 import java.util.List;
+
+import static java.util.Objects.requireNonNull;
 
 public class NexusConfigurer implements BrickConfigurer {
 
@@ -64,13 +67,9 @@ public class NexusConfigurer implements BrickConfigurer {
 
     @Override
     public BrickConfigurerData addUsers(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurerData, List<User> users) throws BrickConfigurationException {
-        if (brickConfigurerData == null) {
-            throw new IllegalArgumentException("brickConfigurerData must be defined.");
-        }
-        if (users == null) {
-            throw new IllegalArgumentException("users must be defined.");
-        }
-        OkHttpClient httpClient = this.httpClient;
+        requireNonNull(brickConfigurerData, "brickConfigurerData must be defined.");
+        requireNonNull(users, "users must be defined.");
+
         String adminPassword = brickConfigurerData.getDefaultAdmin().getPassword();
         for (User user : users) {
             String xmlBody = getCreatUserXmlBody(user);
@@ -83,22 +82,28 @@ public class NexusConfigurer implements BrickConfigurer {
 
     @Override
     public BrickConfigurerData updateUsers(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurerData, List<User> users) {
-        return null;
+        requireNonNull(brickConfigurerData, "brickConfigurerData must be defined.");
+        requireNonNull(users, "users must be defined.");
+
+        String adminPassword = brickConfigurerData.getDefaultAdmin().getPassword();
+        for (User user : users) {
+            String xmlBody = getUpdateUserAccountXmlBody(user.getUsername(), user.getEmail(), user.getFirstName(), user.getLastName());
+            updateAccount(httpClient, brickConfigurerData.getEntrypoint(), xmlBody, ADMIN_ACCOUNT_NAME, adminPassword, user.getUsername());
+            xmlBody = getChangePasswordXmlBody(user.getUsername(), null, user.getPassword());
+            changePassword(httpClient, brickConfigurerData.getEntrypoint(), xmlBody, ADMIN_ACCOUNT_NAME, adminPassword);
+        }
+        return brickConfigurerData;
     }
 
     @Override
     public BrickConfigurerData removeUsers(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurerData, List<User> users) {
-        if (brickConfigurerData == null) {
-            throw new IllegalArgumentException("brickConfigurerData must be defined.");
-        }
-        if (users == null) {
-            throw new IllegalArgumentException("users must be defined.");
-        }
-        OkHttpClient httpClient = this.httpClient;
+        requireNonNull(brickConfigurerData, "brickConfigurerData must be defined.");
+        requireNonNull(users, "users must be defined.");
+
         String adminPassword = brickConfigurerData.getDefaultAdmin().getPassword();
-        String url = brickConfigurerData.getEntrypoint() +"/service/local/users/";
+        String url = brickConfigurerData.getEntrypoint() + "/service/local/users/";
         for (User user : users) {
-            Request request = new Request.Builder().url(url+ user.getUsername())
+            Request request = new Request.Builder().url(url + user.getUsername())
                     .addHeader("Authorization", encodeBasicAuth(ADMIN_ACCOUNT_NAME, adminPassword))
                     .delete().build();
 
@@ -142,6 +147,10 @@ public class NexusConfigurer implements BrickConfigurer {
         return executeRequest(httpClient, baseUrl + "/service/local/users_changepw", xmlBody, login, password);
     }
 
+    private boolean updateAccount(OkHttpClient httpClient, String baseUrl, String xmlBody, String login, String password, String userId) {
+        return executeRequest(httpClient, baseUrl + "/service/local/user_account/" +userId, xmlBody, login, password);
+    }
+
     private boolean createUser(OkHttpClient httpClient, String baseUrl, String xmlBody, String login, String password) {
         return executeRequest(httpClient, baseUrl + "/service/local/users", xmlBody, login, password);
     }
@@ -150,11 +159,23 @@ public class NexusConfigurer implements BrickConfigurer {
         return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                 "<user-changepw>\n" +
                 "<data>\n" +
-                "<oldPassword>" + oldPassword + "</oldPassword>\n" +
+                (StringUtils.isNotBlank(oldPassword) ? "<oldPassword>" + oldPassword + "</oldPassword>\n" : "") +
                 "<userId>" + userId + "</userId>\n" +
                 "<newPassword>" + newPassword + "</newPassword>\n" +
                 "</data>\n" +
                 "</user-changepw>";
+    }
+
+    private String getUpdateUserAccountXmlBody(String userId, String email, String firstName, String lastName) {
+        return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<user-account-request>\n" +
+                "  <data>\n" +
+                "    <email>" + email + "</email>\n" +
+                "    <firstName>" + firstName + "</firstName>\n" +
+                "    <userId>" + userId + "</userId>\n" +
+                "    <lastName>" + lastName + "</lastName>\n" +
+                "  </data>\n" +
+                "</user-account-request>";
     }
 
     private String getCreatUserXmlBody(User user) {
