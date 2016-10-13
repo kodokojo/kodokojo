@@ -4,6 +4,8 @@ import io.kodokojo.model.Project;
 import io.kodokojo.model.User;
 import io.kodokojo.service.actor.message.UserRequestMessage;
 
+import static java.util.Objects.requireNonNull;
+
 public interface ProjectUpdaterMessages {
 
     class ProjectUpdateMsg extends UserRequestMessage {
@@ -50,6 +52,43 @@ public interface ProjectUpdaterMessages {
 
         public Project getProject() {
             return project;
+        }
+    }
+
+    class ListAndUpdateUserToProjectMsg extends UserRequestMessage {
+
+        private final User user;
+
+        public ListAndUpdateUserToProjectMsg(User requester, User user) {
+            super(requester);
+            requireNonNull(user, "user must be defined.");
+            this.user = user;
+        }
+
+        public User getUser() {
+            return user;
+        }
+    }
+
+    class ListAndUpdateUserToProjectResultMsg extends UserRequestMessage {
+
+        private final ListAndUpdateUserToProjectMsg request;
+
+        private final boolean success;
+
+        public ListAndUpdateUserToProjectResultMsg(User requester, ListAndUpdateUserToProjectMsg request, boolean success) {
+            super(requester);
+            requireNonNull(request, "request must be defined.");
+            this.request = request;
+            this.success = success;
+        }
+
+        public ListAndUpdateUserToProjectMsg getRequest() {
+            return request;
+        }
+
+        public boolean isSuccess() {
+            return success;
         }
     }
 }

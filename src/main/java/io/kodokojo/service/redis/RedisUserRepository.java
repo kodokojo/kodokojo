@@ -148,7 +148,7 @@ public class RedisUserRepository extends AbstractRedisStore implements UserRepos
                 byte[] password = RSAUtils.encryptWithAES(key,user.getPassword());
                 UserValue userValue = new UserValue(user, password);
                 out.writeObject(userValue);
-                jedis.set(RedisUtils.aggregateKey(USER_PREFIX, user.getIdentifier()), byteArray.toByteArray());
+                jedis.set(userKey, byteArray.toByteArray());
                 return true;
             }
         } catch (IOException e) {

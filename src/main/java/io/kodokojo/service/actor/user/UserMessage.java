@@ -7,7 +7,6 @@ import static java.util.Objects.requireNonNull;
 
 public interface UserMessage {
 
-
     class UserUpdateMessageResult extends UserRequestMessage {
 
         private final boolean success;

@@ -27,12 +27,14 @@ import io.kodokojo.bdd.stage.ApplicationThen;
 import io.kodokojo.bdd.stage.ApplicationWhen;
 import io.kodokojo.commons.DockerIsRequire;
 import io.kodokojo.commons.DockerPresentMethodRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
 
 @As("User modification scenarii")
 @User
+@Ignore
 public class UserModificationIntTest extends ScenarioTest<ApplicationGiven<?>, ApplicationWhen<?>, ApplicationThen<?>> {
 
     @Rule

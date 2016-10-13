@@ -50,7 +50,7 @@ public class RedisProjectStore extends AbstractRedisStore implements ProjectStor
 
     public static final String PROJECTCONFIG_TO_PROJECT_PREFIX = "projectConfigurationToConfig/";
 
-    public static final String USER_TO_PROJECTCONFIGS_PREFIX = "userToprojectConfigurations/";
+    public static final String USER_TO_PROJECTCONFIGS_PREFIX = "userToProjectConfigurations/";
 
     private static final Pattern PROJECT_NAME_PATTERN = Pattern.compile("([a-zA-Z0-9\\-_]){4,20}");
 

@@ -273,7 +273,7 @@ public class HttpUserSupport {
     }
 
     public void updateUser(UserInfo requester, UserInfo userChanged) {
-        
+        throw new UnsupportedOperationException("");
     }
 
     public enum UserChangeProjectConfig {
