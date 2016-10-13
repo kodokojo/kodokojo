@@ -62,7 +62,7 @@ public class RedisProjectStoreIntTest {
         Service service = StageUtils.startDockerRedis(dockerTestSupport);
         String redisHost = service.getHost();
         int redisPort = service.getPort();
-        redisProjectStore = new RedisProjectStore(aesKey, redisHost, redisPort, new DefaultBrickFactory());
+        redisProjectStore = new RedisProjectStore(aesKey, redisHost, redisPort);
     }
 
     @After

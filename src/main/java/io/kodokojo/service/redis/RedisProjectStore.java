@@ -1,40 +1,41 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package io.kodokojo.service.redis;
 
+import io.kodokojo.model.Project;
 import io.kodokojo.service.RSAUtils;
-import io.kodokojo.model.*;
-import io.kodokojo.brick.BrickFactory;
 import io.kodokojo.service.repository.store.ProjectConfigurationStoreModel;
 import io.kodokojo.service.repository.store.ProjectStore;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 
-import java.io.Serializable;
 import java.security.Key;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang.StringUtils.isBlank;
 
 public class RedisProjectStore extends AbstractRedisStore implements ProjectStore {
@@ -53,14 +54,9 @@ public class RedisProjectStore extends AbstractRedisStore implements ProjectStor
 
     private static final Pattern PROJECT_NAME_PATTERN = Pattern.compile("([a-zA-Z0-9\\-_]){4,20}");
 
-    private final BrickFactory brickFactory;
 
-    public RedisProjectStore(Key key, String host, int port, BrickFactory brickFactory) {
+    public RedisProjectStore(Key key, String host, int port) {
         super(key, host, port);
-        if (brickFactory == null) {
-            throw new IllegalArgumentException("brickFactory must be defined.");
-        }
-        this.brickFactory = brickFactory;
     }
 
     @Override
@@ -130,9 +126,7 @@ public class RedisProjectStore extends AbstractRedisStore implements ProjectStor
 
     @Override
     public String addProject(Project project, String projectConfigurationIdentifier) {
-        if (project == null) {
-            throw new IllegalArgumentException("project must be defined.");
-        }
+        requireNonNull(project, "project must be defined.");
         if (isBlank(projectConfigurationIdentifier)) {
             throw new IllegalArgumentException("projectConfigurationIdentifier must be defined.");
         }
@@ -151,13 +145,11 @@ public class RedisProjectStore extends AbstractRedisStore implements ProjectStor
 
     @Override
     public void updateProject(Project project) {
-        if (project == null) {
-            throw new IllegalArgumentException("project must be defined.");
-        }
+        requireNonNull(project, "project must be defined.");
         if (isBlank(project.getIdentifier())) {
             throw new IllegalArgumentException("Project identifier() must be defined.");
         }
-        try (Jedis jedis= pool.getResource()) {
+        try (Jedis jedis = pool.getResource()) {
             byte[] encryptedObject = RSAUtils.encryptObjectWithAES(key, project);
             jedis.set(RedisUtils.aggregateKey(PROJECT_PREFIX, project.getIdentifier()), encryptedObject);
         }
@@ -168,7 +160,7 @@ public class RedisProjectStore extends AbstractRedisStore implements ProjectStor
         if (isBlank(userIdentifier)) {
             throw new IllegalArgumentException("userIdentifier must be defined.");
         }
-                Set<String> res = new HashSet<>();
+        Set<String> res = new HashSet<>();
         try (Jedis jedis = pool.getResource()) {
             byte[] projectConfigKey = RedisUtils.aggregateKey(USER_TO_PROJECTCONFIGS_PREFIX, userIdentifier);
             if (jedis.exists(projectConfigKey)) {
@@ -239,7 +231,7 @@ public class RedisProjectStore extends AbstractRedisStore implements ProjectStor
     private void writeUserToProjectConfigurationId(Jedis jedis, List<String> users, String projectConfigurationId) {
         byte[] projectConfId = projectConfigurationId.getBytes();
         Iterator<String> it = users.iterator();
-        while(it.hasNext()) {
+        while (it.hasNext()) {
             String user = it.next();
             byte[] key = RedisUtils.aggregateKey(USER_TO_PROJECTCONFIGS_PREFIX, user);
             jedis.sadd(key, projectConfId);

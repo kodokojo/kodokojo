@@ -272,6 +272,10 @@ public class HttpUserSupport {
         return null;
     }
 
+    public void updateUser(UserInfo requester, UserInfo userChanged) {
+        
+    }
+
     public enum UserChangeProjectConfig {
         ADD,
         REMOVE

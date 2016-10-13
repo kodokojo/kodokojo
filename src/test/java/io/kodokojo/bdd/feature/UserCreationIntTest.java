@@ -31,7 +31,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 
-@As("User creation scenarios")
+@As("User creation scenarii")
 @User
 public class UserCreationIntTest extends ScenarioTest<ApplicationGiven<?>, ApplicationWhen<?>, ApplicationThen<?>> {
 
