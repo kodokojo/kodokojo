@@ -1,17 +1,17 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p/>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p/>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p/>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -92,6 +92,25 @@ public class UserSparkEndpoint extends AbstractSparkEndpoint {
 
     @Override
     public void configure() {
+        patch(BASE_API + "/user/:id", JSON_CONTENT_TYPE, ((request, response) -> {
+            String identifier = request.params(":id");
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Try to update user with id {}", identifier);
+            }
+
+            User requester = getRequester(request);
+            User user = userFetcher.getUserByIdentifier(identifier);
+
+            JsonParser parser = new JsonParser();
+            JsonObject json = (JsonObject) parser.parse(request.body());
+            String email = json.getAsJsonPrimitive("email").getAsString();
+            String name = json.getAsJsonPrimitive("name").getAsString();
+            String password = json.getAsJsonPrimitive("password").getAsString();
+            String sshPublicKey = json.getAsJsonPrimitive("sshPublicKey").getAsString();
+
+            return "";
+        }), jsonResponseTransformer);
+
         post(BASE_API + "/user/:id", JSON_CONTENT_TYPE, ((request, response) -> {
             String identifier = request.params(":id");
             if (LOGGER.isDebugEnabled()) {
