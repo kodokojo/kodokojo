@@ -19,6 +19,7 @@ package io.kodokojo.model;
 
 import java.io.Serializable;
 
+import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang.StringUtils.isBlank;
 
 public class Service implements Serializable {
@@ -27,29 +28,21 @@ public class Service implements Serializable {
 
     private final String host;
 
-    private final int port;
+    private final PortDefinition portDefinition;
 
-    private final ServiceType type;
-
-    public Service(String name, String host, int port, ServiceType type) {
+    public Service(String name, String host, PortDefinition portDefinition) {
         if (isBlank(name)) {
             throw new IllegalArgumentException("name must be defined.");
         }
         if (isBlank(host)) {
             throw new IllegalArgumentException("host must be defined.");
         }
-        if (port <= 0) {
-            throw new IllegalArgumentException("port must be upper than 0");
-        }
+        requireNonNull(portDefinition, "portDefinition must be defined.");
         this.name = name;
         this.host = host;
-        this.port = port;
-        this.type = type;
+        this.portDefinition = portDefinition;
     }
 
-    public Service(String name, String host, int port) {
-        this(name, host, port, ServiceType.UNKNOWN);
-    }
 
     public String getName() {
         return name;
@@ -59,12 +52,12 @@ public class Service implements Serializable {
         return host;
     }
 
-    public int getPort() {
-        return port;
+    public PortDefinition getPortDefinition() {
+        return portDefinition;
     }
 
-    public ServiceType getType() {
-        return type;
+    public int getPort() {
+        return portDefinition.getContainerPort();
     }
 
     @Override
@@ -72,8 +65,7 @@ public class Service implements Serializable {
         return "Service{" +
                 "name='" + name + '\'' +
                 ", host='" + host + '\'' +
-                ", port=" + port +
-                ", type=" + type +
+                ", portDefinition=" + portDefinition +
                 '}';
     }
 }

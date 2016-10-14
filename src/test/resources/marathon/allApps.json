@@ -1,0 +1,1337 @@
+{
+
+  "apps": [
+    {
+      "id": "/blue/grafana",
+      "cmd": null,
+      "args": null,
+      "user": null,
+      "env": { },
+      "instances": 1,
+      "cpus": 0.5,
+      "mem": 256,
+      "disk": 0,
+      "executor": "",
+      "constraints": [
+        [
+          "type",
+          "LIKE",
+          "operator"
+        ]
+      ],
+      "uris": [ ],
+      "fetch": [ ],
+      "storeUrls": [ ],
+      "ports": [
+        10004
+      ],
+      "portDefinitions": [
+        {
+          "port": 10004,
+          "protocol": "tcp",
+          "labels": { }
+        }
+      ],
+      "requirePorts": false,
+      "backoffSeconds": 1,
+      "backoffFactor": 1.15,
+      "maxLaunchDelaySeconds": 3600,
+      "container": {
+        "type": "DOCKER",
+        "volumes": [ ],
+        "docker": {
+          "image": "grafana/grafana:3.0.1",
+          "network": "BRIDGE",
+          "portMappings": [
+            {
+              "containerPort": 3000,
+              "hostPort": 13000,
+              "servicePort": 10004,
+              "protocol": "tcp",
+              "labels": {
+                "applicationProtocol": "HTTPS"
+              }
+            }
+          ],
+          "privileged": false,
+          "parameters": [
+            {
+              "key": "label",
+              "value": "componentType=monitoring"
+            },
+            {
+              "key": "label",
+              "value": "component=grafana"
+            },
+            {
+              "key": "log-opt",
+              "value": "tag=blue-grafana"
+            }
+          ],
+          "forcePullImage": false
+        }
+      },
+      "healthChecks": [
+        {
+          "path": "/",
+          "protocol": "HTTP",
+          "portIndex": 0,
+          "gracePeriodSeconds": 180,
+          "intervalSeconds": 20,
+          "timeoutSeconds": 20,
+          "maxConsecutiveFailures": 10,
+          "ignoreHttp1xx": false
+        }
+      ],
+      "readinessChecks": [ ],
+      "dependencies": [ ],
+      "upgradeStrategy": {
+        "minimumHealthCapacity": 1,
+        "maximumOverCapacity": 1
+      },
+      "labels": {
+        "project": "kodokojo",
+        "managedByKodoKojoHa": "true",
+        "componentType": "monitoring",
+        "component": "grafana"
+      },
+      "acceptedResourceRoles": null,
+      "ipAddress": null,
+      "version": "2016-10-04T09:01:10.149Z",
+      "residency": null,
+      "versionInfo": {
+        "lastScalingAt": "2016-10-04T09:01:10.149Z",
+        "lastConfigChangeAt": "2016-10-04T09:01:10.149Z"
+      },
+      "tasksStaged": 0,
+      "tasksRunning": 1,
+      "tasksHealthy": 1,
+      "tasksUnhealthy": 0,
+      "deployments": [ ],
+      "tasks": [
+        {
+          "id": "blue_grafana.180114ed-8a11-11e6-a22a-06ed602014ad",
+          "slaveId": "2ce72106-b586-457f-b183-a6b652b303ed-S0",
+          "host": "10.10.78.34",
+          "startedAt": "2016-10-04T09:01:31.726Z",
+          "stagedAt": "2016-10-04T09:01:10.331Z",
+          "ports": [
+            13000
+          ],
+          "version": "2016-10-04T09:01:10.149Z",
+          "ipAddresses": [
+            {
+              "ipAddress": "172.17.0.2",
+              "protocol": "IPv4"
+            }
+          ],
+          "appId": "/blue/grafana",
+          "healthCheckResults": [
+            {
+              "alive": true,
+              "consecutiveFailures": 0,
+              "firstSuccess": "2016-10-05T15:14:21.805Z",
+              "lastFailure": null,
+              "lastSuccess": "2016-10-14T18:14:29.959Z",
+              "lastFailureCause": null,
+              "taskId": "blue_grafana.180114ed-8a11-11e6-a22a-06ed602014ad"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "/kodokojo/redis",
+      "cmd": null,
+      "args": null,
+      "user": null,
+      "env": { },
+      "instances": 1,
+      "cpus": 0.4,
+      "mem": 512,
+      "disk": 0,
+      "executor": "",
+      "constraints": [
+        [
+          "type",
+          "LIKE",
+          "kodokojo"
+        ]
+      ],
+      "uris": [ ],
+      "fetch": [ ],
+      "storeUrls": [ ],
+      "ports": [
+        10005
+      ],
+      "portDefinitions": [
+        {
+          "port": 10005,
+          "protocol": "tcp",
+          "labels": { }
+        }
+      ],
+      "requirePorts": false,
+      "backoffSeconds": 1,
+      "backoffFactor": 1.15,
+      "maxLaunchDelaySeconds": 3600,
+      "container": {
+        "type": "DOCKER",
+        "volumes": [ ],
+        "docker": {
+          "image": "redis",
+          "network": "BRIDGE",
+          "portMappings": [
+            {
+              "containerPort": 6379,
+              "hostPort": 0,
+              "servicePort": 10005,
+              "protocol": "tcp",
+              "labels": { }
+            }
+          ],
+          "privileged": false,
+          "parameters": [ ],
+          "forcePullImage": false
+        }
+      },
+      "healthChecks": [ ],
+      "readinessChecks": [ ],
+      "dependencies": [ ],
+      "upgradeStrategy": {
+        "minimumHealthCapacity": 1,
+        "maximumOverCapacity": 1
+      },
+      "labels": {
+        "entity": "kodokojo",
+        "component": "redis"
+      },
+      "acceptedResourceRoles": null,
+      "ipAddress": null,
+      "version": "2016-10-14T14:57:14.504Z",
+      "residency": null,
+      "versionInfo": {
+        "lastScalingAt": "2016-10-14T14:57:14.504Z",
+        "lastConfigChangeAt": "2016-10-14T14:57:14.504Z"
+      },
+      "tasksStaged": 0,
+      "tasksRunning": 1,
+      "tasksHealthy": 0,
+      "tasksUnhealthy": 0,
+      "deployments": [ ],
+      "tasks": [
+        {
+          "id": "kodokojo_redis.7e3400a0-921e-11e6-aeac-02068bbb9f1f",
+          "slaveId": "2ce72106-b586-457f-b183-a6b652b303ed-S1",
+          "host": "10.10.101.230",
+          "startedAt": "2016-10-14T14:57:15.322Z",
+          "stagedAt": "2016-10-14T14:57:14.539Z",
+          "ports": [
+            28634
+          ],
+          "version": "2016-10-14T14:57:14.504Z",
+          "ipAddresses": [
+            {
+              "ipAddress": "172.17.0.2",
+              "protocol": "IPv4"
+            }
+          ],
+          "appId": "/kodokojo/redis"
+        }
+      ]
+    },
+    {
+      "id": "/xebia/nexus",
+      "cmd": null,
+      "args": null,
+      "user": null,
+      "env": { },
+      "instances": 1,
+      "cpus": 0.5,
+      "mem": 1024,
+      "disk": 0,
+      "executor": "",
+      "constraints": [
+        [
+          "type",
+          "LIKE",
+          "operator"
+        ]
+      ],
+      "uris": [ ],
+      "fetch": [ ],
+      "storeUrls": [ ],
+      "ports": [
+        10008
+      ],
+      "portDefinitions": [
+        {
+          "port": 10008,
+          "protocol": "tcp",
+          "labels": { }
+        }
+      ],
+      "requirePorts": false,
+      "backoffSeconds": 1,
+      "backoffFactor": 1.15,
+      "maxLaunchDelaySeconds": 3600,
+      "container": {
+        "type": "DOCKER",
+        "volumes": [
+          {
+            "containerPath": "/sonatype-work/",
+            "hostPath": "/kodokojo/env/xebia/nexus/",
+            "mode": "RW"
+          }
+        ],
+        "docker": {
+          "image": "sonatype/nexus:2.13.0-01",
+          "network": "BRIDGE",
+          "portMappings": [
+            {
+              "containerPort": 8081,
+              "hostPort": 0,
+              "servicePort": 10008,
+              "protocol": "tcp",
+              "labels": {
+                "applicationProtocol": "HTTPS"
+              }
+            }
+          ],
+          "privileged": false,
+          "parameters": [
+            {
+              "key": "env",
+              "value": "CONTEXT_PATH=/"
+            },
+            {
+              "key": "env",
+              "value": "JAVA_OPTS=-Dnexus.browserdetector.disable=true -DglobalRestApiSettings.baseUrl=https://nexus-xebia.kodokojo.io"
+            },
+            {
+              "key": "label",
+              "value": "endpoint=xebia"
+            },
+            {
+              "key": "label",
+              "value": "componentType=repository"
+            },
+            {
+              "key": "label",
+              "value": "component=nexus"
+            },
+            {
+              "key": "user",
+              "value": "root"
+            },
+            {
+              "key": "log-opt",
+              "value": "tag=nexus-kodokojo"
+            }
+          ],
+          "forcePullImage": false
+        }
+      },
+      "healthChecks": [
+        {
+          "path": "/",
+          "protocol": "HTTP",
+          "portIndex": 0,
+          "gracePeriodSeconds": 180,
+          "intervalSeconds": 20,
+          "timeoutSeconds": 20,
+          "maxConsecutiveFailures": 10,
+          "ignoreHttp1xx": false
+        }
+      ],
+      "readinessChecks": [ ],
+      "dependencies": [ ],
+      "upgradeStrategy": {
+        "minimumHealthCapacity": 1,
+        "maximumOverCapacity": 1
+      },
+      "labels": {
+        "endpoint": "xebia",
+        "componentType": "repository",
+        "managedByKodoKojoHa": "true",
+        "component": "nexus"
+      },
+      "acceptedResourceRoles": null,
+      "ipAddress": null,
+      "version": "2016-10-14T14:58:55.181Z",
+      "residency": null,
+      "versionInfo": {
+        "lastScalingAt": "2016-10-14T14:58:55.181Z",
+        "lastConfigChangeAt": "2016-10-14T14:58:55.181Z"
+      },
+      "tasksStaged": 0,
+      "tasksRunning": 1,
+      "tasksHealthy": 1,
+      "tasksUnhealthy": 0,
+      "deployments": [ ],
+      "tasks": [
+        {
+          "id": "xebia_nexus.ba370253-921e-11e6-aeac-02068bbb9f1f",
+          "slaveId": "2ce72106-b586-457f-b183-a6b652b303ed-S0",
+          "host": "10.10.78.34",
+          "startedAt": "2016-10-14T14:58:56.053Z",
+          "stagedAt": "2016-10-14T14:58:55.222Z",
+          "ports": [
+            11259
+          ],
+          "version": "2016-10-14T14:58:55.181Z",
+          "ipAddresses": [
+            {
+              "ipAddress": "172.17.0.3",
+              "protocol": "IPv4"
+            }
+          ],
+          "appId": "/xebia/nexus",
+          "healthCheckResults": [
+            {
+              "alive": true,
+              "consecutiveFailures": 0,
+              "firstSuccess": "2016-10-14T14:59:35.471Z",
+              "lastFailure": null,
+              "lastSuccess": "2016-10-14T18:14:21.840Z",
+              "lastFailureCause": null,
+              "taskId": "xebia_nexus.ba370253-921e-11e6-aeac-02068bbb9f1f"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "/blue/influxdb",
+      "cmd": null,
+      "args": null,
+      "user": null,
+      "env": { },
+      "instances": 1,
+      "cpus": 0.5,
+      "mem": 256,
+      "disk": 0,
+      "executor": "",
+      "constraints": [
+        [
+          "type",
+          "LIKE",
+          "operator"
+        ]
+      ],
+      "uris": [ ],
+      "fetch": [ ],
+      "storeUrls": [ ],
+      "ports": [
+        10001,
+        10002,
+        10003
+      ],
+      "portDefinitions": [
+        {
+          "port": 10001,
+          "protocol": "tcp",
+          "labels": { }
+        },
+        {
+          "port": 10002,
+          "protocol": "tcp",
+          "labels": { }
+        },
+        {
+          "port": 10003,
+          "protocol": "tcp",
+          "labels": { }
+        }
+      ],
+      "requirePorts": false,
+      "backoffSeconds": 1,
+      "backoffFactor": 1.15,
+      "maxLaunchDelaySeconds": 3600,
+      "container": {
+        "type": "DOCKER",
+        "volumes": [ ],
+        "docker": {
+          "image": "tutum/influxdb:0.13",
+          "network": "BRIDGE",
+          "portMappings": [
+            {
+              "containerPort": 8083,
+              "hostPort": 0,
+              "servicePort": 10001,
+              "protocol": "tcp",
+              "labels": { }
+            },
+            {
+              "containerPort": 8086,
+              "hostPort": 0,
+              "servicePort": 10002,
+              "protocol": "tcp",
+              "labels": { }
+            },
+            {
+              "containerPort": 25826,
+              "hostPort": 0,
+              "servicePort": 10003,
+              "protocol": "udp",
+              "labels": { }
+            }
+          ],
+          "privileged": false,
+          "parameters": [
+            {
+              "key": "label",
+              "value": "componentType=monitoring"
+            },
+            {
+              "key": "label",
+              "value": "component=influxdb"
+            },
+            {
+              "key": "env",
+              "value": "ADMIN_USER=admin"
+            },
+            {
+              "key": "env",
+              "value": "INFLUXDB_INIT_PWD=admin"
+            },
+            {
+              "key": "env",
+              "value": "PRE_CREATE_DB=infra"
+            },
+            {
+              "key": "env",
+              "value": "COLLECTD_DB=infra"
+            },
+            {
+              "key": "env",
+              "value": "COLLECTD_BINDING=:25826"
+            }
+          ],
+          "forcePullImage": false
+        }
+      },
+      "healthChecks": [
+        {
+          "path": "/",
+          "protocol": "HTTP",
+          "portIndex": 0,
+          "gracePeriodSeconds": 180,
+          "intervalSeconds": 20,
+          "timeoutSeconds": 20,
+          "maxConsecutiveFailures": 10,
+          "ignoreHttp1xx": false
+        }
+      ],
+      "readinessChecks": [ ],
+      "dependencies": [ ],
+      "upgradeStrategy": {
+        "minimumHealthCapacity": 1,
+        "maximumOverCapacity": 1
+      },
+      "labels": {
+        "componentType": "monitoring",
+        "component": "influxdb"
+      },
+      "acceptedResourceRoles": null,
+      "ipAddress": null,
+      "version": "2016-10-03T22:06:50.359Z",
+      "residency": null,
+      "versionInfo": {
+        "lastScalingAt": "2016-10-03T22:06:50.359Z",
+        "lastConfigChangeAt": "2016-10-03T22:06:50.359Z"
+      },
+      "tasksStaged": 0,
+      "tasksRunning": 1,
+      "tasksHealthy": 1,
+      "tasksUnhealthy": 0,
+      "deployments": [ ],
+      "tasks": [
+        {
+          "id": "blue_influxdb.4a4eccc8-89b6-11e6-bec7-02068bbb9f1f",
+          "slaveId": "2ce72106-b586-457f-b183-a6b652b303ed-S2",
+          "host": "10.10.62.239",
+          "startedAt": "2016-10-03T22:11:30.029Z",
+          "stagedAt": "2016-10-03T22:11:10.515Z",
+          "ports": [
+            16467,
+            16468,
+            16469
+          ],
+          "version": "2016-10-03T22:06:50.359Z",
+          "ipAddresses": [
+            {
+              "ipAddress": "172.17.0.2",
+              "protocol": "IPv4"
+            }
+          ],
+          "appId": "/blue/influxdb",
+          "healthCheckResults": [
+            {
+              "alive": true,
+              "consecutiveFailures": 0,
+              "firstSuccess": "2016-10-05T15:14:21.815Z",
+              "lastFailure": null,
+              "lastSuccess": "2016-10-14T18:14:30.129Z",
+              "lastFailureCause": null,
+              "taskId": "blue_influxdb.4a4eccc8-89b6-11e6-bec7-02068bbb9f1f"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "/kodokojo/back",
+      "cmd": null,
+      "args": null,
+      "user": null,
+      "env": { },
+      "instances": 1,
+      "cpus": 1,
+      "mem": 1024,
+      "disk": 0,
+      "executor": "",
+      "constraints": [
+        [
+          "type",
+          "LIKE",
+          "kodokojo"
+        ]
+      ],
+      "uris": [ ],
+      "fetch": [ ],
+      "storeUrls": [ ],
+      "ports": [
+        10006
+      ],
+      "portDefinitions": [
+        {
+          "port": 10006,
+          "protocol": "tcp",
+          "labels": { }
+        }
+      ],
+      "requirePorts": false,
+      "backoffSeconds": 1,
+      "backoffFactor": 1.15,
+      "maxLaunchDelaySeconds": 3600,
+      "container": {
+        "type": "DOCKER",
+        "volumes": [
+          {
+            "containerPath": "/data/",
+            "hostPath": "/opt/kodokojo/",
+            "mode": "RW"
+          }
+        ],
+        "docker": {
+          "image": "kodokojo/kodokojo",
+          "network": "BRIDGE",
+          "portMappings": [
+            {
+              "containerPort": 80,
+              "hostPort": 0,
+              "servicePort": 10006,
+              "protocol": "tcp",
+              "labels": {
+                "applicationProtocol": "WSS"
+              }
+            }
+          ],
+          "privileged": false,
+          "parameters": [
+            {
+              "key": "env",
+              "value": "redis.host=10.10.101.230"
+            },
+            {
+              "key": "env",
+              "value": "redis.port=28634"
+            },
+            {
+              "key": "env",
+              "value": "marathon.url=http://marathon.blue.kodokojo.prv:8080"
+            },
+            {
+              "key": "env",
+              "value": "marathon.login=koooo"
+            },
+            {
+              "key": "env",
+              "value": "marathon.password=kodokojo2016."
+            },
+            {
+              "key": "env",
+              "value": "lb.host=service-blue.kodokojo.io"
+            },
+            {
+              "key": "env",
+              "value": "smtp.from=blue@kodokojo.io"
+            },
+            {
+              "key": "env",
+              "value": "application.dns.domain=kodokojo.io"
+            },
+            {
+              "key": "log-opt",
+              "value": "tag=kodokojo-back"
+            },
+            {
+              "key": "env",
+              "value": "security.ssl.wildcardPemPath=/data/ssl/server.pem"
+            }
+          ],
+          "forcePullImage": true
+        }
+      },
+      "healthChecks": [
+        {
+          "path": "/api/v1/doc/",
+          "protocol": "HTTP",
+          "portIndex": 0,
+          "gracePeriodSeconds": 60,
+          "intervalSeconds": 10,
+          "timeoutSeconds": 20,
+          "maxConsecutiveFailures": 20,
+          "ignoreHttp1xx": false
+        }
+      ],
+      "readinessChecks": [ ],
+      "dependencies": [ ],
+      "upgradeStrategy": {
+        "minimumHealthCapacity": 1,
+        "maximumOverCapacity": 1
+      },
+      "labels": {
+        "project": "kodokojo",
+        "componentType": "back",
+        "entity": "kodokojo",
+        "managedByKodoKojoHa": "true",
+        "component": "back"
+      },
+      "acceptedResourceRoles": null,
+      "ipAddress": null,
+      "version": "2016-10-14T14:57:26.094Z",
+      "residency": null,
+      "versionInfo": {
+        "lastScalingAt": "2016-10-14T14:57:26.094Z",
+        "lastConfigChangeAt": "2016-10-14T14:57:26.094Z"
+      },
+      "tasksStaged": 0,
+      "tasksRunning": 1,
+      "tasksHealthy": 1,
+      "tasksUnhealthy": 0,
+      "deployments": [ ],
+      "tasks": [
+        {
+          "id": "kodokojo_back.851c7f01-921e-11e6-aeac-02068bbb9f1f",
+          "slaveId": "2ce72106-b586-457f-b183-a6b652b303ed-S1",
+          "host": "10.10.101.230",
+          "startedAt": "2016-10-14T14:57:36.691Z",
+          "stagedAt": "2016-10-14T14:57:26.129Z",
+          "ports": [
+            20729
+          ],
+          "version": "2016-10-14T14:57:26.094Z",
+          "ipAddresses": [
+            {
+              "ipAddress": "172.17.0.3",
+              "protocol": "IPv4"
+            }
+          ],
+          "appId": "/kodokojo/back",
+          "healthCheckResults": [
+            {
+              "alive": true,
+              "consecutiveFailures": 0,
+              "firstSuccess": "2016-10-14T14:57:46.205Z",
+              "lastFailure": null,
+              "lastSuccess": "2016-10-14T18:14:28.871Z",
+              "lastFailureCause": null,
+              "taskId": "kodokojo_back.851c7f01-921e-11e6-aeac-02068bbb9f1f"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "/kodokojo/ui",
+      "cmd": null,
+      "args": null,
+      "user": null,
+      "env": { },
+      "instances": 1,
+      "cpus": 0.5,
+      "mem": 512,
+      "disk": 0,
+      "executor": "",
+      "constraints": [
+        [
+          "type",
+          "LIKE",
+          "kodokojo"
+        ]
+      ],
+      "uris": [ ],
+      "fetch": [ ],
+      "storeUrls": [ ],
+      "ports": [
+        10007
+      ],
+      "portDefinitions": [
+        {
+          "port": 10007,
+          "protocol": "tcp",
+          "labels": { }
+        }
+      ],
+      "requirePorts": false,
+      "backoffSeconds": 1,
+      "backoffFactor": 1.15,
+      "maxLaunchDelaySeconds": 3600,
+      "container": {
+        "type": "DOCKER",
+        "volumes": [
+          {
+            "containerPath": "/data/",
+            "hostPath": "/opt/kodokojo/",
+            "mode": "RW"
+          }
+        ],
+        "docker": {
+          "image": "kodokojo/kodokojo-ui",
+          "network": "BRIDGE",
+          "portMappings": [
+            {
+              "containerPort": 80,
+              "hostPort": 0,
+              "servicePort": 10007,
+              "protocol": "tcp",
+              "labels": {
+                "applicationProtocol": "HTTPS"
+              }
+            }
+          ],
+          "privileged": false,
+          "parameters": [
+            {
+              "key": "env",
+              "value": "BACK_HOST=10.10.101.230"
+            },
+            {
+              "key": "env",
+              "value": "BACK_PORT=20729"
+            },
+            {
+              "key": "log-opt",
+              "value": "tag=kodokojo-ui"
+            }
+          ],
+          "forcePullImage": true
+        }
+      },
+      "healthChecks": [ ],
+      "readinessChecks": [ ],
+      "dependencies": [ ],
+      "upgradeStrategy": {
+        "minimumHealthCapacity": 1,
+        "maximumOverCapacity": 1
+      },
+      "labels": {
+        "project": "kodokojo",
+        "componentType": "ui",
+        "entity": "kodokojo",
+        "managedByKodoKojoHa": "true",
+        "component": "ui"
+      },
+      "acceptedResourceRoles": null,
+      "ipAddress": null,
+      "version": "2016-10-14T14:57:37.665Z",
+      "residency": null,
+      "versionInfo": {
+        "lastScalingAt": "2016-10-14T14:57:37.665Z",
+        "lastConfigChangeAt": "2016-10-14T14:57:37.665Z"
+      },
+      "tasksStaged": 0,
+      "tasksRunning": 1,
+      "tasksHealthy": 0,
+      "tasksUnhealthy": 0,
+      "deployments": [ ],
+      "tasks": [
+        {
+          "id": "kodokojo_ui.8c01a202-921e-11e6-aeac-02068bbb9f1f",
+          "slaveId": "2ce72106-b586-457f-b183-a6b652b303ed-S1",
+          "host": "10.10.101.230",
+          "startedAt": "2016-10-14T14:57:42.708Z",
+          "stagedAt": "2016-10-14T14:57:37.697Z",
+          "ports": [
+            20261
+          ],
+          "version": "2016-10-14T14:57:37.665Z",
+          "ipAddresses": [
+            {
+              "ipAddress": "172.17.0.4",
+              "protocol": "IPv4"
+            }
+          ],
+          "appId": "/kodokojo/ui"
+        }
+      ]
+    },
+    {
+      "id": "/kodokojo/haproxy-agent",
+      "cmd": "/start.sh",
+      "args": null,
+      "user": null,
+      "env": { },
+      "instances": 1,
+      "cpus": 1,
+      "mem": 1024,
+      "disk": 0,
+      "executor": "",
+      "constraints": [
+        [
+          "type",
+          "LIKE",
+          "entrypoint"
+        ]
+      ],
+      "uris": [ ],
+      "fetch": [ ],
+      "storeUrls": [ ],
+      "ports": [
+        10000
+      ],
+      "portDefinitions": [
+        {
+          "port": 10000,
+          "protocol": "tcp",
+          "labels": { }
+        }
+      ],
+      "requirePorts": false,
+      "backoffSeconds": 1,
+      "backoffFactor": 1.15,
+      "maxLaunchDelaySeconds": 3600,
+      "container": {
+        "type": "DOCKER",
+        "volumes": [ ],
+        "docker": {
+          "image": "kodokojo/haproxy-agent",
+          "network": "HOST",
+          "privileged": false,
+          "parameters": [
+            {
+              "key": "label",
+              "value": "componentType=lb"
+            },
+            {
+              "key": "label",
+              "value": "component=haproxy"
+            },
+            {
+              "key": "env",
+              "value": "zookeeper_url=ip-10-10-148-234:2181"
+            },
+            {
+              "key": "env",
+              "value": "marathon_user=koooo"
+            },
+            {
+              "key": "env",
+              "value": "marathon_password=kodokojo2016."
+            },
+            {
+              "key": "env",
+              "value": "app_env=blue"
+            },
+            {
+              "key": "env",
+              "value": "rsyslog.host=$HOST"
+            }
+          ],
+          "forcePullImage": false
+        }
+      },
+      "healthChecks": [ ],
+      "readinessChecks": [ ],
+      "dependencies": [ ],
+      "upgradeStrategy": {
+        "minimumHealthCapacity": 1,
+        "maximumOverCapacity": 1
+      },
+      "labels": {
+        "componentType": "ha",
+        "component": "haproxy"
+      },
+      "acceptedResourceRoles": null,
+      "ipAddress": null,
+      "version": "2016-10-05T15:14:26.905Z",
+      "residency": null,
+      "versionInfo": {
+        "lastScalingAt": "2016-10-05T15:14:26.905Z",
+        "lastConfigChangeAt": "2016-10-05T15:14:26.905Z"
+      },
+      "tasksStaged": 0,
+      "tasksRunning": 1,
+      "tasksHealthy": 0,
+      "tasksUnhealthy": 0,
+      "deployments": [ ],
+      "tasks": [
+        {
+          "id": "kodokojo_haproxy-agent.6a05160c-8b0e-11e6-aeac-02068bbb9f1f",
+          "slaveId": "2ce72106-b586-457f-b183-a6b652b303ed-S3",
+          "host": "10.10.15.213",
+          "startedAt": "2016-10-05T15:14:31.434Z",
+          "stagedAt": "2016-10-05T15:14:30.593Z",
+          "ports": [
+            17870
+          ],
+          "version": "2016-10-05T15:14:26.905Z",
+          "ipAddresses": [
+            {
+              "ipAddress": "10.10.15.213",
+              "protocol": "IPv4"
+            }
+          ],
+          "appId": "/kodokojo/haproxy-agent"
+        }
+      ]
+    },
+    {
+      "id": "/xebia/gitlab",
+      "cmd": null,
+      "args": null,
+      "user": null,
+      "env": { },
+      "instances": 1,
+      "cpus": 1,
+      "mem": 2048,
+      "disk": 0,
+      "executor": "",
+      "constraints": [
+        [
+          "type",
+          "LIKE",
+          "operator"
+        ]
+      ],
+      "uris": [ ],
+      "fetch": [ ],
+      "storeUrls": [ ],
+      "ports": [
+        10010,
+        10011
+      ],
+      "portDefinitions": [
+        {
+          "port": 10010,
+          "protocol": "tcp",
+          "labels": { }
+        },
+        {
+          "port": 10011,
+          "protocol": "tcp",
+          "labels": { }
+        }
+      ],
+      "requirePorts": false,
+      "backoffSeconds": 1,
+      "backoffFactor": 1.15,
+      "maxLaunchDelaySeconds": 3600,
+      "container": {
+        "type": "DOCKER",
+        "volumes": [
+          {
+            "containerPath": "/var/opt/gitlab",
+            "hostPath": "/kodokojo/env/xebia/gitlab/",
+            "mode": "RW"
+          }
+        ],
+        "docker": {
+          "image": "gitlab/gitlab-ce:8.12.0-ce.0",
+          "network": "BRIDGE",
+          "portMappings": [
+            {
+              "containerPort": 80,
+              "hostPort": 0,
+              "servicePort": 10010,
+              "protocol": "tcp",
+              "labels": {
+                "applicationProtocol": "HTTPS"
+              }
+            },
+            {
+              "containerPort": 22,
+              "hostPort": 0,
+              "servicePort": 10011,
+              "protocol": "tcp",
+              "labels": {
+                "applicationProtocol": "SSH"
+              }
+            }
+          ],
+          "privileged": false,
+          "parameters": [
+            {
+              "key": "env",
+              "value": "GITLAB_OMNIBUS_CONFIG=external_url 'https://gitlab-xebia.kodokojo.io/';nginx['enable'] = true; nginx['redirect_http_to_https'] = false; nginx['listen_port'] = 80; nginx['listen_https'] = false; gitlab_rails['gitlab_shell_ssh_port'] = 32769"
+            },
+            {
+              "key": "label",
+              "value": "project=xebia"
+            },
+            {
+              "key": "label",
+              "value": "componentType=scm"
+            },
+            {
+              "key": "label",
+              "value": "component=gitlab"
+            },
+            {
+              "key": "user",
+              "value": "root"
+            },
+            {
+              "key": "log-opt",
+              "value": "tag=gitlab-kodokojo"
+            }
+          ],
+          "forcePullImage": false
+        }
+      },
+      "healthChecks": [
+        {
+          "path": "/users/sign_in",
+          "protocol": "HTTP",
+          "portIndex": 0,
+          "gracePeriodSeconds": 60,
+          "intervalSeconds": 10,
+          "timeoutSeconds": 20,
+          "maxConsecutiveFailures": 20,
+          "ignoreHttp1xx": false
+        }
+      ],
+      "readinessChecks": [ ],
+      "dependencies": [ ],
+      "upgradeStrategy": {
+        "minimumHealthCapacity": 1,
+        "maximumOverCapacity": 1
+      },
+      "labels": {
+        "endpoint": "xebia",
+        "managedByKodoKojoHa": "true",
+        "componentType": "scm",
+        "component": "gitlab"
+      },
+      "acceptedResourceRoles": null,
+      "ipAddress": null,
+      "version": "2016-10-14T14:58:55.191Z",
+      "residency": null,
+      "versionInfo": {
+        "lastScalingAt": "2016-10-14T14:58:55.191Z",
+        "lastConfigChangeAt": "2016-10-14T14:58:55.191Z"
+      },
+      "tasksStaged": 0,
+      "tasksRunning": 1,
+      "tasksHealthy": 1,
+      "tasksUnhealthy": 0,
+      "deployments": [ ],
+      "tasks": [
+        {
+          "id": "xebia_gitlab.ba658c64-921e-11e6-aeac-02068bbb9f1f",
+          "slaveId": "2ce72106-b586-457f-b183-a6b652b303ed-S0",
+          "host": "10.10.78.34",
+          "startedAt": "2016-10-14T14:58:56.353Z",
+          "stagedAt": "2016-10-14T14:58:55.528Z",
+          "ports": [
+            13171,
+            13172
+          ],
+          "version": "2016-10-14T14:58:55.191Z",
+          "ipAddresses": [
+            {
+              "ipAddress": "172.17.0.4",
+              "protocol": "IPv4"
+            }
+          ],
+          "appId": "/xebia/gitlab",
+          "healthCheckResults": [
+            {
+              "alive": true,
+              "consecutiveFailures": 0,
+              "firstSuccess": "2016-10-14T15:00:56.363Z",
+              "lastFailure": "2016-10-14T15:00:45.565Z",
+              "lastSuccess": "2016-10-14T18:14:28.174Z",
+              "lastFailureCause": "ConnectionAttemptFailedException: Connection attempt to 10.10.78.34:13171 failed",
+              "taskId": "xebia_gitlab.ba658c64-921e-11e6-aeac-02068bbb9f1f"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "/xebia/jenkins",
+      "cmd": null,
+      "args": null,
+      "user": null,
+      "env": { },
+      "instances": 1,
+      "cpus": 0.5,
+      "mem": 1024,
+      "disk": 0,
+      "executor": "",
+      "constraints": [
+        [
+          "type",
+          "LIKE",
+          "operator"
+        ]
+      ],
+      "uris": [ ],
+      "fetch": [ ],
+      "storeUrls": [ ],
+      "ports": [
+        10009
+      ],
+      "portDefinitions": [
+        {
+          "port": 10009,
+          "protocol": "tcp",
+          "labels": { }
+        }
+      ],
+      "requirePorts": false,
+      "backoffSeconds": 1,
+      "backoffFactor": 1.15,
+      "maxLaunchDelaySeconds": 3600,
+      "container": {
+        "type": "DOCKER",
+        "volumes": [
+          {
+            "containerPath": "/var/jenkins_home/",
+            "hostPath": "/kodokojo/env/xebia/jenkins/",
+            "mode": "RW"
+          }
+        ],
+        "docker": {
+          "image": "jenkins:1.651.3-alpine",
+          "network": "BRIDGE",
+          "portMappings": [
+            {
+              "containerPort": 8080,
+              "hostPort": 0,
+              "servicePort": 10009,
+              "protocol": "tcp",
+              "labels": {
+                "applicationProtocol": "HTTPS"
+              }
+            }
+          ],
+          "privileged": false,
+          "parameters": [
+            {
+              "key": "env",
+              "value": "JENKINS_SLAVE_AGENT_PORT=50000"
+            },
+            {
+              "key": "env",
+              "value": "JAVA_OPTS=-Duser.timezone=Europe/Paris"
+            },
+            {
+              "key": "label",
+              "value": "endpoint=xebia"
+            },
+            {
+              "key": "label",
+              "value": "componentType=ci"
+            },
+            {
+              "key": "label",
+              "value": "component=jenkins"
+            },
+            {
+              "key": "user",
+              "value": "root"
+            },
+            {
+              "key": "log-opt",
+              "value": "tag=jenkins-kodokojo"
+            }
+          ],
+          "forcePullImage": false
+        }
+      },
+      "healthChecks": [
+        {
+          "path": "/",
+          "protocol": "HTTP",
+          "portIndex": 0,
+          "gracePeriodSeconds": 180,
+          "intervalSeconds": 20,
+          "timeoutSeconds": 20,
+          "maxConsecutiveFailures": 10,
+          "ignoreHttp1xx": false
+        }
+      ],
+      "readinessChecks": [ ],
+      "dependencies": [ ],
+      "upgradeStrategy": {
+        "minimumHealthCapacity": 1,
+        "maximumOverCapacity": 1
+      },
+      "labels": {
+        "endpoint": "xebia",
+        "managedByKodoKojoHa": "true",
+        "componentType": "ci",
+        "component": "jenkins"
+      },
+      "acceptedResourceRoles": null,
+      "ipAddress": null,
+      "version": "2016-10-14T14:58:55.183Z",
+      "residency": null,
+      "versionInfo": {
+        "lastScalingAt": "2016-10-14T14:58:55.183Z",
+        "lastConfigChangeAt": "2016-10-14T14:58:55.183Z"
+      },
+      "tasksStaged": 0,
+      "tasksRunning": 1,
+      "tasksHealthy": 1,
+      "tasksUnhealthy": 0,
+      "deployments": [ ],
+      "tasks": [
+        {
+          "id": "xebia_jenkins.bd350015-921e-11e6-aeac-02068bbb9f1f",
+          "slaveId": "2ce72106-b586-457f-b183-a6b652b303ed-S2",
+          "host": "10.10.62.239",
+          "startedAt": "2016-10-14T14:59:01.112Z",
+          "stagedAt": "2016-10-14T14:59:00.243Z",
+          "ports": [
+            17793
+          ],
+          "version": "2016-10-14T14:58:55.183Z",
+          "ipAddresses": [
+            {
+              "ipAddress": "172.17.0.3",
+              "protocol": "IPv4"
+            }
+          ],
+          "appId": "/xebia/jenkins",
+          "healthCheckResults": [
+            {
+              "alive": true,
+              "consecutiveFailures": 0,
+              "firstSuccess": "2016-10-14T15:00:16.969Z",
+              "lastFailure": null,
+              "lastSuccess": "2016-10-14T18:14:21.976Z",
+              "lastFailureCause": null,
+              "taskId": "xebia_jenkins.bd350015-921e-11e6-aeac-02068bbb9f1f"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+
+}

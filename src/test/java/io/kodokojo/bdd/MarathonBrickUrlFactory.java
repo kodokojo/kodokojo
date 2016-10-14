@@ -19,16 +19,13 @@ package io.kodokojo.bdd;
 
 import io.kodokojo.brick.BrickUrlFactory;
 import io.kodokojo.brick.DefaultBrickUrlFactory;
-import io.kodokojo.config.*;
 import io.kodokojo.model.Service;
-import io.kodokojo.service.servicelocator.marathon.MarathonServiceLocator;
+import io.kodokojo.service.marathon.MarathonServiceLocator;
 import org.apache.commons.collections4.CollectionUtils;
 
 import javax.inject.Inject;
 
 import java.util.Set;
-
-import static org.apache.commons.lang.StringUtils.isBlank;
 
 public class MarathonBrickUrlFactory implements BrickUrlFactory {
 
@@ -58,7 +55,7 @@ public class MarathonBrickUrlFactory implements BrickUrlFactory {
             return fallBack.forgeUrl(entity, projectName, stackName, brickName, brickName);
         } else {
             Service service = services.iterator().next();
-            return service.getHost() + ":" + service.getPort();
+            return service.getHost() + ":" + service.getPortDefinition().getContainerPort();
         }
     }
 }
