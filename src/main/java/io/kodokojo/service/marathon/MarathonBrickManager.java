@@ -213,7 +213,7 @@ public class MarathonBrickManager implements BrickManager {
         while (res == null && iterator.hasNext()) {
             Service service = iterator.next();
             if (service.getPortDefinition().getType() == PortDefinition.Type.HTTP || service.getPortDefinition().getType() == PortDefinition.Type.HTTPS ) {
-                res = "http" + (service.getPortDefinition().getType() == PortDefinition.Type.HTTPS ? "s" : "") + "://" + service.getHost() + ":" + service.getPortDefinition().getHostPort();
+                res = "http://" + service.getHost() + ":" + service.getPortDefinition().getHostPort();
             }
         }
         return res;
