@@ -174,7 +174,9 @@ public class MarathonBrickManager implements BrickManager {
         String type = brickType.name().toLowerCase();
         BrickConfigurer configurer = brickConfigurerProvider.provideFromBrick(brickConfiguration);
         if (configurer != null) {
-            Set<Service> services = marathonServiceLocator.getService(type, name);
+            String brickName = brickConfiguration.getName().toLowerCase();
+            LOGGER.debug("Lookup service {} for project {}.", brickName, name);
+            Set<Service> services = marathonServiceLocator.getService(brickName, name);
             if (CollectionUtils.isNotEmpty(services)) {
                 String entrypoint = getEntryPoint(services);
                 if (StringUtils.isBlank(entrypoint)) {
