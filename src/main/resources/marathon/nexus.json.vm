@@ -47,7 +47,7 @@
         },
         {
           "key": "log-opt",
-          "value": "tag=nexus-${projectName}"
+          "value": "tag=nexus-$projectName"
         }
       ]
     },
