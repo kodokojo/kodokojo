@@ -23,7 +23,6 @@ import io.kodokojo.model.*;
 import io.kodokojo.service.BrickManager;
 import io.kodokojo.service.ProjectConfigurationException;
 import io.kodokojo.service.repository.ProjectRepository;
-import io.kodokojo.service.servicelocator.marathon.MarathonServiceLocator;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang.StringUtils;
@@ -42,6 +41,7 @@ import javax.inject.Inject;
 import java.io.StringWriter;
 import java.util.*;
 
+import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang.StringUtils.isBlank;
 
 /*TODO Refacto :
@@ -115,22 +115,14 @@ public class MarathonBrickManager implements BrickManager {
 
     @Override
     public Set<Service> start(ProjectConfiguration projectConfiguration, StackConfiguration stackConfiguration, BrickConfiguration brickConfiguration) throws BrickAlreadyExist {
-        if (projectConfiguration == null) {
-            throw new IllegalArgumentException("projectConfiguration must be defined.");
-        }
-        /*
-        if (stackConfiguration == null) {
-            throw new IllegalArgumentException("stackConfiguration must be defined.");
-        }
-        */
-        if (brickConfiguration == null) {
-            throw new IllegalArgumentException("brickConfiguration must be defined.");
-        }
+        requireNonNull(projectConfiguration, "projectConfiguration must be defined.");
+        //requireNonNull(stackConfiguration, "stackConfiguration must be defined.");
+        requireNonNull(brickConfiguration, "brickConfiguration must be defined.");
 
-        String name = projectConfiguration.getName().toLowerCase();
+        String projectName = projectConfiguration.getName().toLowerCase();
         String type = brickConfiguration.getName().toLowerCase();
 
-        String id = "/" + name.toLowerCase() + "/" + brickConfiguration.getName().toLowerCase();
+        String id = "/" + projectName.toLowerCase() + "/" + type;
         String body = provideStartAppBody(projectConfiguration, projectConfiguration.getDefaultStackConfiguration().getName(), brickConfiguration, id);
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace("Push new Application configuration to Marathon :\n{}", body);
@@ -140,18 +132,18 @@ public class MarathonBrickManager implements BrickManager {
             marathonRestApi.startApplication(input);
         } catch (RetrofitError e) {
             if (e.getResponse().getStatus() == 409) {
-                throw new BrickAlreadyExist(e, type, name);
+                throw new BrickAlreadyExist(e, type, projectName);
             }
         }
         Set<Service> res = new HashSet<>();
-        marathonServiceLocator.getService(type, name);
+        marathonServiceLocator.getService(type, projectName);
         boolean haveHttpService = getAnHttpService(res);
         // TODO remove this, listen Zookeeper instead
         int nbTry = 0;
         int maxNbTry = 10000;
         while (nbTry < maxNbTry && !haveHttpService) {
             nbTry++;
-            res = marathonServiceLocator.getService(type, name);
+            res = marathonServiceLocator.getService(type, projectName);
             haveHttpService = getAnHttpService(res);
             if (!haveHttpService) {
                 try {
@@ -182,7 +174,9 @@ public class MarathonBrickManager implements BrickManager {
         String type = brickType.name().toLowerCase();
         BrickConfigurer configurer = brickConfigurerProvider.provideFromBrick(brickConfiguration);
         if (configurer != null) {
-            Set<Service> services = marathonServiceLocator.getService(type, name);
+            String brickName = brickConfiguration.getName().toLowerCase();
+            LOGGER.debug("Lookup service {} for project {}.", brickName, name);
+            Set<Service> services = marathonServiceLocator.getService(brickName, name);
             if (CollectionUtils.isNotEmpty(services)) {
                 String entrypoint = getEntryPoint(services);
                 if (StringUtils.isBlank(entrypoint)) {
@@ -202,20 +196,6 @@ public class MarathonBrickManager implements BrickManager {
 
                         }
                         return brickConfigurerData;
-                        /*
-                        BrickConfigurationBuilder builder = new BrickConfigurationBuilder(brickConfiguration);
-                        builder.setProperties(brickConfigurerData.getContext());
-
-                        projectConfiguration.getDefaultStackConfiguration().getBrickConfigurations().remove(brickConfiguration);
-                        projectConfiguration.getDefaultStackConfiguration().getBrickConfigurations().add(builder.build());
-
-                        projectRepository.updateProjectConfiguration(projectConfiguration);
-
-                        if (LOGGER.isDebugEnabled()) {
-                            LOGGER.debug("Adding users {} to brick {}", StringUtils.join(users, ","), brickType);
-                            LOGGER.debug("Save project configuration {}", projectConfiguration);
-                        }
-                        */
                     } catch (BrickConfigurationException e) {
                         throw new ProjectConfigurationException("En error occur while trying to configure brick " + brickType.name() + " on project " + projectConfiguration.getName(), e);
                     }
@@ -232,9 +212,8 @@ public class MarathonBrickManager implements BrickManager {
         Iterator<Service> iterator = services.iterator();
         while (res == null && iterator.hasNext()) {
             Service service = iterator.next();
-            String name = service.getName();
-            if (!name.endsWith("-22")) {
-                res = "http" + (name.endsWith("-443") ? "s" : "") + "://" + service.getHost() + ":" + service.getPort();
+            if (service.getPortDefinition().getType() == PortDefinition.Type.HTTP || service.getPortDefinition().getType() == PortDefinition.Type.HTTPS ) {
+                res = "http://" + service.getHost() + ":" + service.getPortDefinition().getHostPort();
             }
         }
         return res;

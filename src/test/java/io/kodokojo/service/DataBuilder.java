@@ -1,5 +1,6 @@
 package io.kodokojo.service;
 
+import io.kodokojo.config.MarathonConfig;
 import io.kodokojo.model.Project;
 import io.kodokojo.model.Stack;
 import io.kodokojo.model.StackType;
@@ -29,4 +30,29 @@ public interface DataBuilder {
     default User anUser() {
         return new User("1234", "5678", "John Doe", "jdoe", "jdoe@inconnu.com", "jdoe4ever", "ssh key");
     }
+
+    default MarathonConfig aMarathonConfig() {
+        return new MarathonConfig() {
+            @Override
+            public String url() {
+                return "http://localhost:8080";
+            }
+
+            @Override
+            public Boolean ignoreContraint() {
+                return Boolean.TRUE;
+            }
+
+            @Override
+            public String login() {
+                return "";
+            }
+
+            @Override
+            public String password() {
+                return "";
+            }
+        };
+    }
+
 }

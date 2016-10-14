@@ -1,0 +1,177 @@
+{
+
+  "app": {
+    "id": "/xebia/gitlab",
+    "cmd": null,
+    "args": null,
+    "user": null,
+    "env": { },
+    "instances": 1,
+    "cpus": 1,
+    "mem": 2048,
+    "disk": 0,
+    "executor": "",
+    "constraints": [
+      [
+        "type",
+        "LIKE",
+        "operator"
+      ]
+    ],
+    "uris": [ ],
+    "fetch": [ ],
+    "storeUrls": [ ],
+    "ports": [
+      10010,
+      10011
+    ],
+    "portDefinitions": [
+      {
+        "port": 10010,
+        "protocol": "tcp",
+        "labels": { }
+      },
+      {
+        "port": 10011,
+        "protocol": "tcp",
+        "labels": { }
+      }
+    ],
+    "requirePorts": false,
+    "backoffSeconds": 1,
+    "backoffFactor": 1.15,
+    "maxLaunchDelaySeconds": 3600,
+    "container": {
+      "type": "DOCKER",
+      "volumes": [
+        {
+          "containerPath": "/var/opt/gitlab",
+          "hostPath": "/kodokojo/env/xebia/gitlab/",
+          "mode": "RW"
+        }
+      ],
+      "docker": {
+        "image": "gitlab/gitlab-ce:8.12.0-ce.0",
+        "network": "BRIDGE",
+        "portMappings": [
+          {
+            "containerPort": 80,
+            "hostPort": 0,
+            "servicePort": 10010,
+            "protocol": "tcp",
+            "labels": {
+              "applicationProtocol": "HTTPS"
+            }
+          },
+          {
+            "containerPort": 22,
+            "hostPort": 0,
+            "servicePort": 10011,
+            "protocol": "tcp",
+            "labels": {
+              "applicationProtocol": "SSH"
+            }
+          }
+        ],
+        "privileged": false,
+        "parameters": [
+          {
+            "key": "env",
+            "value": "GITLAB_OMNIBUS_CONFIG=external_url 'https://gitlab-xebia.kodokojo.io/';nginx['enable'] = true; nginx['redirect_http_to_https'] = false; nginx['listen_port'] = 80; nginx['listen_https'] = false; gitlab_rails['gitlab_shell_ssh_port'] = 32769"
+          },
+          {
+            "key": "label",
+            "value": "project=xebia"
+          },
+          {
+            "key": "label",
+            "value": "componentType=scm"
+          },
+          {
+            "key": "label",
+            "value": "component=gitlab"
+          },
+          {
+            "key": "user",
+            "value": "root"
+          },
+          {
+            "key": "log-opt",
+            "value": "tag=gitlab-kodokojo"
+          }
+        ],
+        "forcePullImage": false
+      }
+    },
+    "healthChecks": [
+      {
+        "path": "/users/sign_in",
+        "protocol": "HTTP",
+        "portIndex": 0,
+        "gracePeriodSeconds": 60,
+        "intervalSeconds": 10,
+        "timeoutSeconds": 20,
+        "maxConsecutiveFailures": 20,
+        "ignoreHttp1xx": false
+      }
+    ],
+    "readinessChecks": [ ],
+    "dependencies": [ ],
+    "upgradeStrategy": {
+      "minimumHealthCapacity": 1,
+      "maximumOverCapacity": 1
+    },
+    "labels": {
+      "endpoint": "xebia",
+      "managedByKodoKojoHa": "true",
+      "componentType": "scm",
+      "component": "gitlab"
+    },
+    "acceptedResourceRoles": null,
+    "ipAddress": null,
+    "version": "2016-10-14T14:58:55.191Z",
+    "residency": null,
+    "versionInfo": {
+      "lastScalingAt": "2016-10-14T14:58:55.191Z",
+      "lastConfigChangeAt": "2016-10-14T14:58:55.191Z"
+    },
+    "tasksStaged": 0,
+    "tasksRunning": 1,
+    "tasksHealthy": 1,
+    "tasksUnhealthy": 0,
+    "deployments": [ ],
+    "tasks": [
+      {
+        "id": "xebia_gitlab.ba658c64-921e-11e6-aeac-02068bbb9f1f",
+        "slaveId": "2ce72106-b586-457f-b183-a6b652b303ed-S0",
+        "host": "10.10.78.34",
+        "startedAt": "2016-10-14T14:58:56.353Z",
+        "stagedAt": "2016-10-14T14:58:55.528Z",
+        "ports": [
+          13171,
+          13172
+        ],
+        "version": "2016-10-14T14:58:55.191Z",
+        "ipAddresses": [
+          {
+            "ipAddress": "172.17.0.4",
+            "protocol": "IPv4"
+          }
+        ],
+        "appId": "/xebia/gitlab",
+        "healthCheckResults": [
+          {
+            "alive": true,
+            "consecutiveFailures": 0,
+            "firstSuccess": "2016-10-14T15:00:56.363Z",
+            "lastFailure": "2016-10-14T15:00:45.565Z",
+            "lastSuccess": "2016-10-14T19:28:22.982Z",
+            "lastFailureCause": "ConnectionAttemptFailedException: Connection attempt to 10.10.78.34:13171 failed",
+            "taskId": "xebia_gitlab.ba658c64-921e-11e6-aeac-02068bbb9f1f"
+          }
+        ]
+      }
+    ]
+  }
+
+}

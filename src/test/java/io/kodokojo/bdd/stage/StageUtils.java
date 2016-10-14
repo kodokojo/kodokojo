@@ -21,6 +21,7 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.Ports;
+import io.kodokojo.model.PortDefinition;
 import io.kodokojo.model.Service;
 import io.kodokojo.commons.utils.DockerTestSupport;
 import io.kodokojo.service.RSAUtils;
@@ -82,7 +83,7 @@ public class StageUtils {
             }
         }
         assertThat(redisIsReady).isTrue();
-        return new Service("redis", redisHost, redisPort);
+        return new Service("redis", redisHost, new PortDefinition(redisPort));
     }
 
 }

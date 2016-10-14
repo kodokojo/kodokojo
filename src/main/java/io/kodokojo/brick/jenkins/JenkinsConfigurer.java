@@ -1,17 +1,17 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -81,29 +81,60 @@ public class JenkinsConfigurer implements BrickConfigurer {
     @Override
     public BrickConfigurerData configure(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurerData) {
 
-        try {
-            Thread.sleep(60000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-
         VelocityContext context = new VelocityContext();
-        List<User> users =new ArrayList<>();
+        List<User> users = new ArrayList<>();
         UserService userService = projectConfiguration.getUserService();
         String email = userService.getLogin() + "@kodokojo.io";
         users.add(new User("1234", "1234", userService.getName(), userService.getLogin(), email, userService.getPassword(), RSAUtils.encodePublicKey(userService.getPublicKey(), email)));
         context.put(USERS_KEY, users);
         String templatePath = INIT_JENKINS_GROOVY_VM;
 
-        return executeGroovyScript(projectConfiguration.getUserService(),brickConfigurerData, context, templatePath);
+        BrickConfigurerData initBrickConfigurerData = executeGroovyScript(projectConfiguration.getUserService(), brickConfigurerData, context, templatePath);
+
+        String baseUrl = brickConfigurerData.getEntrypoint();
+        int nbTry = 0;
+        boolean added;
+        do {
+            added = checkUserExist(baseUrl, userService.getLogin(), userService.getPassword());
+            if (!added) {
+                LOGGER.debug("Service user not added to {}. try number {}.", baseUrl, nbTry);
+                try {
+                    Thread.sleep(200);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+            nbTry++;
+        } while (!added && nbTry < 9000);
+
+        return initBrickConfigurerData;
     }
+
+    private boolean checkUserExist(String baseUrl, String login, String password) {
+        String url = baseUrl + "/me/configure";
+        Request.Builder builder = new Request.Builder().get().url(url);
+        addAuthen(builder, login, password);
+        Response response = null;
+        try {
+            response = httpClient.newCall(builder.build()).execute();
+            return response.code() == 200;
+        } catch (IOException e) {
+            LOGGER.error("Unable to request on {}", url, e);
+            return false;
+        } finally {
+            if (response != null) {
+                IOUtils.closeQuietly(response.body());
+            }
+        }
+    }
+
 
     @Override
     public BrickConfigurerData addUsers(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurerData, List<User> users) {
         VelocityContext context = new VelocityContext();
         context.put(USERS_KEY, brickConfigurerData.getUsers());
         String templatePath = ADD_USER_JENKINS_GROOVY_VM;
-        return executeGroovyScript(projectConfiguration.getUserService(),brickConfigurerData, context, templatePath);
+        return executeGroovyScript(projectConfiguration.getUserService(), brickConfigurerData, context, templatePath);
     }
 
     @Override
@@ -111,10 +142,14 @@ public class JenkinsConfigurer implements BrickConfigurer {
         VelocityContext context = new VelocityContext();
         context.put(USERS_KEY, brickConfigurerData.getUsers());
         String templatePath = DELETE_USER_JENKINS_GROOVY_VM;
-        return executeGroovyScript(projectConfiguration.getUserService(),brickConfigurerData, context, templatePath);
+        return executeGroovyScript(projectConfiguration.getUserService(), brickConfigurerData, context, templatePath);
     }
 
     private BrickConfigurerData executeGroovyScript(UserService admin, BrickConfigurerData brickConfigurerData, VelocityContext context, String templatePath) {
+        return executeGroovyScript(admin, brickConfigurerData, context, templatePath, true);
+    }
+
+    private BrickConfigurerData executeGroovyScript(UserService admin, BrickConfigurerData brickConfigurerData, VelocityContext context, String templatePath, boolean authen) {
         String url = brickConfigurerData.getEntrypoint() + SCRIPT_URL_SUFFIX;
 
         Response response = null;
@@ -122,9 +157,7 @@ public class JenkinsConfigurer implements BrickConfigurer {
             VelocityEngine ve = new VelocityEngine();
             ve.init(VE_PROPERTIES);
 
-
             Template template = ve.getTemplate(templatePath);
-
 
             StringWriter sw = new StringWriter();
             template.merge(context, sw);
@@ -134,18 +167,35 @@ public class JenkinsConfigurer implements BrickConfigurer {
 
             Request.Builder builder = new Request.Builder().url(url).post(body);
 
-            String crendential = String.format("%s:%s", admin.getLogin(), admin.getPassword());
-            builder.addHeader("Authorization", "Basic " + Base64.getEncoder().encodeToString(crendential.getBytes()));
-            Request request = builder.build();
-            response = httpClient.newCall(request).execute();
-            String bodyResponse = response.body().string();
-            if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace("Jenkins response: \n", bodyResponse);
+            if (authen) {
+                String login = admin.getLogin();
+                String password = admin.getPassword();
+                addAuthen(builder, login, password);
             }
-            //if (response.code() >= 200 && response.code() < 300) {
-            return brickConfigurerData;
-            //}
-            //hrow new RuntimeException("Unable to configure Jenkins " + brickConfigurerData.getEntrypoint() + ". Jenkins return " + response.code());//Create a dedicate Exception instead.
+            Request request = builder.build();
+            int nbTry = 0;
+            boolean success = false;
+            do {
+                response = httpClient.newCall(request).execute();
+                String bodyResponse = response.body().string();
+                success = response.code() >= 200 && response.code() < 300;
+                if (LOGGER.isTraceEnabled()) {
+                    LOGGER.trace("Jenkins response: \n", bodyResponse);
+                }
+                nbTry++;
+                if (!success) {
+                    LOGGER.debug("Request {} FAILED, try number {}", request.toString(), nbTry);
+                    try {
+                        Thread.sleep(200);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+            }while (!success && nbTry < 9000 && !Thread.currentThread().isInterrupted());
+            if (response.code() >= 200 && response.code() < 300) {
+                return brickConfigurerData;
+            }
+            throw new RuntimeException("Unable to configure Jenkins " + brickConfigurerData.getEntrypoint() + ". Jenkins return " + response.code());//Create a dedicate Exception instead.
         } catch (IOException e) {
             throw new RuntimeException("Unable to configure Jenkins " + brickConfigurerData.getEntrypoint(), e);
         } finally {
@@ -153,6 +203,11 @@ public class JenkinsConfigurer implements BrickConfigurer {
                 IOUtils.closeQuietly(response.body());
             }
         }
+    }
+
+    private static void addAuthen(Request.Builder builder, String login, String password) {
+        String crendential = String.format("%s:%s", login, password);
+        builder.addHeader("Authorization", "Basic " + Base64.getEncoder().encodeToString(crendential.getBytes()));
     }
 
 }
