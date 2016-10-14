@@ -86,7 +86,7 @@ public class BrickConfigurationConfigurationStarterActorTest {
         BrickStartContext context = createBrickStartContext(new BrickConfiguration("test", BrickType.CI, "1.0", Collections.singleton(new PortDefinition(8080))));
         try {
             Set<Service> services = new HashSet<>();
-            services.add(new Service("acme-ci", "192.168.1.22", 42090));
+            services.add(new Service("acme-ci", "192.168.1.22", new PortDefinition(42090)));
             when(brickManager.start(any(ProjectConfiguration.class), any(StackConfiguration.class), any(BrickConfiguration.class))).thenReturn(services);
 
             try {

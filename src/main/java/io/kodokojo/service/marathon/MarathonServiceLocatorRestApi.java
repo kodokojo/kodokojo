@@ -15,8 +15,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-/**
- *Tool set which allow to locate a {@link io.kodokojo.model.Service} .
- */
-package io.kodokojo.service.servicelocator;
+package io.kodokojo.service.marathon;
 
+import com.google.gson.JsonObject;
+import retrofit.http.GET;
+import retrofit.http.Path;
+
+public interface MarathonServiceLocatorRestApi {
+
+    @GET("/v2/apps")
+    JsonObject getAllApplications();
+
+    @GET("/v2/apps/{appId}")
+    JsonObject getApplicationConfiguration(@Path("appId") String appId);
+
+}

@@ -1,0 +1,165 @@
+{
+
+  "app": {
+    "id": "/xebia/nexus",
+    "cmd": null,
+    "args": null,
+    "user": null,
+    "env": { },
+    "instances": 1,
+    "cpus": 0.5,
+    "mem": 1024,
+    "disk": 0,
+    "executor": "",
+    "constraints": [
+      [
+        "type",
+        "LIKE",
+        "operator"
+      ]
+    ],
+    "uris": [ ],
+    "fetch": [ ],
+    "storeUrls": [ ],
+    "ports": [
+      10008
+    ],
+    "portDefinitions": [
+      {
+        "port": 10008,
+        "protocol": "tcp",
+        "labels": { }
+      }
+    ],
+    "requirePorts": false,
+    "backoffSeconds": 1,
+    "backoffFactor": 1.15,
+    "maxLaunchDelaySeconds": 3600,
+    "container": {
+      "type": "DOCKER",
+      "volumes": [
+        {
+          "containerPath": "/sonatype-work/",
+          "hostPath": "/kodokojo/env/xebia/nexus/",
+          "mode": "RW"
+        }
+      ],
+      "docker": {
+        "image": "sonatype/nexus:2.13.0-01",
+        "network": "BRIDGE",
+        "portMappings": [
+          {
+            "containerPort": 8081,
+            "hostPort": 0,
+            "servicePort": 10008,
+            "protocol": "tcp",
+            "labels": {
+              "applicationProtocol": "HTTPS"
+            }
+          }
+        ],
+        "privileged": false,
+        "parameters": [
+          {
+            "key": "env",
+            "value": "CONTEXT_PATH=/"
+          },
+          {
+            "key": "env",
+            "value": "JAVA_OPTS=-Dnexus.browserdetector.disable=true -DglobalRestApiSettings.baseUrl=https://nexus-xebia.kodokojo.io"
+          },
+          {
+            "key": "label",
+            "value": "endpoint=xebia"
+          },
+          {
+            "key": "label",
+            "value": "componentType=repository"
+          },
+          {
+            "key": "label",
+            "value": "component=nexus"
+          },
+          {
+            "key": "user",
+            "value": "root"
+          },
+          {
+            "key": "log-opt",
+            "value": "tag=nexus-kodokojo"
+          }
+        ],
+        "forcePullImage": false
+      }
+    },
+    "healthChecks": [
+      {
+        "path": "/",
+        "protocol": "HTTP",
+        "portIndex": 0,
+        "gracePeriodSeconds": 180,
+        "intervalSeconds": 20,
+        "timeoutSeconds": 20,
+        "maxConsecutiveFailures": 10,
+        "ignoreHttp1xx": false
+      }
+    ],
+    "readinessChecks": [ ],
+    "dependencies": [ ],
+    "upgradeStrategy": {
+      "minimumHealthCapacity": 1,
+      "maximumOverCapacity": 1
+    },
+    "labels": {
+      "endpoint": "xebia",
+      "componentType": "repository",
+      "managedByKodoKojoHa": "true",
+      "component": "nexus"
+    },
+    "acceptedResourceRoles": null,
+    "ipAddress": null,
+    "version": "2016-10-14T14:58:55.181Z",
+    "residency": null,
+    "versionInfo": {
+      "lastScalingAt": "2016-10-14T14:58:55.181Z",
+      "lastConfigChangeAt": "2016-10-14T14:58:55.181Z"
+    },
+    "tasksStaged": 0,
+    "tasksRunning": 1,
+    "tasksHealthy": 1,
+    "tasksUnhealthy": 0,
+    "deployments": [ ],
+    "tasks": [
+      {
+        "id": "xebia_nexus.ba370253-921e-11e6-aeac-02068bbb9f1f",
+        "slaveId": "2ce72106-b586-457f-b183-a6b652b303ed-S0",
+        "host": "10.10.78.34",
+        "startedAt": "2016-10-14T14:58:56.053Z",
+        "stagedAt": "2016-10-14T14:58:55.222Z",
+        "ports": [
+          11259
+        ],
+        "version": "2016-10-14T14:58:55.181Z",
+        "ipAddresses": [
+          {
+            "ipAddress": "172.17.0.3",
+            "protocol": "IPv4"
+          }
+        ],
+        "appId": "/xebia/nexus",
+        "healthCheckResults": [
+          {
+            "alive": true,
+            "consecutiveFailures": 0,
+            "firstSuccess": "2016-10-14T14:59:35.471Z",
+            "lastFailure": null,
+            "lastSuccess": "2016-10-14T19:28:04.070Z",
+            "lastFailureCause": null,
+            "taskId": "xebia_nexus.ba370253-921e-11e6-aeac-02068bbb9f1f"
+          }
+        ]
+      }
+    ]
+  }
+
+}

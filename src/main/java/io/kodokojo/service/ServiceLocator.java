@@ -15,18 +15,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package io.kodokojo.service.servicelocator.marathon;
+package io.kodokojo.service;
 
-import com.google.gson.JsonObject;
-import retrofit.http.GET;
-import retrofit.http.Path;
 
-public interface MarathonRestApi {
 
-    @GET("/v2/apps")
-    JsonObject getAllApplications();
+import io.kodokojo.model.Service;
 
-    @GET("/v2/apps/{appId}")
-    JsonObject getApplicationConfiguration(@Path("appId") String appId);
+import java.util.Set;
+
+public interface ServiceLocator {
+
+    /**
+     * Provide a Kodokojo service for a given type and name
+     *
+     * @param type The service type, like registry, scm, ci.
+     * @param name The name of service
+     * @return <code>null</code> if no service found.
+     */
+    Set<Service> getService(String type, String name);
+
 
 }

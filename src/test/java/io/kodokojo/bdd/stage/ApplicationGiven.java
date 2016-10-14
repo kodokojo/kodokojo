@@ -152,7 +152,7 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
 
         Service service = StageUtils.startDockerRedis(this.dockerTestSupport);
         redisHost = service.getHost();
-        redisPort = service.getPort();
+        redisPort = service.getPortDefinition().getContainerPort();
 
         return self();
     }

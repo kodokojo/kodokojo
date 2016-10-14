@@ -148,7 +148,7 @@ public class BrickConfigurationStarterActor extends AbstractActor {
             generateMsgAndSend(brickStartContext, httpsUrl, null, BrickStateEvent.State.ALREADYEXIST);
             sender.tell(Futures.failed(brickAlreadyExist), self());
         } catch (RuntimeException e) {
-            LOGGER.error("An error occurred while trying to start brick {} for project {}.", brickType, projectName, e);
+            LOGGER.error("An error occurred while trying to start brick {} for project {}: {}", brickType, projectName, e);
             generateMsgAndSend(brickStartContext, httpsUrl, null, BrickStateEvent.State.ONFAILURE, e.getMessage());
             sender.tell(Futures.failed(e), self());
         }

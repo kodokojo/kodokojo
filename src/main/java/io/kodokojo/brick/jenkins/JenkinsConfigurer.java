@@ -26,7 +26,6 @@ import io.kodokojo.model.User;
 import io.kodokojo.model.UserService;
 import io.kodokojo.service.RSAUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.client.methods.RequestBuilder;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
@@ -98,6 +97,7 @@ public class JenkinsConfigurer implements BrickConfigurer {
         do {
             added = checkUserExist(baseUrl, userService.getLogin(), userService.getPassword());
             if (!added) {
+                LOGGER.debug("Service user not added to {}. try number {}.", baseUrl, nbTry);
                 try {
                     Thread.sleep(200);
                 } catch (InterruptedException e) {
@@ -105,7 +105,7 @@ public class JenkinsConfigurer implements BrickConfigurer {
                 }
             }
             nbTry++;
-        } while (!added && nbTry < 100);
+        } while (!added && nbTry < 9000);
 
         return initBrickConfigurerData;
     }
@@ -119,7 +119,7 @@ public class JenkinsConfigurer implements BrickConfigurer {
             response = httpClient.newCall(builder.build()).execute();
             return response.code() == 200;
         } catch (IOException e) {
-            LOGGER.error("Unable to request on {}", url,e);
+            LOGGER.error("Unable to request on {}", url, e);
             return false;
         } finally {
             if (response != null) {
@@ -134,7 +134,7 @@ public class JenkinsConfigurer implements BrickConfigurer {
         VelocityContext context = new VelocityContext();
         context.put(USERS_KEY, brickConfigurerData.getUsers());
         String templatePath = ADD_USER_JENKINS_GROOVY_VM;
-        return executeGroovyScript(projectConfiguration.getUserService(),brickConfigurerData, context, templatePath);
+        return executeGroovyScript(projectConfiguration.getUserService(), brickConfigurerData, context, templatePath);
     }
 
     @Override
@@ -146,6 +146,10 @@ public class JenkinsConfigurer implements BrickConfigurer {
     }
 
     private BrickConfigurerData executeGroovyScript(UserService admin, BrickConfigurerData brickConfigurerData, VelocityContext context, String templatePath) {
+        return executeGroovyScript(admin, brickConfigurerData, context, templatePath, true);
+    }
+
+    private BrickConfigurerData executeGroovyScript(UserService admin, BrickConfigurerData brickConfigurerData, VelocityContext context, String templatePath, boolean authen) {
         String url = brickConfigurerData.getEntrypoint() + SCRIPT_URL_SUFFIX;
 
         Response response = null;
@@ -163,19 +167,35 @@ public class JenkinsConfigurer implements BrickConfigurer {
 
             Request.Builder builder = new Request.Builder().url(url).post(body);
 
-            String login = admin.getLogin();
-            String password = admin.getPassword();
-            addAuthen(builder, login, password);
-            Request request = builder.build();
-            response = httpClient.newCall(request).execute();
-            String bodyResponse = response.body().string();
-            if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace("Jenkins response: \n", bodyResponse);
+            if (authen) {
+                String login = admin.getLogin();
+                String password = admin.getPassword();
+                addAuthen(builder, login, password);
             }
-            //if (response.code() >= 200 && response.code() < 300) {
-            return brickConfigurerData;
-            //}
-            //hrow new RuntimeException("Unable to configure Jenkins " + brickConfigurerData.getEntrypoint() + ". Jenkins return " + response.code());//Create a dedicate Exception instead.
+            Request request = builder.build();
+            int nbTry = 0;
+            boolean success = false;
+            do {
+                response = httpClient.newCall(request).execute();
+                String bodyResponse = response.body().string();
+                success = response.code() >= 200 && response.code() < 300;
+                if (LOGGER.isTraceEnabled()) {
+                    LOGGER.trace("Jenkins response: \n", bodyResponse);
+                }
+                nbTry++;
+                if (!success) {
+                    LOGGER.debug("Request {} FAILED, try number {}", request.toString(), nbTry);
+                    try {
+                        Thread.sleep(200);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+            }while (!success && nbTry < 9000 && !Thread.currentThread().isInterrupted());
+            if (response.code() >= 200 && response.code() < 300) {
+                return brickConfigurerData;
+            }
+            throw new RuntimeException("Unable to configure Jenkins " + brickConfigurerData.getEntrypoint() + ". Jenkins return " + response.code());//Create a dedicate Exception instead.
         } catch (IOException e) {
             throw new RuntimeException("Unable to configure Jenkins " + brickConfigurerData.getEntrypoint(), e);
         } finally {
