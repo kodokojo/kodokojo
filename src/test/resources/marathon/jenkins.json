@@ -1,0 +1,165 @@
+{
+
+  "app": {
+    "id": "/xebia/jenkins",
+    "cmd": null,
+    "args": null,
+    "user": null,
+    "env": { },
+    "instances": 1,
+    "cpus": 0.5,
+    "mem": 1024,
+    "disk": 0,
+    "executor": "",
+    "constraints": [
+      [
+        "type",
+        "LIKE",
+        "operator"
+      ]
+    ],
+    "uris": [ ],
+    "fetch": [ ],
+    "storeUrls": [ ],
+    "ports": [
+      10009
+    ],
+    "portDefinitions": [
+      {
+        "port": 10009,
+        "protocol": "tcp",
+        "labels": { }
+      }
+    ],
+    "requirePorts": false,
+    "backoffSeconds": 1,
+    "backoffFactor": 1.15,
+    "maxLaunchDelaySeconds": 3600,
+    "container": {
+      "type": "DOCKER",
+      "volumes": [
+        {
+          "containerPath": "/var/jenkins_home/",
+          "hostPath": "/kodokojo/env/xebia/jenkins/",
+          "mode": "RW"
+        }
+      ],
+      "docker": {
+        "image": "jenkins:1.651.3-alpine",
+        "network": "BRIDGE",
+        "portMappings": [
+          {
+            "containerPort": 8080,
+            "hostPort": 0,
+            "servicePort": 10009,
+            "protocol": "tcp",
+            "labels": {
+              "applicationProtocol": "HTTPS"
+            }
+          }
+        ],
+        "privileged": false,
+        "parameters": [
+          {
+            "key": "env",
+            "value": "JENKINS_SLAVE_AGENT_PORT=50000"
+          },
+          {
+            "key": "env",
+            "value": "JAVA_OPTS=-Duser.timezone=Europe/Paris"
+          },
+          {
+            "key": "label",
+            "value": "endpoint=xebia"
+          },
+          {
+            "key": "label",
+            "value": "componentType=ci"
+          },
+          {
+            "key": "label",
+            "value": "component=jenkins"
+          },
+          {
+            "key": "user",
+            "value": "root"
+          },
+          {
+            "key": "log-opt",
+            "value": "tag=jenkins-kodokojo"
+          }
+        ],
+        "forcePullImage": false
+      }
+    },
+    "healthChecks": [
+      {
+        "path": "/",
+        "protocol": "HTTP",
+        "portIndex": 0,
+        "gracePeriodSeconds": 180,
+        "intervalSeconds": 20,
+        "timeoutSeconds": 20,
+        "maxConsecutiveFailures": 10,
+        "ignoreHttp1xx": false
+      }
+    ],
+    "readinessChecks": [ ],
+    "dependencies": [ ],
+    "upgradeStrategy": {
+      "minimumHealthCapacity": 1,
+      "maximumOverCapacity": 1
+    },
+    "labels": {
+      "endpoint": "xebia",
+      "managedByKodoKojoHa": "true",
+      "componentType": "ci",
+      "component": "jenkins"
+    },
+    "acceptedResourceRoles": null,
+    "ipAddress": null,
+    "version": "2016-10-14T14:58:55.183Z",
+    "residency": null,
+    "versionInfo": {
+      "lastScalingAt": "2016-10-14T14:58:55.183Z",
+      "lastConfigChangeAt": "2016-10-14T14:58:55.183Z"
+    },
+    "tasksStaged": 0,
+    "tasksRunning": 1,
+    "tasksHealthy": 1,
+    "tasksUnhealthy": 0,
+    "deployments": [ ],
+    "tasks": [
+      {
+        "id": "xebia_jenkins.bd350015-921e-11e6-aeac-02068bbb9f1f",
+        "slaveId": "2ce72106-b586-457f-b183-a6b652b303ed-S2",
+        "host": "10.10.62.239",
+        "startedAt": "2016-10-14T14:59:01.112Z",
+        "stagedAt": "2016-10-14T14:59:00.243Z",
+        "ports": [
+          17793
+        ],
+        "version": "2016-10-14T14:58:55.183Z",
+        "ipAddresses": [
+          {
+            "ipAddress": "172.17.0.3",
+            "protocol": "IPv4"
+          }
+        ],
+        "appId": "/xebia/jenkins",
+        "healthCheckResults": [
+          {
+            "alive": true,
+            "consecutiveFailures": 0,
+            "firstSuccess": "2016-10-14T15:00:16.969Z",
+            "lastFailure": null,
+            "lastSuccess": "2016-10-14T19:28:04.238Z",
+            "lastFailureCause": null,
+            "taskId": "xebia_jenkins.bd350015-921e-11e6-aeac-02068bbb9f1f"
+          }
+        ]
+      }
+    ]
+  }
+
+}

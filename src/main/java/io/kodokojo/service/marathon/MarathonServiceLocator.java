@@ -1,63 +1,63 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package io.kodokojo.service.servicelocator.marathon;
+package io.kodokojo.service.marathon;
 
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import io.kodokojo.config.MarathonConfig;
+import io.kodokojo.model.PortDefinition;
 import io.kodokojo.model.Service;
-import io.kodokojo.service.servicelocator.ServiceLocator;
+import io.kodokojo.service.ServiceLocator;
+import io.kodokojo.utils.JsonUtils;
 import org.apache.commons.lang.StringUtils;
 import retrofit.RestAdapter;
 
 import javax.inject.Inject;
 import java.util.*;
 
-import static org.apache.commons.lang.StringUtils.isBlank;
-
 public class MarathonServiceLocator implements ServiceLocator {
 
-    private final MarathonRestApi marathonRestApi;
+    private final MarathonServiceLocatorRestApi marathonServiceLocatorRestApi;
 
     @Inject
     public MarathonServiceLocator(MarathonConfig marathonConfig) {
         if (marathonConfig == null) {
             throw new IllegalArgumentException("marathonConfig must be defined.");
         }
-        marathonRestApi = provideMarathonRestApi(marathonConfig);
+        marathonServiceLocatorRestApi = provideMarathonRestApi(marathonConfig);
     }
 
-    protected MarathonRestApi provideMarathonRestApi(MarathonConfig marathonConfig) {
+    protected MarathonServiceLocatorRestApi provideMarathonRestApi(MarathonConfig marathonConfig) {
         RestAdapter.Builder builder = new RestAdapter.Builder().setEndpoint(marathonConfig.url());
         if (StringUtils.isNotBlank(marathonConfig.login())) {
             String basicAuthenticationValue = "Basic " + Base64.getEncoder().encodeToString(String.format("%s:%s", marathonConfig.login(), marathonConfig.password()).getBytes());
             builder.setRequestInterceptor(request -> request.addHeader("Authorization", basicAuthenticationValue));
         }
         RestAdapter adapter = builder.build();
-        return adapter.create(MarathonRestApi.class);
+        return adapter.create(MarathonServiceLocatorRestApi.class);
     }
 
     @Override
-    public Set<Service> getService(String type, String name) {
+    public Set<Service> getService(String type, String projectName) {
         Set<String> appIds = new HashSet<>();
-        JsonObject json = marathonRestApi.getAllApplications();
+        JsonObject json = marathonServiceLocatorRestApi.getAllApplications();
         JsonArray apps = json.getAsJsonArray("apps");
         for (int i = 0; i < apps.size(); i++) {
             JsonObject app = (JsonObject) apps.get(i);
@@ -65,28 +65,21 @@ public class MarathonServiceLocator implements ServiceLocator {
             JsonObject labels = app.getAsJsonObject("labels");
             if (labels.has("endpoint")) {
                 String project = labels.getAsJsonPrimitive("endpoint").getAsString();
-                if (name.equals(project)) {
-                    appIds.add(id);
+                if (labels.has("component")) {
+                    String component = labels.getAsJsonPrimitive("component").getAsString();
+                    if (projectName.equals(project) && type.equals(component)) {
+                        appIds.add(id);
+                    }
                 }
             }
         }
         Set<Service> res = new HashSet<>();
         for (String appId : appIds) {
-            JsonObject applicationConfiguration = marathonRestApi.getApplicationConfiguration(appId);
-            res.addAll(convertToService(name + "-" + type, applicationConfiguration));
+            JsonObject applicationConfiguration = marathonServiceLocatorRestApi.getApplicationConfiguration(appId);
+            res.addAll(convertToService(projectName + "-" + type, applicationConfiguration));
         }
 
         return res;
-    }
-
-    @Override
-    public Set<Service> getServiceByType(String type) {
-        return null;
-    }
-
-    @Override
-    public Set<Service> getServiceByName(String name) {
-        return null;
     }
 
     private static Set<Service> convertToService(String name, JsonObject json) {
@@ -95,12 +88,23 @@ public class MarathonServiceLocator implements ServiceLocator {
         JsonObject container = app.getAsJsonObject("container");
         String containerType = container.getAsJsonPrimitive("type").getAsString();
         if ("DOCKER".equals(containerType)) {
-            List<String> ports = new ArrayList<>();
+            List<PortDefinition> ports = new ArrayList<>();
             JsonObject docker = container.getAsJsonObject("docker");
             JsonArray portMappings = docker.getAsJsonArray("portMappings");
             for (int i = 0; i < portMappings.size(); i++) {
                 JsonObject portMapping = (JsonObject) portMappings.get(i);
-                ports.add(portMapping.getAsJsonPrimitive("containerPort").getAsString());
+                String containerPort = portMapping.getAsJsonPrimitive("containerPort").getAsString();
+
+                PortDefinition.Type portType = JsonUtils.readJsonObjectFromJson(portMapping, "labels")
+                        .map(lab -> JsonUtils.readStringFromJson(lab, "applicationProtocol"))
+                        .filter(Optional::isPresent)
+                        .map(Optional::get)
+                        .map(PortDefinition.Type::valueOf)
+                        .orElse(PortDefinition.Type.TCP);
+
+
+                ports.add(new PortDefinition(portType, -1, Integer.parseInt(containerPort)));
+
             }
             JsonArray tasks = app.getAsJsonArray("tasks");
             for (int i = 0; i < tasks.size(); i++) {
@@ -118,8 +122,9 @@ public class MarathonServiceLocator implements ServiceLocator {
                     JsonArray jsonPorts = task.getAsJsonArray("ports");
                     for (int j = 0; j < jsonPorts.size(); j++) {
                         JsonPrimitive jsonPort = (JsonPrimitive) jsonPorts.get(j);
-                        String portName = ports.get(j);
-                        res.add(new Service(name + "-" + portName, host, jsonPort.getAsInt()));
+                        PortDefinition portDefinition = ports.get(j);
+                        PortDefinition portDefWithHostPort = new PortDefinition(portDefinition.getName(), portDefinition.getType(), jsonPort.getAsInt(), portDefinition.getContainerPort(), portDefinition.getServicePort());
+                        res.add(new Service(name + "-" + portDefinition.getContainerPort(), host, portDefWithHostPort));
                     }
                 }
             }
