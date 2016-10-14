@@ -7,6 +7,7 @@ import akka.testkit.TestActorRef;
 import akka.util.Timeout;
 import io.kodokojo.model.*;
 import io.kodokojo.service.repository.ProjectRepository;
+import io.kodokojo.test.utils.DataBuilder;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -26,7 +27,7 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class ListAndUpdateUserToProjectActorTest {
+public class ListAndUpdateUserToProjectActorTest implements DataBuilder {
 
 
     private static ActorSystem actorSystem;
@@ -42,54 +43,19 @@ public class ListAndUpdateUserToProjectActorTest {
     @Test
     public void list_and_update_user_for_two_bricks_from_on_project() {
         // given
-
-        UserBuilder builder = new UserBuilder();
-        builder.setFirstName("charles");
-        builder.setLastName("dupond");
-        builder.setEmail("cdupond@sample.com");
-        builder.setUsername("cdupond");
-        builder.setEntityIdentifier("1234");
-        builder.setIdentifier("5678");
-        builder.setPassword("oldPawword");
-        builder.setSshPublicKey("oldSshPublicKey");
-        User requester = builder.build();
+        User requester = anUser();
 
         ProjectRepository projectRepository = mock(ProjectRepository.class);
         TestActorRef<Actor> subject = TestActorRef.create(actorSystem, ListAndUpdateUserToProjectActor.PROPS(projectRepository));
 
-        BrickConfigurationBuilder brickConfigurationBuilder = new BrickConfigurationBuilder();
-        brickConfigurationBuilder.setVersion("1.0.0");
-        Set<PortDefinition> portDefinitions = Collections.singleton(new PortDefinition(8080));
-        brickConfigurationBuilder.setPortDefinitions(portDefinitions);
-
-        StackConfigurationBuilder stackConfigurationBuilder = new StackConfigurationBuilder();
-        brickConfigurationBuilder.setName("brick1");
-        brickConfigurationBuilder.setType(BrickType.CI);
-        stackConfigurationBuilder.addBrickConfiguration(brickConfigurationBuilder.build());
-        brickConfigurationBuilder.setName("brick2");
-        brickConfigurationBuilder.setType(BrickType.SCM);
-        stackConfigurationBuilder.setName("Build-A");
-        stackConfigurationBuilder.setType(StackType.BUILD);
-        stackConfigurationBuilder.addBrickConfiguration(brickConfigurationBuilder.build());
-
-        ProjectConfigurationBuilder projectConfigurationBuilder = new ProjectConfigurationBuilder();
-        projectConfigurationBuilder.setUserService(mock(UserService.class));
-        projectConfigurationBuilder.setEntityIdentifier("my@entity.com");
-        projectConfigurationBuilder.setName("myProject");
-        projectConfigurationBuilder.setIdentifier("007");
-        List<User> users = Collections.singletonList(requester);
-
-        projectConfigurationBuilder.setAdmins(users);
-        projectConfigurationBuilder.setUsers(users);
-        projectConfigurationBuilder.addStackConfiguration(stackConfigurationBuilder.build());
-
         // when
 
         Set<String> projectIds = Collections.singleton("9000");
-        when(projectRepository.getProjectConfigIdsByUserIdentifier("5678")).thenReturn(projectIds);
+        when(projectRepository.getProjectConfigIdsByUserIdentifier("1234")).thenReturn(projectIds);
 
-        when(projectRepository.getProjectConfigurationById("9000")).thenReturn(projectConfigurationBuilder.build());
+        when(projectRepository.getProjectConfigurationById("9000")).thenReturn(aProjectConfiguration());
 
+        //then
         Future<Object> future = ask(subject, new ProjectUpdaterMessages.ListAndUpdateUserToProjectMsg(requester, requester), Timeout.apply(1, TimeUnit.SECONDS));
         try {
             Object result = Await.result(future, Duration.apply(1, TimeUnit.SECONDS));
@@ -97,7 +63,7 @@ public class ListAndUpdateUserToProjectActorTest {
             assertThat(result.getClass()).isEqualTo(ProjectUpdaterMessages.ListAndUpdateUserToProjectResultMsg.class);
             TestEndpointActor underlyingActor = (TestEndpointActor) endpointRef.underlyingActor();
             Set<Object> messages = underlyingActor.getMessages();
-            assertThat(messages.size()).isEqualTo(2);
+            assertThat(messages.size()).isEqualTo(3);
             messages.stream().forEach(m -> {
                 assertThat(m.getClass()).isEqualTo(BrickUpdateUserActor.BrickUpdateUserMsg.class);
             });
@@ -107,7 +73,6 @@ public class ListAndUpdateUserToProjectActorTest {
         }
 
 
-        //then
     }
 
     @AfterClass

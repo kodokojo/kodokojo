@@ -109,10 +109,10 @@ public class UserSparkEndpoint extends AbstractSparkEndpoint {
 
                 JsonParser parser = new JsonParser();
                 JsonObject json = (JsonObject) parser.parse(request.body());
-                String email = json.getAsJsonPrimitive("email").getAsString();
-                String name = json.getAsJsonPrimitive("name").getAsString();
-                String password = json.getAsJsonPrimitive("password").getAsString();
-                String sshPublicKey = json.getAsJsonPrimitive("sshPublicKey").getAsString();
+                String email = readStringFromJson(json, "email").orElse("");
+                String name = readStringFromJson(json, "name").orElse("");
+                String password = readStringFromJson(json, "password").orElse("");
+                String sshPublicKey = readStringFromJson(json, "sshPublicKey").orElse("");
 
                 builder.setPassword(password).setSshPublicKey(sshPublicKey);
 

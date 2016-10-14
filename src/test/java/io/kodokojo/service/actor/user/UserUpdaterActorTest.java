@@ -8,6 +8,7 @@ import akka.util.Timeout;
 import io.kodokojo.model.User;
 import io.kodokojo.model.UserBuilder;
 import io.kodokojo.service.repository.UserRepository;
+import io.kodokojo.test.utils.DataBuilder;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -24,7 +25,7 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-public class UserUpdaterActorTest {
+public class UserUpdaterActorTest implements DataBuilder {
 
 
     private static ActorSystem actorSystem;
@@ -39,16 +40,7 @@ public class UserUpdaterActorTest {
     public void update_user_and_request_brick_changed() {
 
         // given
-        UserBuilder builder = new UserBuilder();
-        builder.setFirstName("charles");
-        builder.setLastName("dupond");
-        builder.setEmail("cdupond@sample.com");
-        builder.setUsername("cdupond");
-        builder.setEntityIdentifier("1234");
-        builder.setIdentifier("5678");
-        builder.setPassword("oldPawword");
-        builder.setSshPublicKey("oldSshPublicKey");
-        User requester = builder.build();
+        User requester = anUser();
 
         UserRepository userRepository = mock(UserRepository.class);
         TestActorRef<Actor> subject = TestActorRef.create(actorSystem, UserUpdaterActor.PROPS(userRepository));
