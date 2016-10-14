@@ -52,7 +52,7 @@
         },
         {
           "key": "log-opt",
-          "value": "tag=gitlab-${projectName}"
+          "value": "tag=gitlab-$projectName"
         }
       ]
     },
