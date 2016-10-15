@@ -46,7 +46,7 @@
         },
         {
           "key": "log-opt",
-          "value": "tag=jenkins-${projectName}"
+          "value": "tag=jenkins-$projectName"
         }
       ]
     },
