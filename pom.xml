@@ -338,7 +338,7 @@
             <dependency>
                 <groupId>com.amazonaws</groupId>
                 <artifactId>aws-java-sdk-bom</artifactId>
-                <version>1.10.55</version>
+                <version>1.11.22</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -604,24 +604,6 @@
                     </plugin>
                 </plugins>
             </build>
-        </profile>
-        <profile>
-            <id>jenkins</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-            </activation>
-            <dependencies>
-                <dependency>
-                    <groupId>org.jenkins-ci.main</groupId>
-                    <artifactId>jenkins-core</artifactId>
-                    <version>1.642.1</version>
-                </dependency>
-                <dependency>
-                    <groupId>com.cloudbees.jenkins.plugins</groupId>
-                    <artifactId>cloudbees-credentials</artifactId>
-                    <version>3.3</version>
-                </dependency>
-            </dependencies>
         </profile>
     </profiles>
     <repositories>

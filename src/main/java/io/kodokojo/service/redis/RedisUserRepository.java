@@ -36,6 +36,7 @@ import java.security.interfaces.RSAPublicKey;
 import java.util.Arrays;
 import java.util.Iterator;
 
+import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang.StringUtils.isBlank;
 
 public class RedisUserRepository extends AbstractRedisStore implements UserRepository, ApplicationLifeCycleListener {
@@ -112,9 +113,7 @@ public class RedisUserRepository extends AbstractRedisStore implements UserRepos
 
     @Override
     public boolean addUser(User user) {
-        if (user == null) {
-            throw new IllegalArgumentException("user must be defined.");
-        }
+        requireNonNull(user, "user must be defined.");
         ByteArrayOutputStream byteArray = new ByteArrayOutputStream();
         try (ObjectOutputStream out = new ObjectOutputStream(byteArray); Jedis jedis = pool.getResource()) {
             if (jedis.get(RedisUtils.aggregateKey(USERNAME_PREFIX, user.getUsername())) == null) {
@@ -139,12 +138,28 @@ public class RedisUserRepository extends AbstractRedisStore implements UserRepos
         return false;
     }
 
+    @Override
+    public boolean updateUser(User user) {
+        requireNonNull(user, "user must be defined.");
+        byte[] userKey = RedisUtils.aggregateKey(USER_PREFIX, user.getIdentifier());
+        ByteArrayOutputStream byteArray = new ByteArrayOutputStream();
+        try (ObjectOutputStream out = new ObjectOutputStream(byteArray); Jedis jedis = pool.getResource()) {
+            if (jedis.exists(userKey)) {
+                byte[] password = RSAUtils.encryptWithAES(key,user.getPassword());
+                UserValue userValue = new UserValue(user, password);
+                out.writeObject(userValue);
+                jedis.set(userKey, byteArray.toByteArray());
+                return true;
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to serialized UserValue.", e);
+        }
+        return false;
+    }
 
     @Override
     public boolean addUserService(UserService userService) {
-        if (userService == null) {
-            throw new IllegalArgumentException("userService must be defined.");
-        }
+        requireNonNull(userService, "userService must be defined.");
         ByteArrayOutputStream byteArray = new ByteArrayOutputStream();
         try (ObjectOutputStream out = new ObjectOutputStream(byteArray); Jedis jedis = pool.getResource()) {
             byte[] password = RSAUtils.encryptWithAES(key, userService.getPassword());
@@ -187,20 +202,6 @@ public class RedisUserRepository extends AbstractRedisStore implements UserRepos
             }
             return getUserServiceByIdentifier(identifier);
         }
-    }
-
-    @Deprecated
-    @Override
-    public boolean userIsAdminOfProjectConfiguration(String username, ProjectConfiguration projectConfiguration) {
-        boolean res = false;
-        User current = getUserByUsername(username);
-        String userIdentifier = current.getIdentifier();
-        Iterator<User> admins = projectConfiguration.getAdmins();
-        while (!res && admins.hasNext()) {
-            User user = admins.next();
-            res = userIdentifier.equals(user.getIdentifier());
-        }
-        return res;
     }
 
     @Override

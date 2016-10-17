@@ -34,7 +34,8 @@ public interface UserRepository extends UserFetcher {
 
     boolean addUser(User user);
 
+    boolean updateUser(User user);
+
     boolean addUserService(UserService userService);
 
-    boolean userIsAdminOfProjectConfiguration(String username, ProjectConfiguration projectConfiguration);
 }

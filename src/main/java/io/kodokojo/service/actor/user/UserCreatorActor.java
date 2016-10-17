@@ -1,17 +1,17 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -24,7 +24,6 @@ import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
 import io.kodokojo.model.Entity;
 import io.kodokojo.model.User;
-import io.kodokojo.service.EmailSender;
 import io.kodokojo.service.RSAUtils;
 import io.kodokojo.service.actor.EmailSenderActor;
 import io.kodokojo.service.actor.EndpointActor;
@@ -40,25 +39,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static akka.event.Logging.getLogger;
+import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang.StringUtils.isBlank;
 
 public class UserCreatorActor extends AbstractActor {
 
     private final LoggingAdapter LOGGER = getLogger(getContext().system(), this);
 
-    public static Props PROPS(UserRepository userRepository, EmailSender emailSender) {
-        if (userRepository == null) {
-            throw new IllegalArgumentException("userRepository must be defined.");
-        }
-        if (emailSender == null) {
-            throw new IllegalArgumentException("emailSender must be defined.");
-        }
-        return Props.create(UserCreatorActor.class, userRepository, emailSender);
+    public static Props PROPS(UserRepository userRepository) {
+        requireNonNull(userRepository, "userRepository must be defined.");
+        return Props.create(UserCreatorActor.class, userRepository);
     }
 
     private final UserRepository userRepository;
-
-    private final EmailSender emailSender;
 
     private boolean isValid = false;
 
@@ -72,15 +65,8 @@ public class UserCreatorActor extends AbstractActor {
 
     private ActorRef originalActor;
 
-    public UserCreatorActor(UserRepository userRepository, EmailSender emailSender) {
-        if (userRepository == null) {
-            throw new IllegalArgumentException(" must be defined.");
-        }
-        if (emailSender == null) {
-            throw new IllegalArgumentException("emailSender must be defined.");
-        }
+    public UserCreatorActor(UserRepository userRepository) {
         this.userRepository = userRepository;
-        this.emailSender = emailSender;
         receive(ReceiveBuilder.match(UserCreateMsg.class, u -> {
             originalActor = sender();
             message = u;

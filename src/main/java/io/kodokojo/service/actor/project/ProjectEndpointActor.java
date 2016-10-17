@@ -122,6 +122,8 @@ public class ProjectEndpointActor extends AbstractActor {
                     getContext().actorOf(ProjectConfigurationChangeUserActor.PROPS(projectRepository)).forward(msg, getContext());
                 }).match(BrickUpdateUserActor.BrickUpdateUserMsg.class, msg -> {
                     getContext().actorOf(BrickUpdateUserActor.PROPS(applicationConfig, brickUrlFactory, brickConfigurerProvider)).forward(msg, getContext());
+                }).match(ProjectUpdaterMessages.ListAndUpdateUserToProjectMsg.class, msg -> {
+                    getContext().actorOf(ListAndUpdateUserToProjectActor.PROPS(projectRepository)).forward(msg, getContext());
                 })
                 .matchAny(this::unhandled).build());
     }

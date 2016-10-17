@@ -93,8 +93,8 @@ public class DatabaseModule extends AbstractModule {
 
     @Provides
     @Singleton
-    ProjectStore provideProjectStore(@Named("securityKey") SecretKey key, RedisConfig redisConfig, BrickFactory brickFactory, ApplicationLifeCycleManager applicationLifeCycleManager) {
-        RedisProjectStore redisProjectStore = new RedisProjectStore(key, redisConfig.host(), redisConfig.port(), brickFactory);
+    ProjectStore provideProjectStore(@Named("securityKey") SecretKey key, RedisConfig redisConfig, ApplicationLifeCycleManager applicationLifeCycleManager) {
+        RedisProjectStore redisProjectStore = new RedisProjectStore(key, redisConfig.host(), redisConfig.port());
         applicationLifeCycleManager.addService(redisProjectStore);
         return redisProjectStore;
     }

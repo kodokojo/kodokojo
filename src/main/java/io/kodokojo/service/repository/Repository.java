@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang.StringUtils.isBlank;
 
 public class Repository implements UserRepository, ProjectRepository, EntityRepository {
@@ -204,13 +205,14 @@ public class Repository implements UserRepository, ProjectRepository, EntityRepo
     }
 
     @Override
-    public boolean addUserService(UserService userService) {
-        return userRepository.addUserService(userService);
+    public boolean updateUser(User user) {
+        requireNonNull(user, "user must be defined.");
+        return userRepository.updateUser(user);
     }
 
     @Override
-    public boolean userIsAdminOfProjectConfiguration(String username, ProjectConfiguration projectConfiguration) {
-        return false;
+    public boolean addUserService(UserService userService) {
+        return userRepository.addUserService(userService);
     }
 
     @Override

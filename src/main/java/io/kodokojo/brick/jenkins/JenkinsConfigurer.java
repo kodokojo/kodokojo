@@ -54,7 +54,7 @@ public class JenkinsConfigurer implements BrickConfigurer {
 
     private static final String INIT_JENKINS_GROOVY_VM = "init_jenkins.groovy.vm";
 
-    private static final String ADD_USER_JENKINS_GROOVY_VM = "add_user_jenkins.groovy.vm";
+    private static final String ADD_OR_UPDATE_USER_JENKINS_GROOVY_VM = "add_user_jenkins.groovy.vm";
 
     private static final String DELETE_USER_JENKINS_GROOVY_VM = "delete_user_jenkins.groovy.vm";
 
@@ -133,8 +133,15 @@ public class JenkinsConfigurer implements BrickConfigurer {
     public BrickConfigurerData addUsers(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurerData, List<User> users) {
         VelocityContext context = new VelocityContext();
         context.put(USERS_KEY, brickConfigurerData.getUsers());
-        String templatePath = ADD_USER_JENKINS_GROOVY_VM;
-        return executeGroovyScript(projectConfiguration.getUserService(), brickConfigurerData, context, templatePath);
+
+        String templatePath = ADD_OR_UPDATE_USER_JENKINS_GROOVY_VM;
+        return executeGroovyScript(projectConfiguration.getUserService(),brickConfigurerData, context, templatePath);
+
+    }
+
+    @Override
+    public BrickConfigurerData updateUsers(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurerData, List<User> users) {
+        return addUsers(projectConfiguration, brickConfigurerData, users);
     }
 
     @Override

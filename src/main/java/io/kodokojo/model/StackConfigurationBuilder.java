@@ -32,16 +32,21 @@ public class StackConfigurationBuilder {
 
     private int scmSshPort;
 
+    public StackConfigurationBuilder() {
+        this(null);
+    }
+
     public StackConfigurationBuilder(StackConfiguration init) {
         if (init == null) {
-            throw new IllegalArgumentException("init must be defined.");
+            brickConfigurations = new HashSet<>();
+        } else {
+            this.name = init.getName();
+            this.type = init.getType();
+            this.brickConfigurations = new HashSet<>();
+            this.brickConfigurations.addAll(init.getBrickConfigurations());
+            this.loadBalancerHost = init.getLoadBalancerHost();
+            this.scmSshPort = init.getScmSshPort();
         }
-        this.name = init.getName();
-        this.type = init.getType();
-        this.brickConfigurations = new HashSet<>();
-        this.brickConfigurations.addAll(init.getBrickConfigurations());
-        this.loadBalancerHost = init.getLoadBalancerHost();
-        this.scmSshPort = init.getScmSshPort();
     }
 
     public StackConfiguration build() {
