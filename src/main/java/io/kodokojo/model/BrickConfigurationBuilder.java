@@ -37,14 +37,22 @@ public class BrickConfigurationBuilder {
 
     private  Map<String, Serializable> properties;
 
+    public BrickConfigurationBuilder() {
+        this(null);
+    }
+
     public BrickConfigurationBuilder(BrickConfiguration brickConfiguration) {
+
+        portDefinitions = new HashSet<>();
+        dependencies = new HashSet<>();
+        properties = new HashMap<>();
         if (brickConfiguration != null) {
             name = brickConfiguration.getName();
             type = brickConfiguration.getType();
             version = brickConfiguration.getVersion();
-            portDefinitions = new HashSet<>(brickConfiguration.getPortDefinitions());
-            dependencies = new HashSet<>(brickConfiguration.getDependencies());
-            properties = new HashMap<>(brickConfiguration.getProperties());
+            portDefinitions.addAll(brickConfiguration.getPortDefinitions());
+            dependencies.addAll(brickConfiguration.getDependencies());
+            properties.putAll(brickConfiguration.getProperties());
         }
     }
 

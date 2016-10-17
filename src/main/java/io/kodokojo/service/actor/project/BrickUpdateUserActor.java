@@ -21,10 +21,7 @@ import akka.actor.AbstractActor;
 import akka.actor.Props;
 import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
-import io.kodokojo.brick.BrickConfigurer;
-import io.kodokojo.brick.BrickConfigurerData;
-import io.kodokojo.brick.BrickConfigurerProvider;
-import io.kodokojo.brick.BrickUrlFactory;
+import io.kodokojo.brick.*;
 import io.kodokojo.config.ApplicationConfig;
 import io.kodokojo.model.BrickConfiguration;
 import io.kodokojo.model.ProjectConfiguration;
@@ -37,48 +34,62 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static akka.event.Logging.getLogger;
+import static java.util.Objects.requireNonNull;
 
 public class BrickUpdateUserActor extends AbstractActor {
 
     private final LoggingAdapter LOGGER = getLogger(getContext().system(), this);
 
-    public static final Props PROPS(ApplicationConfig applicationConfig, BrickUrlFactory brickUrlFactory, BrickConfigurerProvider brickConfigurerProvider) {
-        if (applicationConfig == null) {
-            throw new IllegalArgumentException("applicationConfig must be defined.");
-        }
-        if (brickUrlFactory == null) {
-            throw new IllegalArgumentException("brickUrlFactory must be defined.");
-        }
-        if (brickConfigurerProvider == null) {
-            throw new IllegalArgumentException("brickConfigurerProvider must be defined.");
-        }
+    private final ApplicationConfig applicationConfig;
+
+    private final BrickUrlFactory brickUrlFactory;
+
+    private final BrickConfigurerProvider brickConfigurerProvider;
+
+    public BrickUpdateUserActor(ApplicationConfig applicationConfig, BrickUrlFactory brickUrlFactory, BrickConfigurerProvider brickConfigurerProvider) {
+        this.applicationConfig = applicationConfig;
+        this.brickUrlFactory = brickUrlFactory;
+        this.brickConfigurerProvider = brickConfigurerProvider;
+
+        receive(ReceiveBuilder
+                .match(BrickUpdateUserMsg.class, this::onBrickUpdateUser)
+                .matchAny(this::unhandled).build());
+
+    }
+
+    public static Props PROPS(ApplicationConfig applicationConfig, BrickUrlFactory brickUrlFactory, BrickConfigurerProvider brickConfigurerProvider) {
+        requireNonNull(applicationConfig, "applicationConfig must be defined.");
+        requireNonNull(brickUrlFactory, "brickUrlFactory must be defined.");
+        requireNonNull(brickConfigurerProvider, "brickConfigurerProvider must be defined.");
         return Props.create(BrickUpdateUserActor.class, applicationConfig, brickUrlFactory, brickConfigurerProvider);
     }
 
-    public BrickUpdateUserActor(ApplicationConfig applicationConfig, BrickUrlFactory brickUrlFactory, BrickConfigurerProvider brickConfigurerProvider) {
-        receive(ReceiveBuilder.match(BrickUpdateUserMsg.class, msg -> {
-            String url = "https://" + brickUrlFactory.forgeUrl(msg.projectConfiguration, msg.stackConfiguration.getName(), msg.brickConfiguration);
-            LOGGER.debug("Try to {} user {} on brick url {}.",msg.typeChange.toString(), StringUtils.join(msg.users.stream().map(User::getUsername).collect(Collectors.toList()),", "), url);
-            BrickConfigurer brickConfigurer = brickConfigurerProvider.provideFromBrick(msg.brickConfiguration);
-            BrickConfigurerData brickConfigurationData = new BrickConfigurerData(msg.projectConfiguration.getName(),
-                    msg.stackConfiguration.getName(),
-                    url,
-                    applicationConfig.domain(),
-                    IteratorUtils.toList(msg.projectConfiguration.getUsers()),
-                    IteratorUtils.toList(msg.projectConfiguration.getAdmins()));
-            brickConfigurationData.getContext().putAll(msg.brickConfiguration.getProperties());
-            LOGGER.debug("brickConfigurationData context: {}", brickConfigurationData.getContext());
-            switch (msg.typeChange) {
-                case ADD:
-                    brickConfigurationData = brickConfigurer.addUsers(msg.projectConfiguration, brickConfigurationData, msg.users);
-                    break;
-                case REMOVE:
-                    brickConfigurationData = brickConfigurer.removeUsers(msg.projectConfiguration, brickConfigurationData, msg.users);
-                    break;
-            }
-            sender().tell(new BrickUpdateUserResultMsg(msg, true), self());
-            getContext().stop(self());
-        }).matchAny(this::unhandled).build());
+    private void onBrickUpdateUser(BrickUpdateUserMsg msg) throws BrickConfigurationException {
+
+        String url = "https://" + brickUrlFactory.forgeUrl(msg.projectConfiguration, msg.stackConfiguration.getName(), msg.brickConfiguration);
+        LOGGER.debug("Try to {} user {} on brick url {}.",msg.typeChange.toString(), StringUtils.join(msg.users.stream().map(User::getUsername).collect(Collectors.toList()),", "), url);
+        BrickConfigurer brickConfigurer = brickConfigurerProvider.provideFromBrick(msg.brickConfiguration);
+        BrickConfigurerData brickConfigurationData = new BrickConfigurerData(msg.projectConfiguration.getName(),
+                msg.stackConfiguration.getName(),
+                url,
+                applicationConfig.domain(),
+                IteratorUtils.toList(msg.projectConfiguration.getUsers()),
+                IteratorUtils.toList(msg.projectConfiguration.getAdmins()));
+        brickConfigurationData.getContext().putAll(msg.brickConfiguration.getProperties());
+        LOGGER.debug("brickConfigurationData context: {}", brickConfigurationData.getContext());
+        switch (msg.typeChange) {
+            case ADD:
+                brickConfigurationData = brickConfigurer.addUsers(msg.projectConfiguration, brickConfigurationData, msg.users);
+                break;
+            case UPDATE:
+                brickConfigurationData = brickConfigurer.updateUsers(msg.projectConfiguration, brickConfigurationData, msg.users);
+                break;
+            case REMOVE:
+                brickConfigurationData = brickConfigurer.removeUsers(msg.projectConfiguration, brickConfigurationData, msg.users);
+                break;
+        }
+        sender().tell(new BrickUpdateUserResultMsg(msg, true), self());
+        getContext().stop(self());
     }
 
     public static class BrickUpdateUserMsg {

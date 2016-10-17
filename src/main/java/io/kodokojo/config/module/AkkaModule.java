@@ -29,7 +29,10 @@ import io.kodokojo.brick.BrickFactory;
 import io.kodokojo.brick.BrickStateEventDispatcher;
 import io.kodokojo.brick.BrickUrlFactory;
 import io.kodokojo.config.ApplicationConfig;
-import io.kodokojo.service.*;
+import io.kodokojo.service.BootstrapConfigurationProvider;
+import io.kodokojo.service.BrickManager;
+import io.kodokojo.service.ConfigurationStore;
+import io.kodokojo.service.SSLCertificatProvider;
 import io.kodokojo.service.actor.DeadLetterActor;
 import io.kodokojo.service.actor.entity.EntityEndpointActor;
 import io.kodokojo.service.actor.event.EventEndpointActor;
@@ -52,8 +55,8 @@ public class AkkaModule extends AbstractModule {
 
     @Provides
     @Named(UserEndpointActor.NAME)
-    Props provideUserEndpointProps(UserRepository userRepository, EmailSender emailSender) {
-        return UserEndpointActor.PROPS(userRepository, emailSender);
+    Props provideUserEndpointProps(UserRepository userRepository) {
+        return UserEndpointActor.PROPS(userRepository);
     }
 
     @Provides

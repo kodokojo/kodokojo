@@ -1,3 +1,4 @@
+def buildState = 'SUCCESS'
 node() {
     stage('Building kodokojo back JAR') {
         docker.image('maven:3.3.3-jdk-8').inside(" -v /tmp/kodokojo/.m2:/root/.m2 -v /var/run/docker.sock:/var/tmp/docker.sock:rw -e \"DOCKER_HOST=unix:///var/tmp/docker.sock\"  -e \"DOCKER_HOST_IP=${env.DOCKER_HOST_IP}\"") {
@@ -7,24 +8,26 @@ node() {
             def commitMessage = commitMessage()
             slackSend channel: '#dev', color: '#6CBDEC', message: "*Starting * build job ${env.JOB_NAME} ${env.BUILD_NUMBER} from branch *${env.BRANCH_NAME}* (<${env.BUILD_URL}|Open>).\nCommit `${commit}` message :\n```${commitMessage}```"
             try {
-                sh 'mvn -B install'
-                if (currentBuild.result != 'FAILURE') {
+                def mvnStatus = sh returnStatus: true, script: 'mvn -B install'
+                if (mvnStatus == 0) {
                     slackSend channel: '#dev', color: 'good', message: "Building job ${env.JOB_NAME} in version $version from branch *${env.BRANCH_NAME}* on commit `${commit}` \n Job ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>) *SUCCESS*."
                     step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/*.xml'])
                     step([$class: 'ArtifactArchiver', artifacts: '**/target/*.jar', fingerprint: true])
                     //    step([$class: 'JgivenReportGenerator', excludeEmptyScenarios: true, jgivenResults: 'target/jgiven-reports/json/*.json', reportConfigs: [[$class: 'HtmlReportConfig', customCssFile: '', customJsFile: '', title: "${env.BRANCH_NAME} build ${env.BUILD_NUMBER}"]]])
-
-
                 } else {
+                    buildState = 'FAILURE'
+                    currentBuild.result = 'FAILURE'
                     slackSend channel: '#dev', color: 'danger', message: "Building job ${env.JOB_NAME} in version $version from branch *${env.BRANCH_NAME}* on commit `${commit}` \n Job ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>) *FAILED*."
                 }
             } catch (Exception e) {
                 slackSend channel: '#dev', color: 'danger', message: "Building job ${env.JOB_NAME} in version $version from branch *${env.BRANCH_NAME}* on commit `${commit}` \n Job ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>) *FAILED*.\n"
+                buildState = 'FAILURE'
+                currentBuild.result = 'FAILURE'
             }
 
         }
     }
-    if (currentBuild.result != 'FAILURE') {
+    if (buildState == 'SUCCESS') {
         buildAndPushDocker()
     }
 }

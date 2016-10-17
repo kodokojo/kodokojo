@@ -35,8 +35,11 @@ import static akka.event.Logging.getLogger;
 public class ProjectUpdaterActor extends AbstractActor {
 
     private final LoggingAdapter LOGGER = getLogger(getContext().system(), this);
+
     private ProjectUpdaterMessages.ProjectUpdateMsg originalMsg;
+
     private ActorRef originalSender;
+
     private ProjectRepository projectRepository;
 
     public ProjectUpdaterActor(ProjectRepository projectRepository) {

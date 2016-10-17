@@ -26,7 +26,6 @@ import java.util.Set;
 
 public class ProjectConfigurationBuilder {
 
-
     private String identifier;
 
     private String entityIdentifier;
@@ -41,8 +40,17 @@ public class ProjectConfigurationBuilder {
 
     private List<User> users;
 
+    public ProjectConfigurationBuilder() {
+        this(null);
+    }
+
     public ProjectConfigurationBuilder(ProjectConfiguration projectConfiguration) {
-        if (projectConfiguration != null) {
+        if (projectConfiguration == null) {
+            admins = new ArrayList<>();
+            users = new ArrayList<>();
+            stackConfigurations = new HashSet<>();
+
+        } else {
             identifier = projectConfiguration.getIdentifier();
             entityIdentifier = projectConfiguration.getEntityIdentifier();
             name = projectConfiguration.getName();
@@ -50,11 +58,6 @@ public class ProjectConfigurationBuilder {
             admins = IteratorUtils.toList(projectConfiguration.getAdmins());
             users = IteratorUtils.toList(projectConfiguration.getUsers());
             stackConfigurations = new HashSet<>(projectConfiguration.getStackConfigurations());
-        } else {
-            admins = new ArrayList<>();
-            users = new ArrayList<>();
-            stackConfigurations = new HashSet<>();
-
         }
     }
 
@@ -76,6 +79,10 @@ public class ProjectConfigurationBuilder {
 
     public void setAdmins(List<User> admins) {
         this.admins = admins;
+    }
+
+    public void setUserService(UserService userService) {
+        this.userService = userService;
     }
 
     public void setStackConfigurations(Set<StackConfiguration> stackConfigurations) {

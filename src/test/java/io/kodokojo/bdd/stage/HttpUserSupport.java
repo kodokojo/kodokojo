@@ -272,6 +272,10 @@ public class HttpUserSupport {
         return null;
     }
 
+    public void updateUser(UserInfo requester, UserInfo userChanged) {
+        throw new UnsupportedOperationException("");
+    }
+
     public enum UserChangeProjectConfig {
         ADD,
         REMOVE

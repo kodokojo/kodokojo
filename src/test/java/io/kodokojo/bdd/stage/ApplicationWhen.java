@@ -238,6 +238,14 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
         return self();
     }
 
+    public SELF update_user_$_with_password_$(@Quoted String username, @Quoted String password, boolean updateSSH) {
+        UserInfo currentUser = currentUsers.get(currentUserLogin);
+        UserInfo userToChange = currentUsers.get(username);
+        UserInfo userChanged = new UserInfo(userToChange.getUsername(), userToChange.getIdentifier(), userToChange.getEntityId(), password, userToChange.getEmail());
+        httpUserSupport.updateUser(currentUser, userChanged);
+        return self();
+    }
+
     private String getBaseUrl() {
         return "http://" + restEntryPointHost + ":" + restEntryPointPort;
     }

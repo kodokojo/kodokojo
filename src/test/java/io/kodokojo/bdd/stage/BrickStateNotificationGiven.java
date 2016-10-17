@@ -150,7 +150,7 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
         int port = TestUtils.getEphemeralPort();
 
         RedisUserRepository redisUserManager = new RedisUserRepository(secreteKey, service.getHost(), service.getPort());
-        RedisProjectStore redisProjectStore = new RedisProjectStore(secreteKey, service.getHost(), service.getPort(), new DefaultBrickFactory());
+        RedisProjectStore redisProjectStore = new RedisProjectStore(secreteKey, service.getHost(), service.getPort());
         RedisEntityStore redisEntityStore = new RedisEntityStore(secreteKey, service.getHost(), service.getPort());
         KeyPair keyPair = null;
         try {

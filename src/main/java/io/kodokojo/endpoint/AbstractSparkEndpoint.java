@@ -17,8 +17,7 @@
  */
 package io.kodokojo.endpoint;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.google.gson.*;
 import io.kodokojo.model.User;
 import io.kodokojo.service.authentification.SimpleCredential;
 import org.slf4j.Logger;
@@ -26,7 +25,11 @@ import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.ResponseTransformer;
 
+import java.util.Optional;
+import java.util.function.Function;
+
 import static java.util.Objects.requireNonNull;
+import static org.apache.commons.lang.StringUtils.isBlank;
 
 public abstract class AbstractSparkEndpoint implements SparkEndpoint {
 
@@ -74,6 +77,48 @@ public abstract class AbstractSparkEndpoint implements SparkEndpoint {
         }
         return null;
     }
+
+    private interface JsonGetter<T> {
+        T extract(JsonPrimitive jsonPrimitive);
+    }
+
+    private static <T> Optional<T> readFromJson(JsonObject json, String name, JsonGetter<T> mapper) {
+        return Optional.ofNullable(json.getAsJsonPrimitive(name)).flatMap(jsonPrimitive -> Optional.of(mapper.extract(jsonPrimitive)));
+
+    }
+
+    protected static Optional<String> readStringFromJson(JsonObject json, String name) {
+        requireNonNull(json, "json must be defined.");
+        if (isBlank(name)) {
+            throw new IllegalArgumentException("name must be defined.");
+        }
+        return readFromJson(json, name, JsonPrimitive::getAsString);
+    }
+
+    protected static Optional<Integer> readIntFromJson(JsonObject json, String name) {
+        requireNonNull(json, "json must be defined.");
+        if (isBlank(name)) {
+            throw new IllegalArgumentException("name must be defined.");
+        }
+        return readFromJson(json, name, JsonPrimitive::getAsInt);
+    }
+
+    protected static Optional<Long> readLongFromJson(JsonObject json, String name) {
+        requireNonNull(json, "json must be defined.");
+        if (isBlank(name)) {
+            throw new IllegalArgumentException("name must be defined.");
+        }
+        return readFromJson(json, name, JsonPrimitive::getAsLong);
+    }
+
+    protected static Optional<Boolean> readBooleanFromJson(JsonObject json, String name) {
+        requireNonNull(json, "json must be defined.");
+        if (isBlank(name)) {
+            throw new IllegalArgumentException("name must be defined.");
+        }
+        return readFromJson(json, name, JsonPrimitive::getAsBoolean);
+    }
+
 
 
 }

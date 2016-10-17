@@ -1,17 +1,17 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -26,12 +26,14 @@ import io.kodokojo.endpoint.dto.UserCreationDto;
 import io.kodokojo.endpoint.dto.UserDto;
 import io.kodokojo.endpoint.dto.UserProjectConfigIdDto;
 import io.kodokojo.model.User;
+import io.kodokojo.model.UserBuilder;
 import io.kodokojo.service.RSAUtils;
 import io.kodokojo.service.ReCaptchaService;
 import io.kodokojo.service.actor.EndpointActor;
 import io.kodokojo.service.actor.user.UserCreatorActor;
 import io.kodokojo.service.actor.user.UserEligibleActor;
 import io.kodokojo.service.actor.user.UserGenerateIdentifierActor;
+import io.kodokojo.service.actor.user.UserMessage;
 import io.kodokojo.service.authentification.SimpleCredential;
 import io.kodokojo.service.repository.ProjectFetcher;
 import io.kodokojo.service.repository.ProjectRepository;
@@ -92,6 +94,49 @@ public class UserSparkEndpoint extends AbstractSparkEndpoint {
 
     @Override
     public void configure() {
+        patch(BASE_API + "/user/:id", JSON_CONTENT_TYPE, ((request, response) -> {
+            String identifier = request.params(":id");
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Try to update user with id {}", identifier);
+            }
+
+            User requester = getRequester(request);
+            User user = userFetcher.getUserByIdentifier(identifier);
+
+            if (requester.getIdentifier().equals(user.getIdentifier())) {
+
+                UserBuilder builder = new UserBuilder(user);
+
+                JsonParser parser = new JsonParser();
+                JsonObject json = (JsonObject) parser.parse(request.body());
+                String email = readStringFromJson(json, "email").orElse("");
+                String name = readStringFromJson(json, "name").orElse("");
+                String password = readStringFromJson(json, "password").orElse("");
+                String sshPublicKey = readStringFromJson(json, "sshPublicKey").orElse("");
+
+                builder.setPassword(password).setSshPublicKey(sshPublicKey);
+
+                FiniteDuration duration = Duration.apply(2, TimeUnit.SECONDS);
+                Future<Object> future = ask(akkaEndpoint, new UserMessage.UserUpdateMessage(requester, builder.build(), password, sshPublicKey), new Timeout(duration));
+                Object result = Await.result(future, duration);
+                if (result instanceof UserMessage.UserUpdateMessageResult) {
+                    UserMessage.UserUpdateMessageResult msgResult = (UserMessage.UserUpdateMessageResult) result;
+                    if (msgResult.isSuccess()) {
+                        halt(200);
+                    } else {
+                        halt(500, "Unable to update user " + user.getUsername() + ".");
+                    }
+                } else {
+                    halt(500, "Unable to update User");
+                }
+
+            } else {
+                halt(403, "Your aren't allow to update this user.");
+            }
+
+            return "";
+        }), jsonResponseTransformer);
+
         post(BASE_API + "/user/:id", JSON_CONTENT_TYPE, ((request, response) -> {
             String identifier = request.params(":id");
             if (LOGGER.isDebugEnabled()) {
