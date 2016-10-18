@@ -46,7 +46,7 @@ public interface GitlabRest {
 
 
     @FormUrlEncoded
-    @PUT("/api/v3/users/:id")
+    @PUT("/api/v3/users/{id}")
     Response update(@Header("PRIVATE-TOKEN") String privateToken,  @Path("id") String id,
                     @Field("username") String username,
                     @Field("name") String name,
