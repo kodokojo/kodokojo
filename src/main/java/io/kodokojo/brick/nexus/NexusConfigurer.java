@@ -25,6 +25,7 @@ import io.kodokojo.brick.BrickConfigurerHelper;
 import io.kodokojo.model.ProjectConfiguration;
 import io.kodokojo.model.User;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +43,7 @@ public class NexusConfigurer implements BrickConfigurer, BrickConfigurerHelper {
     public static final String ADMIN_ACCOUNT_NAME = "admin";
 
     public static final String DEPLOYMENT_ACCOUNT_NAME = "deployment";
+    public static final String APPLICATION_XML = "application/xml";
 
     private final OkHttpClient httpClient;
 
@@ -128,17 +130,22 @@ public class NexusConfigurer implements BrickConfigurer, BrickConfigurerHelper {
     }
 
     private boolean executeRequest(OkHttpClient httpClient, String url, String xmlBody, String login, String password) {
-        RequestBody requestBody = RequestBody.create(MediaType.parse("application/xml"), xmlBody);
+        RequestBody requestBody = RequestBody.create(MediaType.parse(APPLICATION_XML), xmlBody);
         Request.Builder builder = new Request.Builder()
                 .url(url)
                 .post(requestBody);
         addBasicAuthentificationHeader(builder, login, password);
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Request url {} with login '{}' and password {}blank.", url, login, (StringUtils.isNotBlank(password) ? "NOT " : ""));
+        }
         Request request = builder
                 .build();
         Response response = null;
         try {
             response = httpClient.newCall(request).execute();
-            LOGGER.debug("Request on URL {} return code {}.", url, response.code());
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Request on URL {} return code {}.", url, response.code());
+            }
             return response.code() >= 200 && response.code() < 300;
         } catch (IOException e) {
             LOGGER.error("Unable to complete request on Nexus url {}", url, e);
