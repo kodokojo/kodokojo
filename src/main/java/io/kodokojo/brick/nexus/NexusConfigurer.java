@@ -130,7 +130,7 @@ public class NexusConfigurer implements BrickConfigurer, BrickConfigurerHelper {
     }
 
     private boolean executeRequest(OkHttpClient httpClient, String url, String xmlBody, String login, String password) {
-        executeRequest(httpClient, url, xmlBody, login, password, false);
+        return executeRequest(httpClient, url, xmlBody, login, password, false);
     }
 
     private boolean executeRequest(OkHttpClient httpClient, String url, String xmlBody, String login, String password, boolean put) {
