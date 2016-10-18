@@ -43,6 +43,7 @@ public class NexusConfigurer implements BrickConfigurer, BrickConfigurerHelper {
     public static final String ADMIN_ACCOUNT_NAME = "admin";
 
     public static final String DEPLOYMENT_ACCOUNT_NAME = "deployment";
+
     public static final String APPLICATION_XML = "application/xml";
 
     private final OkHttpClient httpClient;
@@ -170,7 +171,7 @@ public class NexusConfigurer implements BrickConfigurer, BrickConfigurerHelper {
     }
 
     private boolean updateAccount(OkHttpClient httpClient, String baseUrl, String xmlBody, String login, String password, String userId) {
-        return executeRequest(httpClient, baseUrl + "/service/local/user_account/" + userId, xmlBody, login, password);
+        return executeRequest(httpClient, baseUrl + "/service/local/user_account/" + userId, xmlBody, login, password, true);
     }
 
     private boolean createUser(OkHttpClient httpClient, String baseUrl, String xmlBody, String login, String password) {
