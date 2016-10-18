@@ -130,10 +130,18 @@ public class NexusConfigurer implements BrickConfigurer, BrickConfigurerHelper {
     }
 
     private boolean executeRequest(OkHttpClient httpClient, String url, String xmlBody, String login, String password) {
+        executeRequest(httpClient, url, xmlBody, login, password, false);
+    }
+
+    private boolean executeRequest(OkHttpClient httpClient, String url, String xmlBody, String login, String password, boolean put) {
         RequestBody requestBody = RequestBody.create(MediaType.parse(APPLICATION_XML), xmlBody);
         Request.Builder builder = new Request.Builder()
-                .url(url)
-                .post(requestBody);
+                .url(url);
+        if (put) {
+            builder.put(requestBody);
+        } else {
+            builder.post(requestBody);
+        }
         addBasicAuthentificationHeader(builder, login, password);
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Request url {} with login '{}' and password {}blank.", url, login, (StringUtils.isNotBlank(password) ? "NOT " : ""));
