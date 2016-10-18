@@ -191,7 +191,9 @@ public class GitlabConfigurer implements BrickConfigurer {
 
     @Override
     public BrickConfigurerData updateUsers(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurerData, List<User> users) {
-        return null;
+        String privateToken = (String) brickConfigurerData.getContext().get(GITLAB_ADMIN_TOKEN_KEY);
+
+        return brickConfigurerData;
     }
 
     @Override
