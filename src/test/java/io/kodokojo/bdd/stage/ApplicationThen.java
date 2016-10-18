@@ -220,12 +220,9 @@ public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF
 
             assertThat(json.getAsJsonPrimitive("name").getAsString()).isNotEmpty();
             if (complete) {
-                assertThat(json.getAsJsonPrimitive("password").getAsString()).isNotEmpty();
                 assertThat(json.getAsJsonPrimitive("email").getAsString()).isNotEmpty();
                 assertThat(json.getAsJsonPrimitive("sshPublicKey").getAsString()).isNotEmpty();
 
-            } else {
-                assertThat(json.getAsJsonPrimitive("password").getAsString()).isEmpty();
             }
             if (StringUtils.isNotBlank(projectConfigurationId)) {
                 assertThat(json.has("projectConfigurationIds"));
