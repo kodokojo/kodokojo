@@ -38,8 +38,11 @@ public class UserUpdaterActor extends AbstractActor {
     private void onUserUpdate(UserMessage.UserUpdateMessage msg) {
         User oldUser = userRepository.getUserByIdentifier(msg.getUserToUpdate().getIdentifier());
         UserBuilder builder = new UserBuilder(msg.getUserToUpdate());
-        builder.setPassword(msg.getNewPassword());
-        builder.setSshPublicKey(msg.getNewSSHPublicKey());
+        builder.setPassword(msg.getNewPassword())
+                .setSshPublicKey(msg.getNewSSHPublicKey())
+                .setFirstName(msg.getFirstName())
+                .setLastName(msg.getLastName())
+                .setEmail(msg.getEmail());
         User user = builder.build();
         userRepository.updateUser(user);
         sender().tell(new UserMessage.UserUpdateMessageResult(msg.getRequester(), true), self());

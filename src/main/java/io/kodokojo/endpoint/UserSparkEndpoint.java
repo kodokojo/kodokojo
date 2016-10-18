@@ -117,7 +117,7 @@ public class UserSparkEndpoint extends AbstractSparkEndpoint {
                 builder.setPassword(password).setSshPublicKey(sshPublicKey);
 
                 FiniteDuration duration = Duration.apply(2, TimeUnit.SECONDS);
-                Future<Object> future = ask(akkaEndpoint, new UserMessage.UserUpdateMessage(requester, builder.build(), password, sshPublicKey), new Timeout(duration));
+                Future<Object> future = ask(akkaEndpoint, new UserMessage.UserUpdateMessage(requester, builder.build(), password, sshPublicKey, name, name, email), new Timeout(duration));
                 Object result = Await.result(future, duration);
                 if (result instanceof UserMessage.UserUpdateMessageResult) {
                     UserMessage.UserUpdateMessageResult msgResult = (UserMessage.UserUpdateMessageResult) result;
