@@ -110,14 +110,15 @@ public class UserSparkEndpoint extends AbstractSparkEndpoint {
                 JsonParser parser = new JsonParser();
                 JsonObject json = (JsonObject) parser.parse(request.body());
                 String email = readStringFromJson(json, "email").orElse("");
-                String name = readStringFromJson(json, "name").orElse("");
+                String firstname = readStringFromJson(json, "firstName").orElse("");
+                String lastname = readStringFromJson(json, "lastName").orElse("");
                 String password = readStringFromJson(json, "password").orElse("");
                 String sshPublicKey = readStringFromJson(json, "sshPublicKey").orElse("");
 
                 builder.setPassword(password).setSshPublicKey(sshPublicKey);
 
                 FiniteDuration duration = Duration.apply(2, TimeUnit.SECONDS);
-                Future<Object> future = ask(akkaEndpoint, new UserMessage.UserUpdateMessage(requester, builder.build(), password, sshPublicKey, name, name, email), new Timeout(duration));
+                Future<Object> future = ask(akkaEndpoint, new UserMessage.UserUpdateMessage(requester, builder.build(), password, sshPublicKey, firstname, lastname, email), new Timeout(duration));
                 Object result = Await.result(future, duration);
                 if (result instanceof UserMessage.UserUpdateMessageResult) {
                     UserMessage.UserUpdateMessageResult msgResult = (UserMessage.UserUpdateMessageResult) result;
