@@ -56,7 +56,7 @@ public class ListAndUpdateUserToProjectActorTest implements DataBuilder {
         when(projectRepository.getProjectConfigurationById("9000")).thenReturn(aProjectConfiguration());
 
         //then
-        Future<Object> future = ask(subject, new ProjectUpdaterMessages.ListAndUpdateUserToProjectMsg(requester, requester), Timeout.apply(1, TimeUnit.SECONDS));
+        Future<Object> future = ask(subject, new ProjectUpdaterMessages.ListAndUpdateUserToProjectMsg(requester, new UpdateData<>(requester, requester)), Timeout.apply(1, TimeUnit.SECONDS));
         try {
             Object result = Await.result(future, Duration.apply(1, TimeUnit.SECONDS));
             assertThat(result).isNotNull();

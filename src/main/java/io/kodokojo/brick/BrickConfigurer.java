@@ -20,6 +20,7 @@ package io.kodokojo.brick;
 
 
 import io.kodokojo.model.ProjectConfiguration;
+import io.kodokojo.model.UpdateData;
 import io.kodokojo.model.User;
 
 import java.util.List;
@@ -44,7 +45,7 @@ public interface BrickConfigurer {
      */
     BrickConfigurerData addUsers(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurerData, List<User> users) throws BrickConfigurationException;
 
-    BrickConfigurerData updateUsers(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurerData, List<User> users);
+    BrickConfigurerData updateUsers(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurerData, List<UpdateData<User>> users);
 
     BrickConfigurerData removeUsers(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurationData, List<User> users);
 }

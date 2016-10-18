@@ -6,7 +6,6 @@ import akka.testkit.JavaTestKit;
 import akka.testkit.TestActorRef;
 import akka.util.Timeout;
 import io.kodokojo.model.User;
-import io.kodokojo.model.UserBuilder;
 import io.kodokojo.service.repository.UserRepository;
 import io.kodokojo.test.utils.DataBuilder;
 import org.junit.AfterClass;
@@ -47,7 +46,7 @@ public class UserUpdaterActorTest implements DataBuilder {
         //actorSystem.actorOf(Props.create())
 
         // when
-        Future<Object> future = ask(subject, new UserMessage.UserUpdateMessage(requester, requester, "newPassword", "newwSSH"), Timeout.apply(1, TimeUnit.SECONDS));
+        Future<Object> future = ask(subject, new UserMessage.UserUpdateMessage(requester, requester, "newPassword", "newwSSH", "Marcel", "Dupond", "marcel@dupond.com"), Timeout.apply(1, TimeUnit.SECONDS));
         try {
             Object result = Await.result(future, Duration.create(1, TimeUnit.SECONDS));
             assertThat(result).isNotNull();

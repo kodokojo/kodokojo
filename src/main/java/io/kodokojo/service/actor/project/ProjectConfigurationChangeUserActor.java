@@ -22,10 +22,7 @@ import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
-import io.kodokojo.model.Project;
-import io.kodokojo.model.ProjectConfiguration;
-import io.kodokojo.model.ProjectConfigurationBuilder;
-import io.kodokojo.model.User;
+import io.kodokojo.model.*;
 import io.kodokojo.service.actor.EndpointActor;
 import io.kodokojo.service.actor.message.UserRequestMessage;
 import io.kodokojo.service.actor.user.UserFetcherActor;
@@ -112,10 +109,20 @@ public class ProjectConfigurationChangeUserActor extends AbstractActor {
                     } else {
                         nbBrickUpdateRequested = 0;
                         nbBrickUpdateResponse = 0;
+
+                        List<UpdateData<User>> updateDataUsers = new ArrayList<>();
+                        if (originalMsg.typeChange == TypeChange.ADD) {
+                            updateDataUsers.addAll(users.stream().map(u -> new UpdateData<>(null, u)).collect(Collectors.toSet()));
+                        } else  if (originalMsg.typeChange == TypeChange.REMOVE) {
+                            updateDataUsers.addAll(users.stream().map(u -> new UpdateData<>(u, null)).collect(Collectors.toSet()));
+                        }
+
                         ActorRef endpoint = getContext().actorFor(EndpointActor.ACTOR_PATH);
+
                         projectConfiguration.getStackConfigurations().stream().forEach(s -> {
                             s.getBrickConfigurations().stream().forEach(b -> {
-                                BrickUpdateUserActor.BrickUpdateUserMsg msgUpdate = new BrickUpdateUserActor.BrickUpdateUserMsg(originalMsg.typeChange, new ArrayList<>(users), projectConfiguration, s, b);
+
+                                BrickUpdateUserActor.BrickUpdateUserMsg msgUpdate = new BrickUpdateUserActor.BrickUpdateUserMsg(originalMsg.typeChange, updateDataUsers, projectConfiguration, s, b);
                                 nbBrickUpdateRequested++;
                                 endpoint.tell(msgUpdate, self());
                             });
