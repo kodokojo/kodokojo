@@ -25,12 +25,10 @@ import io.kodokojo.brick.BrickConfigurerHelper;
 import io.kodokojo.model.ProjectConfiguration;
 import io.kodokojo.model.User;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Base64;
 import java.util.List;
 
 import static java.util.Objects.requireNonNull;
@@ -168,7 +166,7 @@ public class NexusConfigurer implements BrickConfigurer, BrickConfigurerHelper {
         return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                 "<user-changepw>\n" +
                 "<data>\n" +
-                (StringUtils.isNotBlank(oldPassword) ? "<oldPassword>" + oldPassword + "</oldPassword>\n" : "") +
+                "<oldPassword>" + oldPassword + "</oldPassword>\n" +
                 "<userId>" + userId + "</userId>\n" +
                 "<newPassword>" + newPassword + "</newPassword>\n" +
                 "</data>\n" +
