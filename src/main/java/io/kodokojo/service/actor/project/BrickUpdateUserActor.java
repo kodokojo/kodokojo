@@ -1,17 +1,17 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -23,10 +23,7 @@ import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
 import io.kodokojo.brick.*;
 import io.kodokojo.config.ApplicationConfig;
-import io.kodokojo.model.BrickConfiguration;
-import io.kodokojo.model.ProjectConfiguration;
-import io.kodokojo.model.StackConfiguration;
-import io.kodokojo.model.User;
+import io.kodokojo.model.*;
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang.StringUtils;
 
@@ -67,7 +64,15 @@ public class BrickUpdateUserActor extends AbstractActor {
     private void onBrickUpdateUser(BrickUpdateUserMsg msg) throws BrickConfigurationException {
 
         String url = "https://" + brickUrlFactory.forgeUrl(msg.projectConfiguration, msg.stackConfiguration.getName(), msg.brickConfiguration);
-        LOGGER.debug("Try to {} user {} on brick url {}.",msg.typeChange.toString(), StringUtils.join(msg.users.stream().map(User::getUsername).collect(Collectors.toList()),", "), url);
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Try to {} user {} on brick url {}.",
+                    msg.typeChange.toString(),
+                    StringUtils.join(msg.users.stream()
+                                    .map(entry -> (entry.getNewData() != null ? entry.getNewData().getUsername() : entry.getOldData().getUsername())).collect(Collectors.toList()),
+                            ", "),
+                    url
+            );
+        }
         BrickConfigurer brickConfigurer = brickConfigurerProvider.provideFromBrick(msg.brickConfiguration);
         BrickConfigurerData brickConfigurationData = new BrickConfigurerData(msg.projectConfiguration.getName(),
                 msg.stackConfiguration.getName(),
@@ -79,13 +84,13 @@ public class BrickUpdateUserActor extends AbstractActor {
         LOGGER.debug("brickConfigurationData context: {}", brickConfigurationData.getContext());
         switch (msg.typeChange) {
             case ADD:
-                brickConfigurationData = brickConfigurer.addUsers(msg.projectConfiguration, brickConfigurationData, msg.users);
+                brickConfigurationData = brickConfigurer.addUsers(msg.projectConfiguration, brickConfigurationData, msg.users.stream().map(UpdateData::getNewData).collect(Collectors.toList()));
                 break;
             case UPDATE:
                 brickConfigurationData = brickConfigurer.updateUsers(msg.projectConfiguration, brickConfigurationData, msg.users);
                 break;
             case REMOVE:
-                brickConfigurationData = brickConfigurer.removeUsers(msg.projectConfiguration, brickConfigurationData, msg.users);
+                brickConfigurationData = brickConfigurer.removeUsers(msg.projectConfiguration, brickConfigurationData, msg.users.stream().map(UpdateData::getOldData).collect(Collectors.toList()));
                 break;
         }
         sender().tell(new BrickUpdateUserResultMsg(msg, true), self());
@@ -100,11 +105,11 @@ public class BrickUpdateUserActor extends AbstractActor {
 
         private final BrickConfiguration brickConfiguration;
 
-        private final List<User> users;
+        private final List<UpdateData<User>> users;
 
         private final TypeChange typeChange;
 
-        public BrickUpdateUserMsg(TypeChange typeChange, List<User> users, ProjectConfiguration projectConfiguration, StackConfiguration stackConfiguration, BrickConfiguration brickConfiguration) {
+        public BrickUpdateUserMsg(TypeChange typeChange, List<UpdateData<User>> users, ProjectConfiguration projectConfiguration, StackConfiguration stackConfiguration, BrickConfiguration brickConfiguration) {
             this.users = users;
             this.typeChange = typeChange;
             if (projectConfiguration == null) {

@@ -1,6 +1,7 @@
 package io.kodokojo.service.actor.project;
 
 import io.kodokojo.model.Project;
+import io.kodokojo.model.UpdateData;
 import io.kodokojo.model.User;
 import io.kodokojo.service.actor.message.UserRequestMessage;
 
@@ -57,15 +58,15 @@ public interface ProjectUpdaterMessages {
 
     class ListAndUpdateUserToProjectMsg extends UserRequestMessage {
 
-        private final User user;
+        private final UpdateData<User> user;
 
-        public ListAndUpdateUserToProjectMsg(User requester, User user) {
+        public ListAndUpdateUserToProjectMsg(User requester, UpdateData<User> user) {
             super(requester);
             requireNonNull(user, "user must be defined.");
             this.user = user;
         }
 
-        public User getUser() {
+        public UpdateData<User> getUser() {
             return user;
         }
     }

@@ -27,6 +27,7 @@ import io.kodokojo.brick.BrickConfigurer;
 import io.kodokojo.brick.BrickConfigurerData;
 import io.kodokojo.brick.BrickUrlFactory;
 import io.kodokojo.model.ProjectConfiguration;
+import io.kodokojo.model.UpdateData;
 import io.kodokojo.model.User;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -190,25 +191,27 @@ public class GitlabConfigurer implements BrickConfigurer {
         return brickConfigurerData;
     }
 
+
     @Override
-    public BrickConfigurerData updateUsers(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurerData, List<User> users) {
+    public BrickConfigurerData updateUsers(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurerData, List<UpdateData<User>> users) {
         String privateToken = (String) brickConfigurerData.getContext().get(GITLAB_ADMIN_TOKEN_KEY);
 
         GitlabRest gitlabRest = provideGitlabRest(brickConfigurerData);
 
-        users.stream().forEach(u -> {
-            String userId = lookupUserId(gitlabRest, privateToken, u);
-            gitlabRest.update(privateToken, userId, u.getUsername(), u.getName(), u.getPassword(), u.getEmail());
-            JsonArray listSshKeys = gitlabRest.listSshKeys(privateToken, userId);
-            for (JsonElement keyEl : listSshKeys) {
-                JsonObject keyJson = (JsonObject) keyEl;
-                if (KODO_KOJO_SSH_KEY.equals(keyJson.getAsJsonPrimitive("title").getAsString())) {
-                    int keyId = keyJson.getAsJsonPrimitive("id").getAsInt();
-                    gitlabRest.deleteSshKey(privateToken, userId, "" + keyId);
-                    addSshKey(provideDefaultOkHttpClient(), getGitlabEntryPoint(brickConfigurerData), privateToken, Integer.parseInt(userId), u);
-                }
-            }
-        });
+        users.stream().map(UpdateData::getNewData)
+                .forEach(u -> {
+                    String userId = lookupUserId(gitlabRest, privateToken, u);
+                    gitlabRest.update(privateToken, userId, u.getUsername(), u.getName(), u.getPassword(), u.getEmail());
+                    JsonArray listSshKeys = gitlabRest.listSshKeys(privateToken, userId);
+                    for (JsonElement keyEl : listSshKeys) {
+                        JsonObject keyJson = (JsonObject) keyEl;
+                        if (KODO_KOJO_SSH_KEY.equals(keyJson.getAsJsonPrimitive("title").getAsString())) {
+                            int keyId = keyJson.getAsJsonPrimitive("id").getAsInt();
+                            gitlabRest.deleteSshKey(privateToken, userId, "" + keyId);
+                            addSshKey(provideDefaultOkHttpClient(), getGitlabEntryPoint(brickConfigurerData), privateToken, Integer.parseInt(userId), u);
+                        }
+                    }
+                });
 
         return brickConfigurerData;
     }

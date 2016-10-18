@@ -4,6 +4,7 @@ import akka.actor.AbstractActor;
 import akka.actor.Props;
 import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
+import io.kodokojo.model.UpdateData;
 import io.kodokojo.model.User;
 import io.kodokojo.model.UserBuilder;
 import io.kodokojo.service.actor.EndpointActor;
@@ -35,13 +36,14 @@ public class UserUpdaterActor extends AbstractActor {
     }
 
     private void onUserUpdate(UserMessage.UserUpdateMessage msg) {
+        User oldUser = userRepository.getUserByIdentifier(msg.getUserToUpdate().getIdentifier());
         UserBuilder builder = new UserBuilder(msg.getUserToUpdate());
         builder.setPassword(msg.getNewPassword());
         builder.setSshPublicKey(msg.getNewSSHPublicKey());
         User user = builder.build();
         userRepository.updateUser(user);
         sender().tell(new UserMessage.UserUpdateMessageResult(msg.getRequester(), true), self());
-        getContext().actorFor(EndpointActor.ACTOR_PATH).tell(new ProjectUpdaterMessages.ListAndUpdateUserToProjectMsg(msg.getRequester(), user), self());
+        getContext().actorFor(EndpointActor.ACTOR_PATH).tell(new ProjectUpdaterMessages.ListAndUpdateUserToProjectMsg(msg.getRequester(), new UpdateData<>(oldUser, user)), self());
         getContext().stop(self());
     }
 

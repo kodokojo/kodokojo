@@ -23,6 +23,7 @@ import io.kodokojo.brick.BrickConfigurer;
 import io.kodokojo.brick.BrickConfigurerData;
 import io.kodokojo.brick.BrickConfigurerHelper;
 import io.kodokojo.model.ProjectConfiguration;
+import io.kodokojo.model.UpdateData;
 import io.kodokojo.model.User;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -87,16 +88,17 @@ public class NexusConfigurer implements BrickConfigurer, BrickConfigurerHelper {
     }
 
     @Override
-    public BrickConfigurerData updateUsers(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurerData, List<User> users) {
+    public BrickConfigurerData updateUsers(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurerData, List<UpdateData<User>> users) {
         requireNonNull(brickConfigurerData, "brickConfigurerData must be defined.");
         requireNonNull(users, "users must be defined.");
 
         String adminPassword = getAdminPassword(projectConfiguration);
 
-        for (User user : users) {
+        for (UpdateData<User> entry : users) {
+            User user = entry.getNewData();
             String xmlBody = getUpdateUserAccountXmlBody(user.getUsername(), user.getEmail(), user.getFirstName(), user.getLastName());
             updateAccount(httpClient, brickConfigurerData.getEntrypoint(), xmlBody, ADMIN_ACCOUNT_NAME, adminPassword, user.getUsername());
-            xmlBody = getChangePasswordXmlBody(user.getUsername(), null, user.getPassword());
+            xmlBody = getChangePasswordXmlBody(user.getUsername(), entry.getOldData().getPassword() , user.getPassword());
             changePassword(httpClient, brickConfigurerData.getEntrypoint(), xmlBody, ADMIN_ACCOUNT_NAME, adminPassword);
         }
         return brickConfigurerData;
