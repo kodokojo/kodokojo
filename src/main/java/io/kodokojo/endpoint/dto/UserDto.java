@@ -39,8 +39,6 @@ public class UserDto implements Serializable {
 
     private String email;
 
-    private String password;
-
     private String sshPublicKey;
 
     private List<UserProjectConfigIdDto> projectConfigurationIds;
@@ -57,7 +55,6 @@ public class UserDto implements Serializable {
         this.name = user.getName();
         this.username = user.getUsername();
         this.email = user.getEmail();
-        this.password = user.getPassword();
         this.sshPublicKey = user.getSshPublicKey();
         this.projectConfigurationIds = new ArrayList<>();
     }
@@ -124,14 +121,6 @@ public class UserDto implements Serializable {
 
     public void setProjectConfigurationIds(List<UserProjectConfigIdDto> projectConfigurationIds) {
         this.projectConfigurationIds = projectConfigurationIds;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 
     public String getSshPublicKey() {
