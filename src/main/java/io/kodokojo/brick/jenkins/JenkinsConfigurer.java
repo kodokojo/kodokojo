@@ -22,6 +22,7 @@ import com.squareup.okhttp.*;
 import io.kodokojo.brick.BrickConfigurer;
 import io.kodokojo.brick.BrickConfigurerData;
 import io.kodokojo.model.ProjectConfiguration;
+import io.kodokojo.model.UpdateData;
 import io.kodokojo.model.User;
 import io.kodokojo.model.UserService;
 import io.kodokojo.service.RSAUtils;
@@ -41,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 public class JenkinsConfigurer implements BrickConfigurer {
 
@@ -140,8 +142,8 @@ public class JenkinsConfigurer implements BrickConfigurer {
     }
 
     @Override
-    public BrickConfigurerData updateUsers(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurerData, List<User> users) {
-        return addUsers(projectConfiguration, brickConfigurerData, users);
+    public BrickConfigurerData updateUsers(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurerData, List<UpdateData<User>> users) {
+        return addUsers(projectConfiguration, brickConfigurerData, users.stream().map(UpdateData::getNewData).collect(Collectors.toList()));
     }
 
     @Override

@@ -21,7 +21,9 @@ import com.squareup.okhttp.*;
 import io.kodokojo.brick.BrickConfigurationException;
 import io.kodokojo.brick.BrickConfigurer;
 import io.kodokojo.brick.BrickConfigurerData;
+import io.kodokojo.brick.BrickConfigurerHelper;
 import io.kodokojo.model.ProjectConfiguration;
+import io.kodokojo.model.UpdateData;
 import io.kodokojo.model.User;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -29,12 +31,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Base64;
 import java.util.List;
 
 import static java.util.Objects.requireNonNull;
 
-public class NexusConfigurer implements BrickConfigurer {
+public class NexusConfigurer implements BrickConfigurer, BrickConfigurerHelper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NexusConfigurer.class);
 
@@ -43,6 +44,8 @@ public class NexusConfigurer implements BrickConfigurer {
     public static final String ADMIN_ACCOUNT_NAME = "admin";
 
     public static final String DEPLOYMENT_ACCOUNT_NAME = "deployment";
+
+    public static final String APPLICATION_XML = "application/xml";
 
     private final OkHttpClient httpClient;
 
@@ -55,7 +58,7 @@ public class NexusConfigurer implements BrickConfigurer {
 
     @Override
     public BrickConfigurerData configure(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurerData) throws BrickConfigurationException {
-        String adminPassword = brickConfigurerData.getDefaultAdmin().getPassword();
+        String adminPassword = getAdminPassword(projectConfiguration);
         String xmlBody = getChangePasswordXmlBody(ADMIN_ACCOUNT_NAME, OLD_ADMIN_PASSWORD, adminPassword);
 
         if (changePassword(httpClient, brickConfigurerData.getEntrypoint(), xmlBody, ADMIN_ACCOUNT_NAME, OLD_ADMIN_PASSWORD)) {
@@ -70,7 +73,7 @@ public class NexusConfigurer implements BrickConfigurer {
         requireNonNull(brickConfigurerData, "brickConfigurerData must be defined.");
         requireNonNull(users, "users must be defined.");
 
-        String adminPassword = brickConfigurerData.getDefaultAdmin().getPassword();
+        String adminPassword = getAdminPassword(projectConfiguration);
         for (User user : users) {
             String xmlBody = getCreatUserXmlBody(user);
             if (!createUser(httpClient, brickConfigurerData.getEntrypoint(), xmlBody, ADMIN_ACCOUNT_NAME, adminPassword)) {
@@ -80,16 +83,22 @@ public class NexusConfigurer implements BrickConfigurer {
         return brickConfigurerData;
     }
 
+    private String getAdminPassword(ProjectConfiguration projectConfiguration) {
+        return projectConfiguration.getUserService().getPassword();
+    }
+
     @Override
-    public BrickConfigurerData updateUsers(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurerData, List<User> users) {
+    public BrickConfigurerData updateUsers(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurerData, List<UpdateData<User>> users) {
         requireNonNull(brickConfigurerData, "brickConfigurerData must be defined.");
         requireNonNull(users, "users must be defined.");
 
-        String adminPassword = brickConfigurerData.getDefaultAdmin().getPassword();
-        for (User user : users) {
+        String adminPassword = getAdminPassword(projectConfiguration);
+
+        for (UpdateData<User> entry : users) {
+            User user = entry.getNewData();
             String xmlBody = getUpdateUserAccountXmlBody(user.getUsername(), user.getEmail(), user.getFirstName(), user.getLastName());
             updateAccount(httpClient, brickConfigurerData.getEntrypoint(), xmlBody, ADMIN_ACCOUNT_NAME, adminPassword, user.getUsername());
-            xmlBody = getChangePasswordXmlBody(user.getUsername(), null, user.getPassword());
+            xmlBody = getChangePasswordXmlBody(user.getUsername(), entry.getOldData().getPassword() , user.getPassword());
             changePassword(httpClient, brickConfigurerData.getEntrypoint(), xmlBody, ADMIN_ACCOUNT_NAME, adminPassword);
         }
         return brickConfigurerData;
@@ -100,12 +109,13 @@ public class NexusConfigurer implements BrickConfigurer {
         requireNonNull(brickConfigurerData, "brickConfigurerData must be defined.");
         requireNonNull(users, "users must be defined.");
 
-        String adminPassword = brickConfigurerData.getDefaultAdmin().getPassword();
+        String adminPassword = getAdminPassword(projectConfiguration);
         String url = brickConfigurerData.getEntrypoint() + "/service/local/users/";
         for (User user : users) {
-            Request request = new Request.Builder().url(url + user.getUsername())
-                    .addHeader("Authorization", encodeBasicAuth(ADMIN_ACCOUNT_NAME, adminPassword))
-                    .delete().build();
+            Request.Builder builder = new Request.Builder().url(url + user.getUsername())
+                    .delete();
+            addBasicAuthentificationHeader(builder, ADMIN_ACCOUNT_NAME, adminPassword);
+            Request request = builder.build();
 
             Response response = null;
             try {
@@ -123,15 +133,30 @@ public class NexusConfigurer implements BrickConfigurer {
     }
 
     private boolean executeRequest(OkHttpClient httpClient, String url, String xmlBody, String login, String password) {
-        RequestBody requestBody = RequestBody.create(MediaType.parse("application/xml"), xmlBody);
-        Request request = new Request.Builder().url(url)
-                .addHeader("Authorization", encodeBasicAuth(login, password))
-                .post(requestBody)
+        return executeRequest(httpClient, url, xmlBody, login, password, false);
+    }
+
+    private boolean executeRequest(OkHttpClient httpClient, String url, String xmlBody, String login, String password, boolean put) {
+        RequestBody requestBody = RequestBody.create(MediaType.parse(APPLICATION_XML), xmlBody);
+        Request.Builder builder = new Request.Builder()
+                .url(url);
+        if (put) {
+            builder.put(requestBody);
+        } else {
+            builder.post(requestBody);
+        }
+        addBasicAuthentificationHeader(builder, login, password);
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Request url {} with login '{}' and password {}blank.", url, login, (StringUtils.isNotBlank(password) ? "NOT " : ""));
+        }
+        Request request = builder
                 .build();
         Response response = null;
         try {
             response = httpClient.newCall(request).execute();
-            LOGGER.debug("Request on URL {} return code {}.", url, response.code());
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Request on URL {} return code {}.", url, response.code());
+            }
             return response.code() >= 200 && response.code() < 300;
         } catch (IOException e) {
             LOGGER.error("Unable to complete request on Nexus url {}", url, e);
@@ -148,7 +173,7 @@ public class NexusConfigurer implements BrickConfigurer {
     }
 
     private boolean updateAccount(OkHttpClient httpClient, String baseUrl, String xmlBody, String login, String password, String userId) {
-        return executeRequest(httpClient, baseUrl + "/service/local/user_account/" +userId, xmlBody, login, password);
+        return executeRequest(httpClient, baseUrl + "/service/local/user_account/" + userId, xmlBody, login, password, true);
     }
 
     private boolean createUser(OkHttpClient httpClient, String baseUrl, String xmlBody, String login, String password) {
@@ -159,7 +184,7 @@ public class NexusConfigurer implements BrickConfigurer {
         return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                 "<user-changepw>\n" +
                 "<data>\n" +
-                (StringUtils.isNotBlank(oldPassword) ? "<oldPassword>" + oldPassword + "</oldPassword>\n" : "") +
+                "<oldPassword>" + oldPassword + "</oldPassword>\n" +
                 "<userId>" + userId + "</userId>\n" +
                 "<newPassword>" + newPassword + "</newPassword>\n" +
                 "</data>\n" +
@@ -196,8 +221,5 @@ public class NexusConfigurer implements BrickConfigurer {
                 "</user-request>";
     }
 
-    private String encodeBasicAuth(String login, String password) {
-        return "Basic " + Base64.getEncoder().encodeToString(String.format("%s:%s", login, password).getBytes());
-    }
 
 }

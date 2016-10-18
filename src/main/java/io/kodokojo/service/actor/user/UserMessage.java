@@ -29,12 +29,21 @@ public interface UserMessage {
 
         private final String newSSHPublicKey;
 
-        public UserUpdateMessage(User requester, User userToUpdate, String newPassword, String newSSHPublicKey) {
+        private final String email;
+
+        private final String firstName;
+
+        private final String lastName;
+
+        public UserUpdateMessage(User requester, User userToUpdate, String newPassword, String newSSHPublicKey, String firstName, String lastName, String email) {
             super(requester);
             requireNonNull(userToUpdate, "userToUpdate must be defined.");
             this.userToUpdate = userToUpdate;
             this.newPassword = newPassword;
             this.newSSHPublicKey = newSSHPublicKey;
+            this.firstName = firstName;
+            this.lastName = lastName;
+            this.email = email;
         }
 
         public User getUserToUpdate() {
@@ -47,6 +56,18 @@ public interface UserMessage {
 
         public String getNewSSHPublicKey() {
             return newSSHPublicKey;
+        }
+
+        public String getEmail() {
+            return email;
+        }
+
+        public String getFirstName() {
+            return firstName;
+        }
+
+        public String getLastName() {
+            return lastName;
         }
     }
 }

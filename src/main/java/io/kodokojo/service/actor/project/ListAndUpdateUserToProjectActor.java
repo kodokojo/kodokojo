@@ -6,6 +6,7 @@ import akka.actor.Props;
 import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
 import io.kodokojo.model.ProjectConfiguration;
+import io.kodokojo.model.UpdateData;
 import io.kodokojo.model.User;
 import io.kodokojo.service.actor.EndpointActor;
 import io.kodokojo.service.repository.ProjectRepository;
@@ -50,11 +51,11 @@ public class ListAndUpdateUserToProjectActor extends AbstractActor {
         originalSender = sender();
         initialMsg = msg;
 
-        List<User> userList = Collections.singletonList(msg.getUser());
+        List<UpdateData<User>> userList = Collections.singletonList(msg.getUser());
 
         ActorRef endpoint = getContext().actorFor(EndpointActor.ACTOR_PATH);
 
-        Set<String> projectConfigIds = projectRepository.getProjectConfigIdsByUserIdentifier(msg.getUser().getIdentifier());
+        Set<String> projectConfigIds = projectRepository.getProjectConfigIdsByUserIdentifier(msg.getUser().getOldData().getIdentifier());
         projectConfigIds.stream().forEach(projectConfigId -> {
             ProjectConfiguration projectConfiguration = projectRepository.getProjectConfigurationById(projectConfigId);
             projectConfiguration.getStackConfigurations().stream().forEach(stackConfiguration -> {
