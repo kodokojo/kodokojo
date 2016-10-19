@@ -25,7 +25,7 @@ public interface MarathonRestApi {
 
     @Headers("Content-Type: application/json")
     @POST("/v2/apps")
-    Call<Void> startApplication(RequestBody body);
+    Call<Void> startApplication(@Body RequestBody body);
 
     @DELETE("/v2/apps/{appId}")
     Call<Void> killAps(@Path("appId") String appId);
