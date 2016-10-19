@@ -17,6 +17,7 @@
  */
 package io.kodokojo.service.marathon;
 
+import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.http.*;
 
@@ -24,7 +25,7 @@ public interface MarathonRestApi {
 
     @Headers("Content-Type: application/json")
     @POST("/v2/apps")
-    Call<Void> startApplication(@Body String body);
+    Call<Void> startApplication(RequestBody body);
 
     @DELETE("/v2/apps/{appId}")
     Call<Void> killAps(@Path("appId") String appId);

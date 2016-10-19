@@ -23,10 +23,7 @@ import io.kodokojo.model.*;
 import io.kodokojo.service.BrickManager;
 import io.kodokojo.service.ProjectConfigurationException;
 import io.kodokojo.service.repository.ProjectRepository;
-import okhttp3.Interceptor;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
+import okhttp3.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang.StringUtils;
@@ -139,7 +136,8 @@ public class MarathonBrickManager implements BrickManager {
         }
 
         Set<Service> res = new HashSet<>();
-        Call<Void> call = marathonRestApi.startApplication(body);
+        RequestBody requestBody =RequestBody.create(MediaType.parse("application/json"), body);
+        Call<Void> call = marathonRestApi.startApplication(requestBody);
         try {
             call.execute();
             marathonServiceLocator.getService(type, projectName);
