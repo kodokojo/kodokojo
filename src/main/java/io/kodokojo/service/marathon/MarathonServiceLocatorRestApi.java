@@ -25,9 +25,9 @@ import retrofit2.http.Path;
 public interface MarathonServiceLocatorRestApi {
 
     @GET("/v2/apps")
-    Call<JsonObject> getAllApplications();
+    Call<String> getAllApplications();
 
     @GET("/v2/apps/{appId}")
-    Call<JsonObject> getApplicationConfiguration(@Path("appId") String appId);
+    Call<String> getApplicationConfiguration(@Path("appId") String appId);
 
 }

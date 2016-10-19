@@ -20,6 +20,7 @@ package io.kodokojo.service.marathon;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import io.kodokojo.config.MarathonConfig;
 import io.kodokojo.model.PortDefinition;
@@ -69,10 +70,11 @@ public class MarathonServiceLocator implements ServiceLocator {
     public Set<Service> getService(String type, String projectName) {
         Set<Service> res = new HashSet<>();
         Set<String> appIds = new HashSet<>();
-        Call<JsonObject> allApplicationsCall = marathonServiceLocatorRestApi.getAllApplications();
+        Call<String> allApplicationsCall = marathonServiceLocatorRestApi.getAllApplications();
         try {
-            Response<JsonObject> applicationsResponse = allApplicationsCall.execute();
-            JsonObject json = applicationsResponse.body();
+            Response<String> applicationsResponse = allApplicationsCall.execute();
+            JsonParser parser = new JsonParser();
+            JsonObject json = (JsonObject) parser.parse(applicationsResponse.body());
             JsonArray apps = json.getAsJsonArray("apps");
             for (int i = 0; i < apps.size(); i++) {
                 JsonObject app = (JsonObject) apps.get(i);
@@ -89,9 +91,10 @@ public class MarathonServiceLocator implements ServiceLocator {
                 }
             }
             for (String appId : appIds) {
-                Call<JsonObject> confCall = marathonServiceLocatorRestApi.getApplicationConfiguration(appId);
-                Response<JsonObject> confResponse = confCall.execute();
-                JsonObject applicationConfiguration = confResponse.body();
+                Call<String> confCall = marathonServiceLocatorRestApi.getApplicationConfiguration(appId);
+                JsonParser jsonParser = new JsonParser();
+                Response<String> confResponse = confCall.execute();
+                JsonObject applicationConfiguration = (JsonObject) jsonParser.parse(confResponse.body());
                 res.addAll(convertToService(projectName + "-" + type, applicationConfiguration));
             }
         } catch (IOException e) {
