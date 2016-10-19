@@ -70,11 +70,11 @@ public class MarathonServiceLocator implements ServiceLocator {
     public Set<Service> getService(String type, String projectName) {
         Set<Service> res = new HashSet<>();
         Set<String> appIds = new HashSet<>();
-        Call<String> allApplicationsCall = marathonServiceLocatorRestApi.getAllApplications();
+        Call allApplicationsCall = marathonServiceLocatorRestApi.getAllApplications();
         try {
-            Response<String> applicationsResponse = allApplicationsCall.execute();
+            Response applicationsResponse = allApplicationsCall.execute();
             JsonParser parser = new JsonParser();
-            JsonObject json = (JsonObject) parser.parse(applicationsResponse.body());
+            JsonObject json = (JsonObject) parser.parse(applicationsResponse.body().toString());
             JsonArray apps = json.getAsJsonArray("apps");
             for (int i = 0; i < apps.size(); i++) {
                 JsonObject app = (JsonObject) apps.get(i);
@@ -91,10 +91,10 @@ public class MarathonServiceLocator implements ServiceLocator {
                 }
             }
             for (String appId : appIds) {
-                Call<String> confCall = marathonServiceLocatorRestApi.getApplicationConfiguration(appId);
+                Call confCall = marathonServiceLocatorRestApi.getApplicationConfiguration(appId);
                 JsonParser jsonParser = new JsonParser();
-                Response<String> confResponse = confCall.execute();
-                JsonObject applicationConfiguration = (JsonObject) jsonParser.parse(confResponse.body());
+                Response confResponse = confCall.execute();
+                JsonObject applicationConfiguration = (JsonObject) jsonParser.parse(confResponse.body().toString());
                 res.addAll(convertToService(projectName + "-" + type, applicationConfiguration));
             }
         } catch (IOException e) {
