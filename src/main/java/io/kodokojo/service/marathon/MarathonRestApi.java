@@ -17,16 +17,15 @@
  */
 package io.kodokojo.service.marathon;
 
-import retrofit2.Response;
 import retrofit2.http.*;
 
 public interface MarathonRestApi {
 
     @Headers("Content-Type: application/json")
     @POST("/v2/apps")
-    Response startApplication(@Body String body);
+    void startApplication(@Body String body);
 
     @DELETE("/v2/apps/{appId}")
-    Response killAps(@Path("appId") String appId);
+    void killAps(@Path("appId") String appId);
 
 }
