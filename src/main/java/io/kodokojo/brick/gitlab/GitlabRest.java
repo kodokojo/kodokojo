@@ -21,6 +21,7 @@ package io.kodokojo.brick.gitlab;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import retrofit2.Call;
 import retrofit2.Response;
 import retrofit2.http.*;
 
@@ -32,24 +33,24 @@ public interface GitlabRest {
 
     @FormUrlEncoded
     @POST(API_V3_USERS)
-    JsonObject createUser(@Header(PRIVATE_TOKEN) String privateToken, @Field("username") String username, @Field("password") String password, @Field("email") String email, @Field("name") String name, @Field("confirm") String confirmationExpected);
+    Call<JsonObject> createUser(@Header(PRIVATE_TOKEN) String privateToken, @Field("username") String username, @Field("password") String password, @Field("email") String email, @Field("name") String name, @Field("confirm") String confirmationExpected);
 
     @FormUrlEncoded
     @POST(API_V3_USERS + "{id}/keys")
-    Response addSshKey(@Header(PRIVATE_TOKEN) String privateToken, @Path("id") String id, @Field("title") String title, @Field("key") String key);
+    Call<Response> addSshKey(@Header(PRIVATE_TOKEN) String privateToken, @Path("id") String id, @Field("title") String title, @Field("key") String key);
 
     @GET(API_V3_USERS + "{id}/keys")
-    JsonArray listSshKeys(@Header(PRIVATE_TOKEN) String privateToken, @Path("id") String id);
+    Call<JsonArray> listSshKeys(@Header(PRIVATE_TOKEN) String privateToken, @Path("id") String id);
 
     @DELETE(API_V3_USERS + "{id}/keys/{keyId}")
-    Response deleteSshKey(@Header(PRIVATE_TOKEN) String privateToken, @Path("id") String id, @Path("keyId") String keyId);
+    Call<Response> deleteSshKey(@Header(PRIVATE_TOKEN) String privateToken, @Path("id") String id, @Path("keyId") String keyId);
 
     @GET(API_V3_USERS)
-    JsonArray searchByUsername(@Header(PRIVATE_TOKEN) String privateToken, @Query("username") String username);
+    Call<JsonArray> searchByUsername(@Header(PRIVATE_TOKEN) String privateToken, @Query("username") String username);
 
     @FormUrlEncoded
     @PUT(API_V3_USERS + "{id}")
-    Response update(@Header(PRIVATE_TOKEN) String privateToken,
+    Call<Response> update(@Header(PRIVATE_TOKEN) String privateToken,
                     @Path("id") String id,
                     @Field("username") String username,
                     @Field("name") String name,
@@ -58,6 +59,6 @@ public interface GitlabRest {
 
 
     @DELETE(API_V3_USERS + "{id}")
-    Response deleteUser(@Header(PRIVATE_TOKEN) String privateToken, @Path("id") String id);
+    Call<Response> deleteUser(@Header(PRIVATE_TOKEN) String privateToken, @Path("id") String id);
 
 }

@@ -43,9 +43,7 @@ import java.io.IOException;
 import java.net.*;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -211,15 +209,26 @@ public class GitlabConfigurer implements BrickConfigurer, BrickConfigurerHelper 
                     if (LOGGER.isDebugEnabled()) {
                         LOGGER.debug("Trying to update user '{}' on  Gitlab.", u);
                     }
-                    gitlabRest.update(privateToken, userId, u.getUsername(), u.getName(), u.getPassword(), u.getEmail());
-                    JsonArray listSshKeys = gitlabRest.listSshKeys(privateToken, userId);
-                    for (JsonElement keyEl : listSshKeys) {
-                        JsonObject keyJson = (JsonObject) keyEl;
-                        if (KODO_KOJO_SSH_KEY.equals(keyJson.getAsJsonPrimitive("title").getAsString())) {
-                            int keyId = keyJson.getAsJsonPrimitive("id").getAsInt();
-                            gitlabRest.deleteSshKey(privateToken, userId, "" + keyId);
-                            addSshKey(provideDefaultOkHttpClient(), getGitlabEntryPoint(brickConfigurerData), privateToken, Integer.parseInt(userId), u);
+                    retrofit2.Call<retrofit2.Response> updateCall = gitlabRest.update(privateToken, userId, u.getUsername(), u.getName(), u.getPassword(), u.getEmail());
+                    try {
+                        retrofit2.Response<retrofit2.Response> updateResponse = updateCall.execute();
+                        if (updateResponse.isSuccessful()) {
+                            retrofit2.Call<JsonArray> call = gitlabRest.listSshKeys(privateToken, userId);
+                            JsonArray listSshKeys = call.execute().body();
+
+                            for (JsonElement keyEl : listSshKeys) {
+                                JsonObject keyJson = (JsonObject) keyEl;
+                                if (KODO_KOJO_SSH_KEY.equals(keyJson.getAsJsonPrimitive("title").getAsString())) {
+                                    int keyId = keyJson.getAsJsonPrimitive("id").getAsInt();
+                                    retrofit2.Call<retrofit2.Response> deleteCall = gitlabRest.deleteSshKey(privateToken, userId, "" + keyId);
+                                    deleteCall.execute();
+                                    addSshKey(provideDefaultOkHttpClient(), getGitlabEntryPoint(brickConfigurerData), privateToken, Integer.parseInt(userId), u);
+                                }
+                            }
                         }
+
+                    } catch (IOException e) {
+                        LOGGER.error("Unable to execute a request on Gitlab {}", getGitlabEntryPoint(brickConfigurerData), e);
                     }
                 });
 
@@ -255,16 +264,24 @@ public class GitlabConfigurer implements BrickConfigurer, BrickConfigurerHelper 
     }
 
     private String lookupUserId(GitlabRest gitlabRest, String privateToken, User user) {
-        JsonArray results = gitlabRest.searchByUsername(privateToken, user.getUsername());
-        Iterator<JsonElement> it = results.iterator();
-        String id = null;
-        while (id == null && it.hasNext()) {
-            JsonObject json = (JsonObject) it.next();
-            if (json.has("id")) {
-                id = json.getAsJsonPrimitive("id").getAsString();
+        retrofit2.Call<JsonArray> searchCall = gitlabRest.searchByUsername(privateToken, user.getUsername());
+        JsonArray results = null;
+        try {
+            results = searchCall.execute().body();
+            Iterator<JsonElement> it = results.iterator();
+            String id = null;
+            while (id == null && it.hasNext()) {
+                JsonObject json = (JsonObject) it.next();
+                if (json.has("id")) {
+                    id = json.getAsJsonPrimitive("id").getAsString();
+                }
             }
+            return id;
+        } catch (IOException e) {
+            LOGGER.error("Unable to lookup user '{}.", user.getUsername(), e);
         }
-        return id;
+        return null;
+
     }
 
     private String getGitlabEntryPoint(BrickConfigurerData brickConfigurerData) {

@@ -37,6 +37,7 @@ import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import retrofit2.Call;
 import retrofit2.Retrofit;
 
 import javax.inject.Inject;
@@ -137,25 +138,29 @@ public class MarathonBrickManager implements BrickManager {
             LOGGER.trace("Push new Application configuration to Marathon :\n{}", body);
         }
 
-        marathonRestApi.startApplication(body);
-
         Set<Service> res = new HashSet<>();
-        marathonServiceLocator.getService(type, projectName);
-        boolean haveHttpService = getAnHttpService(res);
-        // TODO remove this, listen Zookeeper instead
-        int nbTry = 0;
-        int maxNbTry = 10000;
-        while (nbTry < maxNbTry && !haveHttpService) {
-            nbTry++;
-            res = marathonServiceLocator.getService(type, projectName);
-            haveHttpService = getAnHttpService(res);
-            if (!haveHttpService) {
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
+        Call<Void> call = marathonRestApi.startApplication(body);
+        try {
+            call.execute();
+            marathonServiceLocator.getService(type, projectName);
+            boolean haveHttpService = getAnHttpService(res);
+            // TODO remove this, listen Zookeeper instead
+            int nbTry = 0;
+            int maxNbTry = 10000;
+            while (nbTry < maxNbTry && !haveHttpService) {
+                nbTry++;
+                res = marathonServiceLocator.getService(type, projectName);
+                haveHttpService = getAnHttpService(res);
+                if (!haveHttpService) {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
                 }
             }
+        } catch (IOException e) {
+            throw new BrickAlreadyExist(e, brickConfiguration.getName(), projectName);
         }
 
         return res;
