@@ -14,7 +14,8 @@ import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import retrofit.http.Path;
+import retrofit2.http.Path;
+
 
 import java.io.IOException;
 import java.util.Iterator;

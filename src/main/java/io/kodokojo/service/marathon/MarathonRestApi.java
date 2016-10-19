@@ -18,15 +18,14 @@
 package io.kodokojo.service.marathon;
 
 import com.google.gson.JsonObject;
-import com.squareup.okhttp.Response;
-import retrofit.http.*;
-import retrofit.mime.TypedString;
+import retrofit2.Response;
+import retrofit2.http.*;
 
 public interface MarathonRestApi {
 
     @Headers("Content-Type: application/json" )
     @POST("/v2/apps")
-    JsonObject startApplication(@Body TypedString body);
+    JsonObject startApplication(@Body String body);
 
     @DELETE("/v2/apps/{appId}")
     Response killAps(@Path("appId") String appId);

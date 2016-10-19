@@ -18,8 +18,8 @@
 package io.kodokojo.service.marathon;
 
 import com.google.gson.JsonObject;
-import retrofit.http.GET;
-import retrofit.http.Path;
+import retrofit2.http.GET;
+import retrofit2.http.Path;
 
 public interface MarathonServiceLocatorRestApi {
 

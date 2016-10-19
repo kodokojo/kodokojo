@@ -17,14 +17,15 @@
  */
 package io.kodokojo.bdd;
 
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
 import io.kodokojo.config.properties.PropertyResolver;
 import io.kodokojo.config.properties.provider.OrderedMergedValueProvider;
 import io.kodokojo.config.properties.provider.PropertyValueProvider;
 import io.kodokojo.config.properties.provider.SystemEnvValueProvider;
 import io.kodokojo.config.properties.provider.SystemPropertyValueProvider;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import org.apache.commons.io.IOUtils;
 import org.junit.Assume;
 import org.junit.rules.MethodRule;
 import org.junit.runners.model.FrameworkMethod;
@@ -88,11 +89,7 @@ public class MarathonIsPresent implements MethodRule {
             LOGGER.error("unable to done request {} due to following error", e);
         } finally {
             if (response != null) {
-                try {
-                    response.body().close();
-                } catch (IOException e) {
-                    fail(e.getMessage());
-                }
+                IOUtils.closeQuietly(response.body());
             }
         }
         return false;

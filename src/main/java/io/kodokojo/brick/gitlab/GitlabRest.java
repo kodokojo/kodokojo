@@ -21,37 +21,43 @@ package io.kodokojo.brick.gitlab;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.squareup.okhttp.Response;
-import retrofit.http.*;
+import retrofit2.Response;
+import retrofit2.http.*;
 
 public interface GitlabRest {
 
-    @FormUrlEncoded
-    @POST("/api/v3/users")
-    JsonObject createUser(@Header("PRIVATE-TOKEN") String privateToken, @Field("username") String username, @Field("password") String password, @Field("email") String email, @Field("name") String name, @Field("confirm") String confirmationExpected);
+    String PRIVATE_TOKEN = "PRIVATE-TOKEN";
+
+    String API_V3_USERS = "/api/v3/users/";
 
     @FormUrlEncoded
-    @POST("/api/v3/users/{id}/keys")
-    Response addSshKey(@Header("PRIVATE-TOKEN") String privateToken, @Path("id") String id, @Field("title") String title, @Field("key") String key);
-
-    @GET("/api/v3/users/{id}/keys")
-    JsonArray listSshKeys(@Header("PRIVATE-TOKEN") String privateToken, @Path("id") String id);
-
-    @DELETE("/api/v3/users/{id}/keys/{keyId}")
-    Response deleteSshKey(@Header("PRIVATE-TOKEN") String privateToken, @Path("id") String id, @Path("keyId") String keyId);
-
-    @GET("/api/v3/users")
-    JsonArray searchByUsername(@Header("PRIVATE-TOKEN") String privateToken, @Query("username") String username);
+    @POST(API_V3_USERS)
+    JsonObject createUser(@Header(PRIVATE_TOKEN) String privateToken, @Field("username") String username, @Field("password") String password, @Field("email") String email, @Field("name") String name, @Field("confirm") String confirmationExpected);
 
     @FormUrlEncoded
-    @PUT("/api/v3/users/{id}")
-    Response update(@Header("PRIVATE-TOKEN") String privateToken,  @Path("id") String id,
+    @POST(API_V3_USERS + "{id}/keys")
+    Response addSshKey(@Header(PRIVATE_TOKEN) String privateToken, @Path("id") String id, @Field("title") String title, @Field("key") String key);
+
+    @GET(API_V3_USERS + "{id}/keys")
+    JsonArray listSshKeys(@Header(PRIVATE_TOKEN) String privateToken, @Path("id") String id);
+
+    @DELETE(API_V3_USERS + "{id}/keys/{keyId}")
+    Response deleteSshKey(@Header(PRIVATE_TOKEN) String privateToken, @Path("id") String id, @Path("keyId") String keyId);
+
+    @GET(API_V3_USERS)
+    JsonArray searchByUsername(@Header(PRIVATE_TOKEN) String privateToken, @Query("username") String username);
+
+    @FormUrlEncoded
+    @PUT(API_V3_USERS + "{id}")
+    Response update(@Header(PRIVATE_TOKEN) String privateToken,
+                    @Path("id") String id,
                     @Field("username") String username,
                     @Field("name") String name,
                     @Field("password") String password,
                     @Field("email") String email);
 
 
-    @DELETE("/api/v3/users/{id}")
-    Response deleteUser(@Header("PRIVATE-TOKEN") String privateToken, @Path("id") String id);
+    @DELETE(API_V3_USERS + "{id}")
+    Response deleteUser(@Header(PRIVATE_TOKEN) String privateToken, @Path("id") String id);
+
 }

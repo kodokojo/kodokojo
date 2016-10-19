@@ -21,26 +21,27 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.squareup.okhttp.*;
-import io.kodokojo.brick.BrickConfigurationException;
-import io.kodokojo.brick.BrickConfigurer;
-import io.kodokojo.brick.BrickConfigurerData;
-import io.kodokojo.brick.BrickUrlFactory;
+import io.kodokojo.brick.*;
 import io.kodokojo.model.ProjectConfiguration;
 import io.kodokojo.model.UpdateData;
 import io.kodokojo.model.User;
+import javaslang.control.Try;
+import okhttp3.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import retrofit.RestAdapter;
-import retrofit.RetrofitError;
-import retrofit.client.OkClient;
+import retrofit2.Retrofit;
 
 import javax.inject.Inject;
-import javax.net.ssl.*;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
 import java.net.*;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -49,7 +50,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class GitlabConfigurer implements BrickConfigurer {
+import static java.util.Objects.requireNonNull;
+
+public class GitlabConfigurer implements BrickConfigurer, BrickConfigurerHelper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GitlabConfigurer.class);
 
@@ -71,8 +74,11 @@ public class GitlabConfigurer implements BrickConfigurer {
 
     private static final String ROOT_LOGIN = "root";
 
-    public static final String GITLAB_CHANGE_FAIL_MESSAGE = "After a successful password update you will be redirected to login screen.";
-    public static final String KODO_KOJO_SSH_KEY = "Kodo Kojo SSH Key";
+    private static final String GITLAB_CHANGE_FAIL_MESSAGE = "After a successful password update you will be redirected to login screen.";
+
+    private static final String KODO_KOJO_SSH_KEY = "Kodo Kojo SSH Key";
+    public static final String PRIVATE_TOKEN = "PRIVATE-TOKEN";
+    public static final String API_V3_USERS = "/api/v3/users/";
 
     private final BrickUrlFactory brickUrlFactory;
 
@@ -176,15 +182,15 @@ public class GitlabConfigurer implements BrickConfigurer {
 
         String privateToken = (String) brickConfigurerData.getContext().get(GITLAB_ADMIN_TOKEN_KEY);
 
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Using private Token {}.", privateToken);
-        }
-
         for (User user : users) {
-            if (!createUser(gitlabRest, httpClient, gitlabEntryPoint, privateToken, user)) {
+            Try<Integer> userId = createUser(gitlabRest, httpClient, gitlabEntryPoint, privateToken, user);
+            if (userId.isSuccess()) {
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("User '{}' successfully added to Gitlab {}.", user.getUsername(), gitlabEntryPoint);
+                }
+            } else {
                 String message = "Unable to create user '" + user.getUsername() + "' for project " + brickConfigurerData.getProjectName() + " on url " + gitlabEntryPoint;
                 LOGGER.error(message);
-                //throw new BrickConfigurationException(message);
             }
         }
 
@@ -216,6 +222,7 @@ public class GitlabConfigurer implements BrickConfigurer {
         return brickConfigurerData;
     }
 
+
     @Override
     public BrickConfigurerData removeUsers(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurerData, List<User> users) {
         if (brickConfigurerData == null) {
@@ -239,7 +246,7 @@ public class GitlabConfigurer implements BrickConfigurer {
     protected GitlabRest provideGitlabRest(BrickConfigurerData brickConfigurerData) {
         String gitlabEntryPoint = getGitlabEntryPoint(brickConfigurerData);
         OkHttpClient httpClient = provideDefaultOkHttpClient();
-        RestAdapter adapter = new RestAdapter.Builder().setEndpoint(gitlabEntryPoint).setClient(new OkClient(httpClient)).build();
+        Retrofit adapter = new Retrofit.Builder().baseUrl(gitlabEntryPoint).client(httpClient).build();
         return adapter.create(GitlabRest.class);
     }
 
@@ -271,7 +278,7 @@ public class GitlabConfigurer implements BrickConfigurer {
         try {
             response = httpClient.newCall(request).execute();
             //LOGGER.debug(response.toString());
-            res = response.request().urlString();
+            res = response.request().url().toString();
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -293,7 +300,7 @@ public class GitlabConfigurer implements BrickConfigurer {
     }
 
     private static boolean changeDefaultPassword(OkHttpClient httpClient, String url, String resetToken, String token, String newPassword) {
-        RequestBody formBody = new FormEncodingBuilder()
+        RequestBody formBody = new FormBody.Builder()
                 .addEncoded("utf8", "%E2%9C%93")
                 .add("authenticity_token", token)
                 .add("_method", "put")
@@ -322,7 +329,7 @@ public class GitlabConfigurer implements BrickConfigurer {
 
     public static boolean signIn(OkHttpClient httpClient, String gitlabUrl, String login, String password) {
         String token = getAuthenticityToken(httpClient, gitlabUrl + SIGNIN_URL, FORM_TOKEN_PATTERN);
-        RequestBody formBody = new FormEncodingBuilder()
+        RequestBody formBody = new FormBody.Builder()
                 .addEncoded("utf8", "%E2%9C%93")
                 .add("authenticity_token", token)
                 .add("user[login]", login)
@@ -370,47 +377,48 @@ public class GitlabConfigurer implements BrickConfigurer {
         return null;
     }
 
-    private boolean createUser(GitlabRest gitlabRest, OkHttpClient httpClient, String gitlabUrl, String privateToken, User user) {
-        Response response = null;
-        int id = -1;
+    private Try<Integer> createUser(GitlabRest gitlabRest, OkHttpClient httpClient, String gitlabUrl, String privateToken, User user) {
+        String url = gitlabUrl + "/api/v3/users";
 
-        RequestBody formBody = new FormEncodingBuilder()
+        RequestBody formBody = new FormBody.Builder()
                 .add("username", user.getUsername())
                 .add("password", user.getPassword())
                 .add("name", user.getName())
                 .add("email", user.getEmail())
+                .add("admin", "true")
                 .add("confirm", "true")
                 .build();
-        Request request = new Request.Builder().url(gitlabUrl + "/api/v3/users").header("PRIVATE-TOKEN", privateToken).post(formBody).build();
+        Request request = new Request.Builder().url(url)
+                .post(formBody)
+                .header(PRIVATE_TOKEN, privateToken)
+                .build();
 
+        int id = -1;
+        Response response = null;
         try {
-            LOGGER.debug("Try to add following user to Gitlab: {}", user);
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Try to add User '{}' to Gitlab: {}", user.getUsername(), gitlabUrl);
+            }
 
             response = httpClient.newCall(request).execute();
 
-            LOGGER.debug("Create user on Gitlab on url {}; response {} .", gitlabUrl, response.code());
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Create user on Gitlab on url {}; response {} .", gitlabUrl, response.code());
+            }
+
             if (response.code() != 201) {
                 LOGGER.debug("Not able to create user ? {}", response.body().string());
             }
 
             JsonParser parser = new JsonParser();
             JsonObject jsonObject = (JsonObject) parser.parse(response.body().string());
-            /*
-            JsonObject jsonObject = gitlabRest.createUser(privateToken, user.getUsername(), user.getPassword(), user.getEmail(), user.getName(), "false");
-            if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace(jsonObject.toString());
-            }
-            */
+
 
             id = jsonObject.getAsJsonPrimitive("id").getAsInt();
 
-        } catch (RetrofitError e) {
-            LOGGER.error("Unable to complete creation of user : ", e);
-            LOGGER.debug(e.getResponse().getBody().toString());
-            return false;
         } catch (IOException e) {
             LOGGER.error("Unable to create user on Gitlab {}.", gitlabUrl, e);
-            return false;
+            return Try.failure(e);
         } finally {
             if (response != null) {
                 IOUtils.closeQuietly(response.body());
@@ -420,25 +428,31 @@ public class GitlabConfigurer implements BrickConfigurer {
 
         addSshKey(httpClient, gitlabUrl, privateToken, id, user);
 
-        return true;
+        return Try.success(id);
     }
 
     private void addSshKey(OkHttpClient httpClient, String gitlabUrl, String privateToken, int userId, User user) {
 
         RequestBody formBody;
         Request request;
-        formBody = new FormEncodingBuilder()
+        formBody = new FormBody.Builder()
                 .add("title", KODO_KOJO_SSH_KEY)
                 .add("key", user.getSshPublicKey())
                 .build();
-        request = new Request.Builder().post(formBody).url(gitlabUrl + "/api/v3/users/" + userId + "/keys").addHeader("PRIVATE-TOKEN", privateToken).build();
+        request = new Request.Builder().post(formBody)
+                .url(gitlabUrl + API_V3_USERS + userId + "/keys")
+                .addHeader(PRIVATE_TOKEN, privateToken)
+                .build();
         Response response = null;
         try {
             response = httpClient.newCall(request).execute();
             boolean sshKeyAdded = response.code() >= 200 && response.code() < 300;
             if (response.code() == 500) {
                 IOUtils.closeQuietly(response.body());
-                request = new Request.Builder().get().url(gitlabUrl + "/api/v3/users/" + userId + "/keys").addHeader("PRIVATE-TOKEN", privateToken).build();
+                request = new Request.Builder().get()
+                        .url(gitlabUrl + API_V3_USERS + userId + "/keys")
+                        .addHeader(PRIVATE_TOKEN, privateToken)
+                        .build();
                 response = httpClient.newCall(request).execute();
                 String body = response.body().string();
 
@@ -455,11 +469,11 @@ public class GitlabConfigurer implements BrickConfigurer {
                             Thread.currentThread().interrupt();
                         }
                         LOGGER.debug("Retry to add SSH Key");
-                        formBody = new FormEncodingBuilder()
+                        formBody = new FormBody.Builder()
                                 .add("title", "SSH Key")
                                 .add("key", user.getSshPublicKey())
                                 .build();
-                        request = new Request.Builder().post(formBody).url(gitlabUrl + "/api/v3/users/" + userId + "/keys").addHeader("PRIVATE-TOKEN", privateToken).build();
+                        request = new Request.Builder().post(formBody).url(gitlabUrl + API_V3_USERS + userId + "/keys").addHeader(PRIVATE_TOKEN, privateToken).build();
                         response = httpClient.newCall(request).execute();
                         LOGGER.debug(response.toString());
                         LOGGER.debug(response.body().string());
@@ -493,45 +507,46 @@ public class GitlabConfigurer implements BrickConfigurer {
     }
 
     public static OkHttpClient provideDefaultOkHttpClient() {
-        OkHttpClient httpClient = new OkHttpClient();
-        final TrustManager[] certs = new TrustManager[]{new X509TrustManager() {
 
-            @Override
-            public X509Certificate[] getAcceptedIssuers() {
-                return null;
-            }
+        // Create a trust manager that does not validate certificate chains
+        TrustManager[] trustAllCerts = new TrustManager[]{
+                new X509TrustManager() {
+                    @Override
+                    public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {
+                    }
 
-            @Override
-            public void checkServerTrusted(final X509Certificate[] chain,
-                                           final String authType) throws CertificateException {
-            }
+                    @Override
+                    public void checkServerTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {
+                    }
 
-            @Override
-            public void checkClientTrusted(final X509Certificate[] chain,
-                                           final String authType) throws CertificateException {
-            }
-        }};
+                    @Override
+                    public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                        return new java.security.cert.X509Certificate[]{};
+                    }
+                }
+        };
 
-        SSLContext ctx = null;
+        // Install the all-trusting trust manager
+        final SSLContext sslContext;
         try {
-            ctx = SSLContext.getInstance("TLS");
-            ctx.init(null, certs, new SecureRandom());
-        } catch (final java.security.GeneralSecurityException ex) {
-            //
+            sslContext = SSLContext.getInstance("SSL");
+            sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
+            // Create an ssl socket factory with our all-trusting manager
+            final SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
+
+            CookieManager cookieManager = new CookieManager(new GitlabCookieStore(), CookiePolicy.ACCEPT_ALL);
+            OkHttpClient.Builder builder = new OkHttpClient.Builder()
+                    .addInterceptor(new OkHttpLogger())
+                    .hostnameVerifier((s, sslSession) -> true)
+                    .sslSocketFactory(sslSocketFactory)
+                    .writeTimeout(1, TimeUnit.MINUTES)
+                    .readTimeout(2, TimeUnit.MINUTES)
+                    .connectTimeout(1, TimeUnit.MINUTES)
+                    .cookieJar(new JavaNetCookieJar(cookieManager));
+            return builder.build();
+        } catch (NoSuchAlgorithmException | KeyManagementException e) {
+            throw new IllegalStateException("Unable to create Http client", e);
         }
-        httpClient.setHostnameVerifier(new HostnameVerifier() {
-            @Override
-            public boolean verify(String s, SSLSession sslSession) {
-                return true;
-            }
-        });
-        httpClient.setSslSocketFactory(ctx.getSocketFactory());
-        CookieManager cookieManager = new CookieManager(new GitlabCookieStore(), CookiePolicy.ACCEPT_ALL);
-        httpClient.setCookieHandler(cookieManager);
-        httpClient.setReadTimeout(2, TimeUnit.MINUTES);
-        httpClient.setConnectTimeout(1, TimeUnit.MINUTES);
-        httpClient.setWriteTimeout(1, TimeUnit.MINUTES);
-        return httpClient;
     }
 
     private static class GitlabCookieStore implements CookieStore {
@@ -567,6 +582,18 @@ public class GitlabConfigurer implements BrickConfigurer {
         @Override
         public boolean removeAll() {
             return false;
+        }
+    }
+
+    private static class OkHttpLogger implements Interceptor {
+
+        @Override
+        public Response intercept(Chain chain) throws IOException {
+            requireNonNull(chain, "chain must be defined.");
+            if (LOGGER.isTraceEnabled()) {
+                return null;
+            }
+            return chain.proceed(chain.request());
         }
     }
 

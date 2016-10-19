@@ -26,8 +26,10 @@ import io.kodokojo.model.PortDefinition;
 import io.kodokojo.model.Service;
 import io.kodokojo.service.ServiceLocator;
 import io.kodokojo.utils.JsonUtils;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import org.apache.commons.lang.StringUtils;
-import retrofit.RestAdapter;
+import retrofit2.Retrofit;
 
 import javax.inject.Inject;
 import java.util.*;
@@ -45,12 +47,18 @@ public class MarathonServiceLocator implements ServiceLocator {
     }
 
     protected MarathonServiceLocatorRestApi provideMarathonRestApi(MarathonConfig marathonConfig) {
-        RestAdapter.Builder builder = new RestAdapter.Builder().setEndpoint(marathonConfig.url());
+        Retrofit.Builder builder = new Retrofit.Builder().baseUrl(marathonConfig.url());
         if (StringUtils.isNotBlank(marathonConfig.login())) {
-            String basicAuthenticationValue = "Basic " + Base64.getEncoder().encodeToString(String.format("%s:%s", marathonConfig.login(), marathonConfig.password()).getBytes());
-            builder.setRequestInterceptor(request -> request.addHeader("Authorization", basicAuthenticationValue));
+            OkHttpClient.Builder httpClientBuilder = new OkHttpClient.Builder().addInterceptor(chain -> {
+                String basicAuthenticationValue = "Basic " + Base64.getEncoder().encodeToString(String.format("%s:%s", marathonConfig.login(), marathonConfig.password()).getBytes());
+                Request authenticateRequest = chain.request().newBuilder()
+                        .addHeader("Authorization", basicAuthenticationValue)
+                        .build();
+                return chain.proceed(authenticateRequest);
+            });
+            builder.client(httpClientBuilder.build());
         }
-        RestAdapter adapter = builder.build();
+        Retrofit adapter = builder.build();
         return adapter.create(MarathonServiceLocatorRestApi.class);
     }
 
