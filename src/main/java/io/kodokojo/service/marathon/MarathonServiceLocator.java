@@ -29,9 +29,12 @@ import io.kodokojo.utils.JsonUtils;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import org.apache.commons.lang.StringUtils;
+import retrofit2.Call;
+import retrofit2.Response;
 import retrofit2.Retrofit;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.util.*;
 
 public class MarathonServiceLocator implements ServiceLocator {
@@ -64,27 +67,35 @@ public class MarathonServiceLocator implements ServiceLocator {
 
     @Override
     public Set<Service> getService(String type, String projectName) {
+        Set<Service> res = new HashSet<>();
         Set<String> appIds = new HashSet<>();
-        JsonObject json = marathonServiceLocatorRestApi.getAllApplications();
-        JsonArray apps = json.getAsJsonArray("apps");
-        for (int i = 0; i < apps.size(); i++) {
-            JsonObject app = (JsonObject) apps.get(i);
-            String id = app.getAsJsonPrimitive("id").getAsString();
-            JsonObject labels = app.getAsJsonObject("labels");
-            if (labels.has("endpoint")) {
-                String project = labels.getAsJsonPrimitive("endpoint").getAsString();
-                if (labels.has("component")) {
-                    String component = labels.getAsJsonPrimitive("component").getAsString();
-                    if (projectName.equals(project) && type.equals(component)) {
-                        appIds.add(id);
+        Call<JsonObject> allApplicationsCall = marathonServiceLocatorRestApi.getAllApplications();
+        try {
+            Response<JsonObject> applicationsResponse = allApplicationsCall.execute();
+            JsonObject json = applicationsResponse.body();
+            JsonArray apps = json.getAsJsonArray("apps");
+            for (int i = 0; i < apps.size(); i++) {
+                JsonObject app = (JsonObject) apps.get(i);
+                String id = app.getAsJsonPrimitive("id").getAsString();
+                JsonObject labels = app.getAsJsonObject("labels");
+                if (labels.has("endpoint")) {
+                    String project = labels.getAsJsonPrimitive("endpoint").getAsString();
+                    if (labels.has("component")) {
+                        String component = labels.getAsJsonPrimitive("component").getAsString();
+                        if (projectName.equals(project) && type.equals(component)) {
+                            appIds.add(id);
+                        }
                     }
                 }
             }
-        }
-        Set<Service> res = new HashSet<>();
-        for (String appId : appIds) {
-            JsonObject applicationConfiguration = marathonServiceLocatorRestApi.getApplicationConfiguration(appId);
-            res.addAll(convertToService(projectName + "-" + type, applicationConfiguration));
+            for (String appId : appIds) {
+                Call<JsonObject> confCall = marathonServiceLocatorRestApi.getApplicationConfiguration(appId);
+                Response<JsonObject> confResponse = confCall.execute();
+                JsonObject applicationConfiguration = confResponse.body();
+                res.addAll(convertToService(projectName + "-" + type, applicationConfiguration));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
         return res;
