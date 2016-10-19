@@ -27,6 +27,7 @@ import io.kodokojo.model.UpdateData;
 import io.kodokojo.model.User;
 import javaslang.control.Try;
 import okhttp3.*;
+import okhttp3.logging.HttpLoggingInterceptor;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -207,6 +208,9 @@ public class GitlabConfigurer implements BrickConfigurer, BrickConfigurerHelper 
         users.stream().map(UpdateData::getNewData)
                 .forEach(u -> {
                     String userId = lookupUserId(gitlabRest, privateToken, u);
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug("Trying to update user '{}' on  Gitlab.", u);
+                    }
                     gitlabRest.update(privateToken, userId, u.getUsername(), u.getName(), u.getPassword(), u.getEmail());
                     JsonArray listSshKeys = gitlabRest.listSshKeys(privateToken, userId);
                     for (JsonElement keyEl : listSshKeys) {
@@ -535,8 +539,11 @@ public class GitlabConfigurer implements BrickConfigurer, BrickConfigurerHelper 
             final SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
 
             CookieManager cookieManager = new CookieManager(new GitlabCookieStore(), CookiePolicy.ACCEPT_ALL);
+            HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
+            logging.setLevel(HttpLoggingInterceptor.Level.BODY);
+
             OkHttpClient.Builder builder = new OkHttpClient.Builder()
-                    .addInterceptor(new OkHttpLogger())
+                    .addInterceptor(logging)
                     .hostnameVerifier((s, sslSession) -> true)
                     .sslSocketFactory(sslSocketFactory)
                     .writeTimeout(1, TimeUnit.MINUTES)
@@ -590,10 +597,11 @@ public class GitlabConfigurer implements BrickConfigurer, BrickConfigurerHelper 
         @Override
         public Response intercept(Chain chain) throws IOException {
             requireNonNull(chain, "chain must be defined.");
+            Request request = chain.request();
             if (LOGGER.isTraceEnabled()) {
-                return null;
+
             }
-            return chain.proceed(chain.request());
+            return chain.proceed(request);
         }
     }
 

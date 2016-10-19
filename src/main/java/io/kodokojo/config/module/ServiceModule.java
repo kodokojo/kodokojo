@@ -42,6 +42,7 @@ import io.kodokojo.service.ssl.WildcardSSLCertificatProvider;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Response;
+import okhttp3.logging.HttpLoggingInterceptor;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -178,9 +179,11 @@ public class ServiceModule extends AbstractModule {
             sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
             // Create an ssl socket factory with our all-trusting manager
             final SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
-
+            HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
+            logging.setLevel(HttpLoggingInterceptor.Level.BASIC);
             OkHttpClient.Builder builder = new OkHttpClient.Builder();
             builder.sslSocketFactory(sslSocketFactory)
+                    .addInterceptor(logging)
                     .hostnameVerifier((hostname, session) -> true)
                     .writeTimeout(1, TimeUnit.MINUTES)
                     .readTimeout(2, TimeUnit.MINUTES)
