@@ -43,7 +43,7 @@ public interface GitlabRest {
     Call<JsonArray> listSshKeys(@Header(PRIVATE_TOKEN) String privateToken, @Path("id") String id);
 
     @DELETE(API_V3_USERS + "{id}/keys/{keyId}")
-    Call<Response> deleteSshKey(@Header(PRIVATE_TOKEN) String privateToken, @Path("id") String id, @Path("keyId") String keyId);
+    Call<ResponseBody> deleteSshKey(@Header(PRIVATE_TOKEN) String privateToken, @Path("id") String id, @Path("keyId") String keyId);
 
     @GET(API_V3_USERS)
     Call<JsonArray> searchByUsername(@Header(PRIVATE_TOKEN) String privateToken, @Query("username") String username);

@@ -27,12 +27,14 @@ import io.kodokojo.model.UpdateData;
 import io.kodokojo.model.User;
 import javaslang.control.Try;
 import okhttp3.*;
+import okhttp3.Call;
+import okhttp3.Response;
 import okhttp3.logging.HttpLoggingInterceptor;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import retrofit2.Retrofit;
+import retrofit2.*;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 import javax.inject.Inject;
@@ -221,9 +223,13 @@ public class GitlabConfigurer implements BrickConfigurer, BrickConfigurerHelper 
                                 JsonObject keyJson = (JsonObject) keyEl;
                                 if (KODO_KOJO_SSH_KEY.equals(keyJson.getAsJsonPrimitive("title").getAsString())) {
                                     int keyId = keyJson.getAsJsonPrimitive("id").getAsInt();
-                                    retrofit2.Call<retrofit2.Response> deleteCall = gitlabRest.deleteSshKey(privateToken, userId, "" + keyId);
-                                    deleteCall.execute();
-                                    addSshKey(provideDefaultOkHttpClient(), getGitlabEntryPoint(brickConfigurerData), privateToken, Integer.parseInt(userId), u);
+                                    retrofit2.Call<ResponseBody> deleteCall = gitlabRest.deleteSshKey(privateToken, userId, "" + keyId);
+                                    retrofit2.Response<ResponseBody> deleteResponse = deleteCall.execute();
+                                    if (deleteResponse.isSuccessful()) {
+                                        addSshKey(provideDefaultOkHttpClient(), getGitlabEntryPoint(brickConfigurerData), privateToken, Integer.parseInt(userId), u);
+                                    } else if (LOGGER.isDebugEnabled()) {
+                                        LOGGER.debug("Unable to delete key {} for user {}: {}", keyId, u.getUsername(), deleteResponse.message());
+                                    }
                                 }
                             }
                         } else if (LOGGER.isDebugEnabled()) {
