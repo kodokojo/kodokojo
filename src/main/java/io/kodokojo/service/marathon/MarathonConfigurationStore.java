@@ -19,12 +19,12 @@ package io.kodokojo.service.marathon;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.squareup.okhttp.*;
 import io.kodokojo.config.MarathonConfig;
 import io.kodokojo.service.ssl.SSLKeyPair;
 import io.kodokojo.service.ssl.SSLUtils;
 import io.kodokojo.model.BootstrapStackData;
 import io.kodokojo.service.ConfigurationStore;
+import okhttp3.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -65,8 +65,8 @@ public class MarathonConfigurationStore implements ConfigurationStore {
         OkHttpClient httpClient = new OkHttpClient();
         Gson gson = new GsonBuilder().create();
         String json = gson.toJson(bootstrapStackData);
-        RequestBody requestBody = new MultipartBuilder()
-                .type(MultipartBuilder.FORM)
+        RequestBody requestBody = new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
                 .addFormDataPart("file", bootstrapStackData.getProjectName().toLowerCase() + ".json",
                         RequestBody.create(MediaType.parse("application/json"), json.getBytes()))
                 .build();
@@ -109,8 +109,8 @@ public class MarathonConfigurationStore implements ConfigurationStore {
 
             String url = marathonConfig.url() + "/v2/artifacts/ssl/" + project.toLowerCase() + "/" + entityName.toLowerCase() + "/" + project.toLowerCase() + "-" + entityName.toLowerCase() + "-server.pem";
             OkHttpClient httpClient = new OkHttpClient();
-            RequestBody requestBody = new MultipartBuilder()
-                    .type(MultipartBuilder.FORM)
+            RequestBody requestBody = new MultipartBody.Builder()
+                    .setType(MultipartBody.FORM)
                     .addFormDataPart("file", project + "-" + entityName + "-server.pem",
                             RequestBody.create(MediaType.parse("application/text"), certificat))
                     .build();

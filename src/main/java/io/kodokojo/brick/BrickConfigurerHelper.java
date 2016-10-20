@@ -1,6 +1,7 @@
 package io.kodokojo.brick;
 
-import com.squareup.okhttp.Request;
+
+import okhttp3.Request;
 
 import java.util.Base64;
 

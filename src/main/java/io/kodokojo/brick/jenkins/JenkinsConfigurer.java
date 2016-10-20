@@ -18,7 +18,6 @@
 package io.kodokojo.brick.jenkins;
 
 
-import com.squareup.okhttp.*;
 import io.kodokojo.brick.BrickConfigurer;
 import io.kodokojo.brick.BrickConfigurerData;
 import io.kodokojo.model.ProjectConfiguration;
@@ -26,6 +25,7 @@ import io.kodokojo.model.UpdateData;
 import io.kodokojo.model.User;
 import io.kodokojo.model.UserService;
 import io.kodokojo.service.RSAUtils;
+import okhttp3.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
@@ -172,7 +172,7 @@ public class JenkinsConfigurer implements BrickConfigurer {
             template.merge(context, sw);
             String script = sw.toString();
 
-            RequestBody body = new FormEncodingBuilder().add(SCRIPT_KEY, script).build();
+            RequestBody body = new FormBody.Builder().add(SCRIPT_KEY, script).build();
 
             Request.Builder builder = new Request.Builder().url(url).post(body);
 

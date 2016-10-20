@@ -20,16 +20,23 @@ package io.kodokojo.service.marathon;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import io.kodokojo.config.MarathonConfig;
 import io.kodokojo.model.PortDefinition;
 import io.kodokojo.model.Service;
 import io.kodokojo.service.ServiceLocator;
 import io.kodokojo.utils.JsonUtils;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import org.apache.commons.lang.StringUtils;
-import retrofit.RestAdapter;
+import retrofit2.Call;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.util.*;
 
 public class MarathonServiceLocator implements ServiceLocator {
@@ -45,38 +52,54 @@ public class MarathonServiceLocator implements ServiceLocator {
     }
 
     protected MarathonServiceLocatorRestApi provideMarathonRestApi(MarathonConfig marathonConfig) {
-        RestAdapter.Builder builder = new RestAdapter.Builder().setEndpoint(marathonConfig.url());
+        Retrofit.Builder builder = new Retrofit.Builder().baseUrl(marathonConfig.url());
         if (StringUtils.isNotBlank(marathonConfig.login())) {
-            String basicAuthenticationValue = "Basic " + Base64.getEncoder().encodeToString(String.format("%s:%s", marathonConfig.login(), marathonConfig.password()).getBytes());
-            builder.setRequestInterceptor(request -> request.addHeader("Authorization", basicAuthenticationValue));
+            OkHttpClient.Builder httpClientBuilder = new OkHttpClient.Builder().addInterceptor(chain -> {
+                String basicAuthenticationValue = "Basic " + Base64.getEncoder().encodeToString(String.format("%s:%s", marathonConfig.login(), marathonConfig.password()).getBytes());
+                Request authenticateRequest = chain.request().newBuilder()
+                        .addHeader("Authorization", basicAuthenticationValue)
+                        .build();
+                return chain.proceed(authenticateRequest);
+            });
+            builder.client(httpClientBuilder.build());
         }
-        RestAdapter adapter = builder.build();
+        builder.addConverterFactory(GsonConverterFactory.create());
+        Retrofit adapter = builder.build();
         return adapter.create(MarathonServiceLocatorRestApi.class);
     }
 
     @Override
     public Set<Service> getService(String type, String projectName) {
+        Set<Service> res = new HashSet<>();
         Set<String> appIds = new HashSet<>();
-        JsonObject json = marathonServiceLocatorRestApi.getAllApplications();
-        JsonArray apps = json.getAsJsonArray("apps");
-        for (int i = 0; i < apps.size(); i++) {
-            JsonObject app = (JsonObject) apps.get(i);
-            String id = app.getAsJsonPrimitive("id").getAsString();
-            JsonObject labels = app.getAsJsonObject("labels");
-            if (labels.has("endpoint")) {
-                String project = labels.getAsJsonPrimitive("endpoint").getAsString();
-                if (labels.has("component")) {
-                    String component = labels.getAsJsonPrimitive("component").getAsString();
-                    if (projectName.equals(project) && type.equals(component)) {
-                        appIds.add(id);
+        Call<JsonObject> allApplicationsCall = marathonServiceLocatorRestApi.getAllApplications();
+        try {
+            Response<JsonObject> response = allApplicationsCall.execute();
+
+            JsonArray apps = response.body().getAsJsonArray("apps");
+            for (int i = 0; i < apps.size(); i++) {
+                JsonObject app = (JsonObject) apps.get(i);
+                String id = app.getAsJsonPrimitive("id").getAsString();
+                JsonObject labels = app.getAsJsonObject("labels");
+                if (labels.has("endpoint")) {
+                    String project = labels.getAsJsonPrimitive("endpoint").getAsString();
+                    if (labels.has("component")) {
+                        String component = labels.getAsJsonPrimitive("component").getAsString();
+                        if (projectName.equals(project) && type.equals(component)) {
+                            appIds.add(id);
+                        }
                     }
                 }
             }
-        }
-        Set<Service> res = new HashSet<>();
-        for (String appId : appIds) {
-            JsonObject applicationConfiguration = marathonServiceLocatorRestApi.getApplicationConfiguration(appId);
-            res.addAll(convertToService(projectName + "-" + type, applicationConfiguration));
+            for (String appId : appIds) {
+                Call confCall = marathonServiceLocatorRestApi.getApplicationConfiguration(appId);
+                JsonParser jsonParser = new JsonParser();
+                Response confResponse = confCall.execute();
+                JsonObject applicationConfiguration = (JsonObject) jsonParser.parse(confResponse.body().toString());
+                res.addAll(convertToService(projectName + "-" + type, applicationConfiguration));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
         return res;
