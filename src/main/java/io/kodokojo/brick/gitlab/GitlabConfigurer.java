@@ -210,9 +210,9 @@ public class GitlabConfigurer implements BrickConfigurer, BrickConfigurerHelper 
                     if (LOGGER.isDebugEnabled()) {
                         LOGGER.debug("Trying to update user '{}' on  Gitlab.", u);
                     }
-                    retrofit2.Call<retrofit2.Response> updateCall = gitlabRest.update(privateToken, userId, u.getUsername(), u.getName(), u.getPassword(), u.getEmail());
+                    retrofit2.Call<ResponseBody> updateCall = gitlabRest.update(privateToken, userId, u.getUsername(), u.getName(), u.getPassword(), u.getEmail());
                     try {
-                        retrofit2.Response<retrofit2.Response> updateResponse = updateCall.execute();
+                        retrofit2.Response<ResponseBody> updateResponse = updateCall.execute();
                         if (updateResponse.isSuccessful()) {
                             retrofit2.Call<JsonArray> call = gitlabRest.listSshKeys(privateToken, userId);
                             JsonArray listSshKeys = call.execute().body();
@@ -226,6 +226,8 @@ public class GitlabConfigurer implements BrickConfigurer, BrickConfigurerHelper 
                                     addSshKey(provideDefaultOkHttpClient(), getGitlabEntryPoint(brickConfigurerData), privateToken, Integer.parseInt(userId), u);
                                 }
                             }
+                        } else if (LOGGER.isDebugEnabled()) {
+                            LOGGER.debug("Request to update User '{}' failed: {}", u.getUsername(), updateResponse.message());
                         }
 
                     } catch (IOException e) {
