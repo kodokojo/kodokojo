@@ -18,9 +18,6 @@
 package io.kodokojo.bdd.stage;
 
 import com.google.gson.*;
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
 import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.ExpectedScenarioState;
 import com.tngtech.jgiven.annotation.ProvidedScenarioState;
@@ -28,6 +25,9 @@ import com.tngtech.jgiven.annotation.Quoted;
 import io.kodokojo.endpoint.dto.BrickConfigDto;
 import io.kodokojo.endpoint.dto.WebSocketMessage;
 import io.kodokojo.endpoint.dto.WebSocketMessageGsonAdapter;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import org.apache.commons.io.IOUtils;
 import org.glassfish.tyrus.client.ClientManager;
 import org.glassfish.tyrus.client.ClientProperties;
@@ -105,11 +105,7 @@ public class AccessRestWhen<SELF extends AccessRestWhen<?>> extends Stage<SELF> 
             fail(e.getMessage());
         } finally {
             if (response != null) {
-                try {
-                    response.body().close();
-                } catch (IOException e) {
-                    fail(e.getMessage());
-                }
+                IOUtils.closeQuietly(response.body());
             }
         }
         return self();

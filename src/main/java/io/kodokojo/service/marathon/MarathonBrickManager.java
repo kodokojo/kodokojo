@@ -1,17 +1,17 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -23,6 +23,7 @@ import io.kodokojo.model.*;
 import io.kodokojo.service.BrickManager;
 import io.kodokojo.service.ProjectConfigurationException;
 import io.kodokojo.service.repository.ProjectRepository;
+import okhttp3.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang.StringUtils;
@@ -33,11 +34,12 @@ import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import retrofit.RestAdapter;
-import retrofit.RetrofitError;
-import retrofit.mime.TypedString;
+import retrofit2.Call;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.io.StringWriter;
 import java.util.*;
 
@@ -98,12 +100,19 @@ public class MarathonBrickManager implements BrickManager {
         }
         this.marathonConfig = marathonConfig;
 
-        RestAdapter.Builder builder = new RestAdapter.Builder().setEndpoint(marathonConfig.url());
+        Retrofit.Builder builder = new Retrofit.Builder().baseUrl(marathonConfig.url());
         if (StringUtils.isNotBlank(marathonConfig.login())) {
-            String basicAuthenticationValue = "Basic " + Base64.getEncoder().encodeToString(String.format("%s:%s", marathonConfig.login(), marathonConfig.password()).getBytes());
-            builder.setRequestInterceptor(request -> request.addHeader("Authorization", basicAuthenticationValue));
+            OkHttpClient.Builder httpClientBuilder = new OkHttpClient.Builder().addInterceptor(chain -> {
+                String basicAuthenticationValue = "Basic " + Base64.getEncoder().encodeToString(String.format("%s:%s", marathonConfig.login(), marathonConfig.password()).getBytes());
+                Request authenticateRequest = chain.request().newBuilder()
+                        .addHeader("Authorization", basicAuthenticationValue)
+                        .build();
+                return chain.proceed(authenticateRequest);
+            });
+            builder.client(httpClientBuilder.build());
         }
-        RestAdapter adapter = builder.build();
+        builder.addConverterFactory(GsonConverterFactory.create());
+        Retrofit adapter = builder.build();
         marathonRestApi = adapter.create(MarathonRestApi.class);
         this.marathonServiceLocator = marathonServiceLocator;
         this.brickConfigurerProvider = brickConfigurerProvider;
@@ -127,31 +136,31 @@ public class MarathonBrickManager implements BrickManager {
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace("Push new Application configuration to Marathon :\n{}", body);
         }
-        TypedString input = new TypedString(body);
-        try {
-            marathonRestApi.startApplication(input);
-        } catch (RetrofitError e) {
-            if (e.getResponse().getStatus() == 409) {
-                throw new BrickAlreadyExist(e, type, projectName);
-            }
-        }
+
         Set<Service> res = new HashSet<>();
-        marathonServiceLocator.getService(type, projectName);
-        boolean haveHttpService = getAnHttpService(res);
-        // TODO remove this, listen Zookeeper instead
-        int nbTry = 0;
-        int maxNbTry = 10000;
-        while (nbTry < maxNbTry && !haveHttpService) {
-            nbTry++;
-            res = marathonServiceLocator.getService(type, projectName);
-            haveHttpService = getAnHttpService(res);
-            if (!haveHttpService) {
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
+        RequestBody requestBody =RequestBody.create(MediaType.parse("application/json"), body);
+        Call<Void> call = marathonRestApi.startApplication(requestBody);
+        try {
+            call.execute();
+            marathonServiceLocator.getService(type, projectName);
+            boolean haveHttpService = getAnHttpService(res);
+            // TODO remove this, listen Zookeeper instead
+            int nbTry = 0;
+            int maxNbTry = 10000;
+            while (nbTry < maxNbTry && !haveHttpService) {
+                nbTry++;
+                res = marathonServiceLocator.getService(type, projectName);
+                haveHttpService = getAnHttpService(res);
+                if (!haveHttpService) {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
                 }
             }
+        } catch (IOException e) {
+            throw new BrickAlreadyExist(e, brickConfiguration.getName(), projectName);
         }
 
         return res;
@@ -212,7 +221,7 @@ public class MarathonBrickManager implements BrickManager {
         Iterator<Service> iterator = services.iterator();
         while (res == null && iterator.hasNext()) {
             Service service = iterator.next();
-            if (service.getPortDefinition().getType() == PortDefinition.Type.HTTP || service.getPortDefinition().getType() == PortDefinition.Type.HTTPS ) {
+            if (service.getPortDefinition().getType() == PortDefinition.Type.HTTP || service.getPortDefinition().getType() == PortDefinition.Type.HTTPS) {
                 res = "http://" + service.getHost() + ":" + service.getPortDefinition().getHostPort();
             }
         }

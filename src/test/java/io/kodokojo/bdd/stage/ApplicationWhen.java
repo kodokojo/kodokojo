@@ -20,7 +20,6 @@ package io.kodokojo.bdd.stage;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.squareup.okhttp.*;
 import com.tngtech.jgiven.CurrentStep;
 import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.ExpectedScenarioState;
@@ -35,6 +34,7 @@ import io.kodokojo.model.*;
 import io.kodokojo.model.Stack;
 import io.kodokojo.service.RSAUtils;
 import io.kodokojo.service.actor.message.BrickStateEvent;
+import okhttp3.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 

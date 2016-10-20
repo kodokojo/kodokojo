@@ -17,7 +17,6 @@
  */
 package io.kodokojo.brick.nexus;
 
-import com.squareup.okhttp.*;
 import io.kodokojo.brick.BrickConfigurationException;
 import io.kodokojo.brick.BrickConfigurer;
 import io.kodokojo.brick.BrickConfigurerData;
@@ -25,6 +24,7 @@ import io.kodokojo.brick.BrickConfigurerHelper;
 import io.kodokojo.model.ProjectConfiguration;
 import io.kodokojo.model.UpdateData;
 import io.kodokojo.model.User;
+import okhttp3.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;

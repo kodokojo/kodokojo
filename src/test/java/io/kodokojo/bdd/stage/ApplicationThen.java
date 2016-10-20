@@ -1,17 +1,17 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -19,10 +19,6 @@ package io.kodokojo.bdd.stage;
 
 
 import com.google.gson.*;
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.RequestBody;
-import com.squareup.okhttp.Response;
 import com.tngtech.jgiven.CurrentStep;
 import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.ExpectedScenarioState;
@@ -33,6 +29,7 @@ import io.kodokojo.endpoint.dto.UserLightDto;
 import io.kodokojo.model.Entity;
 import io.kodokojo.model.User;
 import io.kodokojo.service.repository.Repository;
+import okhttp3.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 
@@ -160,7 +157,7 @@ public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF
 
         OkHttpClient httpClient = new OkHttpClient();
 
-        RequestBody body = RequestBody.create(com.squareup.okhttp.MediaType.parse("application/json"), json.getBytes());
+        RequestBody body = RequestBody.create(MediaType.parse("application/json"), json.getBytes());
         Request.Builder builder = new Request.Builder().url(getApiBaseUrl() + "/projectconfig/" + projectConfigurationId + "/user").put(body);
         Request request = HttpUserSupport.addBasicAuthentification(currentUser, builder).build();
         Response response = null;
@@ -242,11 +239,7 @@ public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF
             fail("Unable to get User details on Url " + url, e);
         } finally {
             if (response != null) {
-                try {
-                    response.body().close();
-                } catch (IOException e) {
-                    fail("Fail to close Http response.", e);
-                }
+                IOUtils.closeQuietly(response.body());
             }
         }
     }

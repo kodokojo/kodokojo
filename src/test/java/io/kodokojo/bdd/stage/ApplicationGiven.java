@@ -23,7 +23,6 @@ import com.github.dockerjava.api.model.Image;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.squareup.okhttp.OkHttpClient;
 import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.AfterScenario;
 import com.tngtech.jgiven.annotation.Hidden;
@@ -42,6 +41,7 @@ import io.kodokojo.service.BrickManager;
 import io.kodokojo.service.ConfigurationStore;
 import io.kodokojo.service.repository.Repository;
 import io.kodokojo.test.utils.TestUtils;
+import okhttp3.OkHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

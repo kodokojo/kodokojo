@@ -17,12 +17,12 @@
  */
 package io.kodokojo.bdd.stage.brickauthenticator;
 
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
 import io.kodokojo.bdd.stage.HttpUserSupport;
 import io.kodokojo.bdd.stage.StageUtils;
 import io.kodokojo.bdd.stage.UserInfo;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
