@@ -33,6 +33,7 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 import javax.inject.Inject;
 import javax.net.ssl.SSLContext;
@@ -259,7 +260,10 @@ public class GitlabConfigurer implements BrickConfigurer, BrickConfigurerHelper 
     protected GitlabRest provideGitlabRest(BrickConfigurerData brickConfigurerData) {
         String gitlabEntryPoint = getGitlabEntryPoint(brickConfigurerData);
         OkHttpClient httpClient = provideDefaultOkHttpClient();
-        Retrofit adapter = new Retrofit.Builder().baseUrl(gitlabEntryPoint).client(httpClient).build();
+        Retrofit adapter = new Retrofit.Builder().baseUrl(gitlabEntryPoint)
+                .client(httpClient)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
         return adapter.create(GitlabRest.class);
     }
 

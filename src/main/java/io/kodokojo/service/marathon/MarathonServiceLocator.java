@@ -70,12 +70,11 @@ public class MarathonServiceLocator implements ServiceLocator {
     public Set<Service> getService(String type, String projectName) {
         Set<Service> res = new HashSet<>();
         Set<String> appIds = new HashSet<>();
-        Call allApplicationsCall = marathonServiceLocatorRestApi.getAllApplications();
+        Call<JsonObject> allApplicationsCall = marathonServiceLocatorRestApi.getAllApplications();
         try {
-            Response applicationsResponse = allApplicationsCall.execute();
-            JsonParser parser = new JsonParser();
-            JsonObject json = (JsonObject) parser.parse(applicationsResponse.body().toString());
-            JsonArray apps = json.getAsJsonArray("apps");
+            Response<JsonObject> response = allApplicationsCall.execute();
+
+            JsonArray apps = response.body().getAsJsonArray("apps");
             for (int i = 0; i < apps.size(); i++) {
                 JsonObject app = (JsonObject) apps.get(i);
                 String id = app.getAsJsonPrimitive("id").getAsString();

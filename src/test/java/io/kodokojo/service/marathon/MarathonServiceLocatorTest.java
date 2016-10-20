@@ -107,11 +107,11 @@ public class MarathonServiceLocatorTest implements DataBuilder {
         marathonServiceLocator = new MarathonServiceLocator(aMarathonConfig()) {
             @Override
             protected MarathonServiceLocatorRestApi provideMarathonRestApi(MarathonConfig marathonConfig) {
-                return new TestMarathonRestApi();
+                return null;
             }
         };
     }
-
+/*
     private class TestMarathonRestApi implements MarathonServiceLocatorRestApi {
 
         @Override
@@ -166,5 +166,7 @@ public class MarathonServiceLocatorTest implements DataBuilder {
         }
 
     }
+    */
+
 
 }

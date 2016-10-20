@@ -17,18 +17,17 @@
  */
 package io.kodokojo.service.marathon;
 
+import com.google.gson.JsonObject;
 import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 import retrofit2.http.GET;
 import retrofit2.http.Path;
 
 public interface MarathonServiceLocatorRestApi {
 
     @GET("/v2/apps")
-    Call getAllApplications();
+    Call<JsonObject> getAllApplications();
 
     @GET("/v2/apps/{appId}")
-    Call getApplicationConfiguration(@Path("appId") String appId);
+    Call<JsonObject> getApplicationConfiguration(@Path("appId") String appId);
 
 }
