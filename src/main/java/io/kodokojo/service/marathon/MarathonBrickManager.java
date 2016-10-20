@@ -36,6 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import retrofit2.Call;
 import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -110,6 +111,7 @@ public class MarathonBrickManager implements BrickManager {
             });
             builder.client(httpClientBuilder.build());
         }
+        builder.addConverterFactory(GsonConverterFactory.create());
         Retrofit adapter = builder.build();
         marathonRestApi = adapter.create(MarathonRestApi.class);
         this.marathonServiceLocator = marathonServiceLocator;
