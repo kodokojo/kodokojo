@@ -69,6 +69,7 @@ public class SecurityModule extends AbstractModule {
         } else {
             SecretKey res = generateAesKey();
             try {
+                keyFile.mkdirs();
                 keyFile.createNewFile();
             } catch (IOException e) {
                 throw new RuntimeException("Unable to create " + keyFile.getAbsolutePath() + " file.", e);
