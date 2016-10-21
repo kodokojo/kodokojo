@@ -57,6 +57,7 @@ def buildAndPushDocker() {
         def version = version()
         def commit = commitSha1()
         def imageName = "kodokojo/kodokojo:dev"
+
         try {
 
             sh 'mkdir -p target/docker'
