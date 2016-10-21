@@ -56,7 +56,7 @@ def buildAndPushDocker() {
     stage('Building docker image then Push it') {
         def version = version()
         def commit = commitSha1()
-        def imageName = "kodokojo/kodokojo:latest"
+        def imageName = "kodokojo/kodokojo:staging"
         try {
 
             sh 'mkdir -p target/docker'
