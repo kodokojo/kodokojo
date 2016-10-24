@@ -143,6 +143,12 @@ public class PropertyModule extends AbstractModule {
         return createConfig(ReCaptchaConfig.class, valueProvider);
     }
 
+    @Provides
+    @Singleton
+    ZookeeperConfig provideZookeeperConfig(PropertyValueProvider valueProvider) {
+        return createConfig(ZookeeperConfig.class, valueProvider);
+    }
+
     private <T extends PropertyConfig> T createConfig(Class<T> configClass, PropertyValueProvider valueProvider) {
         PropertyResolver resolver = new PropertyResolver(valueProvider);
         return resolver.createProxy(configClass);
