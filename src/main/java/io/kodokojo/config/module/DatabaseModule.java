@@ -20,10 +20,7 @@ package io.kodokojo.config.module;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import io.kodokojo.brick.BrickFactory;
-import io.kodokojo.config.ApplicationConfig;
 import io.kodokojo.config.RedisConfig;
-import io.kodokojo.service.BootstrapConfigurationProvider;
 import io.kodokojo.service.redis.RedisEntityStore;
 import io.kodokojo.service.redis.RedisProjectStore;
 import io.kodokojo.service.redis.RedisUserRepository;
@@ -32,7 +29,6 @@ import io.kodokojo.service.repository.ProjectRepository;
 import io.kodokojo.service.lifecycle.ApplicationLifeCycleManager;
 import io.kodokojo.service.repository.Repository;
 import io.kodokojo.service.repository.UserRepository;
-import io.kodokojo.service.redis.RedisBootstrapConfigurationProvider;
 import io.kodokojo.service.repository.store.EntityStore;
 import io.kodokojo.service.repository.store.ProjectStore;
 
@@ -75,13 +71,6 @@ public class DatabaseModule extends AbstractModule {
         return repository;
     }
 
-    @Provides
-    @Singleton
-    BootstrapConfigurationProvider provideBootstrapConfigurationProvider(ApplicationConfig applicationConfig, RedisConfig redisConfig, ApplicationLifeCycleManager applicationLifeCycleManager) {
-        RedisBootstrapConfigurationProvider redisBootstrapConfigurationProvider = new RedisBootstrapConfigurationProvider(redisConfig.host(), redisConfig.port(), applicationConfig.loadbalancerHost(), applicationConfig.initialSshPort());
-        applicationLifeCycleManager.addService(redisBootstrapConfigurationProvider);
-        return redisBootstrapConfigurationProvider;
-    }
 
     @Provides
     @Singleton

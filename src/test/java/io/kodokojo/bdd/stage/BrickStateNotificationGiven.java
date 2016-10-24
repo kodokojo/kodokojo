@@ -124,7 +124,6 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
         dnsManager = mock(DnsManager.class);
         configurationStore = mock(ConfigurationStore.class);
 
-        Mockito.when(bootstrapProvider.provideLoadBalancerHost(anyString(), anyString())).thenReturn("192.168.22.3");
         Mockito.when(bootstrapProvider.provideTcpPortEntrypoint(anyString(), anyString())).thenReturn(10022);
 
         try {
@@ -159,7 +158,6 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
             fail(e.getMessage());
         }
         BootstrapConfigurationProvider bootstrapConfigurationProvider = mock(BootstrapConfigurationProvider.class);
-        Mockito.when(bootstrapConfigurationProvider.provideLoadBalancerHost(anyString(),anyString())).thenReturn(dockerTestSupport.getServerIp());
         Mockito.when(bootstrapConfigurationProvider.provideTcpPortEntrypoint(anyString(),anyString())).thenReturn(10022);
 
         SSLKeyPair caKey = SSLUtils.createSelfSignedSSLKeyPair("Fake CA", (RSAPrivateKey) keyPair.getPrivate(), (RSAPublicKey) keyPair.getPublic());
