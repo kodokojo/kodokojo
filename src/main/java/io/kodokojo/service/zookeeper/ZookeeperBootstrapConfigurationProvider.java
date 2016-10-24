@@ -19,6 +19,7 @@ public class ZookeeperBootstrapConfigurationProvider implements BootstrapConfigu
     public static final String KODOKOJO_TCP_PORT = "/kodokojo/tcpports";
 
     public  static final String KODOKOJO_PORT_INDEX = "/kodokojo/portIndex";
+    public static final int INITIAL_PORT = 10022;
 
     private final ZooKeeper zooKeeper;
 
@@ -49,7 +50,7 @@ public class ZookeeperBootstrapConfigurationProvider implements BootstrapConfigu
             } else {
                 byte[] data = zooKeeper.getData(path, this, stat);
                 Integer res = Integer.valueOf(new String(data));
-                return res;
+                return res + INITIAL_PORT;
             }
         });
         return aTry.getOrElse(-1);
@@ -74,7 +75,7 @@ public class ZookeeperBootstrapConfigurationProvider implements BootstrapConfigu
                 zooKeeper.setData(KODOKOJO_PORT_INDEX, port.toString().getBytes(), version);
 
             }
-            return port;
+            return port + INITIAL_PORT;
         });
     }
 }
