@@ -60,9 +60,4 @@ public class MarathonModule extends AbstractModule {
         return new MarathonBrickManager(marathonConfig, marathonServiceLocator, brickConfigurerProvider, projectRepository, !marathonConfig.ignoreContraint(), applicationConfig.domain(), brickUrlFactory);
     }
 
-    @Provides
-    @Singleton
-    ConfigurationStore provideConfigurationStore(MarathonConfig marathonConfig) {
-        return new MarathonConfigurationStore(marathonConfig);
-    }
 }

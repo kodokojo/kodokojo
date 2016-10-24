@@ -34,11 +34,9 @@ public class StackConfiguration implements Serializable {
 
     private final Set<BrickConfiguration> brickConfigurations;
 
-    private final String loadBalancerHost;
-
     private final int scmSshPort;
 
-    public StackConfiguration(String name, StackType type, Set<BrickConfiguration> brickConfigurations, String loadBalancerHost, int scmSshPort) {
+    public StackConfiguration(String name, StackType type, Set<BrickConfiguration> brickConfigurations, int scmSshPort) {
         if (isBlank(name)) {
             throw new IllegalArgumentException("name must be defined.");
         }
@@ -52,7 +50,6 @@ public class StackConfiguration implements Serializable {
         this.name = name;
         this.type = type;
         this.brickConfigurations = brickConfigurations;
-        this.loadBalancerHost = loadBalancerHost;
         this.scmSshPort = scmSshPort;
     }
 
@@ -66,10 +63,6 @@ public class StackConfiguration implements Serializable {
 
     public Set<BrickConfiguration> getBrickConfigurations() {
         return new HashSet<>(brickConfigurations);
-    }
-
-    public String getLoadBalancerHost() {
-        return loadBalancerHost;
     }
 
     public int getScmSshPort() {
@@ -104,7 +97,6 @@ public class StackConfiguration implements Serializable {
                 "name='" + name + '\'' +
                 ", type=" + type +
                 ", brickConfigurations=" + brickConfigurations +
-                ", loadBalancerHost=" + loadBalancerHost +
                 ", scmSshPort=" + scmSshPort +
                 '}';
     }

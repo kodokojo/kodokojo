@@ -115,7 +115,7 @@ public class ProjectEndpointActor extends AbstractActor {
                 }).match(ProjectConfigurationUpdaterActor.ProjectConfigurationUpdaterMsg.class, msg -> {
                     getContext().actorOf(ProjectConfigurationUpdaterActor.PROPS(projectRepository)).forward(msg, getContext());
                 }).match(StackConfigurationStarterActor.StackConfigurationStartMsg.class, msg -> {
-                    getContext().actorOf(StackConfigurationStarterActor.PROPS(dnsManager, brickUrlFactory)).forward(msg, getContext());
+                    getContext().actorOf(StackConfigurationStarterActor.PROPS(dnsManager, brickUrlFactory, applicationConfig)).forward(msg, getContext());
                 }).match(BrickPropertyToBrickConfigurationActor.BrickPropertyToBrickConfigurationMsg.class, msg -> {
                     getContext().actorOf(BrickPropertyToBrickConfigurationActor.PROPS(projectRepository)).forward(msg, getContext());
                 }).match(ProjectConfigurationChangeUserActor.ProjectConfigurationChangeUserMsg.class, msg -> {

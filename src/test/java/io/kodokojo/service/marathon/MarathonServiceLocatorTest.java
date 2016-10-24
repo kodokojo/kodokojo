@@ -1,29 +1,17 @@
 package io.kodokojo.service.marathon;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import io.kodokojo.config.MarathonConfig;
 import io.kodokojo.model.PortDefinition;
 import io.kodokojo.model.Service;
-import io.kodokojo.service.DataBuilder;
-import okhttp3.Request;
-import org.apache.commons.io.IOUtils;
-import org.assertj.core.api.Assertions;
+import io.kodokojo.test.utils.DataBuilder;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-import retrofit2.http.Path;
 
-
-import java.io.IOException;
 import java.util.Iterator;
 import java.util.Set;
 

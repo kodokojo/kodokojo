@@ -26,7 +26,7 @@ import io.kodokojo.brick.*;
 import io.kodokojo.brick.gitlab.GitlabConfigurer;
 import io.kodokojo.commons.utils.DockerTestSupport;
 import io.kodokojo.model.*;
-import io.kodokojo.service.RSAUtils;
+import io.kodokojo.utils.RSAUtils;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

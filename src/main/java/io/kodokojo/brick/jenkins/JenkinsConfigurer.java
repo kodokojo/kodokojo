@@ -24,7 +24,7 @@ import io.kodokojo.model.ProjectConfiguration;
 import io.kodokojo.model.UpdateData;
 import io.kodokojo.model.User;
 import io.kodokojo.model.UserService;
-import io.kodokojo.service.RSAUtils;
+import io.kodokojo.utils.RSAUtils;
 import okhttp3.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.velocity.Template;

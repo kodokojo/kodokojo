@@ -1,7 +1,8 @@
 package io.kodokojo.test.utils;
 
+import io.kodokojo.config.MarathonConfig;
 import io.kodokojo.model.*;
-import io.kodokojo.service.RSAUtils;
+import io.kodokojo.utils.RSAUtils;
 import scala.concurrent.duration.FiniteDuration;
 
 import java.security.KeyPair;
@@ -52,7 +53,6 @@ public interface DataBuilder {
     default StackConfiguration aStackConfiguration() {
         StackConfigurationBuilder builder = new StackConfigurationBuilder();
         builder.setName("build-A")
-                .setLoadBalancerHost("localhost")
                 .setScmSshPort(10022)
                 .setType(StackType.BUILD)
         .addBrickConfiguration(aBrickConfiguration());
@@ -89,5 +89,29 @@ public interface DataBuilder {
             fail(e.getMessage());
         }
         return null;
+    }
+
+    default MarathonConfig aMarathonConfig() {
+        return new MarathonConfig() {
+            @Override
+            public String url() {
+                return "http://localhost:8080";
+            }
+
+            @Override
+            public Boolean ignoreContraint() {
+                return Boolean.TRUE;
+            }
+
+            @Override
+            public String login() {
+                return "";
+            }
+
+            @Override
+            public String password() {
+                return "";
+            }
+        };
     }
 }

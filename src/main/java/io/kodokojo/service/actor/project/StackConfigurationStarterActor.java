@@ -24,6 +24,7 @@ import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
 import io.kodokojo.brick.BrickStartContext;
 import io.kodokojo.brick.BrickUrlFactory;
+import io.kodokojo.config.ApplicationConfig;
 import io.kodokojo.model.PortDefinition;
 import io.kodokojo.model.ProjectConfiguration;
 import io.kodokojo.model.StackConfiguration;
@@ -40,6 +41,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static akka.event.Logging.getLogger;
+import static java.util.Objects.requireNonNull;
 
 public class StackConfigurationStarterActor extends AbstractActor {
 
@@ -49,14 +51,12 @@ public class StackConfigurationStarterActor extends AbstractActor {
     private static final Pattern IP_PATTERN = Pattern.compile("^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
 
 
-    public static Props PROPS(DnsManager dnsManager, BrickUrlFactory brickUrlFactory) {
-        if (dnsManager == null) {
-            throw new IllegalArgumentException("dnsManager must be defined.");
-        }
-        if (brickUrlFactory == null) {
-            throw new IllegalArgumentException("brickUrlFactory must be defined.");
-        }
-        return Props.create(StackConfigurationStarterActor.class, dnsManager, brickUrlFactory);
+    public static Props PROPS(DnsManager dnsManager, BrickUrlFactory brickUrlFactory, ApplicationConfig applicationConfig) {
+        requireNonNull(dnsManager, "dnsManager must be defined.");
+        requireNonNull(brickUrlFactory, "brickUrlFactory must be defined.");
+        requireNonNull(applicationConfig, "applicationConfig must be defined.");
+
+        return Props.create(StackConfigurationStarterActor.class, dnsManager, brickUrlFactory, applicationConfig);
     }
 
     private StackConfigurationStartMsg intialMsg;
@@ -65,7 +65,7 @@ public class StackConfigurationStarterActor extends AbstractActor {
 
     private int nbResponse = 0;
 
-    public StackConfigurationStarterActor(DnsManager dnsManager, BrickUrlFactory brickUrlFactory) {
+    public StackConfigurationStarterActor(DnsManager dnsManager, BrickUrlFactory brickUrlFactory, ApplicationConfig applicationConfig) {
         receive(ReceiveBuilder.match(StackConfigurationStartMsg.class, msg -> {
             intialMsg = msg;
             originalSender = sender();
@@ -78,7 +78,7 @@ public class StackConfigurationStarterActor extends AbstractActor {
                         .filter(p -> p.getType() == PortDefinition.Type.HTTP || p.getType() == PortDefinition.Type.HTTPS)
                         .map(p -> {
                             String entry = brickUrlFactory.forgeUrl(msg.projectConfiguration, msg.stackConfiguration.getName(), b);
-                            DnsEntry dnsEntry = new DnsEntry(entry, getDnsType(msg.stackConfiguration.getLoadBalancerHost()), msg.stackConfiguration.getLoadBalancerHost());
+                            DnsEntry dnsEntry = new DnsEntry(entry, getDnsType(applicationConfig.loadbalancerHost()), applicationConfig.loadbalancerHost());
                             if (LOGGER.isDebugEnabled()) {
                                 LOGGER.debug("Add following DNS Entry {}", dnsEntry);
                             }
