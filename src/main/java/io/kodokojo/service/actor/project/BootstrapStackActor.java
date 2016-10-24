@@ -53,12 +53,11 @@ public class BootstrapStackActor extends AbstractActor {
                 LOGGER.debug("Boostraping project '{}'", msg.projectName);
             }
 
-            String loadBalancerHost = bootstrapConfigurationProvider.provideLoadBalancerHost(projectName, stackName);
             int sshPortEntrypoint = 0;
             if (stackType == StackType.BUILD) {
                 sshPortEntrypoint = bootstrapConfigurationProvider.provideTcpPortEntrypoint(projectName, stackName);
             }
-            BootstrapStackData res = new BootstrapStackData(projectName, stackName, loadBalancerHost, sshPortEntrypoint);
+            BootstrapStackData res = new BootstrapStackData(projectName, sshPortEntrypoint);
             configurationStore.storeBootstrapStackData(res);
             sender().tell(new BootstrapStackResultMsg(res), self());
             getContext().stop(self());

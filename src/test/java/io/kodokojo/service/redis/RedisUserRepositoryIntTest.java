@@ -29,7 +29,7 @@ import io.kodokojo.commons.DockerPresentMethodRule;
 import io.kodokojo.model.User;
 import io.kodokojo.model.UserService;
 import io.kodokojo.commons.utils.DockerTestSupport;
-import io.kodokojo.service.RSAUtils;
+import io.kodokojo.utils.RSAUtils;
 import io.kodokojo.service.repository.UserRepository;
 import org.junit.Before;
 import org.junit.Rule;

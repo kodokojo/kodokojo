@@ -24,7 +24,7 @@ import akka.testkit.JavaTestKit;
 import io.kodokojo.brick.*;
 import io.kodokojo.service.actor.message.BrickStateEvent;
 import io.kodokojo.model.Service;
-import io.kodokojo.service.RSAUtils;
+import io.kodokojo.utils.RSAUtils;
 import io.kodokojo.service.actor.project.BrickConfigurationStarterActor;
 import io.kodokojo.service.ssl.SSLKeyPair;
 import io.kodokojo.service.ssl.SSLUtils;
@@ -176,7 +176,7 @@ public class BrickConfigurationConfigurationStarterActorTest {
         Set<StackConfiguration> stackConfigurations = new HashSet<>();
         Set<BrickConfiguration> brickConfigurations = new HashSet<>();
         brickConfigurations.add(brickConfiguration);
-        StackConfiguration stackConfiguration = new StackConfiguration("build-A", StackType.BUILD, brickConfigurations, "127.0.0.1", 10022);
+        StackConfiguration stackConfiguration = new StackConfiguration("build-A", StackType.BUILD, brickConfigurations, 10022);
         stackConfigurations.add(stackConfiguration);
         List<User> users = Collections.singletonList(owner);
         UserService userService = new UserService("1244", "Acme-service", "Acme-service", "abcd",  (RSAPrivateKey) keyPair.getPrivate(), (RSAPublicKey) keyPair.getPublic());

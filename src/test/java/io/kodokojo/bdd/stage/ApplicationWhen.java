@@ -32,7 +32,7 @@ import io.kodokojo.endpoint.dto.BrickConfigDto;
 import io.kodokojo.endpoint.dto.StackConfigDto;
 import io.kodokojo.model.*;
 import io.kodokojo.model.Stack;
-import io.kodokojo.service.RSAUtils;
+import io.kodokojo.utils.RSAUtils;
 import io.kodokojo.service.actor.message.BrickStateEvent;
 import okhttp3.*;
 import org.apache.commons.io.IOUtils;
@@ -178,7 +178,7 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
             throw new IllegalArgumentException("projectName must be defined.");
         }
         //  Mock behavior
-        BootstrapStackData boostrapData = new BootstrapStackData(projectName, "build-A", "127.0.0.1", 10022);
+        BootstrapStackData boostrapData = new BootstrapStackData(projectName, 10022);
         //Mockito.when(projectManager.bootstrapStack(projectName, "build-A", StackType.BUILD)).thenReturn(boostrapData);
         KeyPair keyPair = null;
         try {

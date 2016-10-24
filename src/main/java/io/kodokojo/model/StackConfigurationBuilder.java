@@ -44,13 +44,12 @@ public class StackConfigurationBuilder {
             this.type = init.getType();
             this.brickConfigurations = new HashSet<>();
             this.brickConfigurations.addAll(init.getBrickConfigurations());
-            this.loadBalancerHost = init.getLoadBalancerHost();
             this.scmSshPort = init.getScmSshPort();
         }
     }
 
     public StackConfiguration build() {
-        return new StackConfiguration(name, type, brickConfigurations, loadBalancerHost, scmSshPort);
+        return new StackConfiguration(name, type, brickConfigurations, scmSshPort);
     }
 
     public StackConfigurationBuilder setName(String name) {
@@ -70,11 +69,6 @@ public class StackConfigurationBuilder {
 
     public StackConfigurationBuilder addBrickConfiguration(BrickConfiguration brickConfiguration) {
         this.brickConfigurations.add(brickConfiguration);
-        return this;
-    }
-
-    public StackConfigurationBuilder setLoadBalancerHost(String loadBalancerHost) {
-        this.loadBalancerHost = loadBalancerHost;
         return this;
     }
 

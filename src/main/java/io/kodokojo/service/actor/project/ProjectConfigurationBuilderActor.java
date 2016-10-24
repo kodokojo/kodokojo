@@ -65,8 +65,6 @@ public class ProjectConfigurationBuilderActor extends AbstractActor {
 
     private Set<User> users;
 
-    private String loadBalancerHost;
-
     private int scmSshPort = 0;
 
     private List<StackConfigDto> stackConfigDtos;
@@ -118,7 +116,6 @@ public class ProjectConfigurationBuilderActor extends AbstractActor {
                 .match(BootstrapStackActor.BootstrapStackResultMsg.class, msg -> {
 
                     BootstrapStackData bootstrapStackData = msg.getBootstrapStackData();
-                    loadBalancerHost = bootstrapStackData.getLoadBalancerHost();
                     scmSshPort = bootstrapStackData.getSshPort();
                     tryToBuild();
                 })
@@ -132,7 +129,6 @@ public class ProjectConfigurationBuilderActor extends AbstractActor {
     private void tryToBuild() {
 
         if (CollectionUtils.isNotEmpty(admins) &&
-                StringUtils.isNotBlank(loadBalancerHost) &&
                 scmSshPort > 0 &&
                 userService != null) {
 
@@ -143,7 +139,7 @@ public class ProjectConfigurationBuilderActor extends AbstractActor {
                 Set<BrickConfiguration> brickConfigurations = stackConfigDto.getBrickConfigs().stream()
                         .map(brickConfigDto -> brickFactory.createBrick(brickConfigDto.getName()))
                         .collect(Collectors.toSet());
-                return new StackConfiguration(stackConfigDto.getName(), StackType.valueOf(stackConfigDto.getType()), brickConfigurations, loadBalancerHost, scmSshPort);
+                return new StackConfiguration(stackConfigDto.getName(), StackType.valueOf(stackConfigDto.getType()), brickConfigurations, scmSshPort);
             }).collect(Collectors.toSet());
 
 
@@ -151,7 +147,6 @@ public class ProjectConfigurationBuilderActor extends AbstractActor {
             originalSender.tell(new ProjectConfigurationBuildResultMsg(initialMsg.getRequester(), projectConfiguration), self());
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Return a built ProjectConfiguration for project {}.", initialMsg.getProjectCreationDto().getName());
-                LOGGER.debug("Loadbalancer host {}", loadBalancerHost);
                 LOGGER.debug("sshPort {}", scmSshPort);
             }
 
