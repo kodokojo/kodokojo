@@ -19,17 +19,21 @@ package io.kodokojo.config.module;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
+import com.google.inject.*;
 import com.google.inject.name.Names;
 import io.kodokojo.commons.utils.DockerTestSupport;
+import io.kodokojo.config.ZookeeperConfig;
 import io.kodokojo.config.module.endpoint.BrickEndpointModule;
 import io.kodokojo.config.module.endpoint.ProjectEndpointModule;
 import io.kodokojo.config.module.endpoint.UserEndpointModule;
+import io.kodokojo.model.BootstrapStackData;
+import io.kodokojo.service.BootstrapConfigurationProvider;
 import io.kodokojo.service.BrickManager;
 import io.kodokojo.service.ConfigurationStore;
 import io.kodokojo.service.actor.EndpointActor;
+import io.kodokojo.service.ssl.SSLKeyPair;
+import io.kodokojo.service.zookeeper.ZookeeperBootstrapConfigurationProvider;
+import io.kodokojo.service.zookeeper.ZookeeperConfigurationStore;
 
 public class InjectorProvider {
 
@@ -53,7 +57,18 @@ public class InjectorProvider {
 
     public Injector provideInjector() {
         Injector propertyInjector = Guice.createInjector(new TestPropertyModule(args, dockerTestSupport, httpPort, redisHost, redisPort));
-        Injector servicesInjector = propertyInjector.createChildInjector(new ServiceModule(), new DatabaseModule(), new TestSecurityModule());
+        Injector servicesInjector = propertyInjector.createChildInjector(new ServiceModule(), new DatabaseModule(), new TestSecurityModule(), new AbstractModule() {
+            @Override
+            protected void configure() {
+
+            }
+
+            @Provides
+            @Singleton
+            BootstrapConfigurationProvider provideBootstrapConfigurationProvider() {
+                return (projectName, stackName) -> 10022;
+            }
+        });
         Injector orchestratorInjector = servicesInjector.createChildInjector(new AbstractModule() {
             @Override
             protected void configure() {
