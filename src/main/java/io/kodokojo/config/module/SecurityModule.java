@@ -20,7 +20,7 @@ package io.kodokojo.config.module;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import io.kodokojo.service.RSAUtils;
+import io.kodokojo.utils.RSAUtils;
 import io.kodokojo.service.ssl.SSLKeyPair;
 import io.kodokojo.config.SecurityConfig;
 import org.apache.commons.io.FileUtils;

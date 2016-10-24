@@ -27,7 +27,7 @@ import io.kodokojo.endpoint.dto.UserDto;
 import io.kodokojo.endpoint.dto.UserProjectConfigIdDto;
 import io.kodokojo.model.User;
 import io.kodokojo.model.UserBuilder;
-import io.kodokojo.service.RSAUtils;
+import io.kodokojo.utils.RSAUtils;
 import io.kodokojo.service.ReCaptchaService;
 import io.kodokojo.service.actor.EndpointActor;
 import io.kodokojo.service.actor.user.UserCreatorActor;

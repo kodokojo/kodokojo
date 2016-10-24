@@ -18,7 +18,7 @@
 package io.kodokojo.model;
 
 
-import io.kodokojo.service.RSAUtils;
+import io.kodokojo.utils.RSAUtils;
 
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;

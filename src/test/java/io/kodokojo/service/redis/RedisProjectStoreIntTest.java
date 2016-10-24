@@ -18,12 +18,11 @@
 package io.kodokojo.service.redis;
 
 import io.kodokojo.bdd.stage.StageUtils;
-import io.kodokojo.brick.DefaultBrickFactory;
 import io.kodokojo.commons.DockerIsRequire;
 import io.kodokojo.commons.DockerPresentMethodRule;
 import io.kodokojo.model.Service;
 import io.kodokojo.commons.utils.DockerTestSupport;
-import io.kodokojo.service.RSAUtils;
+import io.kodokojo.utils.RSAUtils;
 import io.kodokojo.service.actor.message.BrickStateEvent;
 import io.kodokojo.service.repository.store.ProjectConfigurationStoreModel;
 import io.kodokojo.service.ssl.SSLKeyPair;
@@ -36,8 +35,6 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.*;
@@ -130,7 +127,7 @@ public class RedisProjectStoreIntTest {
         Set<StackConfiguration> stackConfigurations = new HashSet<>();
         Set<BrickConfiguration> brickConfigurations = new HashSet<>();
         brickConfigurations.add(new BrickConfiguration("jenkins", BrickType.CI, "1.651", Collections.singleton(new PortDefinition(8080))));
-        stackConfigurations.add(new StackConfiguration("build-A", StackType.BUILD, brickConfigurations, "127.0.0.1", 10022));
+        stackConfigurations.add(new StackConfiguration("build-A", StackType.BUILD, brickConfigurations, 10022));
         return new ProjectConfigurationStoreModel("123456",null, "acme-a", "1244", users, stackConfigurations, users);
     }
 

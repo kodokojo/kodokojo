@@ -56,7 +56,8 @@ def buildAndPushDocker() {
     stage('Building docker image then Push it') {
         def version = version()
         def commit = commitSha1()
-        def imageName = "kodokojo/kodokojo:dev"
+        def tag = (env.BRANCH_NAME == "staging" ? "staging" : "dev")
+        def imageName = "kodokojo/kodokojo:${tag}"
 
         try {
 
