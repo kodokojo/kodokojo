@@ -76,7 +76,7 @@ public class BrickConfigurerWhen<SELF extends BrickConfigurerWhen<?>> extends St
     BrickConfigurerData brickConfigurerData;
 
     public SELF i_create_a_default_user() {
-        defaultUserInfo = new UserInfo("jpthiery", "123456", "67899", "jpthiery", "jpthiery@kodokojo.io");
+        defaultUserInfo = new UserInfo("jpthiery", "123456", "67899", "jpthiery1234", "jpthiery@kodokojo.io");
         BrickConfiguration brickConfiguration = brickFactory.createBrick(brickName);
         brickConfigurer = brickConfigurerProvider.provideFromBrick(brickConfiguration);
         KeyPair keyPair = null;
@@ -90,7 +90,7 @@ public class BrickConfigurerWhen<SELF extends BrickConfigurerWhen<?>> extends St
         User defaultUser = new User(defaultUserInfo.getIdentifier(), "1234", "Jean-Pascal THIERY", defaultUserInfo.getUsername(), defaultUserInfo.getEmail(), defaultUserInfo.getPassword(), sshPublicKey);
         List<User> users = Collections.singletonList(defaultUser);
 
-        UserService userService = new UserService("5678", "service-acme", "serviceacme", "toto", (RSAPrivateKey) keyPair.getPrivate(), publicKey);
+        UserService userService = new UserService("5678", "service-acme", "serviceacme", "toto1234", (RSAPrivateKey) keyPair.getPrivate(), publicKey);
         ArrayList<User> admins = new ArrayList<>();
         admins.add(defaultUser);
         HashSet<StackConfiguration> stackConfigurations = new HashSet<>();
