@@ -129,8 +129,9 @@ public class UserCreatorActor extends AbstractActor {
                         user.getSshPublicKey() + "\n" +
                         "</p>";
                 Set<EmailSender.Attachment> attachments = new HashSet<>();
-                
+
                 String encodedKey = Base64.getEncoder().encodeToString(keyPair.getPrivate().getEncoded());
+                encodedKey = encodedKey.replaceAll("(.{66})", "$1\n");
                 String privateKeyContent = String.format("-----BEGIN RSA PRIVATE KEY-----\n%s\n-----END RSA PRIVATE KEY-----", encodedKey);
                 attachments.add(new EmailSender.PlainTextAttachment<>(privateKeyContent, user.getUsername() + ".key"));
                 attachments.add(new EmailSender.PlainTextAttachment<>(user.getSshPublicKey(), user.getUsername() + ".pub"));
