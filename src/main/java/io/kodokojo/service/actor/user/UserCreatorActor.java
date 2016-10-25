@@ -24,6 +24,7 @@ import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
 import io.kodokojo.model.Entity;
 import io.kodokojo.model.User;
+import io.kodokojo.service.EmailSender;
 import io.kodokojo.utils.RSAUtils;
 import io.kodokojo.service.actor.EmailSenderActor;
 import io.kodokojo.service.actor.EndpointActor;
@@ -32,11 +33,17 @@ import io.kodokojo.service.actor.entity.EntityCreatorActor;
 import io.kodokojo.service.actor.message.UserRequestMessage;
 import io.kodokojo.service.repository.UserRepository;
 import org.apache.commons.lang.StringUtils;
+import org.bouncycastle.openssl.PKCS8Generator;
+import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 
+import java.io.IOException;
+import java.io.StringWriter;
 import java.security.KeyPair;
 import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static akka.event.Logging.getLogger;
 import static java.util.Objects.requireNonNull;
@@ -128,8 +135,19 @@ public class UserCreatorActor extends AbstractActor {
                         "<br />\n" +
                         user.getSshPublicKey() + "\n" +
                         "</p>";
-                EmailSenderActor.EmailSenderMsg emailSenderMsg = new EmailSenderActor.EmailSenderMsg(to, String.format("Kodo Kojo user %s created", user.getUsername()), content);
-                getContext().actorFor(EndpointActor.ACTOR_PATH).tell(emailSenderMsg, self());
+                Set<EmailSender.Attachment> attachments = new HashSet<>();
+
+                StringWriter sw = new StringWriter();
+                JcaPEMWriter pemWriter = new JcaPEMWriter(sw);
+                try {
+                    pemWriter.writeObject(keyPair.getPrivate());
+                    attachments.add(new EmailSender.PlainTextAttachment<>(sw.toString(), user.getUsername() + ".key"));
+                    attachments.add(new EmailSender.PlainTextAttachment<>(user.getSshPublicKey(),  user.getUsername() + ".pub"));
+                    EmailSenderActor.EmailSenderMsg emailSenderMsg = new EmailSenderActor.EmailSenderMsg(to, null, null, String.format("Kodo Kojo user %s created", user.getUsername()), content, true, attachments);
+                    getContext().actorFor(EndpointActor.ACTOR_PATH).tell(emailSenderMsg, self());
+                } catch (IOException e) {
+                    LOGGER.error("An error occur wile trying to create attachment: {}", e);
+                }
                 getContext().stop(self());
             } else if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Unable to store user {}", user);

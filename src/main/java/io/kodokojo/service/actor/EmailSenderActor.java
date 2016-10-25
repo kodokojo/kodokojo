@@ -26,6 +26,7 @@ import io.kodokojo.service.EmailSender;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import static akka.event.Logging.getLogger;
 
@@ -72,17 +73,20 @@ public class EmailSenderActor extends AbstractActor {
 
         private final boolean htmlContent;
 
-        public EmailSenderMsg(List<String> to, List<String> cc, List<String> ci, String object, String content, boolean htmlContent) {
+        private final Set<EmailSender.Attachment> attachments;
+
+        public EmailSenderMsg(List<String> to, List<String> cc, List<String> ci, String object, String content, boolean htmlContent, Set<EmailSender.Attachment> attachments) {
             this.to = to;
             this.cc = cc;
             this.ci = ci;
             this.object = object;
             this.content = content;
             this.htmlContent = htmlContent;
+            this.attachments = attachments;
         }
 
         public EmailSenderMsg(List<String> to, String object, String content) {
-            this(to, null, null, object, content, true);
+            this(to, null, null, object, content, true, null);
         }
     }
 
