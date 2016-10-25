@@ -137,7 +137,7 @@ public class JenkinsConfigurer implements BrickConfigurer {
         context.put(USERS_KEY, brickConfigurerData.getUsers());
 
         String templatePath = ADD_OR_UPDATE_USER_JENKINS_GROOVY_VM;
-        return executeGroovyScript(projectConfiguration.getUserService(),brickConfigurerData, context, templatePath);
+        return executeGroovyScript(projectConfiguration.getUserService(), brickConfigurerData, context, templatePath);
 
     }
 
@@ -200,7 +200,7 @@ public class JenkinsConfigurer implements BrickConfigurer {
                         Thread.currentThread().interrupt();
                     }
                 }
-            }while (!success && nbTry < 9000 && !Thread.currentThread().isInterrupted());
+            } while (!success && nbTry < 9000 && !Thread.currentThread().isInterrupted());
             if (response.code() >= 200 && response.code() < 300) {
                 return brickConfigurerData;
             }
@@ -216,7 +216,12 @@ public class JenkinsConfigurer implements BrickConfigurer {
 
     private static void addAuthen(Request.Builder builder, String login, String password) {
         String crendential = String.format("%s:%s", login, password);
-        builder.addHeader("Authorization", "Basic " + Base64.getEncoder().encodeToString(crendential.getBytes()));
+        String encodedBase64 = Base64.getEncoder().encodeToString(crendential.getBytes());
+        builder.addHeader("Authorization", "Basic " + encodedBase64);
+        if (LOGGER.isDebugEnabled()) {
+            Request request = builder.build();
+            LOGGER.debug("Request Jenkins url {} with following Header : Authorization : Basic ({}:{})", request.url().toString(), encodedBase64, login, password);
+        }
     }
 
 }
