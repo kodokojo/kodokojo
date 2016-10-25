@@ -23,14 +23,6 @@ package io.kodokojo.service;
 public interface BootstrapConfigurationProvider {
 
     /**
-     * Provide the load balancer IP which may used to access to the project stack.
-     * @param projectName Name of the project
-     * @param stackName The stack name
-     * @return Ip of the load balancer
-     */
-    String provideLoadBalancerHost(String projectName, String stackName);
-
-    /**
      * Provide SSH port configured on the load balancer to access to the stack.
      * @param projectName Name of the project
      * @param stackName The stack name
