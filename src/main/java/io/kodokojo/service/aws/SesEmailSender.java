@@ -20,7 +20,6 @@ package io.kodokojo.service.aws;
 import com.amazonaws.regions.Region;
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClient;
 import com.amazonaws.services.simpleemail.model.*;
-import com.amazonaws.services.simpleemail.model.Message;
 import io.kodokojo.service.EmailSender;
 import javaslang.control.Try;
 import org.apache.commons.collections4.CollectionUtils;
@@ -28,7 +27,9 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.mail.*;
+import javax.mail.Address;
+import javax.mail.MessagingException;
+import javax.mail.Session;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
@@ -37,7 +38,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.ByteBuffer;
-import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
@@ -130,7 +130,7 @@ public class SesEmailSender implements EmailSender {
         }
     }
 
-    private static void addRecipients(MimeMessage message , javax.mail.Message.RecipientType recipientType, List<String> address) throws MessagingException {
+    private static void addRecipients(MimeMessage message, javax.mail.Message.RecipientType recipientType, List<String> address) throws MessagingException {
         if (CollectionUtils.isNotEmpty(address)) {
             message.addRecipients(recipientType, convertListToAddresses(address));
         }
