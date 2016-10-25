@@ -40,10 +40,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.security.KeyPair;
 import java.security.interfaces.RSAPublicKey;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static akka.event.Logging.getLogger;
 import static java.util.Objects.requireNonNull;
@@ -137,11 +134,11 @@ public class UserCreatorActor extends AbstractActor {
                         "</p>";
                 Set<EmailSender.Attachment> attachments = new HashSet<>();
 
-                StringWriter sw = new StringWriter();
-                JcaPEMWriter pemWriter = new JcaPEMWriter(sw);
+
                 try {
-                    pemWriter.writeObject(keyPair.getPrivate());
-                    attachments.add(new EmailSender.PlainTextAttachment<>(sw.toString(), user.getUsername() + ".key"));
+                    String encodedKey = Base64.getEncoder().encodeToString(keyPair.getPrivate().getEncoded());
+                    String privateKeyContent = String.format("-----BEGIN RSA PRIVATE KEY-----\n%s\n-----END RSA PRIVATE KEY-----", encodedKey);
+                    attachments.add(new EmailSender.PlainTextAttachment<>(privateKeyContent, user.getUsername() + ".key"));
                     attachments.add(new EmailSender.PlainTextAttachment<>(user.getSshPublicKey(),  user.getUsername() + ".pub"));
                     EmailSenderActor.EmailSenderMsg emailSenderMsg = new EmailSenderActor.EmailSenderMsg(to, null, null, String.format("Kodo Kojo user %s created", user.getUsername()), content, true, attachments);
                     getContext().actorFor(EndpointActor.ACTOR_PATH).tell(emailSenderMsg, self());
