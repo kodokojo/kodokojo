@@ -25,19 +25,15 @@ import akka.japi.pf.ReceiveBuilder;
 import io.kodokojo.model.Entity;
 import io.kodokojo.model.User;
 import io.kodokojo.service.EmailSender;
-import io.kodokojo.utils.RSAUtils;
 import io.kodokojo.service.actor.EmailSenderActor;
 import io.kodokojo.service.actor.EndpointActor;
 import io.kodokojo.service.actor.entity.AddUserToEntityActor;
 import io.kodokojo.service.actor.entity.EntityCreatorActor;
 import io.kodokojo.service.actor.message.UserRequestMessage;
 import io.kodokojo.service.repository.UserRepository;
+import io.kodokojo.utils.RSAUtils;
 import org.apache.commons.lang.StringUtils;
-import org.bouncycastle.openssl.PKCS8Generator;
-import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 
-import java.io.IOException;
-import java.io.StringWriter;
 import java.security.KeyPair;
 import java.security.interfaces.RSAPublicKey;
 import java.util.*;
@@ -133,18 +129,14 @@ public class UserCreatorActor extends AbstractActor {
                         user.getSshPublicKey() + "\n" +
                         "</p>";
                 Set<EmailSender.Attachment> attachments = new HashSet<>();
+                
+                String encodedKey = Base64.getEncoder().encodeToString(keyPair.getPrivate().getEncoded());
+                String privateKeyContent = String.format("-----BEGIN RSA PRIVATE KEY-----\n%s\n-----END RSA PRIVATE KEY-----", encodedKey);
+                attachments.add(new EmailSender.PlainTextAttachment<>(privateKeyContent, user.getUsername() + ".key"));
+                attachments.add(new EmailSender.PlainTextAttachment<>(user.getSshPublicKey(), user.getUsername() + ".pub"));
+                EmailSenderActor.EmailSenderMsg emailSenderMsg = new EmailSenderActor.EmailSenderMsg(to, null, null, String.format("Kodo Kojo user %s created", user.getUsername()), content, true, attachments);
+                getContext().actorFor(EndpointActor.ACTOR_PATH).tell(emailSenderMsg, self());
 
-
-                try {
-                    String encodedKey = Base64.getEncoder().encodeToString(keyPair.getPrivate().getEncoded());
-                    String privateKeyContent = String.format("-----BEGIN RSA PRIVATE KEY-----\n%s\n-----END RSA PRIVATE KEY-----", encodedKey);
-                    attachments.add(new EmailSender.PlainTextAttachment<>(privateKeyContent, user.getUsername() + ".key"));
-                    attachments.add(new EmailSender.PlainTextAttachment<>(user.getSshPublicKey(),  user.getUsername() + ".pub"));
-                    EmailSenderActor.EmailSenderMsg emailSenderMsg = new EmailSenderActor.EmailSenderMsg(to, null, null, String.format("Kodo Kojo user %s created", user.getUsername()), content, true, attachments);
-                    getContext().actorFor(EndpointActor.ACTOR_PATH).tell(emailSenderMsg, self());
-                } catch (IOException e) {
-                    LOGGER.error("An error occur wile trying to create attachment: {}", e);
-                }
                 getContext().stop(self());
             } else if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Unable to store user {}", user);
