@@ -134,7 +134,7 @@ public class JenkinsConfigurer implements BrickConfigurer {
     @Override
     public BrickConfigurerData addUsers(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurerData, List<User> users) {
         VelocityContext context = new VelocityContext();
-        context.put(USERS_KEY, brickConfigurerData.getUsers());
+        context.put(USERS_KEY, users);
 
         String templatePath = ADD_OR_UPDATE_USER_JENKINS_GROOVY_VM;
         UserService userService = projectConfiguration.getUserService();
