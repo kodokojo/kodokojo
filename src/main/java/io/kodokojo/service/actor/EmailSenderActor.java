@@ -47,7 +47,7 @@ public class EmailSenderActor extends AbstractActor {
         }
         receive(ReceiveBuilder.match(EmailSenderMsg.class, msg -> {
             try {
-                emailSender.send(msg.to, msg.cc, msg.ci, msg.object, msg.content, msg.htmlContent);
+                emailSender.send(msg.to, msg.cc, msg.ci, msg.object, msg.content, msg.htmlContent,msg.attachments);
             } catch (RuntimeException e) {
                 LOGGER.error("Unable to sent email to '{}', with subject '{}'", Arrays.toString(msg.to.toArray()), msg.object, e);
                 sender().tell(Futures.failed(e), self());
