@@ -27,6 +27,7 @@ import io.kodokojo.model.UserService;
 import io.kodokojo.utils.RSAUtils;
 import okhttp3.*;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
@@ -134,6 +135,10 @@ public class JenkinsConfigurer implements BrickConfigurer {
     @Override
     public BrickConfigurerData addUsers(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurerData, List<User> users) {
         VelocityContext context = new VelocityContext();
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Trying to add or Update following users '{}'", StringUtils.join(users.stream().map(User::getUsername).collect(Collectors.toList()), ", "));
+        }
+
         context.put(USERS_KEY, users);
 
         String templatePath = ADD_OR_UPDATE_USER_JENKINS_GROOVY_VM;
@@ -152,7 +157,7 @@ public class JenkinsConfigurer implements BrickConfigurer {
     @Override
     public BrickConfigurerData removeUsers(ProjectConfiguration projectConfiguration, BrickConfigurerData brickConfigurerData, List<User> users) {
         VelocityContext context = new VelocityContext();
-        context.put(USERS_KEY, brickConfigurerData.getUsers());
+        context.put(USERS_KEY, users);
         String templatePath = DELETE_USER_JENKINS_GROOVY_VM;
         return executeGroovyScript(projectConfiguration.getUserService(), brickConfigurerData, context, templatePath);
     }
