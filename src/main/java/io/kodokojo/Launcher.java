@@ -46,7 +46,7 @@ public class Launcher {
         LOGGER.info("Starting Kodo Kojo.");
 
         Injector propertyInjector = Guice.createInjector(new PropertyModule(args));
-        Injector servicesInjector = propertyInjector.createChildInjector(new ServiceModule(), new DatabaseModule(), new SecurityModule());
+        Injector servicesInjector = propertyInjector.createChildInjector(new ServiceModule(), new DatabaseModule(), new SecurityModule(), new ZookeeperModule());
         Injector akkaInjector = servicesInjector.createChildInjector(new AkkaModule(), new MarathonModule());
         ActorSystem actorSystem = akkaInjector.getInstance(ActorSystem.class);
         ActorRef endpointActor = actorSystem.actorOf(EndpointActor.PROPS(akkaInjector), "endpoint");
