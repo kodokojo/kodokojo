@@ -91,7 +91,7 @@ public class JenkinsConfigurer implements BrickConfigurer {
         context.put(USERS_KEY, users);
         String templatePath = INIT_JENKINS_GROOVY_VM;
 
-        BrickConfigurerData initBrickConfigurerData = executeGroovyScript(projectConfiguration.getUserService(), brickConfigurerData, context, templatePath);
+        BrickConfigurerData initBrickConfigurerData = executeGroovyScript(projectConfiguration.getUserService(), brickConfigurerData, context, templatePath, false);
 
         String baseUrl = brickConfigurerData.getEntrypoint();
         int nbTry = 0;
