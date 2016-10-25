@@ -91,7 +91,7 @@ public class JenkinsConfigurer implements BrickConfigurer {
         context.put(USERS_KEY, users);
         String templatePath = INIT_JENKINS_GROOVY_VM;
 
-        BrickConfigurerData initBrickConfigurerData = executeGroovyScript(projectConfiguration.getUserService(), brickConfigurerData, context, templatePath, false);
+        BrickConfigurerData initBrickConfigurerData = executeGroovyScript(userService, brickConfigurerData, context, templatePath, false);
 
         String baseUrl = brickConfigurerData.getEntrypoint();
         int nbTry = 0;
@@ -137,7 +137,10 @@ public class JenkinsConfigurer implements BrickConfigurer {
         context.put(USERS_KEY, brickConfigurerData.getUsers());
 
         String templatePath = ADD_OR_UPDATE_USER_JENKINS_GROOVY_VM;
-        return executeGroovyScript(projectConfiguration.getUserService(), brickConfigurerData, context, templatePath);
+        UserService userService = projectConfiguration.getUserService();
+        BrickConfigurerData res = executeGroovyScript(userService, brickConfigurerData, context, templatePath);
+        checkUserExist(getEntryPoint(brickConfigurerData), userService.getLogin(), userService.getPassword());
+        return res;
 
     }
 
@@ -159,7 +162,7 @@ public class JenkinsConfigurer implements BrickConfigurer {
     }
 
     private BrickConfigurerData executeGroovyScript(UserService admin, BrickConfigurerData brickConfigurerData, VelocityContext context, String templatePath, boolean authen) {
-        String url = brickConfigurerData.getEntrypoint() + SCRIPT_URL_SUFFIX;
+        String url = getEntryPoint(brickConfigurerData);
 
         Response response = null;
         try {
@@ -214,13 +217,17 @@ public class JenkinsConfigurer implements BrickConfigurer {
         }
     }
 
+    private String getEntryPoint(BrickConfigurerData brickConfigurerData) {
+        return brickConfigurerData.getEntrypoint() + SCRIPT_URL_SUFFIX;
+    }
+
     private static void addAuthen(Request.Builder builder, String login, String password) {
         String crendential = String.format("%s:%s", login, password);
         String encodedBase64 = Base64.getEncoder().encodeToString(crendential.getBytes());
         builder.addHeader("Authorization", "Basic " + encodedBase64);
         if (LOGGER.isDebugEnabled()) {
             Request request = builder.build();
-            LOGGER.debug("Request Jenkins url {} with following Header : Authorization : Basic ({}:{})", request.url().toString(), encodedBase64, login, password);
+            LOGGER.debug("Request Jenkins url {} with following Header : Authorization : Basic ({}:{})", request.url().toString(), login, password);
         }
     }
 
