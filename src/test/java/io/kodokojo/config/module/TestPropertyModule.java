@@ -210,6 +210,13 @@ public class TestPropertyModule extends AbstractModule {
         return () -> "";
     }
 
+
+    @Provides
+    @Singleton
+    ZookeeperConfig provideZookeeperConfig() {
+        return () -> "localhost:2181";
+    }
+
     private <T extends PropertyConfig> T createConfig(Class<T> configClass, PropertyValueProvider valueProvider) {
         PropertyResolver resolver = new PropertyResolver(valueProvider);
         return resolver.createProxy(configClass);

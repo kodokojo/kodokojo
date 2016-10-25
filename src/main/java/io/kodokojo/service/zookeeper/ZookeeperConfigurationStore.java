@@ -7,16 +7,18 @@ import io.kodokojo.service.ssl.SSLKeyPair;
 import javaslang.control.Try;
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
+import static io.kodokojo.service.zookeeper.ZookeeperBootstrapConfigurationProvider.KODOKOJO_TCP_PORT;
 import static java.util.Objects.requireNonNull;
 
 public class ZookeeperConfigurationStore implements ConfigurationStore, Watcher {
 
-    private static final String KODOKOJO_TCP_PORT = "/kodokojo/tcpports";
+    private static final Logger LOGGER = LoggerFactory.getLogger(ZookeeperConfigurationStore.class);
 
-    private static final String KODOKOJO_PORT_INDEX = "/kodokojo/portIndex";
 
     private final ZooKeeper zooKeeper;
 
@@ -35,11 +37,19 @@ public class ZookeeperConfigurationStore implements ConfigurationStore, Watcher 
         requireNonNull(bootstrapStackData, "bootstrapStackData must be defined.");
         return Try.of(() -> {
             String path = KODOKOJO_TCP_PORT + "/" + bootstrapStackData.getProjectName();
+            byte[] data = ("" + bootstrapStackData.getSshPort()).getBytes();
             Stat stat = zooKeeper.exists(path, this);
             if (stat == null) {
-                return generateNewPortIndex().andThenTry(port -> {
-                    zooKeeper.create(path, port.toString().getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-                });
+                zooKeeper.create(path, data, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("Store Tcp port {} on zookeeper path '{}'.", path, path);
+                }
+            } else {
+                int version = stat.getVersion();
+                zooKeeper.setData(path, data, version);
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("Update Tcp port {} on zookeeper path '{}'.", path, path);
+                }
             }
             return true;
         }).isSuccess();
@@ -55,21 +65,5 @@ public class ZookeeperConfigurationStore implements ConfigurationStore, Watcher 
         //  Nothing to do.
     }
 
-    protected final Try<Integer> generateNewPortIndex() {
-        return Try.of(() -> {
-            Stat stat = zooKeeper.exists(KODOKOJO_PORT_INDEX, this);
-            Integer port = 1;
-            if (stat == null) {
-                zooKeeper.create(KODOKOJO_PORT_INDEX, port.toString().getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            } else {
-                byte[] data = zooKeeper.getData(KODOKOJO_PORT_INDEX, this, stat);
-                int version = stat.getVersion();
-                port = Integer.parseInt(new String(data));
-                port++;
-                zooKeeper.setData(KODOKOJO_PORT_INDEX, port.toString().getBytes(), version);
 
-            }
-            return port;
-        });
-    }
 }
