@@ -21,6 +21,7 @@ import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.dispatch.Futures;
+import akka.dispatch.Futures$;
 import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
 import akka.pattern.Patterns;
@@ -37,6 +38,7 @@ import io.kodokojo.brick.BrickStartContext;
 import io.kodokojo.service.ConfigurationStore;
 import io.kodokojo.service.ProjectConfigurationException;
 import io.kodokojo.service.SSLCertificatProvider;
+import javaslang.control.Try;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import scala.concurrent.Await;
@@ -46,7 +48,9 @@ import scala.concurrent.duration.Duration;
 import javax.inject.Inject;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import static akka.event.Logging.getLogger;
 
@@ -97,41 +101,52 @@ public class BrickConfigurationStarterActor extends AbstractActor {
         try {
             generateMsgAndSend(brickStartContext, httpsUrl, null, BrickStateEvent.State.STARTING);
 
+            Future<Set<Service>> futureStart = Futures.future(() -> brickManager.start(projectConfiguration, stackConfiguration, brickConfiguration), getContext().dispatcher());
 
-            Set<Service> services = brickManager.start(projectConfiguration, stackConfiguration, brickConfiguration);
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("{} for project {} started : {}", brickType, projectName, StringUtils.join(services, ","));
-            }
-            generateMsgAndSend(brickStartContext, httpsUrl, BrickStateEvent.State.STARTING, BrickStateEvent.State.CONFIGURING);
-
-            BrickConfigurerData brickConfigurerData = null;
-            try {
-                brickConfigurerData = brickManager.configure(projectConfiguration,stackConfiguration, brickConfiguration);
-
-            } catch (ProjectConfigurationException e) {
-                LOGGER.error("An error occur while trying to configure project {}: {}", projectName, e.getMessage());
-                generateMsgAndSend(brickStartContext, httpsUrl, null, BrickStateEvent.State.ONFAILURE, e.getMessage());
-            }
-
-            if (brickConfigurerData != null) {
-                
-                Future<Object> future = Patterns.ask(getContext().actorFor(EndpointActor.ACTOR_PATH), new BrickPropertyToBrickConfigurationActor.BrickPropertyToBrickConfigurationMsg(projectConfiguration.getIdentifier(), stackConfiguration.getName(), brickConfiguration.getName(), brickConfigurerData.getContext()), Timeout.apply(10, TimeUnit.SECONDS));
-                try {
-                    Await.result(future, Duration.apply(10, TimeUnit.SECONDS));
-                    generateMsgAndSend(brickStartContext, httpsUrl, BrickStateEvent.State.CONFIGURING, BrickStateEvent.State.RUNNING);
-                    BrickStateEvent brickStateEvent = new BrickStateEvent(projectConfiguration.getIdentifier(), brickStartContext.getStackConfiguration().getName(), brickType.name(), brickStartContext.getBrickConfiguration().getName(), null, BrickStateEvent.State.RUNNING, url, "", brickConfiguration.getVersion());
-                    sender.tell(brickStateEvent, self());
-                    if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug("{} for project {} configured", brickType, projectName);
-                    }
-                } catch (Exception e) {
-                    LOGGER.error("Unable to update projectConfiguration {}", projectConfiguration, e);
+            Try<Set<Service>> servicesTry = Try.of(() -> Await.result(futureStart, Duration.create(5, TimeUnit.MINUTES))).onFailure(throwable -> {
+                LOGGER.error("Unable to start brick '{}' for project '{}': {}", brickConfiguration.getName(), projectName, throwable);
+                if (throwable instanceof BrickAlreadyExist) {
+                    BrickAlreadyExist brickAlreadyExist = (BrickAlreadyExist) throwable;
+                    LOGGER.error("BrickConfiguration {} already exist for project {}, not reconfigure it.", brickAlreadyExist.getBrickName(), brickAlreadyExist.getProjectName());
+                    generateMsgAndSend(brickStartContext, httpsUrl, null, BrickStateEvent.State.ALREADYEXIST);
+                    sender.tell(Futures.failed(brickAlreadyExist), self());
                 }
+            });
+
+            Set<Service> services = servicesTry.get();
+            if (CollectionUtils.isNotEmpty(services)) {
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("{} for project {} started : {}", brickType, projectName, StringUtils.join(services, ","));
+                }
+                generateMsgAndSend(brickStartContext, httpsUrl, BrickStateEvent.State.STARTING, BrickStateEvent.State.CONFIGURING);
+
+                BrickConfigurerData brickConfigurerData = null;
+
+                Future<BrickConfigurerData> futureConfigure = Futures.future(() -> brickManager.configure(projectConfiguration, stackConfiguration, brickConfiguration), getContext().dispatcher());
+                Try<BrickConfigurerData> brickConfigurerDataTry = Try.of(() -> Await.result(futureConfigure, Duration.apply(1, TimeUnit.MINUTES))).onFailure(throwable -> {
+                    LOGGER.error("An error occur while trying to configure project {}.", projectName);
+                    generateMsgAndSend(brickStartContext, httpsUrl, null, BrickStateEvent.State.ONFAILURE, throwable.getMessage());
+                });
+
+                brickConfigurerData = brickConfigurerDataTry.get();
+                if (brickConfigurerData != null) {
+
+                    Future<Object> future = Patterns.ask(getContext().actorFor(EndpointActor.ACTOR_PATH), new BrickPropertyToBrickConfigurationActor.BrickPropertyToBrickConfigurationMsg(projectConfiguration.getIdentifier(), stackConfiguration.getName(), brickConfiguration.getName(), brickConfigurerData.getContext()), Timeout.apply(10, TimeUnit.SECONDS));
+                    try {
+                        Await.result(future, Duration.apply(10, TimeUnit.SECONDS));
+                        generateMsgAndSend(brickStartContext, httpsUrl, BrickStateEvent.State.CONFIGURING, BrickStateEvent.State.RUNNING);
+                        BrickStateEvent brickStateEvent = new BrickStateEvent(projectConfiguration.getIdentifier(), brickStartContext.getStackConfiguration().getName(), brickType.name(), brickStartContext.getBrickConfiguration().getName(), null, BrickStateEvent.State.RUNNING, url, "", brickConfiguration.getVersion());
+                        sender.tell(brickStateEvent, self());
+                        if (LOGGER.isDebugEnabled()) {
+                            LOGGER.debug("{} for project {} configured", brickType, projectName);
+                        }
+                    } catch (Exception e) {
+                        LOGGER.error("Unable to update projectConfiguration {}", projectConfiguration, e);
+                    }
+                }
+            } else if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Start on brick '{}' for project '{}' returned an empty service.", brickConfiguration.getName(), projectName);
             }
-        } catch (BrickAlreadyExist brickAlreadyExist) {
-            LOGGER.error("BrickConfiguration {} already exist for project {}, not reconfigure it.", brickAlreadyExist.getBrickName(), brickAlreadyExist.getProjectName());
-            generateMsgAndSend(brickStartContext, httpsUrl, null, BrickStateEvent.State.ALREADYEXIST);
-            sender.tell(Futures.failed(brickAlreadyExist), self());
         } catch (RuntimeException e) {
             LOGGER.error("An error occurred while trying to start brick {} for project {}: {}", brickType, projectName, e);
             generateMsgAndSend(brickStartContext, httpsUrl, null, BrickStateEvent.State.ONFAILURE, e.getMessage());
