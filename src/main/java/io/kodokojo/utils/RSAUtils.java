@@ -41,6 +41,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang.StringUtils.isBlank;
 
 public class RSAUtils {
@@ -204,6 +205,14 @@ public class RSAUtils {
         } catch (IOException e) {
             throw new RuntimeException("Unable to write un a memory DataOutputStream.", e);
         }
+    }
+
+    public static String encodedPrivateKey(PrivateKey key) {
+        requireNonNull(key, "key must be defined.");
+        String encodedKey = Base64.getEncoder().encodeToString(key.getEncoded());
+        encodedKey = encodedKey.replaceAll("(.{64})", "$1\n");
+        String privateKeyContent = String.format("-----BEGIN RSA PRIVATE KEY-----\n%s\n-----END RSA PRIVATE KEY-----", encodedKey);
+        return privateKeyContent;
     }
 
 

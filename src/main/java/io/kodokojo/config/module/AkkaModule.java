@@ -61,8 +61,8 @@ public class AkkaModule extends AbstractModule {
 
     @Provides
     @Named(ProjectEndpointActor.NAME)
-    Props provideProjectEndpointProps(ApplicationConfig applicationConfig, ProjectRepository projectRepository, UserRepository userRepository, DnsManager dnsManager, BrickFactory brickFactory, BrickManager brickManager, BootstrapConfigurationProvider bootstrapConfigurationProvider, ConfigurationStore configurationStore, BrickUrlFactory brickUrlFactory, SSLCertificatProvider sslCertificatProvider, BrickConfigurerProvider brickConfigurerProvider) {
-        return ProjectEndpointActor.PROPS(applicationConfig, projectRepository, userRepository, dnsManager, brickFactory, brickManager, bootstrapConfigurationProvider, configurationStore, brickUrlFactory, sslCertificatProvider, brickConfigurerProvider);
+    Props provideProjectEndpointProps(ApplicationConfig applicationConfig, ProjectRepository projectRepository, UserRepository userRepository, DnsManager dnsManager, BrickFactory brickFactory, BrickManager brickManager, BootstrapConfigurationProvider bootstrapConfigurationProvider, ConfigurationStore configurationStore, BrickUrlFactory brickUrlFactory, BrickConfigurerProvider brickConfigurerProvider) {
+        return ProjectEndpointActor.PROPS(applicationConfig, projectRepository, userRepository, dnsManager, brickFactory, brickManager, bootstrapConfigurationProvider, configurationStore, brickUrlFactory, brickConfigurerProvider);
     }
 
     @Provides

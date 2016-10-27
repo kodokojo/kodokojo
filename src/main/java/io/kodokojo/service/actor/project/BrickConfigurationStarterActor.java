@@ -55,36 +55,24 @@ public class BrickConfigurationStarterActor extends AbstractActor {
 
     private final LoggingAdapter LOGGER = getLogger(getContext().system(), this);
 
-    public static Props PROPS(BrickManager brickManager, ConfigurationStore configurationStore, BrickUrlFactory brickUrlFactory, SSLCertificatProvider sslCertificatProvider) {
-        return Props.create(BrickConfigurationStarterActor.class, brickManager, configurationStore, brickUrlFactory, sslCertificatProvider);
+    public static Props PROPS(BrickManager brickManager, BrickUrlFactory brickUrlFactory) {
+        return Props.create(BrickConfigurationStarterActor.class, brickManager, brickUrlFactory);
     }
 
     private final BrickManager brickManager;
 
-    private final ConfigurationStore configurationStore;
-
     private final BrickUrlFactory brickUrlFactory;
 
-    private final SSLCertificatProvider sslCertificatProvider;
-
     @Inject
-    public BrickConfigurationStarterActor(BrickManager brickManager, ConfigurationStore configurationStore, BrickUrlFactory brickUrlFactory, SSLCertificatProvider sslCertificatProvider) {
+    public BrickConfigurationStarterActor(BrickManager brickManager, BrickUrlFactory brickUrlFactory) {
         if (brickManager == null) {
             throw new IllegalArgumentException("brickManager must be defined.");
-        }
-        if (configurationStore == null) {
-            throw new IllegalArgumentException("configurationStore must be defined.");
         }
         if (brickUrlFactory == null) {
             throw new IllegalArgumentException("brickUrlFactory must be defined.");
         }
-        if (sslCertificatProvider == null) {
-            throw new IllegalArgumentException("sslCertificatProvider must be defined.");
-        }
         this.brickManager = brickManager;
         this.brickUrlFactory = brickUrlFactory;
-        this.configurationStore = configurationStore;
-        this.sslCertificatProvider = sslCertificatProvider;
 
         receive(
                 ReceiveBuilder
@@ -104,10 +92,7 @@ public class BrickConfigurationStarterActor extends AbstractActor {
         String projectName = projectConfiguration.getName();
         String url = brickUrlFactory.forgeUrl(projectConfiguration,projectConfiguration.getDefaultStackConfiguration().getName(), brickConfiguration);
         String httpsUrl = "https://" + url;
-        if (brickType.isRequiredHttpExposed()) {
-            SSLKeyPair brickSslKeyPair = sslCertificatProvider.provideCertificat(projectName, brickStartContext.getStackConfiguration().getName(), brickConfiguration);
-            configurationStore.storeSSLKeys(projectName, brickStartContext.getBrickConfiguration().getName().toLowerCase(), brickSslKeyPair);
-        }
+
 
         try {
             generateMsgAndSend(brickStartContext, httpsUrl, null, BrickStateEvent.State.STARTING);
