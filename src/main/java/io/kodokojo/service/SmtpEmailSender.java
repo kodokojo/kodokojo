@@ -26,10 +26,8 @@ import javax.mail.*;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Properties;
+import javax.naming.OperationNotSupportedException;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
@@ -74,6 +72,11 @@ public class SmtpEmailSender implements EmailSender {
         } catch (AddressException e) {
             throw new IllegalArgumentException("Unable to create an address from '" + fromAddr + "'.", e);
         }
+    }
+
+    @Override
+    public void send(List<String> to, List<String> cc, List<String> ci, String object, String content, boolean htmlContent, Set<Attachment> attachments) {
+        throw new UnsupportedOperationException("Oups !");
     }
 
     @Override

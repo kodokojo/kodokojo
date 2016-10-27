@@ -19,6 +19,7 @@ package io.kodokojo.config.module;
 
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.google.inject.AbstractModule;
@@ -89,13 +90,7 @@ public class ServiceModule extends AbstractModule {
     @Provides
     @Singleton
     DnsManager provideDnsManager(ApplicationConfig applicationConfig, AwsConfig awsConfig) {
-        AWSCredentials credentials = null;
-        try {
-            DefaultAWSCredentialsProviderChain defaultAWSCredentialsProviderChain = new DefaultAWSCredentialsProviderChain();
-            credentials = defaultAWSCredentialsProviderChain.getCredentials();
-        } catch (RuntimeException e) {
-            LOGGER.warn("Unable to retrieve AWS credentials.");
-        }
+        AWSCredentials credentials = getAwsCredentials();
         if (StringUtils.isNotBlank(System.getenv("NO_DNS")) || credentials == null) {
             LOGGER.info("Using NoOpDnsManager as DnsManger implementation");
             return new NoOpDnsManager();
@@ -109,13 +104,7 @@ public class ServiceModule extends AbstractModule {
     @Singleton
     EmailSender provideEmailSender(AwsConfig awsConfig, EmailConfig emailConfig) {
         if (StringUtils.isBlank(emailConfig.smtpHost())) {
-            AWSCredentials credentials = null;
-            try {
-                DefaultAWSCredentialsProviderChain defaultAWSCredentialsProviderChain = new DefaultAWSCredentialsProviderChain();
-                credentials = defaultAWSCredentialsProviderChain.getCredentials();
-            } catch (RuntimeException e) {
-                LOGGER.warn("Unable to retrieve AWS credentials.");
-            }
+            AWSCredentials credentials = getAwsCredentials();
             if (credentials == null) {
                 return new NoopEmailSender();
             } else {
@@ -215,18 +204,23 @@ public class ServiceModule extends AbstractModule {
 
     @Provides
     @Singleton
-    SSLCertificatProvider provideSslCertificatProvider(SecurityConfig securityConfig, ApplicationConfig
-            applicationConfig, SSLKeyPair sslKeyPair, BrickUrlFactory brickUrlFactory) {
-        if (StringUtils.isNotBlank(securityConfig.wildcardPemPath())) {
-            return new WildcardSSLCertificatProvider(sslKeyPair);
-        }
-        return new SSLCertificatProviderFromCaSSLpaire(applicationConfig.domain(), applicationConfig.sslCaDuration(), sslKeyPair, brickUrlFactory);
-    }
-
-    @Provides
-    @Singleton
     BrickUrlFactory provideBrickUrlFactory(ApplicationConfig applicationConfig) {
         return new DefaultBrickUrlFactory(applicationConfig.domain());
+    }
+
+    private AWSCredentials getAwsCredentials() {
+        AWSCredentials credentials = null;
+        try {
+            DefaultAWSCredentialsProviderChain defaultAWSCredentialsProviderChain = new DefaultAWSCredentialsProviderChain();
+            credentials = defaultAWSCredentialsProviderChain.getCredentials();
+            if (credentials == null) {
+                InstanceProfileCredentialsProvider instanceProfileCredentialsProvider = new InstanceProfileCredentialsProvider(true);
+                credentials = instanceProfileCredentialsProvider.getCredentials();
+            }
+        } catch (RuntimeException e) {
+            LOGGER.warn("Unable to retrieve AWS credentials.");
+        }
+        return credentials;
     }
 
 }

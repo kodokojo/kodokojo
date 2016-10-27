@@ -19,8 +19,12 @@ package io.kodokojo.service;
 
 import io.kodokojo.service.ssl.SSLKeyPair;
 import io.kodokojo.model.BrickConfiguration;
-
+/**
+ * Will be moved into another component than kodokojo back.
+ */
+@Deprecated
 public interface SSLCertificatProvider {
 
     SSLKeyPair provideCertificat(String projectName, String stackName, BrickConfiguration brickConfiguration);
+
 }

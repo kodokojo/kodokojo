@@ -18,10 +18,12 @@
 package io.kodokojo.service;
 
 import java.util.List;
+import java.util.Set;
 
 public class NoopEmailSender implements EmailSender {
+
     @Override
-    public void send(List<String> to, List<String> cc, List<String> ci, String object, String content, boolean htmlContent) {
-        // Nothing to do.
+    public void send(List<String> to, List<String> cc, List<String> ci, String object, String content, boolean htmlContent, Set<Attachment> attachments) {
+        //  Nothing to do.
     }
 }

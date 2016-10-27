@@ -40,7 +40,7 @@ public class ProjectEndpointActor extends AbstractActor {
 
     private final LoggingAdapter LOGGER = getLogger(getContext().system(), this);
 
-    public static Props PROPS(ApplicationConfig applicationConfig, ProjectRepository projectRepository, UserRepository userRepository, DnsManager dnsManager, BrickFactory brickFactory, BrickManager brickManager, BootstrapConfigurationProvider bootstrapConfigurationProvider, ConfigurationStore configurationStore, BrickUrlFactory brickUrlFactory, SSLCertificatProvider sslCertificatProvider, BrickConfigurerProvider brickConfigurerProvider) {
+    public static Props PROPS(ApplicationConfig applicationConfig, ProjectRepository projectRepository, UserRepository userRepository, DnsManager dnsManager, BrickFactory brickFactory, BrickManager brickManager, BootstrapConfigurationProvider bootstrapConfigurationProvider, ConfigurationStore configurationStore, BrickUrlFactory brickUrlFactory,BrickConfigurerProvider brickConfigurerProvider) {
         if (applicationConfig == null) {
             throw new IllegalArgumentException("applicationConfig must be defined.");
         }
@@ -68,18 +68,15 @@ public class ProjectEndpointActor extends AbstractActor {
         if (brickUrlFactory == null) {
             throw new IllegalArgumentException("brickUrlFactory must be defined.");
         }
-        if (sslCertificatProvider == null) {
-            throw new IllegalArgumentException("sslCertificatProvider must be defined.");
-        }
         if (brickConfigurerProvider == null) {
             throw new IllegalArgumentException("brickConfigurerProvider must be defined.");
         }
-        return Props.create(ProjectEndpointActor.class, applicationConfig, projectRepository, userRepository, dnsManager, brickFactory, brickManager, bootstrapConfigurationProvider, configurationStore, brickUrlFactory, sslCertificatProvider, brickConfigurerProvider);
+        return Props.create(ProjectEndpointActor.class, applicationConfig, projectRepository, userRepository, dnsManager, brickFactory, brickManager, bootstrapConfigurationProvider, configurationStore, brickUrlFactory, brickConfigurerProvider);
     }
 
     public static final String NAME = "projectEndpointProps";
 
-    public ProjectEndpointActor(ApplicationConfig applicationConfig, ProjectRepository projectRepository, UserRepository userRepository, DnsManager dnsManager, BrickFactory brickFactory, BrickManager brickManager, BootstrapConfigurationProvider bootstrapConfigurationProvider, ConfigurationStore configurationStore, BrickUrlFactory brickUrlFactory, SSLCertificatProvider sslCertificatProvider, BrickConfigurerProvider brickConfigurerProvider) {
+    public ProjectEndpointActor(ApplicationConfig applicationConfig, ProjectRepository projectRepository, UserRepository userRepository, DnsManager dnsManager, BrickFactory brickFactory, BrickManager brickManager, BootstrapConfigurationProvider bootstrapConfigurationProvider, ConfigurationStore configurationStore, BrickUrlFactory brickUrlFactory, BrickConfigurerProvider brickConfigurerProvider) {
         if (projectRepository == null) {
             throw new IllegalArgumentException("projectRepository must be defined.");
         }
@@ -101,7 +98,7 @@ public class ProjectEndpointActor extends AbstractActor {
                     getContext().actorOf(BootstrapStackActor.PROPS(bootstrapConfigurationProvider, configurationStore)).forward(msg, getContext());
                 })
                 .match(BrickStartContext.class, msg -> {
-                    getContext().actorOf(BrickConfigurationStarterActor.PROPS(brickManager, configurationStore, brickUrlFactory, sslCertificatProvider)).forward(msg, getContext());
+                    getContext().actorOf(BrickConfigurationStarterActor.PROPS(brickManager, brickUrlFactory)).forward(msg, getContext());
                 })
                 .match(ProjectUpdaterMessages.ProjectUpdateMsg.class, msg -> {
                     getContext().actorOf(ProjectUpdaterActor.props(projectRepository)).forward(msg, getContext());

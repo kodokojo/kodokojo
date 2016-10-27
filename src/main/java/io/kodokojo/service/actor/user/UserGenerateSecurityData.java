@@ -43,7 +43,7 @@ public class UserGenerateSecurityData extends AbstractActor {
     public UserGenerateSecurityData() {
         receive(ReceiveBuilder.match(GenerateSecurityMsg.class, msg -> {
             LOGGER.debug("Receive a request to generate security data of user.");
-            String password = new BigInteger(130, new SecureRandom()).toString(msg.nbDecimal);
+            String password = new BigInteger(130, new SecureRandom()).toString(msg.nbDecimal).substring(0,10);
             KeyPair keyPair = RSAUtils.generateRsaKeyPair();
             sender().tell(new UserSecurityDataMsg(password, keyPair), self());
         }).matchAny(this::unhandled).build());

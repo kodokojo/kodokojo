@@ -57,10 +57,6 @@ public class BrickConfigurationConfigurationStarterActorTest {
 
     private BrickManager brickManager = mock(BrickManager.class);
 
-    private ConfigurationStore configurationStore = mock(ConfigurationStore.class);
-
-    private SSLCertificatProvider sslCertificatProvider = mock(SSLCertificatProvider.class);
-
     private BrickUrlFactory brickUrlFactory = new DefaultBrickUrlFactory("kodokojo.dev");
 
 
@@ -78,7 +74,6 @@ public class BrickConfigurationConfigurationStarterActorTest {
     @Before
     public void setupMock() {
         brickManager = mock(BrickManager.class);
-        configurationStore = mock(ConfigurationStore.class);
     }
 
     @Test
@@ -104,7 +99,7 @@ public class BrickConfigurationConfigurationStarterActorTest {
             JavaTestKit probe = new JavaTestKit(system);
 
 
-            ActorRef ref = system.actorOf(BrickConfigurationStarterActor.PROPS(brickManager, configurationStore, brickUrlFactory, sslCertificatProvider));
+            ActorRef ref = system.actorOf(BrickConfigurationStarterActor.PROPS(brickManager, brickUrlFactory));
 
             ref.tell(context, getRef());
             new AwaitAssert(duration("10000 millis")) {
@@ -116,7 +111,6 @@ public class BrickConfigurationConfigurationStarterActorTest {
                     List<BrickStateEvent> brickStateEvents = Arrays.asList(objects).stream().map(o -> (BrickStateEvent) o).collect(Collectors.toList());
                     assertThat(brickStateEvents).extracting("state.name").contains(BrickStateEvent.State.CONFIGURING.name(), BrickStateEvent.State.STARTING.name(), BrickStateEvent.State.RUNNING.name());
 
-                    verify(configurationStore).storeSSLKeys(eq("Acme"), eq("ci"), any(SSLKeyPair.class));
                     try {
                         verify(brickManager).configure(any(ProjectConfiguration.class), any(StackConfiguration.class), any(BrickConfiguration.class));
                     } catch (ProjectConfigurationException e) {
@@ -138,7 +132,7 @@ public class BrickConfigurationConfigurationStarterActorTest {
 
         new JavaTestKit(system) {{
 
-            final Props props = BrickConfigurationStarterActor.PROPS(brickManager, configurationStore, brickUrlFactory, sslCertificatProvider);
+            final Props props = BrickConfigurationStarterActor.PROPS(brickManager, brickUrlFactory);
 
             ActorRef ref = system.actorOf(props);
             BrickStartContext context = createBrickStartContext(new BrickConfiguration("test", BrickType.CI, "1.0", Collections.singleton(new PortDefinition(8080))));
@@ -154,7 +148,6 @@ public class BrickConfigurationConfigurationStarterActorTest {
                     List<BrickStateEvent> brickStateEvents = Arrays.asList(objects).stream().map(o -> (BrickStateEvent) o).collect(Collectors.toList());
                     assertThat(brickStateEvents).extracting("state.name").contains( states);
 
-                    verify(configurationStore).storeSSLKeys(eq("Acme"), eq("ci"), any(SSLKeyPair.class));
                 }
 
             };
