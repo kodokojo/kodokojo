@@ -25,15 +25,14 @@ import akka.japi.pf.ReceiveBuilder;
 import io.kodokojo.service.repository.EntityRepository;
 
 import static akka.event.Logging.getLogger;
+import static java.util.Objects.requireNonNull;
 
 public class EntityEndpointActor extends AbstractActor {
 
     private final LoggingAdapter LOGGER = getLogger(getContext().system(), this);
 
     public static Props PROPS(EntityRepository entityRepository) {
-        if (entityRepository == null) {
-            throw new IllegalArgumentException("entityRepository must be defined.");
-        }
+        requireNonNull(entityRepository, "entityRepository must be defined.");
         return Props.create(EntityEndpointActor.class, entityRepository);
     }
 
@@ -44,7 +43,7 @@ public class EntityEndpointActor extends AbstractActor {
             throw new IllegalArgumentException("entityRepository must be defined.");
         }
 
-        receive(ReceiveBuilder.match(AddUserToEntityActor.AddUserToEntityMsg.class, msg -> {
+        receive(ReceiveBuilder.match(EntityMessage.AddUserToEntityMsg.class, msg -> {
             getContext().actorOf(AddUserToEntityActor.PROPS(entityRepository)).forward(msg, getContext());
         })
                 .match(EntityCreatorActor.EntityCreateMsg.class, msg -> {
