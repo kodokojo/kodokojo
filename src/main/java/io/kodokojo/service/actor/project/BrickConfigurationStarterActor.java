@@ -124,7 +124,7 @@ public class BrickConfigurationStarterActor extends AbstractActor {
 
                 Future<BrickConfigurerData> futureConfigure = Futures.future(() -> brickManager.configure(projectConfiguration, stackConfiguration, brickConfiguration), getContext().dispatcher());
                 Try<BrickConfigurerData> brickConfigurerDataTry = Try.of(() -> Await.result(futureConfigure, Duration.apply(5, TimeUnit.MINUTES))).onFailure(throwable -> {
-                    LOGGER.error("An error occur while trying to configure project {}.", projectName);
+                    LOGGER.error("An error occur while trying to configure project {}: {}", projectName, throwable);
                     generateMsgAndSend(brickStartContext, httpsUrl, null, BrickStateEvent.State.ONFAILURE, throwable.getMessage());
                 });
 
