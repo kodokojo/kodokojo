@@ -19,6 +19,7 @@ package io.kodokojo.config.module;
 
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.google.inject.AbstractModule;
@@ -93,6 +94,10 @@ public class ServiceModule extends AbstractModule {
         try {
             DefaultAWSCredentialsProviderChain defaultAWSCredentialsProviderChain = new DefaultAWSCredentialsProviderChain();
             credentials = defaultAWSCredentialsProviderChain.getCredentials();
+            if (credentials == null) {
+                InstanceProfileCredentialsProvider instanceProfileCredentialsProvider = new InstanceProfileCredentialsProvider(true);
+                credentials = instanceProfileCredentialsProvider.getCredentials();
+            }
         } catch (RuntimeException e) {
             LOGGER.warn("Unable to retrieve AWS credentials.");
         }
