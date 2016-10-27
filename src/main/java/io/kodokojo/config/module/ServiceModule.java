@@ -204,20 +204,10 @@ public class ServiceModule extends AbstractModule {
 
     @Provides
     @Singleton
-    SSLCertificatProvider provideSslCertificatProvider(SecurityConfig securityConfig, ApplicationConfig
-            applicationConfig, SSLKeyPair sslKeyPair, BrickUrlFactory brickUrlFactory) {
-        if (StringUtils.isNotBlank(securityConfig.wildcardPemPath())) {
-            return new WildcardSSLCertificatProvider(sslKeyPair);
-        }
-        return new SSLCertificatProviderFromCaSSLpaire(applicationConfig.domain(), applicationConfig.sslCaDuration(), sslKeyPair, brickUrlFactory);
-    }
-
-    @Provides
-    @Singleton
     BrickUrlFactory provideBrickUrlFactory(ApplicationConfig applicationConfig) {
         return new DefaultBrickUrlFactory(applicationConfig.domain());
     }
-    
+
     private AWSCredentials getAwsCredentials() {
         AWSCredentials credentials = null;
         try {
