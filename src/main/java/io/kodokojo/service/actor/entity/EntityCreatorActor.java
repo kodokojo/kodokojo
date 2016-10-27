@@ -23,22 +23,29 @@ import akka.japi.pf.ReceiveBuilder;
 import io.kodokojo.model.Entity;
 import io.kodokojo.service.repository.EntityRepository;
 
+import static java.util.Objects.requireNonNull;
+
 public class EntityCreatorActor extends AbstractActor {
 
+    private final EntityRepository entityRepository;
+
+    public EntityCreatorActor(EntityRepository entityRepository) {
+        this.entityRepository = entityRepository;
+        receive(ReceiveBuilder
+                .match(EntityCreateMsg.class, this::onEntityCreateMsg)
+                .matchAny(this::unhandled)
+                .build());
+    }
+
     public static Props PROPS(EntityRepository entityRepository) {
+        requireNonNull(entityRepository, "entityRepository must be defined.");
         return Props.create(EntityCreatorActor.class, entityRepository);
     }
 
-    public EntityCreatorActor(EntityRepository entityRepository) {
-        if (entityRepository == null) {
-            throw new IllegalArgumentException("entityRepository must be defined.");
-        }
-
-        receive(ReceiveBuilder.match(EntityCreateMsg.class, msg -> {
-            String entityId = entityRepository.addEntity(msg.entity);
-            sender().tell(new EntityCreatedResultMsg(entityId), self());
-            getContext().stop(self());
-        }).matchAny(this::unhandled).build());
+    private void onEntityCreateMsg(EntityCreateMsg msg) {
+        String entityId = entityRepository.addEntity(msg.entity);
+        sender().tell(new EntityCreatedResultMsg(entityId), self());
+        getContext().stop(self());
     }
 
     public static class EntityCreateMsg {
