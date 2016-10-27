@@ -19,15 +19,21 @@ package io.kodokojo.service.actor.project;
 
 import akka.actor.AbstractActor;
 import akka.actor.Props;
+import akka.dispatch.Futures;
 import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
 import io.kodokojo.brick.*;
 import io.kodokojo.config.ApplicationConfig;
 import io.kodokojo.model.*;
+import javaslang.control.Try;
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang.StringUtils;
+import scala.concurrent.Await;
+import scala.concurrent.Future;
+import scala.concurrent.duration.Duration;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static akka.event.Logging.getLogger;
@@ -74,7 +80,7 @@ public class BrickUpdateUserActor extends AbstractActor {
             );
         }
         BrickConfigurer brickConfigurer = brickConfigurerProvider.provideFromBrick(msg.brickConfiguration);
-        BrickConfigurerData brickConfigurationData = new BrickConfigurerData(msg.projectConfiguration.getName(),
+        final BrickConfigurerData brickConfigurationData = new BrickConfigurerData(msg.projectConfiguration.getName(),
                 msg.stackConfiguration.getName(),
                 url,
                 applicationConfig.domain(),
@@ -82,18 +88,27 @@ public class BrickUpdateUserActor extends AbstractActor {
                 IteratorUtils.toList(msg.projectConfiguration.getAdmins()));
         brickConfigurationData.getContext().putAll(msg.brickConfiguration.getProperties());
         LOGGER.debug("brickConfigurationData context: {}", brickConfigurationData.getContext());
-        switch (msg.typeChange) {
-            case ADD:
-                brickConfigurationData = brickConfigurer.addUsers(msg.projectConfiguration, brickConfigurationData, msg.users.stream().map(UpdateData::getNewData).collect(Collectors.toList()));
-                break;
-            case UPDATE:
-                brickConfigurationData = brickConfigurer.updateUsers(msg.projectConfiguration, brickConfigurationData, msg.users);
-                break;
-            case REMOVE:
-                brickConfigurationData = brickConfigurer.removeUsers(msg.projectConfiguration, brickConfigurationData, msg.users.stream().map(UpdateData::getOldData).collect(Collectors.toList()));
-                break;
-        }
-        sender().tell(new BrickUpdateUserResultMsg(msg, true), self());
+
+        Future<Object> futureUpdate = Futures.future(() -> {
+
+            switch (msg.typeChange) {
+                case ADD:
+                    brickConfigurer.addUsers(msg.projectConfiguration, brickConfigurationData, msg.users.stream().map(UpdateData::getNewData).collect(Collectors.toList()));
+                    break;
+                case UPDATE:
+                    brickConfigurer.updateUsers(msg.projectConfiguration, brickConfigurationData, msg.users);
+                    break;
+                case REMOVE:
+                    brickConfigurer.removeUsers(msg.projectConfiguration, brickConfigurationData, msg.users.stream().map(UpdateData::getOldData).collect(Collectors.toList()));
+                    break;
+            }
+            return null;
+        }, getContext().dispatcher());
+        Try.of(() -> Await.result(futureUpdate, Duration.create(1, TimeUnit.MINUTES))).onFailure(throwable -> {
+            LOGGER.error("Unable to update user for brick '{}' on project '{}': {}", msg.brickConfiguration.getName(), msg.projectConfiguration.getName(), throwable);
+            sender().tell(new BrickUpdateUserResultMsg(msg, false), self());
+        }).onSuccess(o -> sender().tell(new BrickUpdateUserResultMsg(msg, true), self()));
+
         getContext().stop(self());
     }
 

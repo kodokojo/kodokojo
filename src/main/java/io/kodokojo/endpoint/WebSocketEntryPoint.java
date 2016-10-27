@@ -94,7 +94,6 @@ public class WebSocketEntryPoint implements BrickStateEventListener {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Receive following message: {}", message);
         }
-        LOGGER.info("Receive following message: {}", message);
         UserSession userSession = sessionIsValidated(session);
         if (userSession == null) {
             Long connectDate = sessions.get(session);
@@ -138,7 +137,6 @@ public class WebSocketEntryPoint implements BrickStateEventListener {
                                     if (LOGGER.isDebugEnabled()) {
                                         LOGGER.debug("Send following message to user {} : {}", user.getUsername(), responseStr);
                                     }
-                                    LOGGER.info("Send welcome message to user {} : {}", user.getUsername(), responseStr);
                                 } else {
                                     sessions.remove(session);
                                     session.close(4401, "Invalid credentials.");

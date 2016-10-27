@@ -21,9 +21,12 @@ import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
 import akka.testkit.JavaTestKit;
+import akka.testkit.TestActorRef;
 import io.kodokojo.brick.*;
 import io.kodokojo.service.actor.message.BrickStateEvent;
 import io.kodokojo.model.Service;
+import io.kodokojo.service.actor.project.BrickPropertyToBrickConfigurationActor;
+import io.kodokojo.service.repository.ProjectRepository;
 import io.kodokojo.utils.RSAUtils;
 import io.kodokojo.service.actor.project.BrickConfigurationStarterActor;
 import io.kodokojo.service.ssl.SSLKeyPair;
@@ -50,10 +53,11 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
 
-@Ignore
 public class BrickConfigurationConfigurationStarterActorTest {
 
     private static ActorSystem system;
+
+    private static TestActorRef<TestEndpointActor> endpointRef;
 
     private BrickManager brickManager = mock(BrickManager.class);
 
@@ -63,6 +67,7 @@ public class BrickConfigurationConfigurationStarterActorTest {
     @BeforeClass
     public static void setup() {
         system = ActorSystem.create();
+        endpointRef = TestActorRef.create(system, Props.create(TestEndpointActor.class), "endpoint");
     }
 
     @AfterClass
@@ -78,7 +83,12 @@ public class BrickConfigurationConfigurationStarterActorTest {
 
     @Test
     public void brick_configure_and_start_successfully() {
+
+        //  given
+        endpointRef.underlyingActor().cleanMessages();
         BrickStartContext context = createBrickStartContext(new BrickConfiguration("test", BrickType.CI, "1.0", Collections.singleton(new PortDefinition(8080))));
+
+        // when
         try {
             Set<Service> services = new HashSet<>();
             services.add(new Service("acme-ci", "192.168.1.22", new PortDefinition(42090)));
@@ -96,19 +106,18 @@ public class BrickConfigurationConfigurationStarterActorTest {
 
         new JavaTestKit(system) {{
 
-            JavaTestKit probe = new JavaTestKit(system);
-
-
             ActorRef ref = system.actorOf(BrickConfigurationStarterActor.PROPS(brickManager, brickUrlFactory));
+
 
             ref.tell(context, getRef());
             new AwaitAssert(duration("10000 millis")) {
                 @Override
                 protected void check() {
+        //  then
+                    Set<Object> messages = endpointRef.underlyingActor().getMessages();
 
-                    Object[] objects = probe.receiveN(3);
-                    assertThat(objects.length).isEqualTo(3);
-                    List<BrickStateEvent> brickStateEvents = Arrays.asList(objects).stream().map(o -> (BrickStateEvent) o).collect(Collectors.toList());
+                    assertThat(messages.size()).isEqualTo(4);
+                    List<BrickStateEvent> brickStateEvents = messages.stream().filter(o -> o instanceof BrickStateEvent).map(o -> (BrickStateEvent) o).collect(Collectors.toList());
                     assertThat(brickStateEvents).extracting("state.name").contains(BrickStateEvent.State.CONFIGURING.name(), BrickStateEvent.State.STARTING.name(), BrickStateEvent.State.RUNNING.name());
 
                     try {
@@ -124,6 +133,7 @@ public class BrickConfigurationConfigurationStarterActorTest {
 
     @Test
     public void brick_already_exist() {
+        endpointRef.underlyingActor().cleanMessages();
         try {
             when(brickManager.start(any(ProjectConfiguration.class), any(StackConfiguration.class), any(BrickConfiguration.class))).thenThrow(new BrickAlreadyExist("test", "Acme"));
         } catch (BrickAlreadyExist e) {
@@ -143,9 +153,9 @@ public class BrickConfigurationConfigurationStarterActorTest {
                 @Override
                 protected void check() {
                     String[] states = new String[] {BrickStateEvent.State.STARTING.name(), BrickStateEvent.State.ALREADYEXIST.name()};
-                    Object[] objects = receiveN(2);
-                    assertThat(objects.length).isEqualTo(2);
-                    List<BrickStateEvent> brickStateEvents = Arrays.asList(objects).stream().map(o -> (BrickStateEvent) o).collect(Collectors.toList());
+                    Set<Object> messages = endpointRef.underlyingActor().getMessages();
+                    assertThat(messages.size()).isEqualTo(3);
+                    List<BrickStateEvent> brickStateEvents = messages.stream().filter(o -> o instanceof BrickStateEvent).map(o -> (BrickStateEvent) o).collect(Collectors.toList());
                     assertThat(brickStateEvents).extracting("state.name").contains( states);
 
                 }

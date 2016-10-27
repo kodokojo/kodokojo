@@ -127,7 +127,9 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
         Mockito.when(bootstrapProvider.provideTcpPortEntrypoint(anyString(), anyString())).thenReturn(10022);
 
         try {
-            Mockito.when(brickManager.start(any(ProjectConfiguration.class), any(StackConfiguration.class), any(BrickConfiguration.class))).thenReturn(new HashSet<>());
+            HashSet<Service> services = new HashSet<>();
+            services.add(new Service("test", "localhost", new PortDefinition(8080)));
+            Mockito.when(brickManager.start(any(ProjectConfiguration.class), any(StackConfiguration.class), any(BrickConfiguration.class))).thenReturn(services);
             List<User> users = new ArrayList<>();
             users.add(new User("1234", "5678", "Jean-Pascal THIEYR", "jpthiery", "jpthiery@xebia.fr", "password", "sshKey"));
             Mockito.when(brickManager.configure(any(ProjectConfiguration.class), any(StackConfiguration.class), any(BrickConfiguration.class))).thenReturn(new BrickConfigurerData("test", "test", "localhost", "kodokojo.dev", users, users));
