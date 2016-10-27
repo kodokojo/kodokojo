@@ -26,6 +26,7 @@ import org.bouncycastle.util.io.pem.PemReader;
 import org.bouncycastle.util.io.pem.PemWriter;
 
 import javax.crypto.*;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
 import java.security.*;
@@ -65,6 +66,9 @@ public class RSAUtils {
     private static final Pattern PRIVATE_PATTERN = Pattern.compile("(-----BEGIN RSA PRIVATE KEY-----\n.*\n-----END RSA PRIVATE KEY-----?)", Pattern.DOTALL);
 
     private static final Pattern PUBLIC_PATTERN = Pattern.compile("(-----BEGIN CERTIFICATE-----\n.*\n-----END CERTIFICATE-----)", Pattern.DOTALL);
+
+    private static final byte[] IV_PARAMETERSPEC_BYTES = "0102030405060708".getBytes();//Todo Change this by another. (16 char required)
+    public static final String AES_CBC_PKCS5_PADDING = "AES/CBC/PKCS5Padding";
 
     private RSAUtils() {
         // Utility Class
@@ -254,19 +258,15 @@ public class RSAUtils {
     }
 
     public static byte[] encryptObjectWithAES(Key key, Serializable data) {
-        if (key == null) {
-            throw new IllegalArgumentException("key must be defined.");
-        }
-        if (!"AES".equals(key.getAlgorithm())) {
+        requireNonNull(key, "key must be defined.");
+        if (!AES.equals(key.getAlgorithm())) {
             throw new IllegalArgumentException("key must be an AES key, not a  " + key.getAlgorithm() + " .");
         }
-        if (data == null) {
-            throw new IllegalArgumentException("data must be defined.");
-        }
+        requireNonNull(data, "data must be defined.");
         try {
-            SecretKeySpec sks = new SecretKeySpec(key.getEncoded(), AES_ECB_PKCS5_PADDING);
-            Cipher cipher = Cipher.getInstance(AES_ECB_PKCS5_PADDING);
-            cipher.init(Cipher.ENCRYPT_MODE, sks);
+            IvParameterSpec iv = new IvParameterSpec(IV_PARAMETERSPEC_BYTES);
+            Cipher cipher = Cipher.getInstance(AES_CBC_PKCS5_PADDING);
+            cipher.init(Cipher.ENCRYPT_MODE, key, iv);
             try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
                 SealedObject sealedObject = new SealedObject(data, cipher);
                 CipherOutputStream cipherOutputStream = new CipherOutputStream(out, cipher);
@@ -275,31 +275,28 @@ public class RSAUtils {
                 objectOutputStream.close();
                 return out.toByteArray();
             }
-        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | IOException e) {
+        } catch (InvalidAlgorithmParameterException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | IOException | NoSuchAlgorithmException e) {
             throw new RuntimeException("Unable to create Cipher", e);
         }
     }
 
     public static Serializable decryptObjectWithAES(Key key, byte[] encrypted) {
-        if (key == null) {
-            throw new IllegalArgumentException("key must be defined.");
-        }
+        requireNonNull(key, "key must be defined.");
         if (!key.getAlgorithm().equals("AES")) {
             throw new IllegalArgumentException("key must be an AES key, not a  " + key.getAlgorithm() + " .");
         }
-        if (encrypted == null) {
-            throw new IllegalArgumentException("encrypted must be defined.");
-        }
+        requireNonNull(encrypted, "encrypted must be defined.");
         try {
-            SecretKeySpec sks = new SecretKeySpec(key.getEncoded(), AES_ECB_PKCS5_PADDING);
-            Cipher cipher = Cipher.getInstance(AES_ECB_PKCS5_PADDING);
-            cipher.init(Cipher.DECRYPT_MODE, sks);
+            IvParameterSpec iv = new IvParameterSpec(IV_PARAMETERSPEC_BYTES);
+            SecretKeySpec spec = new SecretKeySpec(key.getEncoded(), AES);
+            Cipher cipher = Cipher.getInstance(AES_CBC_PKCS5_PADDING);
+            cipher.init(Cipher.DECRYPT_MODE, spec, iv);
             ByteArrayInputStream in = new ByteArrayInputStream(encrypted);
             CipherInputStream cipherInputStream = new CipherInputStream(in, cipher);
             ObjectInputStream objectInputStream = new ObjectInputStream(cipherInputStream);
             SealedObject sealedObject = (SealedObject) objectInputStream.readObject();
             return (Serializable) sealedObject.getObject(cipher);
-        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException | IOException e) {
+        } catch (InvalidAlgorithmParameterException | NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException | IOException e) {
             throw new RuntimeException("Unable to create Cipher", e);
         } catch (ClassNotFoundException e) {
             throw new RuntimeException("Unable to found SealedObject class", e);

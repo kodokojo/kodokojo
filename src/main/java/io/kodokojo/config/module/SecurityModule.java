@@ -47,9 +47,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static java.util.Objects.requireNonNull;
+
 public class SecurityModule extends AbstractModule {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SecurityModule.class);
+    public static final String AES = "AES";
 
     @Override
     protected void configure() {
@@ -60,26 +63,32 @@ public class SecurityModule extends AbstractModule {
     @Singleton
     @Named("securityKey")
     SecretKey provideSecretKey(SecurityConfig securityConfig) {
-        if (securityConfig == null) {
-            throw new IllegalArgumentException("securityConfig must be defined.");
-        }
+        requireNonNull(securityConfig, "securityConfig must be defined.");
+
         File keyFile = createPrivateKeyFile(securityConfig);
         if (keyFile.exists() && keyFile.canRead()) {
             return provideAesKey(keyFile);
         } else {
-            SecretKey res = generateAesKey();
+            boolean created;
             try {
-                keyFile.createNewFile();
+                created = keyFile.createNewFile();
             } catch (IOException e) {
                 throw new RuntimeException("Unable to create " + keyFile.getAbsolutePath() + " file.", e);
             }
-            try (FileOutputStream out = new FileOutputStream(securityConfig.privateKeyPath())) {
-                out.write(res.getEncoded());
-                out.flush();
-                return res;
-            } catch (IOException e) {
-                throw new RuntimeException("unable to read and/or create key file at path " + keyFile.getAbsolutePath(), e);
+            if (created) {
+                SecretKey res = generateAesKey();
+                try (FileOutputStream out = new FileOutputStream(securityConfig.privateKeyPath())) {
+                    out.write(res.getEncoded());
+                    out.flush();
+                    return res;
+                } catch (IOException e) {
+                    throw new RuntimeException("unable to read and/or create key file at path " + keyFile.getAbsolutePath(), e);
+                }
+            } else if (keyFile.exists() && keyFile.canRead()) {
+                //May another intance try to create file in same moment. Try to read ot again.
+                return provideAesKey(keyFile);
             }
+            throw new IllegalStateException("Unable to know if file '" + securityConfig.privateKeyPath() +"' exist or not.");
         }
     }
 
@@ -135,7 +144,8 @@ public class SecurityModule extends AbstractModule {
 
     private SecretKey generateAesKey() {
         try {
-            KeyGenerator kg = KeyGenerator.getInstance("AES");
+            KeyGenerator kg = KeyGenerator.getInstance(AES);
+            kg.init(128);
             return kg.generateKey();
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("Unable to get key generator for AES", e);

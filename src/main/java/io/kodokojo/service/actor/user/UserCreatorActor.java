@@ -27,8 +27,8 @@ import io.kodokojo.model.User;
 import io.kodokojo.service.EmailSender;
 import io.kodokojo.service.actor.EmailSenderActor;
 import io.kodokojo.service.actor.EndpointActor;
-import io.kodokojo.service.actor.entity.AddUserToEntityActor;
 import io.kodokojo.service.actor.entity.EntityCreatorActor;
+import io.kodokojo.service.actor.entity.EntityMessage;
 import io.kodokojo.service.actor.message.UserRequestMessage;
 import io.kodokojo.service.repository.UserRepository;
 import io.kodokojo.utils.RSAUtils;
@@ -84,7 +84,7 @@ public class UserCreatorActor extends AbstractActor {
             }
         }).match(EntityCreatorActor.EntityCreatedResultMsg.class, msg -> {
             entityId = msg.getEntityId();
-            getContext().actorSelection(EndpointActor.ACTOR_PATH).tell(new AddUserToEntityActor.AddUserToEntityMsg(null, message.id, entityId), self());
+            getContext().actorSelection(EndpointActor.ACTOR_PATH).tell(new EntityMessage.AddUserToEntityMsg(null, message.id, entityId), self());
             isReadyToStore();
         })
                 .match(UserEligibleActor.UserEligibleResultMsg.class, r -> {

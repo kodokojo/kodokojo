@@ -30,6 +30,7 @@ import io.kodokojo.service.EmailSender;
 import io.kodokojo.service.actor.entity.AddUserToEntityActor;
 import io.kodokojo.service.actor.entity.EntityCreatorActor;
 import io.kodokojo.service.actor.entity.EntityEndpointActor;
+import io.kodokojo.service.actor.entity.EntityMessage;
 import io.kodokojo.service.actor.event.EventEndpointActor;
 import io.kodokojo.service.actor.message.BrickStateEvent;
 import io.kodokojo.service.actor.project.*;
@@ -77,7 +78,7 @@ public class EndpointActor extends AbstractActor {
             userEndpoint.forward(msg, getContext());
         }).match(EntityCreatorActor.EntityCreateMsg.class, msg -> {
             entityEndpoint.forward(msg, getContext());
-        }).match(AddUserToEntityActor.AddUserToEntityMsg.class, msg -> {
+        }).match(EntityMessage.AddUserToEntityMsg.class, msg -> {
             entityEndpoint.forward(msg, getContext());
         }).match(ProjectConfigurationBuilderActor.ProjectConfigurationBuildMsg.class, msg -> {
             projectEndpoint.forward(msg, getContext());
@@ -112,7 +113,7 @@ public class EndpointActor extends AbstractActor {
             projectEndpoint.forward(msg, getContext());
         }).match(UserMessage.UserUpdateMessage.class, msg -> {
             userEndpoint.forward(msg, getContext());
-        }).match(ProjectUpdaterMessages.ListAndUpdateUserToProjectMsg.class, msg ->{
+        }).match(ProjectUpdaterMessages.ListAndUpdateUserToProjectMsg.class, msg -> {
             projectEndpoint.forward(msg, getContext());
         })
                 .matchAny(this::unhandled).build());
