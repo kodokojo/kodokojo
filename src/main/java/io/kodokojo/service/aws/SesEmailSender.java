@@ -109,8 +109,6 @@ public class SesEmailSender implements EmailSender {
                 }
 
                 html.setContent(content, MINE_TEXT_HTML);
-                PrintStream out = System.out;
-                message.writeTo(out);
 
                 // Send the email.
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
