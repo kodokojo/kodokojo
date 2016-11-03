@@ -429,7 +429,7 @@ public class UserCreatorActor extends AbstractActor {
                 "\n" +
                 "                    <p style=\"word-wrap: break-word; color: #4A4A52;\">\n" +
                 "                      Thanks for signing up to our SaaS service, we hope you will enjoy it!\n" +
-                "                      Feel free to report any suggestion and problem to <a href=\"mailto:support@kodokojo.io\" target=\"_blank\" class=\"link\" style=\"font-family: sans-serif; font-size: 15px; mso-height-rule: exactly; line-height: 20px; color: #4A4A52; text-decoration: underline;\">support@kodokojo.io</a>.\n" +
+                "                      Feel free to report any suggestion and problem to <a href=\"mailto:help@kodokojo.io\" target=\"_blank\" class=\"link\" style=\"font-family: sans-serif; font-size: 15px; mso-height-rule: exactly; line-height: 20px; color: #4A4A52; text-decoration: underline;\">help@kodokojo.io</a>.\n" +
                 "                      You can also <a href=\"https://gitter.im/kodokojo/kodokojo\" target=\"_blank\" class=\"link\" style=\"font-family: sans-serif; font-size: 15px; mso-height-rule: exactly; line-height: 20px; color: #4A4A52; text-decoration: underline;\">chat with us directly on our gitter</a>.\n" +
                 "                      For any additionnal information, please visit <a href=\"https://kodokojo.io\" target=\"_blank\" class=\"link\" style=\"font-family: sans-serif; font-size: 15px; mso-height-rule: exactly; line-height: 20px; color: #4A4A52; text-decoration: underline;\">kodokojo.io</a>.\n" +
                 "                    </p>\n" +
