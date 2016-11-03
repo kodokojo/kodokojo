@@ -58,7 +58,7 @@ This script will try to run tests and build a `kodokojo/kodokojo` *Docker* image
 Contribute
 ------
 
-Want to contribute? That's great! Feel free to read our [Contribution page](CONTRIBUTE.md) to know our guidelines.
+Want to contribute? That's great! Feel free to read our [Contribution page](CONTRIBUTING.md) to know our guidelines.
 
 You may find help on our [Gitter](https://gitter.im/kodokojo/kodokojo) channel if needed. Don't be afraid to ask.
 
