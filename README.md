@@ -66,7 +66,7 @@ You may find help on our [Gitter](https://gitter.im/kodokojo/kodokojo) channel i
 
 The following diagram describes how Kodo Kojo and its components will be deployed:
 
-![Kodo Kojo Architecture](doc/images/kodokojo-architecture.png)
+![Kodo Kojo Architecture](doc/images/kodokojo-architecture-v3.png)
 
 HA Proxy will be managed by [kodokojo-haproxy-agent](https://github.com/kodokojo/kodokojo-haproxy-agent) which is registered on Zookeeper.
 This will allow the HA Proxy configuration to be updated when a Marathon state changes.
