@@ -141,7 +141,7 @@ public class BrickConfigurationStarterActor extends AbstractActor {
                             LOGGER.debug("{} for project {} configured", brickType, projectName);
                         }
                     } catch (Exception e) {
-                        LOGGER.error("Unable to update projectConfiguration {}", projectConfiguration, e);
+                        LOGGER.error("Unable to update projectConfiguration {}: {}", projectConfiguration, e);
                     }
                 }
             } else if (LOGGER.isDebugEnabled()) {
