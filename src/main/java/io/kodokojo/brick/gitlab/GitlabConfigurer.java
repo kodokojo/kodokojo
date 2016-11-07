@@ -569,7 +569,7 @@ public class GitlabConfigurer implements BrickConfigurer, BrickConfigurerHelper 
 
             CookieManager cookieManager = new CookieManager(new GitlabCookieStore(), CookiePolicy.ACCEPT_ALL);
             HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
-            logging.setLevel(HttpLoggingInterceptor.Level.BODY);
+            logging.setLevel(HttpLoggingInterceptor.Level.NONE);
 
             OkHttpClient.Builder builder = new OkHttpClient.Builder()
                     .addInterceptor(logging)
@@ -618,19 +618,6 @@ public class GitlabConfigurer implements BrickConfigurer, BrickConfigurerHelper 
         @Override
         public boolean removeAll() {
             return false;
-        }
-    }
-
-    private static class OkHttpLogger implements Interceptor {
-
-        @Override
-        public Response intercept(Chain chain) throws IOException {
-            requireNonNull(chain, "chain must be defined.");
-            Request request = chain.request();
-            if (LOGGER.isTraceEnabled()) {
-
-            }
-            return chain.proceed(request);
         }
     }
 
