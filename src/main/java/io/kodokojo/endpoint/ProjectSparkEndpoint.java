@@ -105,14 +105,9 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
                 halt(404);
                 return "";
             }
-            User requester = getRequester(request);
 
-            if (userIsAdmin(requester, projectConfiguration)) {
-                return new ProjectConfigDto(projectConfiguration);
-            }
+            return new ProjectConfigDto(projectConfiguration);
 
-            halt(403, "Your are not admin of project configuration '" + projectConfiguration.getName() + "'.");
-            return "";
         }, jsonResponseTransformer);
 
         put(BASE_API + "/projectconfig/:id/user", JSON_CONTENT_TYPE, ((request, response) -> {
