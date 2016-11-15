@@ -23,14 +23,14 @@
 
     <groupId>io.kodokojo</groupId>
     <artifactId>kodokojo</artifactId>
-    <version>1.0.2-SNAPSHOT</version>
+    <version>1.0.2</version>
 
     <description>Software factory done right</description>
     <scm>
         <url>https://github.com/kodokojo/kodokojo</url>
         <connection>scm:git:git://github.com/kodokojo/kodokojo.git</connection>
         <developerConnection>scm:git:git@github.com:kodokojo/kodokojo.git</developerConnection>
-        <tag>HEAD</tag>
+        <tag>v1.0.2</tag>
     </scm>
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
