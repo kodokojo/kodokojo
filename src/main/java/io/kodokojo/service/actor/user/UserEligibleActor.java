@@ -24,6 +24,7 @@ import akka.japi.pf.ReceiveBuilder;
 import io.kodokojo.service.repository.UserRepository;
 
 import static akka.event.Logging.getLogger;
+import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang.StringUtils.isBlank;
 
 /**
@@ -34,16 +35,11 @@ public class UserEligibleActor extends AbstractActor {
     private final LoggingAdapter LOGGER = getLogger(getContext().system(), this);
 
     public static Props PROPS(UserRepository userRepository) {
-        if (userRepository == null) {
-            throw new IllegalArgumentException("userRepository must be defined.");
-        }
+        requireNonNull(userRepository, "userRepository must be defined.");
         return Props.create(UserEligibleActor.class, userRepository);
     }
 
     public UserEligibleActor(UserRepository userRepository) {
-        if (userRepository == null) {
-            throw new IllegalArgumentException("userRepository must be defined.");
-        }
         receive(ReceiveBuilder.match(UserCreatorActor.UserCreateMsg.class, msg -> {
             String id = msg.id;
             String username = msg.username;

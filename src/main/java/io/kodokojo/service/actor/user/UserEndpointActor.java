@@ -20,6 +20,7 @@ package io.kodokojo.service.actor.user;
 import akka.actor.AbstractActor;
 import akka.actor.Props;
 import akka.japi.pf.ReceiveBuilder;
+import io.kodokojo.config.ApplicationConfig;
 import io.kodokojo.service.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,18 +31,19 @@ public class UserEndpointActor extends AbstractActor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserEndpointActor.class);
 
-    public static Props PROPS(UserRepository userRepository) {
+    public static Props PROPS(UserRepository userRepository, ApplicationConfig applicationConfig) {
         requireNonNull(userRepository, "userRepository must be defined.");
-        return Props.create(UserEndpointActor.class, userRepository);
+        requireNonNull(applicationConfig, "applicationConfig must be defined.");
+        return Props.create(UserEndpointActor.class, userRepository, applicationConfig);
     }
 
     public static final String NAME = "userEndpointProps";
 
-    public UserEndpointActor(UserRepository userRepository) {
+    public UserEndpointActor(UserRepository userRepository, ApplicationConfig applicationConfig) {
 
         receive(ReceiveBuilder.match(UserGenerateIdentifierActor.UserGenerateIdentifierMsg.class,
                 msg -> getContext().actorOf(UserGenerateIdentifierActor.PROPS(userRepository)).forward(msg, getContext())).match(UserCreatorActor.UserCreateMsg.class, msg -> {
-            getContext().actorOf(UserCreatorActor.PROPS(userRepository)).forward(msg, getContext());
+            getContext().actorOf(UserCreatorActor.PROPS(userRepository, applicationConfig)).forward(msg, getContext());
         }).match(UserFetcherActor.UserFetchMsg.class, msg -> {
             getContext().actorOf(UserFetcherActor.PROPS(userRepository)).forward(msg, getContext());
         }).match(UserServiceCreatorActor.UserServiceCreateMsg.class, msg -> {

@@ -24,9 +24,7 @@ import io.kodokojo.service.repository.store.ProjectConfigurationStoreModel;
 import io.kodokojo.service.repository.store.ProjectStore;
 
 import javax.inject.Inject;
-import java.io.Serializable;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -202,6 +200,12 @@ public class Repository implements UserRepository, ProjectRepository, EntityRepo
     @Override
     public boolean addUser(User user) {
         return userRepository.addUser(user);
+    }
+
+    @Override
+    public boolean addUserToWaitingList( UserInWaitingList userInWaitingList ) {
+        requireNonNull(userInWaitingList, "userInWaitingList must be defined.");
+        return userRepository.addUserToWaitingList(userInWaitingList);
     }
 
     @Override

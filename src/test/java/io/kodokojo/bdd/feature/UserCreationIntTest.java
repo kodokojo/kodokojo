@@ -104,4 +104,14 @@ public class UserCreationIntTest extends ScenarioTest<ApplicationGiven<?>, Appli
         then().it_NOT_exist_a_valid_user_with_username_$("aletaxin");
     }
 
+    @Test
+    @DockerIsRequire
+    public void route_creation_user_waiting_list() {
+        given().redis_is_started(dockerPresentMethodRule.getDockerTestSupport())
+                .and().kodokojo_restEntrypoint_is_available(true);
+        when().retrive_a_new_id()
+                .and().create_user_with_email_$("jpthiery@xebia.fr");
+        then().it_NOT_exist_a_valid_user_with_username_$("jpthiery");
+    }
+
 }

@@ -44,8 +44,9 @@ public class InjectorProvider {
     private final int redisPort;
     private final BrickManager brickManager;
     private final ConfigurationStore configurationStore;
+    private final boolean userInWaitingList;
 
-    public InjectorProvider(String[] args, DockerTestSupport dockerTestSupport, int httpPort, String redisHost, int redisPort, BrickManager brickManager, ConfigurationStore configurationStore) {
+    public InjectorProvider(String[] args, DockerTestSupport dockerTestSupport, int httpPort, String redisHost, int redisPort, BrickManager brickManager, ConfigurationStore configurationStore, boolean userInWaitingList) {
         this.args = args;
         this.dockerTestSupport = dockerTestSupport;
         this.httpPort = httpPort;
@@ -53,10 +54,11 @@ public class InjectorProvider {
         this.redisPort = redisPort;
         this.brickManager = brickManager;
         this.configurationStore = configurationStore;
+        this.userInWaitingList = userInWaitingList;
     }
 
     public Injector provideInjector() {
-        Injector propertyInjector = Guice.createInjector(new TestPropertyModule(args, dockerTestSupport, httpPort, redisHost, redisPort));
+        Injector propertyInjector = Guice.createInjector(new TestPropertyModule(args, dockerTestSupport, httpPort, redisHost, redisPort, userInWaitingList));
         Injector servicesInjector = propertyInjector.createChildInjector(new ServiceModule(), new DatabaseModule(), new TestSecurityModule(), new AbstractModule() {
             @Override
             protected void configure() {

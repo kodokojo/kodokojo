@@ -210,6 +210,11 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
                     public long sslCaDuration() {
                         return -1;
                     }
+
+                    @Override
+                    public Boolean userCreationRoutedInWaitingList() {
+                        return false;
+                    }
                 });
                 bind(EmailConfig.class).toInstance(new EmailConfig() {
                     @Override
