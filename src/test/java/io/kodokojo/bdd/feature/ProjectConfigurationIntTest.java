@@ -71,7 +71,8 @@ public class ProjectConfigurationIntTest extends ScenarioTest<ApplicationGiven<?
         .and().add_user_$_to_project_configuration("aletaxin");
         then().it_exist_a_valid_project_configuration_in_store_which_contain_user("aletaxin")
                 .and().it_is_possible_to_get_details_for_user_$("aletaxin")
-                .and().user_$_belong_to_entity_of_project_configuration("aletaxin");
+                .and().user_$_belong_to_entity_of_project_configuration("aletaxin")
+                .and().it_is_possible_to_get_projectConfiguration_of_$_state_from_user_$("Acme", "aletaxin");
     }
 
     @Test
