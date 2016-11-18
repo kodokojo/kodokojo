@@ -55,8 +55,8 @@ public class AkkaModule extends AbstractModule {
 
     @Provides
     @Named(UserEndpointActor.NAME)
-    Props provideUserEndpointProps(UserRepository userRepository) {
-        return UserEndpointActor.PROPS(userRepository);
+    Props provideUserEndpointProps(UserRepository userRepository, ApplicationConfig applicationConfig) {
+        return UserEndpointActor.PROPS(userRepository, applicationConfig);
     }
 
     @Provides

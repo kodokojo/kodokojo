@@ -157,9 +157,14 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
         return self();
     }
 
-    public SELF kodokojo_restEntrypoint_is_available() {
+
+    public SELF kodokojo_restEntrypoint_is_available(@Hidden  boolean userInWaitingList) {
         int port = TestUtils.getEphemeralPort();
-        return kodokojo_restEntrypoint_is_available_on_port_$(port);
+        return kodokojo_restEntrypoint_is_available_on_port_$(port, userInWaitingList);
+    }
+
+    public SELF kodokojo_restEntrypoint_is_available(){
+        return kodokojo_restEntrypoint_is_available(false);
     }
 
     public SELF kodokojo_is_running(@Hidden DockerTestSupport dockerTestSupport) {
@@ -171,11 +176,12 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
         return kodokojo_restEntrypoint_is_available();
     }
 
-    public SELF kodokojo_restEntrypoint_is_available_on_port_$(int port) {
+
+    public SELF kodokojo_restEntrypoint_is_available_on_port_$(int port, boolean userInWaitingList) {
 
         BrickManager brickManager = mock(BrickManager.class);
         ConfigurationStore configurationStore = mock(ConfigurationStore.class);
-        InjectorProvider injectorProvider = new InjectorProvider(null, dockerTestSupport, port, redisHost, redisPort, brickManager, configurationStore);
+        InjectorProvider injectorProvider = new InjectorProvider(null, dockerTestSupport, port, redisHost, redisPort, brickManager, configurationStore, userInWaitingList);
         Launcher.INJECTOR = injectorProvider.provideInjector();
         repository = Launcher.INJECTOR.getInstance(Repository.class);
         httpEndpoint = Launcher.INJECTOR.getInstance(HttpEndpoint.class);

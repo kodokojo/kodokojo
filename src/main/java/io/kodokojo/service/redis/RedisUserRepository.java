@@ -19,6 +19,7 @@ package io.kodokojo.service.redis;
 
 
 
+import io.kodokojo.model.UserInWaitingList;
 import io.kodokojo.service.lifecycle.ApplicationLifeCycleListener;
 import io.kodokojo.model.User;
 import io.kodokojo.model.UserService;
@@ -52,6 +53,8 @@ public class RedisUserRepository extends AbstractRedisStore implements UserRepos
     public static final String USER_PREFIX = "user/";
 
     public static final String USERNAME_PREFIX = "usenamer/";
+
+    public static final String USER_WAITING_LIST_PREFIX = "user-waitinglist/";
 
     public static final String USERSERVICE_PREFIX = "userservice/";
 
@@ -134,6 +137,19 @@ public class RedisUserRepository extends AbstractRedisStore implements UserRepos
             throw new RuntimeException("Unable to serialized UserValue.", e);
         }
         return false;
+    }
+
+    @Override
+    public boolean addUserToWaitingList( UserInWaitingList userInWaitingList ) {
+        requireNonNull(userInWaitingList, "userInWaitingList must be defined.");
+        ByteArrayOutputStream byteArray = new ByteArrayOutputStream();
+        try (ObjectOutputStream out = new ObjectOutputStream(byteArray); Jedis jedis = pool.getResource()) {
+            out.writeObject(userInWaitingList);
+            jedis.set(RedisUtils.aggregateKey(USER_WAITING_LIST_PREFIX, userInWaitingList.getUsername()), byteArray.toByteArray());
+            return true;
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to serialized a UserInWaitingList.", e);
+        }
     }
 
     @Override
