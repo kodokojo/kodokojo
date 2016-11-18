@@ -22,8 +22,10 @@ import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
+import io.kodokojo.config.ApplicationConfig;
 import io.kodokojo.model.Entity;
 import io.kodokojo.model.User;
+import io.kodokojo.model.UserInWaitingList;
 import io.kodokojo.service.EmailSender;
 import io.kodokojo.service.actor.EmailSenderActor;
 import io.kodokojo.service.actor.EndpointActor;
@@ -49,12 +51,15 @@ public class UserCreatorActor extends AbstractActor {
 
     private final LoggingAdapter LOGGER = getLogger(getContext().system(), this);
 
-    public static Props PROPS(UserRepository userRepository) {
+    public static Props PROPS(UserRepository userRepository, ApplicationConfig applicationConfig) {
         requireNonNull(userRepository, "userRepository must be defined.");
-        return Props.create(UserCreatorActor.class, userRepository);
+        requireNonNull(applicationConfig, "applicationConfig must be defined.");
+        return Props.create(UserCreatorActor.class, userRepository, applicationConfig);
     }
 
     private final UserRepository userRepository;
+
+    private final ApplicationConfig applicationConfig;
 
     private boolean isValid = false;
 
@@ -68,11 +73,29 @@ public class UserCreatorActor extends AbstractActor {
 
     private ActorRef originalActor;
 
-    public UserCreatorActor(UserRepository userRepository) {
+    public UserCreatorActor(UserRepository userRepository, ApplicationConfig applicationConfig) {
         this.userRepository = userRepository;
-        receive(ReceiveBuilder.match(UserCreateMsg.class, u -> {
-            originalActor = sender();
-            message = u;
+        this.applicationConfig = applicationConfig;
+        receive(ReceiveBuilder.match(UserCreateMsg.class, this::onCreateUserRequest)
+                .match(EntityCreatorActor.EntityCreatedResultMsg.class, this::onEntityCreated)
+                .match(UserEligibleActor.UserEligibleResultMsg.class, this::onUserIsEligible)
+                .match(UserGenerateSecurityData.UserSecurityDataMsg.class, this::onSecurityDataGenerated)
+                .build()
+        );
+    }
+
+    private void onCreateUserRequest(UserCreateMsg u) {
+        originalActor = sender();
+        message = u;
+        if (applicationConfig.userCreationRoutedInWaitingList() && message.getRequester() == null) {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Creation of User '{}' send to waiting list.", message.getUsername());
+            }
+            UserInWaitingList userInWaitingList = new UserInWaitingList(message.getUsername(), message.getEmail(), System.currentTimeMillis());
+            userRepository.addUserToWaitingList(userInWaitingList);
+            originalActor.tell(new UserInWaitinglistResultMsg(userInWaitingList), self());
+            getContext().stop(self());
+        } else {
             getContext().actorOf(UserGenerateSecurityData.PROPS()).tell(new UserGenerateSecurityData.GenerateSecurityMsg(), self());
             getContext().actorOf(UserEligibleActor.PROPS(userRepository)).tell(u, self());
             if (StringUtils.isBlank(u.entityId)) {
@@ -82,26 +105,29 @@ public class UserCreatorActor extends AbstractActor {
             } else {
                 entityId = u.entityId;
             }
-        }).match(EntityCreatorActor.EntityCreatedResultMsg.class, msg -> {
-            entityId = msg.getEntityId();
-            getContext().actorSelection(EndpointActor.ACTOR_PATH).tell(new EntityMessage.AddUserToEntityMsg(null, message.id, entityId), self());
+        }
+    }
+
+    private void onSecurityDataGenerated(UserGenerateSecurityData.UserSecurityDataMsg msg) {
+        password = msg.getPassword();
+        keyPair = msg.getKeyPair();
+        isReadyToStore();
+    }
+
+    private void onUserIsEligible(UserEligibleActor.UserEligibleResultMsg r) {
+        isValid = r.isValid;
+        if (isValid) {
             isReadyToStore();
-        })
-                .match(UserEligibleActor.UserEligibleResultMsg.class, r -> {
-                    isValid = r.isValid;
-                    if (isValid) {
-                        isReadyToStore();
-                    } else {
-                        originalActor.forward(r, getContext());
-                        getContext().stop(self());
-                    }
-                })
-                .match(UserGenerateSecurityData.UserSecurityDataMsg.class, msg -> {
-                    password = msg.getPassword();
-                    keyPair = msg.getKeyPair();
-                    isReadyToStore();
-                })
-                .build());
+        } else {
+            originalActor.forward(r, getContext());
+            getContext().stop(self());
+        }
+    }
+
+    private void onEntityCreated(EntityCreatorActor.EntityCreatedResultMsg msg) {
+        entityId = msg.getEntityId();
+        getContext().actorSelection(EndpointActor.ACTOR_PATH).tell(new EntityMessage.AddUserToEntityMsg(null, message.id, entityId), self());
+        isReadyToStore();
     }
 
     private void isReadyToStore() {
@@ -206,6 +232,19 @@ public class UserCreatorActor extends AbstractActor {
 
         public KeyPair getKeyPair() {
             return keyPair;
+        }
+    }
+
+    public static class UserInWaitinglistResultMsg {
+
+        private final UserInWaitingList userInWaitingList;
+
+        public UserInWaitinglistResultMsg(UserInWaitingList userInWaitingList) {
+            this.userInWaitingList = userInWaitingList;
+        }
+
+        public UserInWaitingList getUserInWaitingList() {
+            return userInWaitingList;
         }
     }
 

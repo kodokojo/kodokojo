@@ -27,6 +27,7 @@ import io.kodokojo.endpoint.dto.UserDto;
 import io.kodokojo.endpoint.dto.UserProjectConfigIdDto;
 import io.kodokojo.model.User;
 import io.kodokojo.model.UserBuilder;
+import io.kodokojo.model.UserInWaitingList;
 import io.kodokojo.utils.RSAUtils;
 import io.kodokojo.service.ReCaptchaService;
 import io.kodokojo.service.actor.EndpointActor;
@@ -190,6 +191,10 @@ public class UserSparkEndpoint extends AbstractSparkEndpoint {
                 RSAUtils.writeRsaPrivateKey((RSAPrivateKey) userCreateResultMsg.getKeyPair().getPrivate(), sw);
                 UserCreationDto userCreationDto = new UserCreationDto(user, sw.toString());
                 return userCreationDto;
+            } else if ( result instanceof UserCreatorActor.UserInWaitinglistResultMsg) {
+                LOGGER.info("Set user '{}' in waiting list to creation.", (( UserCreatorActor.UserInWaitinglistResultMsg) result).getUserInWaitingList().getUsername());
+                response.status(202);
+                return "";
             }
             halt(500, "An unexpected behaviour happened while trying to create user " + username + ".");
             return "";

@@ -130,21 +130,32 @@ public class ApplicationWhen<SELF extends ApplicationWhen<?>> extends Stage<SELF
         try {
             response = httpClient.newCall(request).execute();
             if (success) {
-                assertThat(response.code()).isEqualTo(201);
-                JsonParser parser = new JsonParser();
-                String bodyResponse = response.body().string();
-                JsonObject json = (JsonObject) parser.parse(bodyResponse);
-                String currentUsername = json.getAsJsonPrimitive("username").getAsString();
-                String currentUserPassword = json.getAsJsonPrimitive("password").getAsString();
-                String currentUserEmail = json.getAsJsonPrimitive("email").getAsString();
-                String currentUserIdentifier = json.getAsJsonPrimitive("identifier").getAsString();
-                String currentUserEntityIdentifier = json.getAsJsonPrimitive("entityIdentifier").getAsString();
-                currentUsers.put(currentUsername, new UserInfo(currentUsername, currentUserIdentifier, currentUserEntityIdentifier, currentUserPassword, currentUserEmail));
-                if (isBlank(currentUserLogin)) {
-                    currentUserLogin = currentUsername;
+                switch (response.code()) {
+                    case 201:
+                        JsonParser parser = new JsonParser();
+                        String bodyResponse = response.body().string();
+                        JsonObject json = (JsonObject) parser.parse(bodyResponse);
+                        String currentUsername = json.getAsJsonPrimitive("username").getAsString();
+                        String currentUserPassword = json.getAsJsonPrimitive("password").getAsString();
+                        String currentUserEmail = json.getAsJsonPrimitive("email").getAsString();
+                        String currentUserIdentifier = json.getAsJsonPrimitive("identifier").getAsString();
+                        String currentUserEntityIdentifier = json.getAsJsonPrimitive("entityIdentifier").getAsString();
+                        currentUsers.put(currentUsername, new UserInfo(currentUsername, currentUserIdentifier, currentUserEntityIdentifier, currentUserPassword, currentUserEmail));
+                        if (isBlank(currentUserLogin)) {
+                            currentUserLogin = currentUsername;
+                        }
+                        Attachment privateKey = Attachment.plainText(bodyResponse).withTitle(currentUsername + " response");
+                        currentStep.addAttachment(privateKey);
+                        break;
+                    case 202:
+
+                        break;
+                    default:
+                        fail("Unexpected return code " + response.code());
+                        break;
                 }
-                Attachment privateKey = Attachment.plainText(bodyResponse).withTitle(currentUsername + " response");
-                currentStep.addAttachment(privateKey);
+
+
             } else {
                 assertThat(response.code()).isNotEqualTo(201);
             }

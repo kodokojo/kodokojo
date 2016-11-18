@@ -36,11 +36,13 @@ public class TestPropertyModule extends AbstractModule {
     private final int httpPort;
     private final String redisHost;
     private final int redisPort;
+    private final boolean userInWaitingList;
 
-    public TestPropertyModule(String[] args, DockerTestSupport dockerTestSupport, int httpPort, String redisHost, int redisPort) {
+    public TestPropertyModule(String[] args, DockerTestSupport dockerTestSupport, int httpPort, String redisHost, int redisPort, boolean userInWaitingList) {
         this.httpPort = httpPort;
         this.redisHost = redisHost;
         this.redisPort = redisPort;
+        this.userInWaitingList = userInWaitingList;
         if (args == null) {
             this.args = new String[0];
         } else {
@@ -135,6 +137,11 @@ public class TestPropertyModule extends AbstractModule {
             @Override
             public long sslCaDuration() {
                 return -1;
+            }
+
+            @Override
+            public Boolean userCreationRoutedInWaitingList() {
+                return userInWaitingList;
             }
         };
     }

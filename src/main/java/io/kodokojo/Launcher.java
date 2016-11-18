@@ -23,6 +23,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.name.Names;
+import io.kodokojo.config.ApplicationConfig;
 import io.kodokojo.config.module.*;
 import io.kodokojo.config.module.endpoint.BrickEndpointModule;
 import io.kodokojo.config.module.endpoint.ProjectEndpointModule;
@@ -56,6 +57,11 @@ public class Launcher {
                 bind(ActorRef.class).annotatedWith(Names.named(EndpointActor.NAME)).toInstance(endpointActor);
             }
         }, new HttpModule(), new UserEndpointModule(), new ProjectEndpointModule(), new BrickEndpointModule());
+
+        ApplicationConfig applicationConfig = INJECTOR.getInstance(ApplicationConfig.class);
+        if (applicationConfig.userCreationRoutedInWaitingList()) {
+            LOGGER.warn("You user will be routed to a waiting list when trying to create a new users (from strach, invitation will work).");
+        }
 
         HttpEndpoint httpEndpoint = INJECTOR.getInstance(HttpEndpoint.class);
         ApplicationLifeCycleManager applicationLifeCycleManager = INJECTOR.getInstance(ApplicationLifeCycleManager.class);
