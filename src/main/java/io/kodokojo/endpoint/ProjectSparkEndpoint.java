@@ -105,9 +105,14 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
                 halt(404);
                 return "";
             }
+            User requester = getRequester(request);
 
-            return new ProjectConfigDto(projectConfiguration);
-
+            if (userIsUser(requester, projectConfiguration)) {
+                return new ProjectConfigDto(projectConfiguration);
+            } else {
+                halt(403, "You have not right to lookup projectConfiguration id " + identifier + ".");
+            }
+            return "";
         }, jsonResponseTransformer);
 
         put(BASE_API + "/projectconfig/:id/user", JSON_CONTENT_TYPE, ((request, response) -> {
@@ -208,7 +213,7 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
                 return "";
             }
             ProjectConfiguration projectConfiguration = projectFetcher.getProjectConfigurationById(project.getProjectConfigurationIdentifier());
-            if (userIsAdmin(requester, projectConfiguration)) {
+            if (userIsUser(requester, projectConfiguration)) {
                 //LOGGER.debug("Retrieve project following project {}", project);
                 ProjectDto projectDto = new ProjectDto(project);
                 //LOGGER.debug("Sending project Ddto {}", projectDto);
@@ -219,6 +224,13 @@ public class ProjectSparkEndpoint extends AbstractSparkEndpoint {
 
             return "";
         }), jsonResponseTransformer);
+    }
+
+
+    private static boolean userIsUser(User user, ProjectConfiguration projectConfiguration) {
+        List<User> users = IteratorUtils.toList(projectConfiguration.getUsers());
+        boolean res = users.stream().filter(u -> u.getIdentifier().equals(user.getIdentifier())).findFirst().isPresent();
+        return res || userIsAdmin(user, projectConfiguration);
     }
 
     private static boolean userIsAdmin(User user, ProjectConfiguration projectConfiguration) {
