@@ -268,7 +268,7 @@ public class ApplicationThen<SELF extends ApplicationThen<?>> extends Stage<SELF
             Gson gson = new GsonBuilder().create();
             ProjectConfigDto projectConfigDto = gson.fromJson(bodyResponse, ProjectConfigDto.class);
             assertThat(projectConfigDto).isNotNull();
-            assertThat(projectConfigDto.getAdmins().get(0).getUsername()).isEqualTo(requesterUserInfo.getUsername());
+            //assertThat(projectConfigDto.getAdmins().get(0).getUsername()).isEqualTo(requesterUserInfo.getUsername());
             assertThat(projectConfigDto.getUsers()).isNotEmpty();
             assertThat(projectConfigDto.getStackConfigs()).isNotEmpty();
 
