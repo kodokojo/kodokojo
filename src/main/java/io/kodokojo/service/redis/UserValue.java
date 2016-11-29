@@ -19,7 +19,7 @@ package io.kodokojo.service.redis;
 
 
 
-import io.kodokojo.model.User;
+import io.kodokojo.commons.model.User;
 
 import java.io.Serializable;
 

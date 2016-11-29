@@ -17,7 +17,7 @@
  */
 package io.kodokojo.service.repository;
 
-import io.kodokojo.model.Entity;
+import io.kodokojo.commons.model.Entity;
 
 public interface EntityRepository extends EntityFetcher {
 

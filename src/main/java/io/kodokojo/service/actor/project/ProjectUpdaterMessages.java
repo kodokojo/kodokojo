@@ -17,9 +17,9 @@
  */
 package io.kodokojo.service.actor.project;
 
-import io.kodokojo.model.Project;
-import io.kodokojo.model.UpdateData;
-import io.kodokojo.model.User;
+import io.kodokojo.commons.model.Project;
+import io.kodokojo.commons.model.UpdateData;
+import io.kodokojo.commons.model.User;
 import io.kodokojo.service.actor.message.UserRequestMessage;
 
 import static java.util.Objects.requireNonNull;

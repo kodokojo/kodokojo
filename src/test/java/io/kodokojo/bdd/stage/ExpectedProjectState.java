@@ -17,7 +17,7 @@
  */
 package io.kodokojo.bdd.stage;
 
-import io.kodokojo.model.BrickType;
+import io.kodokojo.commons.model.BrickType;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.List;

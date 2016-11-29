@@ -17,10 +17,8 @@
  */
 package io.kodokojo.service.repository.store;
 
-import io.kodokojo.model.ProjectConfiguration;
-import io.kodokojo.model.StackConfiguration;
-import io.kodokojo.model.User;
-import io.kodokojo.model.UserService;
+import io.kodokojo.commons.model.ProjectConfiguration;
+import io.kodokojo.commons.model.StackConfiguration;
 
 import java.io.Serializable;
 import java.util.ArrayList;

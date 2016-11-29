@@ -17,7 +17,7 @@
  */
 package io.kodokojo.service.repository.store;
 
-import io.kodokojo.model.Entity;
+import io.kodokojo.commons.model.Entity;
 
 import java.io.Serializable;
 import java.util.ArrayList;

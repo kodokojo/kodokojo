@@ -18,9 +18,9 @@
 package io.kodokojo.service.repository;
 
 
-import io.kodokojo.model.User;
-import io.kodokojo.model.UserInWaitingList;
-import io.kodokojo.model.UserService;
+import io.kodokojo.commons.model.User;
+import io.kodokojo.commons.model.UserInWaitingList;
+import io.kodokojo.commons.model.UserService;
 
 /**
  * Allow to manage {@link User} and {@link UserService}.

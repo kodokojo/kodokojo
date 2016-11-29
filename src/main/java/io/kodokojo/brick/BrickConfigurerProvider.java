@@ -17,7 +17,7 @@
  */
 package io.kodokojo.brick;
 
-import io.kodokojo.model.BrickConfiguration;
+import io.kodokojo.commons.model.BrickConfiguration;
 
 public interface BrickConfigurerProvider {
 

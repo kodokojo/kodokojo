@@ -17,8 +17,8 @@
  */
 package io.kodokojo.brick;
 
-import io.kodokojo.model.BrickConfiguration;
-import io.kodokojo.model.ProjectConfiguration;
+import io.kodokojo.commons.model.BrickConfiguration;
+import io.kodokojo.commons.model.ProjectConfiguration;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 

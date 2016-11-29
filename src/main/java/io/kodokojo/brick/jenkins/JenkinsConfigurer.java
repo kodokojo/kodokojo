@@ -20,11 +20,11 @@ package io.kodokojo.brick.jenkins;
 
 import io.kodokojo.brick.BrickConfigurer;
 import io.kodokojo.brick.BrickConfigurerData;
-import io.kodokojo.model.ProjectConfiguration;
-import io.kodokojo.model.UpdateData;
-import io.kodokojo.model.User;
-import io.kodokojo.model.UserService;
-import io.kodokojo.utils.RSAUtils;
+import io.kodokojo.commons.model.ProjectConfiguration;
+import io.kodokojo.commons.model.UpdateData;
+import io.kodokojo.commons.model.User;
+import io.kodokojo.commons.model.UserService;
+import io.kodokojo.commons.utils.RSAUtils;
 import okhttp3.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;

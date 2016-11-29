@@ -17,7 +17,7 @@
  */
 package io.kodokojo.service.zookeeper;
 
-import io.kodokojo.config.ZookeeperConfig;
+import io.kodokojo.commons.config.ZookeeperConfig;
 import io.kodokojo.service.BootstrapConfigurationProvider;
 import javaslang.control.Try;
 import org.apache.zookeeper.*;

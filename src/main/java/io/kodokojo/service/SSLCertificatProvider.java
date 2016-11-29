@@ -18,7 +18,7 @@
 package io.kodokojo.service;
 
 import io.kodokojo.service.ssl.SSLKeyPair;
-import io.kodokojo.model.BrickConfiguration;
+import io.kodokojo.commons.model.BrickConfiguration;
 /**
  * Will be moved into another component than kodokojo back.
  */

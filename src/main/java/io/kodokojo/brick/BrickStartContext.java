@@ -17,13 +17,11 @@
  */
 package io.kodokojo.brick;
 
-import io.kodokojo.model.BrickConfiguration;
-import io.kodokojo.model.ProjectConfiguration;
-import io.kodokojo.model.StackConfiguration;
+import io.kodokojo.commons.model.BrickConfiguration;
+import io.kodokojo.commons.model.ProjectConfiguration;
+import io.kodokojo.commons.model.StackConfiguration;
 
 import java.io.Serializable;
-
-import static org.apache.commons.lang.StringUtils.isBlank;
 
 public class BrickStartContext implements Serializable {
 

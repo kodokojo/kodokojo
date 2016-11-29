@@ -21,23 +21,18 @@ import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.dispatch.Futures;
-import akka.dispatch.Futures$;
 import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
 import akka.pattern.Patterns;
 import akka.util.Timeout;
 import io.kodokojo.brick.BrickConfigurerData;
 import io.kodokojo.brick.BrickUrlFactory;
-import io.kodokojo.model.*;
+import io.kodokojo.commons.model.*;
 import io.kodokojo.service.actor.message.BrickStateEvent;
 import io.kodokojo.service.actor.EndpointActor;
-import io.kodokojo.service.ssl.SSLKeyPair;
 import io.kodokojo.service.BrickManager;
 import io.kodokojo.brick.BrickAlreadyExist;
 import io.kodokojo.brick.BrickStartContext;
-import io.kodokojo.service.ConfigurationStore;
-import io.kodokojo.service.ProjectConfigurationException;
-import io.kodokojo.service.SSLCertificatProvider;
 import javaslang.control.Try;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -46,11 +41,8 @@ import scala.concurrent.Future;
 import scala.concurrent.duration.Duration;
 
 import javax.inject.Inject;
-import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 
 import static akka.event.Logging.getLogger;
 

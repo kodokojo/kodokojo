@@ -22,7 +22,7 @@ import akka.actor.ActorSystem;
 import akka.pattern.Patterns;
 import akka.testkit.JavaTestKit;
 import akka.testkit.TestActorRef;
-import io.kodokojo.model.*;
+import io.kodokojo.commons.model.*;
 import io.kodokojo.test.utils.DataBuilder;
 import io.kodokojo.service.repository.ProjectRepository;
 import org.junit.AfterClass;

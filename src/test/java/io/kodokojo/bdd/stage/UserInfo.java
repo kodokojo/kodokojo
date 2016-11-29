@@ -17,8 +17,7 @@
  */
 package io.kodokojo.bdd.stage;
 
-import io.kodokojo.commons.docker.model.StringToDockerFileConverter;
-import io.kodokojo.model.User;
+import io.kodokojo.commons.model.User;
 
 public class UserInfo {
 

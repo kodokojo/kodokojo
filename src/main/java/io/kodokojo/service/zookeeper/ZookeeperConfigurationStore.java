@@ -17,8 +17,8 @@
  */
 package io.kodokojo.service.zookeeper;
 
-import io.kodokojo.config.ZookeeperConfig;
-import io.kodokojo.model.BootstrapStackData;
+import io.kodokojo.commons.config.ZookeeperConfig;
+import io.kodokojo.commons.model.BootstrapStackData;
 import io.kodokojo.service.ConfigurationStore;
 import io.kodokojo.service.ssl.SSLKeyPair;
 import javaslang.control.Try;

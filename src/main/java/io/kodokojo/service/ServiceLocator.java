@@ -19,7 +19,7 @@ package io.kodokojo.service;
 
 
 
-import io.kodokojo.model.Service;
+import io.kodokojo.commons.model.Service;
 
 import java.util.Set;
 

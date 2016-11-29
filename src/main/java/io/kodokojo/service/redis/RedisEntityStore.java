@@ -17,7 +17,7 @@
  */
 package io.kodokojo.service.redis;
 
-import io.kodokojo.utils.RSAUtils;
+import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.service.repository.store.EntityStore;
 import io.kodokojo.service.repository.store.EntityStoreModel;
 import org.apache.commons.collections4.CollectionUtils;

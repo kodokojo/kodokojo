@@ -17,7 +17,7 @@
  */
 package io.kodokojo.service.repository;
 
-import io.kodokojo.model.*;
+import io.kodokojo.commons.model.*;
 import io.kodokojo.service.repository.store.EntityStore;
 import io.kodokojo.service.repository.store.EntityStoreModel;
 import io.kodokojo.service.repository.store.ProjectConfigurationStoreModel;

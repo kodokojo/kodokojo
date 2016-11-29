@@ -20,7 +20,7 @@ package io.kodokojo.service.actor.entity;
 import akka.actor.AbstractActor;
 import akka.actor.Props;
 import akka.japi.pf.ReceiveBuilder;
-import io.kodokojo.model.Entity;
+import io.kodokojo.commons.model.Entity;
 import io.kodokojo.service.repository.EntityRepository;
 
 import static java.util.Objects.requireNonNull;

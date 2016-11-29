@@ -17,9 +17,9 @@
  */
 package io.kodokojo.brick;
 
-import io.kodokojo.model.BrickConfiguration;
-import io.kodokojo.model.BrickType;
-import io.kodokojo.model.PortDefinition;
+import io.kodokojo.commons.model.BrickConfiguration;
+import io.kodokojo.commons.model.BrickType;
+import io.kodokojo.commons.model.PortDefinition;
 
 import javax.inject.Inject;
 import java.util.*;

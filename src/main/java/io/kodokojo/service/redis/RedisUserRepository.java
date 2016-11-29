@@ -19,11 +19,11 @@ package io.kodokojo.service.redis;
 
 
 
-import io.kodokojo.model.UserInWaitingList;
+import io.kodokojo.commons.model.UserInWaitingList;
 import io.kodokojo.service.lifecycle.ApplicationLifeCycleListener;
-import io.kodokojo.model.User;
-import io.kodokojo.model.UserService;
-import io.kodokojo.utils.RSAUtils;
+import io.kodokojo.commons.model.User;
+import io.kodokojo.commons.model.UserService;
+import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.service.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

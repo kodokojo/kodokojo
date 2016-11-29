@@ -17,7 +17,7 @@
  */
 package io.kodokojo.service.actor.message;
 
-import io.kodokojo.model.User;
+import io.kodokojo.commons.model.User;
 
 import java.io.Serializable;
 

@@ -20,7 +20,7 @@ package io.kodokojo.service.actor.user;
 import akka.actor.AbstractActor;
 import akka.actor.Props;
 import akka.japi.pf.ReceiveBuilder;
-import io.kodokojo.config.ApplicationConfig;
+import io.kodokojo.commons.config.ApplicationConfig;
 import io.kodokojo.service.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

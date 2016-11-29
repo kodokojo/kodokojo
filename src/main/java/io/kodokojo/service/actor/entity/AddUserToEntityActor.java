@@ -20,12 +20,9 @@ package io.kodokojo.service.actor.entity;
 import akka.actor.AbstractActor;
 import akka.actor.Props;
 import akka.japi.pf.ReceiveBuilder;
-import io.kodokojo.model.User;
-import io.kodokojo.service.actor.message.UserRequestMessage;
 import io.kodokojo.service.repository.EntityRepository;
 
 import static java.util.Objects.requireNonNull;
-import static org.apache.commons.lang.StringUtils.isBlank;
 
 public class AddUserToEntityActor extends AbstractActor {
 

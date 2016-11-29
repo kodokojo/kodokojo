@@ -17,7 +17,7 @@
  */
 package io.kodokojo.service.ssl;
 
-import io.kodokojo.model.BrickConfiguration;
+import io.kodokojo.commons.model.BrickConfiguration;
 import io.kodokojo.service.SSLCertificatProvider;
 
 public class WildcardSSLCertificatProvider implements SSLCertificatProvider {

@@ -18,7 +18,7 @@
 package io.kodokojo.service;
 
 import io.kodokojo.service.ssl.SSLKeyPair;
-import io.kodokojo.model.BootstrapStackData;
+import io.kodokojo.commons.model.BootstrapStackData;
 
 /**
  * Allow to store data and configuration which will be used to start project's brick.

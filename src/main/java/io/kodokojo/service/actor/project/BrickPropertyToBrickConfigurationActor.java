@@ -21,7 +21,7 @@ import akka.actor.AbstractActor;
 import akka.actor.Props;
 import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
-import io.kodokojo.model.ProjectConfiguration;
+import io.kodokojo.commons.model.ProjectConfiguration;
 import io.kodokojo.service.repository.ProjectRepository;
 
 import java.io.Serializable;

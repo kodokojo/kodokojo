@@ -20,7 +20,7 @@ package io.kodokojo.brick;
 import io.kodokojo.brick.gitlab.GitlabConfigurer;
 import io.kodokojo.brick.jenkins.JenkinsConfigurer;
 import io.kodokojo.brick.nexus.NexusConfigurer;
-import io.kodokojo.model.BrickConfiguration;
+import io.kodokojo.commons.model.BrickConfiguration;
 import okhttp3.OkHttpClient;
 
 import javax.inject.Inject;

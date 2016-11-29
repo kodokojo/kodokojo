@@ -22,7 +22,7 @@ import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
-import io.kodokojo.model.*;
+import io.kodokojo.commons.model.*;
 import io.kodokojo.service.actor.EndpointActor;
 import io.kodokojo.service.actor.message.UserRequestMessage;
 import io.kodokojo.service.actor.user.UserFetcherActor;

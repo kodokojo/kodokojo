@@ -18,8 +18,8 @@
 package io.kodokojo.service.marathon;
 
 import io.kodokojo.brick.*;
-import io.kodokojo.config.MarathonConfig;
-import io.kodokojo.model.*;
+import io.kodokojo.commons.config.MarathonConfig;
+import io.kodokojo.commons.model.*;
 import io.kodokojo.service.BrickManager;
 import io.kodokojo.service.ProjectConfigurationException;
 import io.kodokojo.service.repository.ProjectRepository;

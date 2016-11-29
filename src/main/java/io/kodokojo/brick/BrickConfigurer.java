@@ -19,9 +19,9 @@ package io.kodokojo.brick;
 
 
 
-import io.kodokojo.model.ProjectConfiguration;
-import io.kodokojo.model.UpdateData;
-import io.kodokojo.model.User;
+import io.kodokojo.commons.model.ProjectConfiguration;
+import io.kodokojo.commons.model.UpdateData;
+import io.kodokojo.commons.model.User;
 
 import java.util.List;
 

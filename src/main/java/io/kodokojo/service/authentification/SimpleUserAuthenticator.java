@@ -17,8 +17,8 @@
  */
 package io.kodokojo.service.authentification;
 
-import io.kodokojo.model.User;
-import io.kodokojo.endpoint.UserAuthenticator;
+import io.kodokojo.commons.model.User;
+import io.kodokojo.commons.endpoint.UserAuthenticator;
 import io.kodokojo.service.repository.UserRepository;
 
 import javax.inject.Inject;

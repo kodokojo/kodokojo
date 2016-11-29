@@ -17,18 +17,18 @@
  */
 package io.kodokojo.service.redis;
 
-import io.kodokojo.bdd.stage.StageUtils;
 import io.kodokojo.commons.DockerIsRequire;
 import io.kodokojo.commons.DockerPresentMethodRule;
-import io.kodokojo.model.Service;
+import io.kodokojo.commons.model.Service;
+import io.kodokojo.commons.utils.DockerTestApplicationBuilder;
 import io.kodokojo.commons.utils.DockerTestSupport;
-import io.kodokojo.utils.RSAUtils;
+import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.service.actor.message.BrickStateEvent;
 import io.kodokojo.service.repository.store.ProjectConfigurationStoreModel;
 import io.kodokojo.service.ssl.SSLKeyPair;
 import io.kodokojo.service.ssl.SSLUtils;
-import io.kodokojo.model.*;
-import io.kodokojo.model.Stack;
+import io.kodokojo.commons.model.*;
+import io.kodokojo.commons.model.Stack;
 import org.junit.*;
 
 import javax.crypto.KeyGenerator;
@@ -42,7 +42,7 @@ import java.util.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Ignore
-public class RedisProjectStoreIntTest {
+public class RedisProjectStoreIntTest implements DockerTestApplicationBuilder {
 
     @Rule
     public DockerPresentMethodRule dockerPresentMethodRule = new DockerPresentMethodRule();
@@ -56,7 +56,7 @@ public class RedisProjectStoreIntTest {
         dockerTestSupport = dockerPresentMethodRule.getDockerTestSupport();
         KeyGenerator kg = KeyGenerator.getInstance("AES");
         SecretKey aesKey = kg.generateKey();
-        Service service = StageUtils.startDockerRedis(dockerTestSupport);
+        Service service = startRedis(dockerTestSupport).get();
         String redisHost = service.getHost();
         int redisPort = service.getPort();
         redisProjectStore = new RedisProjectStore(aesKey, redisHost, redisPort);

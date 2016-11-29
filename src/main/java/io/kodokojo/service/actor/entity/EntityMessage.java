@@ -17,7 +17,7 @@
  */
 package io.kodokojo.service.actor.entity;
 
-import io.kodokojo.model.User;
+import io.kodokojo.commons.model.User;
 import io.kodokojo.service.actor.message.UserRequestMessage;
 
 import static org.apache.commons.lang.StringUtils.isBlank;

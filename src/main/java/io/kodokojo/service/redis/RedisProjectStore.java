@@ -17,8 +17,8 @@
  */
 package io.kodokojo.service.redis;
 
-import io.kodokojo.model.Project;
-import io.kodokojo.utils.RSAUtils;
+import io.kodokojo.commons.model.Project;
+import io.kodokojo.commons.utils.RSAUtils;
 import io.kodokojo.service.repository.store.ProjectConfigurationStoreModel;
 import io.kodokojo.service.repository.store.ProjectStore;
 import org.apache.commons.lang.StringUtils;

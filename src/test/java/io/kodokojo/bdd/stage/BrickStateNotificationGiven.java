@@ -28,18 +28,20 @@ import com.tngtech.jgiven.annotation.ProvidedScenarioState;
 import com.tngtech.jgiven.annotation.Quoted;
 import io.kodokojo.Launcher;
 import io.kodokojo.brick.*;
+import io.kodokojo.commons.utils.DockerService;
+import io.kodokojo.commons.utils.DockerTestApplicationBuilder;
 import io.kodokojo.commons.utils.DockerTestSupport;
-import io.kodokojo.config.ApplicationConfig;
-import io.kodokojo.config.EmailConfig;
-import io.kodokojo.config.VersionConfig;
-import io.kodokojo.config.module.AkkaModule;
-import io.kodokojo.config.module.HttpModule;
-import io.kodokojo.config.module.endpoint.BrickEndpointModule;
-import io.kodokojo.config.module.endpoint.ProjectEndpointModule;
-import io.kodokojo.config.module.endpoint.UserEndpointModule;
-import io.kodokojo.endpoint.HttpEndpoint;
-import io.kodokojo.endpoint.UserAuthenticator;
-import io.kodokojo.model.*;
+import io.kodokojo.commons.config.ApplicationConfig;
+import io.kodokojo.commons.config.EmailConfig;
+import io.kodokojo.commons.config.VersionConfig;
+import io.kodokojo.commons.config.module.AkkaModule;
+import io.kodokojo.commons.config.module.HttpModule;
+import io.kodokojo.commons.config.module.endpoint.BrickEndpointModule;
+import io.kodokojo.commons.config.module.endpoint.ProjectEndpointModule;
+import io.kodokojo.commons.config.module.endpoint.UserEndpointModule;
+import io.kodokojo.api.endpoint.HttpEndpoint;
+import io.kodokojo.commons.endpoint.UserAuthenticator;
+import io.kodokojo.commons.model.*;
 import io.kodokojo.service.*;
 import io.kodokojo.service.actor.EndpointActor;
 import io.kodokojo.service.authentification.SimpleCredential;
@@ -58,7 +60,7 @@ import io.kodokojo.service.ssl.SSLKeyPair;
 import io.kodokojo.service.ssl.SSLUtils;
 import io.kodokojo.service.ssl.WildcardSSLCertificatProvider;
 import io.kodokojo.test.utils.TestUtils;
-import io.kodokojo.utils.RSAUtils;
+import io.kodokojo.commons.utils.RSAUtils;
 import okhttp3.OkHttpClient;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
@@ -79,7 +81,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 
-public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGiven<?>> extends Stage<SELF> {
+public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGiven<?>> extends Stage<SELF> implements DockerTestApplicationBuilder {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BrickStateNotificationGiven.class);
 
@@ -117,7 +119,7 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
         this.dockerTestSupport = dockerTestSupport;
         LOGGER.info("Pulling docker image redis:latest");
         this.dockerTestSupport.pullImage("redis:latest");
-        Service service = StageUtils.startDockerRedis(this.dockerTestSupport);
+        DockerService service = startRedis(dockerTestSupport).get();
 
         brickManager = mock(BrickManager.class);
         bootstrapProvider = mock(BootstrapConfigurationProvider.class);
@@ -133,10 +135,8 @@ public class BrickStateNotificationGiven<SELF extends BrickStateNotificationGive
             List<User> users = new ArrayList<>();
             users.add(new User("1234", "5678", "Jean-Pascal THIEYR", "jpthiery", "jpthiery@xebia.fr", "password", "sshKey"));
             Mockito.when(brickManager.configure(any(ProjectConfiguration.class), any(StackConfiguration.class), any(BrickConfiguration.class))).thenReturn(new BrickConfigurerData("test", "test", "localhost", "kodokojo.dev", users, users));
-        } catch (BrickAlreadyExist brickAlreadyExist) {
+        } catch (BrickAlreadyExist | ProjectConfigurationException brickAlreadyExist) {
             fail(brickAlreadyExist.getMessage());
-        } catch (ProjectConfigurationException e) {
-            fail(e.getMessage());
         }
 
         SecretKey tmpKey = null;

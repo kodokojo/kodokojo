@@ -18,9 +18,9 @@
 package io.kodokojo.brick;
 
 import io.kodokojo.service.actor.message.BrickStateEvent;
-import io.kodokojo.model.Project;
-import io.kodokojo.model.ProjectBuilder;
-import io.kodokojo.model.Stack;
+import io.kodokojo.commons.model.Project;
+import io.kodokojo.commons.model.ProjectBuilder;
+import io.kodokojo.commons.model.Stack;
 import io.kodokojo.service.repository.ProjectRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

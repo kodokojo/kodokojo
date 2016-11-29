@@ -21,8 +21,8 @@ import akka.actor.AbstractActor;
 import akka.actor.Props;
 import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
-import io.kodokojo.model.BootstrapStackData;
-import io.kodokojo.model.StackType;
+import io.kodokojo.commons.model.BootstrapStackData;
+import io.kodokojo.commons.model.StackType;
 import io.kodokojo.service.BootstrapConfigurationProvider;
 import io.kodokojo.service.ConfigurationStore;
 

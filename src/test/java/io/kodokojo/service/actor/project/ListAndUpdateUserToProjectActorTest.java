@@ -22,7 +22,7 @@ import akka.japi.pf.ReceiveBuilder;
 import akka.testkit.JavaTestKit;
 import akka.testkit.TestActorRef;
 import akka.util.Timeout;
-import io.kodokojo.model.*;
+import io.kodokojo.commons.model.*;
 import io.kodokojo.service.repository.ProjectRepository;
 import io.kodokojo.test.utils.DataBuilder;
 import org.junit.AfterClass;
@@ -34,7 +34,6 @@ import scala.concurrent.duration.Duration;
 
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 

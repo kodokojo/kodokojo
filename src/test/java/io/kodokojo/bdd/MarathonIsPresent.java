@@ -17,11 +17,11 @@
  */
 package io.kodokojo.bdd;
 
-import io.kodokojo.config.properties.PropertyResolver;
-import io.kodokojo.config.properties.provider.OrderedMergedValueProvider;
-import io.kodokojo.config.properties.provider.PropertyValueProvider;
-import io.kodokojo.config.properties.provider.SystemEnvValueProvider;
-import io.kodokojo.config.properties.provider.SystemPropertyValueProvider;
+import io.kodokojo.commons.config.properties.PropertyResolver;
+import io.kodokojo.commons.config.properties.provider.OrderedMergedValueProvider;
+import io.kodokojo.commons.config.properties.provider.PropertyValueProvider;
+import io.kodokojo.commons.config.properties.provider.SystemEnvValueProvider;
+import io.kodokojo.commons.config.properties.provider.SystemPropertyValueProvider;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;

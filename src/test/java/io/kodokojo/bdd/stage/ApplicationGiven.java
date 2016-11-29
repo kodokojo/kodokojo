@@ -1,17 +1,17 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -19,7 +19,6 @@ package io.kodokojo.bdd.stage;
 
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.model.Image;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -29,14 +28,14 @@ import com.tngtech.jgiven.annotation.Hidden;
 import com.tngtech.jgiven.annotation.ProvidedScenarioState;
 import com.tngtech.jgiven.annotation.Quoted;
 import io.kodokojo.Launcher;
+import io.kodokojo.api.endpoint.HttpEndpoint;
+import io.kodokojo.commons.utils.DockerTestApplicationBuilder;
+import io.kodokojo.commons.config.VersionConfig;
+import io.kodokojo.commons.config.module.InjectorProvider;
+import io.kodokojo.commons.config.properties.PropertyResolver;
+import io.kodokojo.commons.config.properties.provider.*;
+import io.kodokojo.commons.utils.DockerService;
 import io.kodokojo.commons.utils.DockerTestSupport;
-import io.kodokojo.config.DockerConfig;
-import io.kodokojo.config.VersionConfig;
-import io.kodokojo.config.module.InjectorProvider;
-import io.kodokojo.config.properties.PropertyResolver;
-import io.kodokojo.config.properties.provider.*;
-import io.kodokojo.endpoint.HttpEndpoint;
-import io.kodokojo.model.Service;
 import io.kodokojo.service.BrickManager;
 import io.kodokojo.service.ConfigurationStore;
 import io.kodokojo.service.repository.Repository;
@@ -49,7 +48,7 @@ import java.util.*;
 
 import static org.mockito.Mockito.mock;
 
-public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SELF> {
+public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SELF> implements DockerTestApplicationBuilder {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationGiven.class);
 
@@ -110,7 +109,6 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
                 OrderedMergedValueProvider valueProvider = new OrderedMergedValueProvider(propertyValueProviders);
                 PropertyResolver resolver = new PropertyResolver(new DockerConfigValueProvider(valueProvider));
 
-                bind(DockerConfig.class).toInstance(resolver.createProxy(DockerConfig.class));
                 bind(VersionConfig.class).toInstance(new VersionConfig() {
                     @Override
                     public String version() {
@@ -132,25 +130,12 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
             }
         });
         Launcher.INJECTOR = injector;
-        DockerConfig dockerConfig = injector.getInstance(DockerConfig.class);
         redis_is_started();
         return self();
     }
 
     public SELF redis_is_started() {
-        List<Image> images = dockerClient.listImagesCmd().exec();
-        boolean foundRedis = false;
-        Iterator<Image> iterator = images.iterator();
-        while (iterator.hasNext() && !foundRedis) {
-            Image image = iterator.next();
-            foundRedis = image.getId().equals("redis") && Arrays.asList(image.getRepoTags()).contains("latest");
-        }
-        if (!foundRedis) {
-            LOGGER.info("Pulling docker image redis:latest");
-            this.dockerTestSupport.pullImage("redis:latest");
-        }
-
-        Service service = StageUtils.startDockerRedis(this.dockerTestSupport);
+        DockerService service = startRedis(dockerTestSupport).get();
         redisHost = service.getHost();
         redisPort = service.getPortDefinition().getContainerPort();
 
@@ -158,12 +143,12 @@ public class ApplicationGiven<SELF extends ApplicationGiven<?>> extends Stage<SE
     }
 
 
-    public SELF kodokojo_restEntrypoint_is_available(@Hidden  boolean userInWaitingList) {
+    public SELF kodokojo_restEntrypoint_is_available(@Hidden boolean userInWaitingList) {
         int port = TestUtils.getEphemeralPort();
         return kodokojo_restEntrypoint_is_available_on_port_$(port, userInWaitingList);
     }
 
-    public SELF kodokojo_restEntrypoint_is_available(){
+    public SELF kodokojo_restEntrypoint_is_available() {
         return kodokojo_restEntrypoint_is_available(false);
     }
 

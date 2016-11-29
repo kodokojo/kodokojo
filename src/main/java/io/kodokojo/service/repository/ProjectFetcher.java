@@ -17,8 +17,8 @@
  */
 package io.kodokojo.service.repository;
 
-import io.kodokojo.model.Project;
-import io.kodokojo.model.ProjectConfiguration;
+import io.kodokojo.commons.model.Project;
+import io.kodokojo.commons.model.ProjectConfiguration;
 
 import java.util.Set;
 

@@ -22,7 +22,7 @@ import akka.actor.ActorSystem;
 import akka.testkit.JavaTestKit;
 import akka.testkit.TestActorRef;
 import akka.util.Timeout;
-import io.kodokojo.model.User;
+import io.kodokojo.commons.model.User;
 import io.kodokojo.service.repository.UserRepository;
 import io.kodokojo.test.utils.DataBuilder;
 import org.junit.AfterClass;

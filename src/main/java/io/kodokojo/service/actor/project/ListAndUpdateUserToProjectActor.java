@@ -22,9 +22,9 @@ import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
-import io.kodokojo.model.ProjectConfiguration;
-import io.kodokojo.model.UpdateData;
-import io.kodokojo.model.User;
+import io.kodokojo.commons.model.ProjectConfiguration;
+import io.kodokojo.commons.model.UpdateData;
+import io.kodokojo.commons.model.User;
 import io.kodokojo.service.actor.EndpointActor;
 import io.kodokojo.service.repository.ProjectRepository;
 

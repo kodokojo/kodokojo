@@ -20,7 +20,7 @@ package io.kodokojo.bdd.stage;
 import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.ExpectedScenarioState;
 import com.tngtech.jgiven.annotation.ProvidedScenarioState;
-import io.kodokojo.endpoint.dto.ProjectCreationDto;
+import io.kodokojo.commons.endpoint.dto.ProjectCreationDto;
 
 import javax.websocket.Session;
 import java.util.Collections;

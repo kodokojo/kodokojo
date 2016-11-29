@@ -23,7 +23,7 @@ import akka.actor.Props;
 import akka.dispatch.Futures;
 import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
-import io.kodokojo.model.*;
+import io.kodokojo.commons.model.*;
 import io.kodokojo.service.ProjectAlreadyExistException;
 import io.kodokojo.service.actor.EndpointActor;
 import io.kodokojo.service.actor.message.BrickStateEvent;

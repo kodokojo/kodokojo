@@ -17,7 +17,7 @@
  */
 package io.kodokojo.brick;
 
-import io.kodokojo.model.*;
+import io.kodokojo.commons.model.*;
 import org.junit.Test;
 
 import java.util.Collections;

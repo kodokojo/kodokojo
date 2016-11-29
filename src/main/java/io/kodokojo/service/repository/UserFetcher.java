@@ -17,8 +17,8 @@
  */
 package io.kodokojo.service.repository;
 
-import io.kodokojo.model.User;
-import io.kodokojo.model.UserService;
+import io.kodokojo.commons.model.User;
+import io.kodokojo.commons.model.UserService;
 
 public interface UserFetcher {
 

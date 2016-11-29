@@ -19,7 +19,7 @@ package io.kodokojo.brick;
 
 
 
-import io.kodokojo.model.User;
+import io.kodokojo.commons.model.User;
 
 import java.io.Serializable;
 import java.util.HashMap;

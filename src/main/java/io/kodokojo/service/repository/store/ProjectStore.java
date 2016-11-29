@@ -17,12 +17,8 @@
  */
 package io.kodokojo.service.repository.store;
 
-import io.kodokojo.model.BrickConfiguration;
-import io.kodokojo.model.Project;
-import io.kodokojo.model.ProjectConfiguration;
+import io.kodokojo.commons.model.Project;
 
-import java.io.Serializable;
-import java.util.Map;
 import java.util.Set;
 
 public interface ProjectStore {

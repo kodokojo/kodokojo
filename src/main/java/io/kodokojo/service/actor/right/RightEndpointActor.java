@@ -21,10 +21,9 @@ import akka.actor.AbstractActor;
 import akka.actor.Props;
 import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
-import io.kodokojo.model.ProjectConfiguration;
-import io.kodokojo.model.User;
+import io.kodokojo.commons.model.ProjectConfiguration;
+import io.kodokojo.commons.model.User;
 import io.kodokojo.service.actor.message.UserRequestMessage;
-import io.kodokojo.service.repository.UserFetcher;
 import org.apache.commons.collections4.IteratorUtils;
 
 import java.util.List;

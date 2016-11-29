@@ -21,7 +21,7 @@ import io.kodokojo.brick.BrickAlreadyExist;
 import io.kodokojo.brick.BrickConfigurer;
 import io.kodokojo.brick.BrickConfigurerData;
 import io.kodokojo.brick.BrickConfigurerProvider;
-import io.kodokojo.model.*;
+import io.kodokojo.commons.model.*;
 
 import java.util.Set;
 

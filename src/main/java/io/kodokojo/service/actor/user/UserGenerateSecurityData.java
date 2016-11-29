@@ -21,7 +21,7 @@ import akka.actor.AbstractActor;
 import akka.actor.Props;
 import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
-import io.kodokojo.utils.RSAUtils;
+import io.kodokojo.commons.utils.RSAUtils;
 
 import java.math.BigInteger;
 import java.security.KeyPair;

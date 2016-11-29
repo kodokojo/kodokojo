@@ -21,8 +21,7 @@ package io.kodokojo.bdd.stage;
 
 import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.ExpectedScenarioState;
-import com.tngtech.jgiven.annotation.ProvidedScenarioState;
-import io.kodokojo.endpoint.dto.BrickConfigDto;
+import io.kodokojo.commons.endpoint.dto.BrickConfigDto;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

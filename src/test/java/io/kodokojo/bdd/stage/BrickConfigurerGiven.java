@@ -1,43 +1,40 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package io.kodokojo.bdd.stage;
 
-import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.CreateContainerResponse;
-import com.github.dockerjava.api.model.ExposedPort;
-import com.github.dockerjava.api.model.Ports;
 import com.tngtech.jgiven.Stage;
-import com.tngtech.jgiven.annotation.*;
+import com.tngtech.jgiven.annotation.Hidden;
+import com.tngtech.jgiven.annotation.ProvidedScenarioState;
+import com.tngtech.jgiven.annotation.Quoted;
 import io.kodokojo.bdd.stage.brickauthenticator.UserAuthenticator;
 import io.kodokojo.brick.*;
+import io.kodokojo.commons.docker.model.ImageName;
+import io.kodokojo.commons.docker.model.StringToImageNameConverter;
+import io.kodokojo.commons.utils.DockerService;
+import io.kodokojo.commons.utils.DockerTestApplicationBuilder;
 import io.kodokojo.commons.utils.DockerTestSupport;
+import io.kodokojo.commons.utils.HttpServiceChecker;
+import javaslang.control.Try;
 import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
-public class BrickConfigurerGiven<SELF extends BrickConfigurerGiven<?>> extends Stage<SELF> {
+public class BrickConfigurerGiven<SELF extends BrickConfigurerGiven<?>> extends Stage<SELF> implements DockerTestApplicationBuilder {
 
 
     @ProvidedScenarioState
@@ -71,74 +68,24 @@ public class BrickConfigurerGiven<SELF extends BrickConfigurerGiven<?>> extends 
             this.dockerTestSupport.stopAndRemoveContainer();
         }
         this.dockerTestSupport = dockerTestSupport;
-        DockerClient dockerClient = this.dockerTestSupport.getDockerClient();
-        LOGGER.info("Pulling docker image {}", image);
-        this.dockerTestSupport.pullImage(image);
 
         this.brickName = brickName.toLowerCase();
         this.userAuthenticator = userAuthenticator;
-        assertThat(image).isNotNull();
-        LOGGER.info("Starting Docker image {} to run brick {}.", image, brickName);
 
-        Ports portBinding = new Ports();
-        ExposedPort exposedPort = ExposedPort.tcp(port);
-        portBinding.bind(exposedPort, new Ports.Binding(null, "80"));
+        ImageName imageName = StringToImageNameConverter.convert(image);
 
-        CreateContainerResponse containerResponse = dockerClient.createContainerCmd(image)
-                .withPortBindings(portBinding)
-                .withExposedPorts(exposedPort)
-                .withHostName(dockerTestSupport.getServerIp())
-                .exec();
-        containerId = containerResponse.getId();
-        this.dockerTestSupport.addContainerIdToClean(containerId);
-        dockerClient.startContainerCmd(containerId).exec();
+        Try<DockerService> dockerServices = startDockerService(dockerTestSupport, brickName, imageName.getName(), imageName.getTag(), port, new HttpServiceChecker(port, timeout * 1000, "/"));
+        DockerService service = dockerServices.getOrElseThrow(() -> {
+            return new RuntimeException("Unable to start " + brickName);
+        });
+        containerId = service.getContainerId();
+        brickUrl = dockerTestSupport.getHttpContainerUrl(containerId, port);
 
-        brickUrl = this.dockerTestSupport.getHttpContainerUrl(containerId, port);
-
-        boolean brickStarted = waitBrickStarted(brickUrl, timeout);
-        assertThat(brickStarted).isTrue();
         LOGGER.info("BrickConfiguration {} successfully started.", brickName);
         brickFactory = new DefaultBrickFactory();
         brickConfigurerProvider = new DefaultBrickConfigurerProvider(new DefaultBrickUrlFactory("kodokojo.dev"), new OkHttpClient());
         return self();
     }
 
-    private boolean waitBrickStarted(String brickUrl, int timeout) {
-        boolean started = false;
-        long now = System.currentTimeMillis();
-        long end = now + (timeout * 1000);
-
-        OkHttpClient httpClient = new OkHttpClient();
-        Request request = new Request.Builder().get().url(brickUrl).build();
-        while (!started && (end - System.currentTimeMillis()) > 0) {
-            Response response = null;
-            try {
-                response = httpClient.newCall(request).execute();
-                int httpStatusCode = response.code();
-                //LOGGER.debug("Wait brick {}.",response.toString());
-                started = (httpStatusCode >= 200 && httpStatusCode < 405);
-            } catch (IOException e) {
-                // Silently ignore, service maybe not available
-                started = false;
-            } finally {
-                if (response != null) {
-                    IOUtils.closeQuietly(response.body());
-                }
-            }
-            if (!started) {
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            }
-        }
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        return started;
-    }
 
 }

@@ -17,9 +17,9 @@
  */
 package io.kodokojo.test.utils;
 
-import io.kodokojo.config.MarathonConfig;
-import io.kodokojo.model.*;
-import io.kodokojo.utils.RSAUtils;
+import io.kodokojo.commons.config.MarathonConfig;
+import io.kodokojo.commons.model.*;
+import io.kodokojo.commons.utils.RSAUtils;
 import scala.concurrent.duration.FiniteDuration;
 
 import java.security.KeyPair;

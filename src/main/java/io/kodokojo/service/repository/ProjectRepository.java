@@ -17,12 +17,8 @@
  */
 package io.kodokojo.service.repository;
 
-import io.kodokojo.model.BrickConfiguration;
-import io.kodokojo.model.Project;
-import io.kodokojo.model.ProjectConfiguration;
-
-import java.io.Serializable;
-import java.util.Map;
+import io.kodokojo.commons.model.Project;
+import io.kodokojo.commons.model.ProjectConfiguration;
 
 public interface ProjectRepository extends ProjectFetcher {
 

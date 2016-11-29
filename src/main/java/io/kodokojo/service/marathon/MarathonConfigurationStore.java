@@ -19,10 +19,10 @@ package io.kodokojo.service.marathon;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import io.kodokojo.config.MarathonConfig;
+import io.kodokojo.commons.config.MarathonConfig;
 import io.kodokojo.service.ssl.SSLKeyPair;
 import io.kodokojo.service.ssl.SSLUtils;
-import io.kodokojo.model.BootstrapStackData;
+import io.kodokojo.commons.model.BootstrapStackData;
 import io.kodokojo.service.ConfigurationStore;
 import okhttp3.*;
 import org.apache.commons.io.IOUtils;

@@ -19,7 +19,7 @@ package io.kodokojo.service;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import io.kodokojo.config.ReCaptchaConfig;
+import io.kodokojo.commons.config.ReCaptchaConfig;
 import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
