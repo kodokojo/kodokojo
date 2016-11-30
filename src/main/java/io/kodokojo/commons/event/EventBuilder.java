@@ -1,5 +1,8 @@
 package io.kodokojo.commons.event;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
@@ -19,7 +22,7 @@ public class EventBuilder {
 
     private Map<String, String> custom;
 
-    private Serializable payload;
+    private String payload;
 
     public EventBuilder() {
         super();
@@ -36,11 +39,7 @@ public class EventBuilder {
         payload = copyFrom.getPayload();
     }
 
-    public <T extends Serializable> Event<T> build(Class<T> payloadType) {
-        requireNonNull(payloadType, "payloadType must be defined.");
-        if (payload == null || !payloadType.isAssignableFrom(payloadType.getClass())) {
-            throw new IllegalArgumentException("payload type " + (payload == null ? "null" : payload.getClass().getCanonicalName()) + " is not assignable to required type " + payloadType.getCanonicalName() + ".");
-        }
+    public Event build() {
         requireNonNull(category, "category must be defined.");
         if (isBlank(from)) {
             throw new IllegalArgumentException("from must be defined.");
@@ -53,6 +52,9 @@ public class EventBuilder {
         }
         if (custom == null) {
             custom = new HashMap<>();
+        }
+        if (category == null) {
+            category = Event.Category.BUSINESS;
         }
         return new Event(new Event.Header(category, from, creationDate, eventType, custom), payload);
     }
@@ -90,9 +92,40 @@ public class EventBuilder {
         return this;
     }
 
-    public EventBuilder setPayload(Serializable payload) {
+    public EventBuilder setPayload(String payload) {
         requireNonNull(payload, "payload must be defined.");
         this.payload = payload;
         return this;
+    }
+
+    public EventBuilder setPayload(Serializable payload) {
+        requireNonNull(payload, "payload must be defined.");
+        Gson gson = new GsonBuilder().create();
+        this.payload = gson.toJson(payload);
+        return this;
+    }
+
+    public Event.Category getCategory() {
+        return category;
+    }
+
+    public String getFrom() {
+        return from;
+    }
+
+    public long getCreationDate() {
+        return creationDate;
+    }
+
+    public String getEventType() {
+        return eventType;
+    }
+
+    public Map<String, String> getCustom() {
+        return custom;
+    }
+
+    public String getPayload() {
+        return payload;
     }
 }

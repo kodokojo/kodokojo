@@ -3,22 +3,23 @@ package io.kodokojo.commons.event;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
 import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang.StringUtils.isBlank;
 
-public class Event<T extends Serializable> {
+public class Event {
 
-    private final String version = "1.0.0";
+    private static final String VERSION = "1.0.0";
+
+    private final String version = VERSION;
 
     private final Header headers;
 
-    private final T payload;
+    private final String payload;
 
-    public Event(Header headers, T payload) {
+    public Event(Header headers, String payload) {
         requireNonNull(headers, "headers must be defined.");
         requireNonNull(payload, "payload must be defined.");
         this.headers = headers;
@@ -53,7 +54,7 @@ public class Event<T extends Serializable> {
         return headers.getCustom();
     }
 
-    public T getPayload() {
+    public String getPayload() {
         return payload;
     }
 
@@ -123,19 +124,34 @@ public class Event<T extends Serializable> {
         public Map<String, String> getCustom() {
             return new HashMap<>(custom);
         }
+
+        @Override
+        public String toString() {
+            return "Header{" +
+                    "category=" + category +
+                    ", from='" + from + '\'' +
+                    ", creationDate=" + creationDate +
+                    ", eventType='" + eventType + '\'' +
+                    ", custom=" + custom +
+                    '}';
+        }
     }
 
-    public static <T extends Serializable> Event<T> buildFromJson(Class<T> payloadType, String json) {
-        requireNonNull(payloadType, "payloadType must be defined.");
+    @Override
+    public String toString() {
+        return "Event{" +
+                "version='" + version + '\'' +
+                ", headers=" + headers +
+                ", payload='" + payload + '\'' +
+                '}';
+    }
+
+    public static Event buildFromJson(String json) {
         if (isBlank(json)) {
             throw new IllegalArgumentException("json must be defined.");
         }
         Gson gson = new GsonBuilder().create();
         Event event = gson.fromJson(json, Event.class);
-        Serializable payload = event.getPayload();
-        if (payload == null || ! payloadType.isAssignableFrom(payload.getClass())) {
-            throw new IllegalArgumentException("payload type " + (payload == null ? "null" : payload.getClass().getCanonicalName()) + " is not assignable to required type " + payloadType.getCanonicalName() + ".");
-        }
         return event;
     }
 
@@ -144,5 +160,7 @@ public class Event<T extends Serializable> {
         Gson gson = new GsonBuilder().create();
         return gson.toJson(event);
     }
+
+    public static final String SERVICE_CONNECT_TYPE = "service_connection";
 
 }

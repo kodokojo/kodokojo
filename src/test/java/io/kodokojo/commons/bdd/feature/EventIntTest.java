@@ -8,15 +8,17 @@ import io.kodokojo.commons.DockerPresentMethodRule;
 import io.kodokojo.commons.utils.DockerTestApplicationBuilder;
 import io.kodokojo.commons.utils.DockerService;
 import javaslang.control.Try;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
-
+@Ignore
 public class EventIntTest implements DockerTestApplicationBuilder {
 
     private static final String QUEUE_NAME = "testQueueName";
+
     @Rule
     public DockerPresentMethodRule dockerPresentMethodRule = new DockerPresentMethodRule();
 

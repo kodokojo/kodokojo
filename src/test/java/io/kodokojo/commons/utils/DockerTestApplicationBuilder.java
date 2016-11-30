@@ -7,12 +7,7 @@ import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.api.model.Ports;
 import com.github.dockerjava.core.command.PullImageResultCallback;
 import io.kodokojo.commons.model.PortDefinition;
-import io.kodokojo.commons.model.Service;
 import javaslang.control.Try;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
@@ -20,7 +15,6 @@ import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -52,7 +46,7 @@ public interface DockerTestApplicationBuilder {
                     redisIsReady = "PONG".equals(resPing);
                 } catch (JedisConnectionException e) {
                     //  Silently ignore, Redis may not be available
-                    if (nbTry++%100 == 0) {
+                    if (nbTry++ % 100 == 0) {
                         LOGGER.debug("Unable to connect to redis {}:{}", redisHost, redisPort);
                     }
                 }
@@ -159,6 +153,7 @@ public interface DockerTestApplicationBuilder {
             LOGGER.info("Docker image {}:{} which have a not tagged 'latest' already pulled.", imageName, tag);
         }
     }
+
 
     interface ServiceChecker {
         void checkServiceIsRunning(DockerTestSupport dockerTestSupport, CreateContainerResponse createContainerResponse);
