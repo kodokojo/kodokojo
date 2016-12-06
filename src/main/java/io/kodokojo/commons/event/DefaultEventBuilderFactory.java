@@ -22,6 +22,7 @@ public class DefaultEventBuilderFactory implements EventBuilderFactory {
     public EventBuilder create() {
         EventBuilder eventBuilder = new EventBuilder();
         eventBuilder.setFrom(from);
+
         return eventBuilder;
     }
 }

@@ -16,6 +16,10 @@ public class EventBuilder {
 
     private String from;
 
+    private String replyTo;
+
+    private String correlationId;
+
     private long creationDate;
 
     private String eventType;
@@ -33,6 +37,8 @@ public class EventBuilder {
         requireNonNull(copyFrom, "copyFrom must be defined.");
         category = copyFrom.getCategory();
         from = copyFrom.getFrom();
+        replyTo = copyFrom.getReplyTo();
+        correlationId = copyFrom.getCorrelationId();
         creationDate = copyFrom.getCreationDate();
         eventType = copyFrom.getEventType();
         custom = copyFrom.getCustom();
@@ -40,7 +46,6 @@ public class EventBuilder {
     }
 
     public Event build() {
-        requireNonNull(category, "category must be defined.");
         if (isBlank(from)) {
             throw new IllegalArgumentException("from must be defined.");
         }
@@ -56,7 +61,7 @@ public class EventBuilder {
         if (category == null) {
             category = Event.Category.BUSINESS;
         }
-        return new Event(new Event.Header(category, from, creationDate, eventType, custom), payload);
+        return new Event(new Event.Header(category, from, replyTo, correlationId, creationDate, eventType, custom), payload);
     }
 
     public EventBuilder setCategory(Event.Category category) {
@@ -70,6 +75,14 @@ public class EventBuilder {
             throw new IllegalArgumentException("from must be defined.");
         }
         this.from = from;
+        return this;
+    }
+    public EventBuilder setReplyTo(String replyTo) {
+        this.replyTo = replyTo;
+        return this;
+    }
+    public EventBuilder setCorrelationId(String correlationId) {
+        this.correlationId = correlationId;
         return this;
     }
 
@@ -92,7 +105,7 @@ public class EventBuilder {
         return this;
     }
 
-    public EventBuilder setPayload(String payload) {
+    public EventBuilder setJsonPayload(String payload) {
         requireNonNull(payload, "payload must be defined.");
         this.payload = payload;
         return this;
@@ -102,6 +115,17 @@ public class EventBuilder {
         requireNonNull(payload, "payload must be defined.");
         Gson gson = new GsonBuilder().create();
         this.payload = gson.toJson(payload);
+        return this;
+    }
+
+    public EventBuilder setEvent(Event copyFrom) {
+        category = copyFrom.getCategory();
+        replyTo = copyFrom.getReplyTo();
+        correlationId = copyFrom.getCorrelationId();
+        creationDate = copyFrom.getCreationDate();
+        eventType = copyFrom.getEventType();
+        custom = copyFrom.getCustom();
+        payload = copyFrom.getPayload();
         return this;
     }
 
@@ -127,5 +151,15 @@ public class EventBuilder {
 
     public String getPayload() {
         return payload;
+    }
+
+    public void addCustomHeader(String key, String value) {
+        if (isBlank(key)) {
+            throw new IllegalArgumentException("key must be defined.");
+        }
+        if (custom == null) {
+            custom = new HashMap<>();
+        }
+        custom.put(key, value);
     }
 }

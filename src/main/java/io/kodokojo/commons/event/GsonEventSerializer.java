@@ -1,27 +1,19 @@
 package io.kodokojo.commons.event;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import static org.apache.commons.lang.StringUtils.isBlank;
+import static java.util.Objects.requireNonNull;
 
-public interface JsonToEventConverter {
+public class GsonEventSerializer implements JsonSerializer<Event>, JsonDeserializer<Event> {
+    @Override
+    public Event deserialize(JsonElement el, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
 
-    default Event converter(String input) {
-        if (isBlank(input)) {
-            throw new IllegalArgumentException("input must be defined.");
-        }
-        GsonEventSerializer gsonEventSerializer = new GsonEventSerializer();
-        JsonParser parser = new JsonParser();
-        return gsonEventSerializer.deserialize(parser.parse(input), null, null);
-/*
-        JsonParser parser = new JsonParser();
-        JsonObject json = (JsonObject) parser.parse(input);
+        JsonObject json = (JsonObject) el;
         if (json.has("version") && "1.0.0".equals(json.getAsJsonPrimitive("version").getAsString())) {
             EventBuilder builder = new EventBuilder();
             if (json.has("headers")) {
@@ -50,15 +42,44 @@ public interface JsonToEventConverter {
                 }
                 builder.setCustom(customMap);
             }
-            if (json.has("payload")) {
-                builder.setJsonPayload(json.get("payload").toString());
-            } else {
+
+            JsonElement payload = json.get("payload");
+            if (payload == null) {
                 builder.setJsonPayload("");
+            } else {
+                if (payload.isJsonObject()) {
+                    builder.setJsonPayload(payload.toString());
+                } else {
+                    builder.setJsonPayload(payload.getAsString());
+                }
             }
             return builder.build();
         }
         return null;
-    */
     }
 
+    @Override
+    public JsonElement serialize(Event src, Type typeOfSrc, JsonSerializationContext context) {
+        requireNonNull(src, "src must be defined.");
+        JsonObject root = new JsonObject();
+        root.addProperty("version", src.getVersion());
+        JsonObject headers = new JsonObject();
+        root.add("headers", headers);
+        headers.addProperty("category", src.getCategory().name());
+        headers.addProperty("from", src.getFrom());
+        headers.addProperty("replyTo", src.getReplyTo());
+        headers.addProperty("creationDate", src.getCreationDate());
+        headers.addProperty("correlationId", src.getCorrelationId());
+        headers.addProperty("eventType", src.getEventType());
+        JsonObject custom = new JsonObject();
+        headers.add("custom", custom);
+        for(Map.Entry<String, String> entry : src.getCustom().entrySet()) {
+            custom.addProperty(entry.getKey(), entry.getValue());
+        }
+        JsonParser parser = new JsonParser();
+        JsonElement parse = parser.parse(src.getPayload());
+        root.add("payload", parse);
+
+        return root;
+    }
 }

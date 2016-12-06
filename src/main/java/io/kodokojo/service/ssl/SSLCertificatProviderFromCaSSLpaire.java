@@ -17,8 +17,9 @@
  */
 package io.kodokojo.service.ssl;
 
-import io.kodokojo.brick.BrickUrlFactory;
+
 import io.kodokojo.commons.model.BrickConfiguration;
+import io.kodokojo.service.BrickUrlFactory;
 import io.kodokojo.service.SSLCertificatProvider;
 
 import javax.inject.Inject;

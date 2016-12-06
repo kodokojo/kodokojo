@@ -20,7 +20,7 @@ package io.kodokojo.commons.config.module;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import io.kodokojo.commons.utils.RSAUtils;
+import io.kodokojo.commons.RSAUtils;
 import io.kodokojo.service.ssl.SSLKeyPair;
 import io.kodokojo.commons.config.SecurityConfig;
 import org.apache.commons.io.FileUtils;
@@ -63,7 +63,6 @@ public class SecurityModule extends AbstractModule {
     @Singleton
     @Named("securityKey")
     SecretKey provideSecretKey(SecurityConfig securityConfig) {
-        requireNonNull(securityConfig, "securityConfig must be defined.");
 
         File keyFile = createPrivateKeyFile(securityConfig);
         if (keyFile.exists() && keyFile.canRead()) {

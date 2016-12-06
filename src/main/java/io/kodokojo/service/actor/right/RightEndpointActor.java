@@ -21,9 +21,11 @@ import akka.actor.AbstractActor;
 import akka.actor.Props;
 import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
+import io.kodokojo.commons.event.Event;
 import io.kodokojo.commons.model.ProjectConfiguration;
 import io.kodokojo.commons.model.User;
-import io.kodokojo.service.actor.message.UserRequestMessage;
+import io.kodokojo.service.actor.message.EventReplyMessage;
+import io.kodokojo.service.actor.message.EventRequestMessage;
 import org.apache.commons.collections4.IteratorUtils;
 
 import java.util.List;
@@ -53,9 +55,16 @@ public class RightEndpointActor extends AbstractActor {
     }
 
     //  Taging class.
-    public static class RightRequestMsg extends  UserRequestMessage {
+    public static class RightRequestMsg {
+
+        private final User requester;
+
         public RightRequestMsg(User requester) {
-            super(requester);
+            this.requester = requester;
+        }
+
+        public User getRequester() {
+            return requester;
         }
     }
 
@@ -76,22 +85,19 @@ public class RightEndpointActor extends AbstractActor {
         }
     }
 
-    public static class RightRequestResultMsg extends UserRequestMessage {
+    public static class RightRequestResultMsg extends RightRequestMsg {
 
-        private final UserRequestMessage request;
+        private final RightRequestMsg request;
 
         private final boolean valid;
 
-        public RightRequestResultMsg(User requester, UserRequestMessage request, boolean valid) {
+        public RightRequestResultMsg(User requester,RightRequestMsg request, boolean valid) {
             super(requester);
-            if (request == null) {
-                throw new IllegalArgumentException("request must be defined.");
-            }
             this.request = request;
             this.valid = valid;
         }
 
-        public UserRequestMessage getRequest() {
+        public RightRequestMsg getRequest() {
             return request;
         }
 
