@@ -24,6 +24,7 @@ import io.kodokojo.commons.config.*;
 import io.kodokojo.commons.config.properties.PropertyConfig;
 import io.kodokojo.commons.config.properties.PropertyResolver;
 import io.kodokojo.commons.config.properties.provider.*;
+import io.kodokojo.commons.model.ServiceInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -114,6 +115,19 @@ public class CommonsPropertyModule extends AbstractModule {
     @Singleton
     RabbitMqConfig provideRabbitMqConfig(MicroServiceConfig microServiceConfig, PropertyValueProvider valueProvider) {
         return createConfig(RabbitMqConfig.class, new RabbitMqValueProvider(microServiceConfig, valueProvider));
+    }
+
+
+    @Provides
+    @Singleton
+    RedisConfig provideRedisConfig(PropertyValueProvider valueProvider) {
+        return createConfig(RedisConfig.class, new RedisDockerLinkPropertyValueProvider(valueProvider));
+    }
+
+    @Provides
+    @Singleton
+    ServiceInfo provideServiceInfo(MicroServiceConfig microServiceConfig, VersionConfig versionConfig) {
+        return new ServiceInfo(microServiceConfig.name(), microServiceConfig.uuid(), versionConfig.version(), versionConfig.gitSha1(), versionConfig.branch());
     }
 
     private <T extends PropertyConfig> T createConfig(Class<T> configClass, PropertyValueProvider valueProvider) {

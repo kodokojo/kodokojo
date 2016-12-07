@@ -21,7 +21,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import io.kodokojo.commons.RSAUtils;
-import io.kodokojo.service.ssl.SSLKeyPair;
+import io.kodokojo.commons.service.ssl.SSLKeyPair;
 import io.kodokojo.commons.config.SecurityConfig;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;

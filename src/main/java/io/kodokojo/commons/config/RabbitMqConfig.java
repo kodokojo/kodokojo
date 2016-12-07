@@ -5,10 +5,15 @@ import io.kodokojo.commons.config.properties.PropertyConfig;
 
 public interface RabbitMqConfig extends PropertyConfig {
 
-    @Key("rabbitmq.host")
+
+    String RABBITMQ_HOST = "rabbitmq.host";
+
+    String RABBITMQ_PORT = "rabbitmq.port";
+
+    @Key(RABBITMQ_HOST)
     String host();
 
-    @Key("rabbitmq.port")
+    @Key(RABBITMQ_PORT)
     int port();
 
     @Key(value = "rabbitmq.business", defaultValue = "kodokojo.business")

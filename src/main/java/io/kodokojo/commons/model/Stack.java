@@ -18,7 +18,7 @@
 package io.kodokojo.commons.model;
 
 
-import io.kodokojo.service.actor.message.BrickStateEvent;
+import io.kodokojo.commons.service.actor.message.BrickStateEvent;
 
 import java.io.Serializable;
 import java.util.Set;

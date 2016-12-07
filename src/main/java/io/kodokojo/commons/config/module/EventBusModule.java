@@ -7,17 +7,17 @@ import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import io.kodokojo.commons.config.MicroServiceConfig;
 import io.kodokojo.commons.config.RabbitMqConfig;
+import io.kodokojo.commons.config.VersionConfig;
 import io.kodokojo.commons.event.DefaultEventBuilderFactory;
 import io.kodokojo.commons.event.EventBuilderFactory;
 import io.kodokojo.commons.event.EventBus;
 import io.kodokojo.commons.event.JsonToEventConverter;
+import io.kodokojo.commons.model.ServiceInfo;
 import io.kodokojo.commons.rabbitmq.RabbitMqConnectionFactory;
 import io.kodokojo.commons.rabbitmq.RabbitMqEventBus;
-import io.kodokojo.service.lifecycle.ApplicationLifeCycleListener;
-import io.kodokojo.service.lifecycle.ApplicationLifeCycleManager;
+import io.kodokojo.commons.service.lifecycle.ApplicationLifeCycleListener;
+import io.kodokojo.commons.service.lifecycle.ApplicationLifeCycleManager;
 import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
@@ -38,9 +38,10 @@ public class EventBusModule extends AbstractModule {
 
     @Provides
     @Singleton
-    RabbitMqEventBus provideRabbitMqEventBus(RabbitMqConfig rabbitMqConfig, MicroServiceConfig microServiceConfig, RabbitMqConnectionFactory rabbitMqConnectionFactory, EventBuilderFactory eventBuilderFactory, ApplicationLifeCycleManager applicationLifeCycleManager) {
+    RabbitMqEventBus provideRabbitMqEventBus(RabbitMqConfig rabbitMqConfig, MicroServiceConfig microServiceConfig, RabbitMqConnectionFactory rabbitMqConnectionFactory, EventBuilderFactory eventBuilderFactory, ApplicationLifeCycleManager applicationLifeCycleManager, ServiceInfo serviceInfo) {
+
         RabbitMqEventBus rabbitMqEventBus = new RabbitMqEventBus(rabbitMqConfig, microServiceConfig, rabbitMqConnectionFactory, new JsonToEventConverter() {
-        }, eventBuilderFactory);
+        }, eventBuilderFactory, serviceInfo);
         applicationLifeCycleManager.addService(new ApplicationLifeCycleListener() {
             @Override
             public void start() {

@@ -21,16 +21,13 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import io.kodokojo.commons.config.RedisConfig;
-import io.kodokojo.service.lifecycle.ApplicationLifeCycleManager;
-import io.kodokojo.service.redis.RedisEntityStore;
-import io.kodokojo.service.redis.RedisProjectStore;
-import io.kodokojo.service.redis.RedisUserRepository;
-import io.kodokojo.service.repository.EntityRepository;
-import io.kodokojo.service.repository.ProjectRepository;
-import io.kodokojo.service.repository.Repository;
-import io.kodokojo.service.repository.UserRepository;
-import io.kodokojo.service.repository.store.EntityStore;
-import io.kodokojo.service.repository.store.ProjectStore;
+import io.kodokojo.commons.service.lifecycle.ApplicationLifeCycleManager;
+import io.kodokojo.commons.service.redis.RedisEntityStore;
+import io.kodokojo.commons.service.redis.RedisProjectStore;
+import io.kodokojo.commons.service.redis.RedisUserRepository;
+import io.kodokojo.commons.service.repository.*;
+import io.kodokojo.commons.service.repository.store.EntityStore;
+import io.kodokojo.commons.service.repository.store.ProjectStore;
 
 import javax.crypto.SecretKey;
 import javax.inject.Named;
@@ -54,6 +51,12 @@ public class DatabaseModule extends AbstractModule {
     @Singleton
     UserRepository provideUserRepository(Repository repository) {
         return repository;
+    }
+
+    @Provides
+    @Singleton
+    UserFetcher provideUserFetcher(UserRepository userRepository) {
+        return userRepository;
     }
 
     @Provides

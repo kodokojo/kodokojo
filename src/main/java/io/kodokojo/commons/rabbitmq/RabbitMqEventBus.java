@@ -6,11 +6,11 @@ import com.rabbitmq.client.*;
 import io.kodokojo.commons.config.MicroServiceConfig;
 import io.kodokojo.commons.config.RabbitMqConfig;
 import io.kodokojo.commons.event.*;
+import io.kodokojo.commons.model.ServiceInfo;
 import javaslang.control.Try;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,6 +18,7 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
@@ -52,6 +53,8 @@ public class RabbitMqEventBus implements EventBus {
 
     private final String from;
 
+    private final ServiceInfo serviceInfo;
+
     protected String localQueueName;
 
     protected EventConsumer eventConsumer;
@@ -60,13 +63,16 @@ public class RabbitMqEventBus implements EventBus {
 
     private final Set<EventListener> waitingListeners = new HashSet<>();
 
+    private final ReentrantLock lock;
+
     @Inject
-    public RabbitMqEventBus(RabbitMqConfig rabbitMqConfig, MicroServiceConfig microServiceConfig, RabbitMqConnectionFactory connectionFactory, JsonToEventConverter jsonToEventConverter, EventBuilderFactory eventBuilderFactory) {
+    public RabbitMqEventBus(RabbitMqConfig rabbitMqConfig, MicroServiceConfig microServiceConfig, RabbitMqConnectionFactory connectionFactory, JsonToEventConverter jsonToEventConverter, EventBuilderFactory eventBuilderFactory, ServiceInfo serviceInfo) {
         requireNonNull(microServiceConfig, "microServiceConfig must be defined.");
         requireNonNull(rabbitMqConfig, "rabbitMqConfig must be defined.");
         requireNonNull(connectionFactory, "connectionFactory must be defined.");
         requireNonNull(jsonToEventConverter, "eventFactory must be defined.");
         requireNonNull(eventBuilderFactory, "eventBuilderFactory must be defined.");
+        requireNonNull(serviceInfo, "serviceInfo must be defined.");
         this.connectionFactory = connectionFactory;
         this.microServiceConfig = microServiceConfig;
         this.rabbitMqConfig = rabbitMqConfig;
@@ -74,6 +80,8 @@ public class RabbitMqEventBus implements EventBus {
         this.eventBuilderFactory = eventBuilderFactory;
         this.localQueueName = rabbitMqConfig.serviceQueueName() + "-" + microServiceConfig.uuid();
         this.from = microServiceConfig.name() + "@" + microServiceConfig.uuid();
+        this.serviceInfo = serviceInfo;
+        this.lock = new ReentrantLock();
     }
 
     @Override
@@ -121,10 +129,12 @@ public class RabbitMqEventBus implements EventBus {
                     channel.basicConsume(localQueueName, false, localEventConsumer);
                     channel.basicConsume(rabbitMqConfig.serviceQueueName(), false, eventConsumer);
 
+
+
                     EventBuilder eventBuilder = eventBuilderFactory.create();
                     eventBuilder.setCategory(Event.Category.TECHNICAL)
                             .setEventType(Event.SERVICE_CONNECT_TYPE)
-                            .setJsonPayload(eventBuilder.getFrom());
+                            .setPayload(serviceInfo);
                     broadcast(eventBuilder.build());
 
                     LOGGER.info("Connected to RabbitMq {}:{} on queue '{}' which contain {} message and get {} consumer(s) already connected.",
@@ -144,11 +154,12 @@ public class RabbitMqEventBus implements EventBus {
 
     }
 
-
     @Override
     public void broadcast(Event event) {
         requireNonNull(event, "event must be defined.");
+
         String message = gson.get().toJson(event);
+
         sendAndAck(() -> {
             try {
                 channel.basicPublish(rabbitMqConfig.broadcastExchangeName(), "",
@@ -307,6 +318,7 @@ public class RabbitMqEventBus implements EventBus {
         private final String queueName;
 
         private final ConcurrentHashMap<String, ReplyEvent> requests = new ConcurrentHashMap<>();
+
         private EventConsumer(Channel channel, String queueName, Set<EventListener> eventListeners) {
             super(channel);
             this.queueName = queueName;
@@ -336,18 +348,18 @@ public class RabbitMqEventBus implements EventBus {
                     .andThenTry(event -> {
                         channel.basicAck(envelope.getDeliveryTag(), false);
                     }).onSuccess(event -> {
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("Following Event from queue'{}' : {}", queueName, event);
-                }
-            }).onSuccess(event -> {
-                if (!event.getFrom().equals(from) &&
-                        StringUtils.isNotBlank(event.getCorrelationId()) &&
-                        requests.containsKey(event.getCorrelationId())) {
-                    ReplyEvent replyEvent = requests.get(event.getCorrelationId());
-                    requests.remove(event.getCorrelationId());
-                    replyEvent.setReply(event);
-                }
-            })
+                        if (LOGGER.isDebugEnabled()) {
+                            LOGGER.debug("Following Event from queue'{}' : {}", queueName, event);
+                        }
+                    }).onSuccess(event -> {
+                        if (!event.getFrom().equals(from) &&
+                                StringUtils.isNotBlank(event.getCorrelationId()) &&
+                                requests.containsKey(event.getCorrelationId())) {
+                            ReplyEvent replyEvent = requests.get(event.getCorrelationId());
+                            requests.remove(event.getCorrelationId());
+                            replyEvent.setReply(event);
+                        }
+                    })
                     .onFailure(e -> LOGGER.warn("Unable to process message : {}", message, e));
         }
 
@@ -381,12 +393,15 @@ public class RabbitMqEventBus implements EventBus {
     }
 
     private void sendAndAck(AckMessageSentTemplate callback) {
+        lock.lock();
         try {
             channel.confirmSelect();
             callback.send();
             channel.waitForConfirms();
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException("Unable to send and ack an event.", e);
+        } finally {
+            lock.unlock();
         }
     }
 

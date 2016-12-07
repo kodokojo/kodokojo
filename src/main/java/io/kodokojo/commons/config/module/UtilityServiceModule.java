@@ -20,7 +20,12 @@ package io.kodokojo.commons.config.module;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import io.kodokojo.service.lifecycle.ApplicationLifeCycleManager;
+import io.kodokojo.commons.config.ApplicationConfig;
+import io.kodokojo.commons.service.BrickFactory;
+import io.kodokojo.commons.service.BrickUrlFactory;
+import io.kodokojo.commons.service.DefaultBrickFactory;
+import io.kodokojo.commons.service.DefaultBrickUrlFactory;
+import io.kodokojo.commons.service.lifecycle.ApplicationLifeCycleManager;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Response;
@@ -54,6 +59,21 @@ public class UtilityServiceModule extends AbstractModule {
     ApplicationLifeCycleManager provideApplicationLifeCycleManager() {
         return new ApplicationLifeCycleManager();
     }
+
+
+    @Provides
+    @Singleton
+    BrickFactory provideBrickFactory() {
+        return new DefaultBrickFactory();
+    }
+
+
+    @Provides
+    @Singleton
+    BrickUrlFactory provideBrickUrlFactory(ApplicationConfig applicationConfig) {
+        return new DefaultBrickUrlFactory(applicationConfig.domain());
+    }
+
 
 
     @Provides
