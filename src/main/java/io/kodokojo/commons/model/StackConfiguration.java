@@ -18,6 +18,7 @@
 package io.kodokojo.commons.model;
 
 
+import com.google.gson.annotations.Expose;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.io.Serializable;
@@ -28,12 +29,16 @@ import static org.apache.commons.lang.StringUtils.isBlank;
 
 public class StackConfiguration implements Serializable {
 
+    @Expose
     private final String name;
 
+    @Expose
     private final StackType type;
 
+    @Expose
     private final Set<BrickConfiguration> brickConfigurations;
 
+    @Expose
     private final int scmSshPort;
 
     public StackConfiguration(String name, StackType type, Set<BrickConfiguration> brickConfigurations, int scmSshPort) {

@@ -21,10 +21,10 @@ import com.google.gson.*;
 
 import java.lang.reflect.Type;
 
-public class WebSocketMessageGsonAdapter implements JsonDeserializer<WebSocketMessage>, JsonSerializer<WebSocketMessage> {
+public class WebSocketMessageGsonAdapter implements JsonDeserializer<BrickEventStateWebSocketMessage>, JsonSerializer<BrickEventStateWebSocketMessage> {
 
     @Override
-    public WebSocketMessage deserialize(JsonElement input, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+    public BrickEventStateWebSocketMessage deserialize(JsonElement input, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
         JsonObject json = (JsonObject) input;
         JsonPrimitive jsonEntity = json.getAsJsonPrimitive("entity");
         if (jsonEntity == null) {
@@ -41,11 +41,11 @@ public class WebSocketMessageGsonAdapter implements JsonDeserializer<WebSocketMe
             throw new JsonParseException("data attribute expected.");
         }
 
-        return new WebSocketMessage(entity, action, jsonData);
+        return new BrickEventStateWebSocketMessage(entity, action, jsonData);
     }
 
     @Override
-    public JsonElement serialize(WebSocketMessage src, Type typeOfSrc, JsonSerializationContext context) {
+    public JsonElement serialize(BrickEventStateWebSocketMessage src, Type typeOfSrc, JsonSerializationContext context) {
         JsonObject res = new JsonObject();
         res.addProperty("entity", src.getEntity());
         res.addProperty("action", src.getAction());

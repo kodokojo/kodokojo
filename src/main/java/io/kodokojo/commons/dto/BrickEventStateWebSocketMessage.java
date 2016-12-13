@@ -23,7 +23,7 @@ import java.io.Serializable;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
-public class WebSocketMessage implements Serializable {
+public class BrickEventStateWebSocketMessage implements Serializable {
 
     private final String entity;
 
@@ -31,7 +31,7 @@ public class WebSocketMessage implements Serializable {
 
     private final JsonObject data;
 
-    public WebSocketMessage(String entity, String action, JsonObject data) {
+    public BrickEventStateWebSocketMessage(String entity, String action, JsonObject data) {
         if (isBlank(entity)) {
             throw new IllegalArgumentException("entity must be defined.");
         }

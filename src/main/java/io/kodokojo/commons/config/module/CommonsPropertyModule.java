@@ -33,6 +33,8 @@ import java.io.InputStream;
 import java.util.LinkedList;
 import java.util.Properties;
 
+import static java.util.Objects.requireNonNull;
+
 public class CommonsPropertyModule extends AbstractModule {
 
     public static final String APPLICATION_CONFIGURATION_PROPERTIES = "application.properties";
@@ -71,9 +73,6 @@ public class CommonsPropertyModule extends AbstractModule {
 
         SystemPropertyValueProvider systemPropertyValueProvider = new SystemPropertyValueProvider();
         valueProviders.add(systemPropertyValueProvider);
-
-        RedisDockerLinkPropertyValueProvider redisDockerLinkPropertyValueProvider = new RedisDockerLinkPropertyValueProvider(systemEnvValueProvider);
-        valueProviders.add(redisDockerLinkPropertyValueProvider);
 
         try (InputStream in = getClass().getClassLoader().getResourceAsStream(VERSION_CONFIGURATION_PROPERTIES)) {
             Properties properties = new Properties();
@@ -114,14 +113,21 @@ public class CommonsPropertyModule extends AbstractModule {
     @Provides
     @Singleton
     RabbitMqConfig provideRabbitMqConfig(MicroServiceConfig microServiceConfig, PropertyValueProvider valueProvider) {
-        return createConfig(RabbitMqConfig.class, new RabbitMqValueProvider(microServiceConfig, valueProvider));
+        requireNonNull(microServiceConfig, "microServiceConfig must be defined.");
+        requireNonNull(valueProvider, "valueProvider must be defined.");
+        RabbitMqValueProvider provider = new RabbitMqValueProvider(microServiceConfig, valueProvider);
+        RabbitMqConfig rabbitMqConfig = createConfig(RabbitMqConfig.class, provider);
+        LOGGER.info("RabbitMq instance : {}:{}", rabbitMqConfig.host(), rabbitMqConfig.port());
+        return rabbitMqConfig;
     }
 
 
     @Provides
     @Singleton
     RedisConfig provideRedisConfig(PropertyValueProvider valueProvider) {
-        return createConfig(RedisConfig.class, new RedisDockerLinkPropertyValueProvider(valueProvider));
+        RedisConfig redisConfig = createConfig(RedisConfig.class, valueProvider);
+        LOGGER.info("Redis instance : {}:{}", redisConfig.host(), redisConfig.port());
+        return redisConfig;
     }
 
     @Provides

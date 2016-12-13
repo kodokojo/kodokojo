@@ -18,6 +18,7 @@
 package io.kodokojo.commons.model;
 
 
+import com.google.gson.annotations.Expose;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.io.Serializable;
@@ -27,18 +28,25 @@ import static org.apache.commons.lang.StringUtils.isBlank;
 
 public class ProjectConfiguration implements Cloneable, Serializable {
 
+    @Expose
     private final String identifier;
 
+    @Expose
     private final String entityIdentifier;
 
+    @Expose
     private final String name;
 
+    @Expose
     private final UserService userService;
 
+    @Expose
     private final List<User> admins;
 
+    @Expose
     private final Set<StackConfiguration> stackConfigurations;
 
+    @Expose
     private final List<User> users;
 
     public ProjectConfiguration(String entityIdentifier, String identifier, String name,UserService userService,  List<User> admins, Set<StackConfiguration> stackConfigurations, List<User> users) {

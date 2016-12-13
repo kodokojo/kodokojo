@@ -22,13 +22,13 @@ import io.kodokojo.commons.model.User;
 
 import java.io.Serializable;
 
-public class EventRequestMessage implements Serializable, EventBusOriginMessage {
+public class EventUserRequestMessage implements Serializable, EventBusOriginMessage {
 
     protected final User requester;
 
     protected final Event request;
 
-    public EventRequestMessage(User requester, Event request) {
+    public EventUserRequestMessage(User requester, Event request) {
         this.requester = requester;
         this.request = request;
     }

@@ -18,6 +18,7 @@
 package io.kodokojo.commons.model;
 
 
+import com.google.gson.annotations.Expose;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.map.HashedMap;
 
@@ -30,16 +31,22 @@ import static org.apache.commons.lang.StringUtils.isBlank;
 
 public class BrickConfiguration implements Serializable {
 
+    @Expose
     private final String name;
 
+    @Expose
     private final BrickType type;
 
+    @Expose
     private final String version;
 
+    @Expose
     private final Set<PortDefinition> portDefinitions;
 
+    @Expose
     private final Set<BrickConfiguration> dependencies;
 
+    @Expose
     private final Map<String, Serializable> properties;
 
     public BrickConfiguration(String name, BrickType type, String version, Set<PortDefinition> portDefinitions, Set<BrickConfiguration> dependencies, Map<String, Serializable> properties) {

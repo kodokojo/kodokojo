@@ -2,6 +2,7 @@ package io.kodokojo.commons.event;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.apache.commons.collections4.MapUtils;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -28,6 +29,10 @@ public class EventBuilder {
 
     private String payload;
 
+    private long ttl;
+
+    private int maxRedeliveryCountlong;
+
     public EventBuilder() {
         super();
     }
@@ -40,6 +45,8 @@ public class EventBuilder {
         replyTo = copyFrom.getReplyTo();
         correlationId = copyFrom.getCorrelationId();
         creationDate = copyFrom.getCreationDate();
+        ttl = copyFrom.getTtl();
+        maxRedeliveryCountlong = copyFrom.getMaxRedeliveryCount();
         eventType = copyFrom.getEventType();
         custom = copyFrom.getCustom();
         payload = copyFrom.getPayload();
@@ -61,7 +68,7 @@ public class EventBuilder {
         if (category == null) {
             category = Event.Category.BUSINESS;
         }
-        return new Event(new Event.Header(category, from, replyTo, correlationId, creationDate, eventType, custom), payload);
+        return new Event(new Event.Header(category, from, replyTo, correlationId, creationDate, ttl, maxRedeliveryCountlong, eventType, custom), payload);
     }
 
     public EventBuilder setCategory(Event.Category category) {
@@ -77,10 +84,12 @@ public class EventBuilder {
         this.from = from;
         return this;
     }
+
     public EventBuilder setReplyTo(String replyTo) {
         this.replyTo = replyTo;
         return this;
     }
+
     public EventBuilder setCorrelationId(String correlationId) {
         this.correlationId = correlationId;
         return this;
@@ -88,6 +97,16 @@ public class EventBuilder {
 
     public EventBuilder setCreationDate(long creationDate) {
         this.creationDate = creationDate;
+        return this;
+    }
+
+    public EventBuilder setTtl(long ttl) {
+        this.ttl = ttl;
+        return this;
+    }
+
+    public EventBuilder setMaxRedeliveryCountlong(int maxRedeliveryCountlong) {
+        this.maxRedeliveryCountlong = maxRedeliveryCountlong;
         return this;
     }
 
@@ -102,6 +121,18 @@ public class EventBuilder {
     public EventBuilder setCustom(Map<String, String> custom) {
         requireNonNull(custom, "custom must be defined.");
         this.custom = custom;
+        return this;
+    }
+
+    public EventBuilder copyCustomHeader(Event from, String header) {
+        requireNonNull(from, "from must be defined.");
+        if (isBlank(header)) {
+            throw new IllegalArgumentException("header must be defined.");
+        }
+        Map<String, String> fromCustom = from.getCustom();
+        if (MapUtils.isNotEmpty(fromCustom) && fromCustom.containsKey(header)) {
+            custom.put(header, fromCustom.get(header));
+        }
         return this;
     }
 

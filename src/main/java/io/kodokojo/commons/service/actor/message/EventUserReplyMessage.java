@@ -25,13 +25,13 @@ import java.io.Serializable;
 import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang.StringUtils.isBlank;
 
-public class EventReplyMessage extends EventRequestMessage implements EventReplyableMessage{
+public class EventUserReplyMessage extends EventUserRequestMessage implements EventReplyableMessage{
 
     private final String eventType;
 
     private final Serializable payloadReply;
 
-    public EventReplyMessage(User requester, Event request, String eventType, Serializable payloadReply) {
+    public EventUserReplyMessage(User requester, Event request, String eventType, Serializable payloadReply) {
         super(requester, request);
         requireNonNull(payloadReply, "payloadReply must be defined.");
         if (isBlank(eventType)) {

@@ -74,8 +74,6 @@ public class UtilityServiceModule extends AbstractModule {
         return new DefaultBrickUrlFactory(applicationConfig.domain());
     }
 
-
-
     @Provides
     @Singleton
     Interceptor provideInterceptor() {

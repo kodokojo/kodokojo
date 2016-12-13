@@ -53,7 +53,6 @@ public class EventBusModule extends AbstractModule {
                 rabbitMqEventBus.disconnect();
             }
         });
-        rabbitMqEventBus.connect();
         return rabbitMqEventBus;
     }
 
@@ -66,24 +65,7 @@ public class EventBusModule extends AbstractModule {
     @Provides
     @Singleton
     RabbitMqConnectionFactory proviRabbitMqConnectionFactory() {
-        return new RabbitMqConnectionFactory() {
-
-            @Override
-            public Connection createFromRabbitMqConfig(RabbitMqConfig config) {
-                ConnectionFactory factory = new ConnectionFactory();
-                factory.setHost(config.host());
-                factory.setPort(config.port());
-                if (StringUtils.isNotBlank(config.login())) {
-                    factory.setUsername(config.login());
-                    factory.setPassword(config.password());
-                }
-                try {
-                    return factory.newConnection();
-                } catch (IOException | TimeoutException e) {
-                    throw new RuntimeException("Unable to create a connection to Rabbit " + config.host() + ":" + config.port(), e);
-                }
-            }
-        };
+        return new RabbitMqConnectionFactory() {};
     }
 
 }

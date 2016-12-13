@@ -8,7 +8,6 @@ import io.kodokojo.commons.config.RabbitMqConfig;
 import io.kodokojo.commons.event.*;
 import io.kodokojo.commons.model.ServiceInfo;
 import javaslang.control.Try;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -16,8 +15,12 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
@@ -56,6 +59,8 @@ public class RabbitMqEventBus implements EventBus {
     private final ServiceInfo serviceInfo;
 
     protected String localQueueName;
+
+    protected String serviceBroadcastExhangeName;
 
     protected EventConsumer eventConsumer;
 
@@ -108,12 +113,13 @@ public class RabbitMqEventBus implements EventBus {
                     channel = connection.createChannel();
                     channel.basicQos(1);
                     channel.exchangeDeclare(rabbitMqConfig.businessExchangeName(), "fanout", true);
-                    AMQP.Queue.DeclareOk declareOk = channel.queueDeclare(rabbitMqConfig.serviceQueueName(), true, false, false, null);
+                    String businessQueueName = rabbitMqConfig.serviceQueueName() + "-business";
+                    AMQP.Queue.DeclareOk declareOk = channel.queueDeclare(businessQueueName, true, false, false, null);
 
                     int consumerCount = declareOk.getConsumerCount();
                     int messageCount = declareOk.getMessageCount();
 
-                    channel.queueBind(rabbitMqConfig.serviceQueueName(), rabbitMqConfig.businessExchangeName(), "");
+                    channel.queueBind(businessQueueName, rabbitMqConfig.businessExchangeName(), "");
 
                     channel.exchangeDeclare(rabbitMqConfig.broadcastExchangeName(), "fanout", true);
                     channel.exchangeDeclare(microServiceConfig.name(), "fanout", false);
@@ -123,12 +129,15 @@ public class RabbitMqEventBus implements EventBus {
                     channel.queueDeclare(localQueueName, false, true, true, null);
                     channel.queueBind(localQueueName, microServiceConfig.name(), "");
 
+                    serviceBroadcastExhangeName = microServiceConfig.name() + "-broadcast";
+                    channel.exchangeDeclare(serviceBroadcastExhangeName, "fanout", false);
+                    channel.queueBind(localQueueName, serviceBroadcastExhangeName, "");
+
                     eventConsumer = new EventConsumer(channel, rabbitMqConfig.serviceQueueName(), eventListeners);
                     localEventConsumer = new EventConsumer(channel, localQueueName);
 
                     channel.basicConsume(localQueueName, false, localEventConsumer);
-                    channel.basicConsume(rabbitMqConfig.serviceQueueName(), false, eventConsumer);
-
+                    channel.basicConsume(businessQueueName, false, eventConsumer);
 
 
                     EventBuilder eventBuilder = eventBuilderFactory.create();
@@ -155,6 +164,11 @@ public class RabbitMqEventBus implements EventBus {
     }
 
     @Override
+    public String getFrom() {
+        return from;
+    }
+
+    @Override
     public void broadcast(Event event) {
         requireNonNull(event, "event must be defined.");
 
@@ -172,17 +186,26 @@ public class RabbitMqEventBus implements EventBus {
     }
 
     @Override
-    public void send(Event event) {
+    public void broadcastToSameService(Event event) {
         requireNonNull(event, "event must be defined.");
-        sendAndAck(() -> publish(event));
+        EventBuilder eventBuilder = new EventBuilder(event);
+        eventBuilder.addCustomHeader(Event.BROADCAST_FROM_CUSTOM_HEADER, from);
+        String message = gson.get().toJson(eventBuilder.build());
+        sendAndAck(() -> {
+            try {
+                channel.basicPublish(serviceBroadcastExhangeName, "",
+                        MessageProperties.PERSISTENT_TEXT_PLAIN,
+                        message.getBytes());
+            } catch (IOException e) {
+                LOGGER.error("Unable to send following event :{}", message, e);
+            }
+        });
     }
 
     @Override
-    public List<Event> poll() {
-        if (eventConsumer != null) {
-            return eventConsumer.pollEvents();
-        }
-        return null;
+    public void send(Event event) {
+        requireNonNull(event, "event must be defined.");
+        sendAndAck(() -> publish(event));
     }
 
     @Override
@@ -311,8 +334,6 @@ public class RabbitMqEventBus implements EventBus {
 
     class EventConsumer extends DefaultConsumer {
 
-        private final BlockingDeque<Event> queues = new LinkedBlockingDeque<>();
-
         protected final Set<EventListener> eventListeners = new HashSet<>();
 
         private final String queueName;
@@ -334,39 +355,38 @@ public class RabbitMqEventBus implements EventBus {
             String message = new String(body, UTF_8);
             Try.of(() -> jsonToEventConverter.converter(message))
                     .andThen(event -> {
-                        Set<EventListener> currentListener = new HashSet<>(eventListeners);
-                        if (CollectionUtils.isEmpty(currentListener)) {
-                            queues.add(event);
-                        } else {
-                            try {
-                                currentListener.stream().forEach(eventListener -> eventListener.receive(event));
-                            } catch (RuntimeException e) {
-                                LOGGER.warn("An error occurred while dispatched an event to listener.", e);
-                            }
+                        if (LOGGER.isDebugEnabled() && !LOGGER.isTraceEnabled()) {
+                            Gson prettyGson = new GsonBuilder().registerTypeAdapter(Event.class, new GsonEventSerializer()).setPrettyPrinting().create();
+                            LOGGER.debug("EventBus receive:\n{}", prettyGson.toJson(event));
                         }
+
+                        Iterator<EventListener> eventListenerIterator = eventListeners.iterator();
+                        eventListenerIterator.forEachRemaining(eventListener -> eventListener.receive(event));
+
                     })
                     .andThenTry(event -> {
                         channel.basicAck(envelope.getDeliveryTag(), false);
-                    }).onSuccess(event -> {
-                        if (LOGGER.isDebugEnabled()) {
-                            LOGGER.debug("Following Event from queue'{}' : {}", queueName, event);
-                        }
-                    }).onSuccess(event -> {
-                        if (!event.getFrom().equals(from) &&
-                                StringUtils.isNotBlank(event.getCorrelationId()) &&
-                                requests.containsKey(event.getCorrelationId())) {
-                            ReplyEvent replyEvent = requests.get(event.getCorrelationId());
-                            requests.remove(event.getCorrelationId());
-                            replyEvent.setReply(event);
-                        }
-                    })
-                    .onFailure(e -> LOGGER.warn("Unable to process message : {}", message, e));
-        }
+                    }).onFailure(e -> {
+                try {
+                    channel.basicNack(envelope.getDeliveryTag(), false, true);
+                    LOGGER.warn("Unable to process following message due to an error:\n {}", message, e);
+                } catch (IOException e1) {
+                    StringWriter sw = new StringWriter();
+                    PrintWriter pw = new PrintWriter(sw);
+                    e.printStackTrace(pw);
+                    LOGGER.error("Unable to unack message '{}' with error: {}", message, sw.toString(), e1);
+                }
+            }).onSuccess(event -> {
 
-        public List<Event> pollEvents() {
-            List<Event> res = new ArrayList<>();
-            queues.drainTo(res);
-            return res;
+                if (!event.getFrom().equals(from) &&
+                        StringUtils.isNotBlank(event.getCorrelationId()) &&
+                        requests.containsKey(event.getCorrelationId())) {
+                    ReplyEvent replyEvent = requests.get(event.getCorrelationId());
+                    requests.remove(event.getCorrelationId());
+                    replyEvent.setReply(event);
+                }
+            })
+                    .onFailure(e -> LOGGER.warn("Unable to process message : {}", message, e));
         }
 
         public void addEventlistener(EventListener eventListener) {

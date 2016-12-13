@@ -18,6 +18,8 @@
 package io.kodokojo.commons.model;
 
 
+import com.google.gson.annotations.Expose;
+
 import java.io.Serializable;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
@@ -25,22 +27,30 @@ import static org.apache.commons.lang.StringUtils.isNotBlank;
 
 public class User implements Serializable {
 
+    @Expose
     private final String identifier;
 
+    @Expose
     private final String entityIdentifier;
 
+    @Expose
     private final String firstName;
 
+    @Expose
     private final String lastName;
 
+    @Expose
     private final String name;
 
+    @Expose
     private final String username;
 
+    @Expose
     private final String email;
 
     private final String password;
 
+    @Expose
     private final String sshPublicKey;
 
     public User(String identifier, String entityIdentifier, String firstName, String lastName, String username, String email, String password, String sshPublicKey) {

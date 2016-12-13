@@ -18,6 +18,7 @@
 package io.kodokojo.commons.model;
 
 
+import com.google.gson.annotations.Expose;
 import io.kodokojo.commons.RSAUtils;
 
 import java.security.interfaces.RSAPrivateKey;
@@ -27,10 +28,13 @@ import static org.apache.commons.lang.StringUtils.isBlank;
 
 public class UserService {
 
+    @Expose
     private final String identifier;
 
+    @Expose
     private final String name;
 
+    @Expose
     private final String login;
 
     private final String password;

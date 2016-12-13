@@ -2,8 +2,11 @@ package io.kodokojo.commons.service.actor;
 
 import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
+import akka.dispatch.Futures;
+import akka.dispatch.OnSuccess;
 import akka.event.LoggingAdapter;
 import akka.japi.pf.UnitPFBuilder;
+import akka.pattern.Patterns;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Injector;
@@ -11,6 +14,7 @@ import io.kodokojo.commons.event.*;
 import io.kodokojo.commons.service.actor.message.EventBusOriginMessage;
 import io.kodokojo.commons.service.actor.message.EventReplyableMessage;
 import org.apache.commons.lang.StringUtils;
+import scala.concurrent.Future;
 
 import static akka.event.Logging.getLogger;
 import static java.util.Objects.requireNonNull;
@@ -27,23 +31,35 @@ public abstract class AbstractEndpointActor extends AbstractActor {
 
     protected final EventBus eventBus;
 
+
     public AbstractEndpointActor(Injector injector) {
         this.injector = injector;
         requireNonNull(injector, "injector must be defined.");
         EventBuilderFactory eventBuilderFactory = injector.getInstance(EventBuilderFactory.class);
         eventBus = injector.getInstance(EventBus.class);
         receive(messageMatcherBuilder()
+                .match(Event.class, event -> {
+                    if (LOGGER.isDebugEnabled()) {
+                        Gson gson = new GsonBuilder().registerTypeAdapter(Event.class, new GsonEventSerializer()).setPrettyPrinting().create();
+                        LOGGER.debug("Sending following message to EventBus:\n{}", gson.toJson(event));
+                    }
+                    eventBus.send(event);
+                })
                 .match(EventReplyableMessage.class, msg -> {
+
+                    onEventReplyableMessagePreReply(msg, eventBuilderFactory);
                     EventBuilder eventBuilder = eventBuilderFactory.create();
                     eventBuilder.setPayload(msg.payloadReply());
                     eventBuilder.setEventType(msg.eventType());
                     eventBuilder.setCategory(Event.Category.BUSINESS);
                     Event event = eventBuilder.build();
                     eventBus.reply(msg.originalEvent(), event);
+                    onEventReplyableMessagePostReply(msg, eventBuilderFactory);
                     if (LOGGER.isDebugEnabled()) {
                         Gson gson = new GsonBuilder().registerTypeAdapter(Event.class, new GsonEventSerializer()).setPrettyPrinting().create();
                         LOGGER.debug("Reply following event to {}:\n {}", msg.originalEvent().getFrom(), gson.toJson(event));
                     }
+
                 })
                 .matchAny(this::unhandled)
                 .build());
@@ -51,20 +67,43 @@ public abstract class AbstractEndpointActor extends AbstractActor {
 
     protected abstract UnitPFBuilder<Object> messageMatcherBuilder();
 
+    protected void onEventReplyableMessagePreReply(EventReplyableMessage msg, EventBuilderFactory eventBuilderFactory) {
+        //  Nothing to do.
+    }
+
+    protected void onEventReplyableMessagePostReply(EventReplyableMessage msg, EventBuilderFactory eventBuilderFactory) {
+        //  Nothing to do.
+    }
+
     protected void dispatch(Object msg, ActorRef sender, ActorRef target) {
         boolean telling = false;
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Dispatch message class {} from actor {} to actor Ref {}.", msg.getClass().getCanonicalName(),sender.toString(), target.toString());
+            LOGGER.debug("Dispatch message class {} from actor {} to actor Ref {}.", msg.getClass().getCanonicalName(), sender.toString(), target.toString());
         }
-        if (msg instanceof EventBusOriginMessage) {
+        if (msg instanceof EventBusOriginMessage && ((EventBusOriginMessage) msg).initialSenderIsEventBus()) {
             EventBusOriginMessage eventBusOriginMessage = (EventBusOriginMessage) msg;
             Event event = eventBusOriginMessage.originalEvent();
             if (LOGGER.isDebugEnabled()) {
                 Gson gson = new GsonBuilder().registerTypeAdapter(Event.class, new GsonEventSerializer()).setPrettyPrinting().create();
                 LOGGER.debug("Dispatch message contain following event :\n{}", gson.toJson(event));
             }
-            if (StringUtils.isNotBlank(event.getReplyTo()) && StringUtils.isNotBlank(event.getCorrelationId())) {
-                target.tell(msg, self());
+            if (StringUtils.isNotBlank(event.getReplyTo()) &&
+                    StringUtils.isNotBlank(event.getCorrelationId())) {
+                if (eventBusOriginMessage.requireToBeCompleteBeforeAckEventBus()) {
+                    Future<Object> future = Patterns.ask(target, msg, eventBusOriginMessage.timeout());
+                    Patterns.pipe(future, getContext().dispatcher()).to(sender);
+                    future.onSuccess(new OnSuccess<Object>() {
+                        @Override
+                        public void onSuccess(Object result) throws Throwable {
+                            if (result instanceof EventReplyableMessage) {
+                                self().forward(msg, getContext());  //  Allow to process reply in eventbus...
+                            }
+                        }
+                    }, getContext().dispatcher());
+                } else {
+                    sender.tell(Futures.successful(Boolean.TRUE), self());
+                    target.tell(msg, self());
+                }
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("TELL following message to actor {} : {}", target.toString(), msg);
                 }

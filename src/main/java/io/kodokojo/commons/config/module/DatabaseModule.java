@@ -71,6 +71,12 @@ public class DatabaseModule extends AbstractModule {
         return repository;
     }
 
+    @Provides
+    @Singleton
+    ProjectFetcher provideProjectFetcher(Repository repository) {
+        return repository;
+    }
+
 
     @Provides
     @Singleton

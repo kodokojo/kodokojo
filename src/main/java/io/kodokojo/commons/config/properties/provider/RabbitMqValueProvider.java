@@ -14,7 +14,7 @@ public class RabbitMqValueProvider implements PropertyValueProvider {
         requireNonNull(microServiceConfig, "microServiceConfig must be defined.");
         requireNonNull(delagte, "delagte must be defined.");
         this.microServiceConfig = microServiceConfig;
-        this.delagte = new RabbitMqDockerLinkPropertyValueProvider(delagte);
+        this.delagte = delagte;
     }
 
     @Override

@@ -46,15 +46,25 @@ public class Event implements Serializable {
     public String getFrom() {
         return headers.getFrom();
     }
+
     public String getReplyTo() {
         return headers.getReplyTo();
     }
+
     public String getCorrelationId() {
         return headers.getCorrelationId();
     }
 
     public String getEventType() {
         return headers.getEventType();
+    }
+
+    public long getTtl() {
+        return headers.getTtl();
+    }
+
+    public int getMaxRedeliveryCount() {
+        return headers.getMaxRedeliveryCount();
     }
 
     public Map<String, String> getCustom() {
@@ -96,9 +106,14 @@ public class Event implements Serializable {
 
         private final String eventType;
 
+        private final long ttl;
+
+        private final int maxRedeliveryCount;
+
         private final Map<String, String> custom;
 
-        public Header(Category category, String from, String replyTo, String correlationId, long creationDate, String eventType, Map<String, String> custom) {
+
+        public Header(Category category, String from, String replyTo, String correlationId, long creationDate, long ttl, int maxRedeliveryCount, String eventType, Map<String, String> custom) {
             requireNonNull(category, "category must be defined.");
             if (isBlank(from)) {
                 throw new IllegalArgumentException("from must be defined.");
@@ -117,6 +132,13 @@ public class Event implements Serializable {
             this.correlationId = correlationId;
             this.creationDate = creationDate;
             this.eventType = eventType;
+            this.ttl = ttl;
+            this.maxRedeliveryCount = maxRedeliveryCount;
+        }
+
+
+        public Header(Category category, String from, String replyTo, String correlationId, long creationDate,String eventType, Map<String, String> custom) {
+            this(category, from, replyTo, correlationId,creationDate, -1, -1, eventType, custom);
         }
 
         public Header(Category category, String from, long creationDate, String eventType) {
@@ -146,6 +168,14 @@ public class Event implements Serializable {
 
         public String getEventType() {
             return eventType;
+        }
+
+        public long getTtl() {
+            return ttl;
+        }
+
+        public int getMaxRedeliveryCount() {
+            return maxRedeliveryCount;
         }
 
         public Map<String, String> getCustom() {
@@ -195,19 +225,33 @@ public class Event implements Serializable {
 
 
     //  Business
-    public static final String REQUESTER_ID_CUSTOM_HEADER = "requester";
+    public static final String REQUESTER_ID_CUSTOM_HEADER = "requester_id";
+    public static final String ENTITY_ID_CUSTOM_HEADER = "entity_id";
+    public static final String PROJECTCONFIGURATION_ID_CUSTOM_HEADER = "projectconfiguration_id";
+    public static final String BROADCAST_FROM_CUSTOM_HEADER = "broadcst_from";
 
     public static final String USER_CREATION_REQUEST = "user_creation_request";
     public static final String USER_CREATION_REPLY = "user_creation_reply";
+    public static final String USER_CREATION_EVENT = "user_created";
     public static final String USER_IDENTIFIER_CREATION_REQUEST = "user_id_creation_request";
     public static final String USER_IDENTIFIER_CREATION_REPLY = "user_id_creation_reply";
     public static final String USER_UPDATE_REQUEST = "user_update_request";
     public static final String USER_UPDATE_REPLY = "user_update_reply";
     public static final String PROJECTCONFIG_CREATION_REQUEST = "projectconfig_creation_request";
     public static final String PROJECTCONFIG_CREATION_REPLY = "projectconfig_creation_reply";
+    public static final String PROJECTCONFIG_CREATION_EVENT = "projectconfig_created";
     public static final String PROJECTCONFIG_CHANGE_USER_REQUEST = "projectconfig_change_user_request";
     public static final String PROJECTCONFIG_CHANGE_USER_REPLY = "projectconfig_change_user_reply";
     public static final String PROJECTCONFIG_START_REQUEST = "projectconfig_start_request";
+    public static final String PROJECTCONFIG_START_REPLY = "projectconfig_start_reply";
     public static final String PROJECTCONFIG_STARTED = "projectconfig_started";
+    public static final String PROJECT_CREATION_REQUEST = "project_creation_request";
+    public static final String PROJECT_CREATION_REPLY = "project_creation_reply";
+    public static final String STACK_STARTED = "stack_started";
+    public static final String BRICK_STARTING = "brick_starting";
+    public static final String BRICK_CONFIGURING = "brick_configuring";
+    public static final String BRICK_RUNNING = "brick_running";
+    public static final String BRICK_ONFAILURE = "brick_onfailure";
+    public static final String BRICK_STOPPED = "brick_stopped";
 
 }

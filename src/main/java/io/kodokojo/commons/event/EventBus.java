@@ -1,5 +1,7 @@
 package io.kodokojo.commons.event;
 
+import javaslang.control.Try;
+
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -10,13 +12,15 @@ public interface EventBus {
 
     void connect(Set<EventListener> eventListeners);
 
+    String getFrom();
+
     void broadcast(Event event);
+
+    void broadcastToSameService(Event event);
 
     void send(Event event);
 
     void send(Set<Event> events);
-
-    List<Event> poll();
 
     Event request(Event request, int duration, TimeUnit timeUnit) throws InterruptedException;
 

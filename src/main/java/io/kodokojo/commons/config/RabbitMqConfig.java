@@ -5,16 +5,15 @@ import io.kodokojo.commons.config.properties.PropertyConfig;
 
 public interface RabbitMqConfig extends PropertyConfig {
 
-
     String RABBITMQ_HOST = "rabbitmq.host";
 
     String RABBITMQ_PORT = "rabbitmq.port";
 
-    @Key(RABBITMQ_HOST)
+    @Key(value = RABBITMQ_HOST, defaultValue = "rabbitmq")
     String host();
 
-    @Key(RABBITMQ_PORT)
-    int port();
+    @Key(value = RABBITMQ_PORT, defaultValue = "5672")
+    Integer port();
 
     @Key(value = "rabbitmq.business", defaultValue = "kodokojo.business")
     String businessExchangeName();
@@ -22,7 +21,7 @@ public interface RabbitMqConfig extends PropertyConfig {
     @Key(value = "rabbitmq.service")
     String serviceQueueName();
 
-    @Key(value = "rabbitmq.broadcast" , defaultValue = "kodokojo.broadcast")
+    @Key(value = "rabbitmq.broadcast", defaultValue = "kodokojo.broadcast")
     String broadcastExchangeName();
 
     @Key(value = "rabbitmq.login")

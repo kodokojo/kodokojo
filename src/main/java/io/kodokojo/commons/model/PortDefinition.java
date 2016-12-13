@@ -17,6 +17,8 @@
  */
 package io.kodokojo.commons.model;
 
+import com.google.gson.annotations.Expose;
+
 import java.io.Serializable;
 
 public class PortDefinition implements Serializable {
@@ -34,14 +36,19 @@ public class PortDefinition implements Serializable {
         UDP
     }
 
+    @Expose
     private final Type type;
 
+    @Expose
     private final int hostPort;
 
+    @Expose
     private final int containerPort;
 
+    @Expose
     private final int servicePort;
 
+    @Expose
     private final String name;
 
     public PortDefinition(String name, Type type, int hostPort, int containerPort, int servicePort) {
