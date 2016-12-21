@@ -34,7 +34,7 @@ public interface EventBus {
 
     interface EventListener {
 
-        void receive(Event event);
+        Try<Boolean> receive(Event event);
 
     }
 

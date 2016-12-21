@@ -31,7 +31,9 @@ public class EventBuilder {
 
     private long ttl;
 
-    private int maxRedeliveryCountlong;
+    private int redeliveryCount = 0;
+
+    private int maxRedeliveryCount;
 
     public EventBuilder() {
         super();
@@ -46,7 +48,8 @@ public class EventBuilder {
         correlationId = copyFrom.getCorrelationId();
         creationDate = copyFrom.getCreationDate();
         ttl = copyFrom.getTtl();
-        maxRedeliveryCountlong = copyFrom.getMaxRedeliveryCount();
+        maxRedeliveryCount = copyFrom.getMaxRedeliveryCount();
+        redeliveryCount = copyFrom.getRedeliveryCount();
         eventType = copyFrom.getEventType();
         custom = copyFrom.getCustom();
         payload = copyFrom.getPayload();
@@ -68,7 +71,7 @@ public class EventBuilder {
         if (category == null) {
             category = Event.Category.BUSINESS;
         }
-        return new Event(new Event.Header(category, from, replyTo, correlationId, creationDate, ttl, maxRedeliveryCountlong, eventType, custom), payload);
+        return new Event(new Event.Header(category, from, replyTo, correlationId, creationDate, ttl, redeliveryCount, maxRedeliveryCount, eventType, custom), payload);
     }
 
     public EventBuilder setCategory(Event.Category category) {
@@ -105,8 +108,18 @@ public class EventBuilder {
         return this;
     }
 
-    public EventBuilder setMaxRedeliveryCountlong(int maxRedeliveryCountlong) {
-        this.maxRedeliveryCountlong = maxRedeliveryCountlong;
+    public EventBuilder setRedeliveryCount(int redeliveryCount) {
+        this.redeliveryCount = redeliveryCount;
+        return this;
+    }
+
+    public EventBuilder incrementRedeliveryCount() {
+        this.redeliveryCount++;
+        return this;
+    }
+
+    public EventBuilder setMaxRedeliveryCount(int maxRedeliveryCount) {
+        this.maxRedeliveryCount = maxRedeliveryCount;
         return this;
     }
 

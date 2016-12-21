@@ -63,6 +63,10 @@ public class Event implements Serializable {
         return headers.getTtl();
     }
 
+    public int getRedeliveryCount() {
+        return headers.getRedeliveryCount();
+    }
+
     public int getMaxRedeliveryCount() {
         return headers.getMaxRedeliveryCount();
     }
@@ -108,12 +112,14 @@ public class Event implements Serializable {
 
         private final long ttl;
 
+        private final int redeliveryCount;
+
         private final int maxRedeliveryCount;
 
         private final Map<String, String> custom;
 
 
-        public Header(Category category, String from, String replyTo, String correlationId, long creationDate, long ttl, int maxRedeliveryCount, String eventType, Map<String, String> custom) {
+        public Header(Category category, String from, String replyTo, String correlationId, long creationDate, long ttl,int redeliveryCount, int maxRedeliveryCount, String eventType, Map<String, String> custom) {
             requireNonNull(category, "category must be defined.");
             if (isBlank(from)) {
                 throw new IllegalArgumentException("from must be defined.");
@@ -133,12 +139,13 @@ public class Event implements Serializable {
             this.creationDate = creationDate;
             this.eventType = eventType;
             this.ttl = ttl;
+            this.redeliveryCount = redeliveryCount;
             this.maxRedeliveryCount = maxRedeliveryCount;
         }
 
 
         public Header(Category category, String from, String replyTo, String correlationId, long creationDate,String eventType, Map<String, String> custom) {
-            this(category, from, replyTo, correlationId,creationDate, -1, -1, eventType, custom);
+            this(category, from, replyTo, correlationId,creationDate,0, -1, -1, eventType, custom);
         }
 
         public Header(Category category, String from, long creationDate, String eventType) {
@@ -174,6 +181,10 @@ public class Event implements Serializable {
             return ttl;
         }
 
+        public int getRedeliveryCount() {
+            return redeliveryCount;
+        }
+
         public int getMaxRedeliveryCount() {
             return maxRedeliveryCount;
         }
@@ -191,6 +202,9 @@ public class Event implements Serializable {
                     ", correlationId='" + correlationId + '\'' +
                     ", creationDate=" + creationDate +
                     ", eventType='" + eventType + '\'' +
+                    ", ttl=" + ttl +
+                    ", redeliveryCount=" + redeliveryCount +
+                    ", maxRedeliveryCount=" + maxRedeliveryCount +
                     ", custom=" + custom +
                     '}';
         }
@@ -219,6 +233,13 @@ public class Event implements Serializable {
         Gson gson = new GsonBuilder().registerTypeAdapter(Event.class, new GsonEventSerializer()).create();
         return gson.toJson(event);
     }
+
+    public static String convertToPrettyJson(Event event) {
+        requireNonNull(event, "event must be defined.");
+        Gson gson = new GsonBuilder().registerTypeAdapter(Event.class, new GsonEventSerializer()).setPrettyPrinting().create();
+        return gson.toJson(event);
+    }
+
 
     //  Technical
     public static final String SERVICE_CONNECT_TYPE = "service_connection";
@@ -253,5 +274,6 @@ public class Event implements Serializable {
     public static final String BRICK_RUNNING = "brick_running";
     public static final String BRICK_ONFAILURE = "brick_onfailure";
     public static final String BRICK_STOPPED = "brick_stopped";
+    public static final String ERROR_THROW_FROM = "error_throw_from";
 
 }

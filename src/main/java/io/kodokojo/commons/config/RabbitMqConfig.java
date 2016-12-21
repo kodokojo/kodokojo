@@ -24,10 +24,20 @@ public interface RabbitMqConfig extends PropertyConfig {
     @Key(value = "rabbitmq.broadcast", defaultValue = "kodokojo.broadcast")
     String broadcastExchangeName();
 
+    @Key(value = "rabbitmq.deadletter", defaultValue = "kodokojo.deadletter")
+    String deadLetterExchangeName();
+
+    @Key(value = "rabbitmq.deadletter.queue", defaultValue = "kodokojo.deadletterQueue")
+    String deadLetterQueueName();
+
     @Key(value = "rabbitmq.login")
     String login();
 
     @Key(value = "rabbitmq.password")
     String password();
+
+    @Key(value = "rabbitmq.maxRedeliveryMessageCount", defaultValue = "3")
+    Integer maxRedeliveryMessageCount();
+
 
 }

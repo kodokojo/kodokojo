@@ -26,6 +26,10 @@ public class GsonEventSerializer implements JsonSerializer<Event>, JsonDeseriali
                 builder.setCreationDate(creationDate);
                 String eventType = headers.getAsJsonPrimitive("eventType").getAsString();
                 builder.setEventType(eventType);
+                if (headers.has("redeliveryCount")) {
+                    Integer redeliveryCount = headers.getAsJsonPrimitive("redeliveryCount").getAsNumber().intValue();
+                    builder.setRedeliveryCount(redeliveryCount);
+                }
                 if (headers.has("replyTo")) {
                     builder.setReplyTo(headers.getAsJsonPrimitive("replyTo").getAsString());
                 }
@@ -71,6 +75,7 @@ public class GsonEventSerializer implements JsonSerializer<Event>, JsonDeseriali
         headers.addProperty("creationDate", src.getCreationDate());
         headers.addProperty("correlationId", src.getCorrelationId());
         headers.addProperty("eventType", src.getEventType());
+        headers.addProperty("redeliveryCount", src.getRedeliveryCount());
         JsonObject custom = new JsonObject();
         headers.add("custom", custom);
         for(Map.Entry<String, String> entry : src.getCustom().entrySet()) {

@@ -31,6 +31,7 @@ public class RabbitMqEventBus implements EventBus {
     private static final Logger LOGGER = LoggerFactory.getLogger(RabbitMqEventBus.class);
 
     public static final String UTF_8 = "UTF-8";
+    public static final String FANOUT = "fanout";
 
     protected final RabbitMqConfig rabbitMqConfig;
 
@@ -111,27 +112,37 @@ public class RabbitMqEventBus implements EventBus {
 
                 try {
                     channel = connection.createChannel();
+
+                    channel.exchangeDeclare(rabbitMqConfig.deadLetterExchangeName(), FANOUT, true, false, null);
+                    channel.queueDeclare(rabbitMqConfig.deadLetterQueueName(), true, false, false, null);
+                    channel.queueBind(rabbitMqConfig.deadLetterQueueName(), rabbitMqConfig.deadLetterExchangeName(), "");
+
+                    Map<String, Object> args = new HashMap<>();
+                    args.put("x-dead-letter-exchange", rabbitMqConfig.deadLetterExchangeName());
+
                     channel.basicQos(1);
-                    channel.exchangeDeclare(rabbitMqConfig.businessExchangeName(), "fanout", true);
+
+                    channel.exchangeDeclare(rabbitMqConfig.businessExchangeName(), FANOUT, true, false, args);
                     String businessQueueName = rabbitMqConfig.serviceQueueName() + "-business";
-                    AMQP.Queue.DeclareOk declareOk = channel.queueDeclare(businessQueueName, true, false, false, null);
+                    AMQP.Queue.DeclareOk declareOk = channel.queueDeclare(businessQueueName, true, false, false, args);
 
                     int consumerCount = declareOk.getConsumerCount();
                     int messageCount = declareOk.getMessageCount();
 
                     channel.queueBind(businessQueueName, rabbitMqConfig.businessExchangeName(), "");
 
-                    channel.exchangeDeclare(rabbitMqConfig.broadcastExchangeName(), "fanout", true);
-                    channel.exchangeDeclare(microServiceConfig.name(), "fanout", false);
+                    channel.exchangeDeclare(rabbitMqConfig.broadcastExchangeName(), FANOUT, true, false, args);
+                    channel.exchangeDeclare(microServiceConfig.name(), FANOUT, false, false, args);
                     channel.exchangeBind(microServiceConfig.name(), rabbitMqConfig.broadcastExchangeName(), "");
 
 
-                    channel.queueDeclare(localQueueName, false, true, true, null);
+                    channel.queueDeclare(localQueueName, false, true, true, args);
                     channel.queueBind(localQueueName, microServiceConfig.name(), "");
 
                     serviceBroadcastExhangeName = microServiceConfig.name() + "-broadcast";
-                    channel.exchangeDeclare(serviceBroadcastExhangeName, "fanout", false);
+                    channel.exchangeDeclare(serviceBroadcastExhangeName, FANOUT, false, false, args);
                     channel.queueBind(localQueueName, serviceBroadcastExhangeName, "");
+
 
                     eventConsumer = new EventConsumer(channel, rabbitMqConfig.serviceQueueName(), eventListeners);
                     localEventConsumer = new EventConsumer(channel, localQueueName);
@@ -352,29 +363,45 @@ public class RabbitMqEventBus implements EventBus {
 
         @Override
         public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
+
+
             String message = new String(body, UTF_8);
-            Try.of(() -> jsonToEventConverter.converter(message))
-                    .andThen(event -> {
-                        if (LOGGER.isDebugEnabled() && !LOGGER.isTraceEnabled()) {
-                            Gson prettyGson = new GsonBuilder().registerTypeAdapter(Event.class, new GsonEventSerializer()).setPrettyPrinting().create();
-                            LOGGER.debug("EventBus receive:\n{}", prettyGson.toJson(event));
-                        }
+            Event eventInit = jsonToEventConverter.converter(message);
+            Try.of(() -> {
+                if (LOGGER.isDebugEnabled() && !LOGGER.isTraceEnabled()) {
+                    Gson prettyGson = new GsonBuilder().registerTypeAdapter(Event.class, new GsonEventSerializer()).setPrettyPrinting().create();
+                    LOGGER.debug("EventBus receive:\n{}", prettyGson.toJson(eventInit));
+                }
 
-                        Iterator<EventListener> eventListenerIterator = eventListeners.iterator();
-                        eventListenerIterator.forEachRemaining(eventListener -> eventListener.receive(event));
 
-                    })
-                    .andThenTry(event -> {
+                Iterator<EventListener> eventListenerIterator = eventListeners.iterator();
+                eventListenerIterator.forEachRemaining(eventListener -> {
+                    Try<Boolean> receive = eventListener.receive(eventInit);
+                    receive.get();
+                });
+                return eventInit;
+            }).andThenTry(event -> {
+                channel.basicAck(envelope.getDeliveryTag(), false);
+            }).onFailure(e -> {
+                LOGGER.warn("Unable to process message : {}", message, e);
+                if (eventInit.getRedeliveryCount() > rabbitMqConfig.maxRedeliveryMessageCount()) {
+                    try {
+                        channel.basicReject(envelope.getDeliveryTag(), false);
+                        LOGGER.warn("Unqueue following Event:\n{}", Event.convertToPrettyJson(eventInit));
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                    }
+                } else {
+                    EventBuilder eventBuilder = new EventBuilder(eventInit);
+                    eventBuilder.incrementRedeliveryCount();
+                    Event newEvent = eventBuilder.build();
+                    RabbitMqEventBus.this.send(newEvent);
+                    try {
                         channel.basicAck(envelope.getDeliveryTag(), false);
-                    }).onFailure(e -> {
-                try {
-                    channel.basicNack(envelope.getDeliveryTag(), false, true);
-                    LOGGER.warn("Unable to process following message due to an error:\n {}", message, e);
-                } catch (IOException e1) {
-                    StringWriter sw = new StringWriter();
-                    PrintWriter pw = new PrintWriter(sw);
-                    e.printStackTrace(pw);
-                    LOGGER.error("Unable to unack message '{}' with error: {}", message, sw.toString(), e1);
+                        LOGGER.warn("Push with redelivery count message incremented:\n{}", Event.convertToPrettyJson(newEvent));
+                    } catch (IOException e1) {
+                        processAckException(message, true, e, e1);
+                    }
                 }
             }).onSuccess(event -> {
 
@@ -385,8 +412,14 @@ public class RabbitMqEventBus implements EventBus {
                     requests.remove(event.getCorrelationId());
                     replyEvent.setReply(event);
                 }
-            })
-                    .onFailure(e -> LOGGER.warn("Unable to process message : {}", message, e));
+            });
+        }
+
+        private void processAckException(String message, boolean ack, Throwable e, IOException e1) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            LOGGER.error("Unable to {} message '{}' with error: {}", ack ? "ack" : "unack", message, sw.toString(), e1);
         }
 
         public void addEventlistener(EventListener eventListener) {
