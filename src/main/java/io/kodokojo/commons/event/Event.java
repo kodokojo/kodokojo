@@ -230,15 +230,22 @@ public class Event implements Serializable {
 
     public static String convertToJson(Event event) {
         requireNonNull(event, "event must be defined.");
-        Gson gson = new GsonBuilder().registerTypeAdapter(Event.class, new GsonEventSerializer()).create();
+        Gson gson = GSON_BUILDER.get().create();
         return gson.toJson(event);
     }
 
     public static String convertToPrettyJson(Event event) {
         requireNonNull(event, "event must be defined.");
-        Gson gson = new GsonBuilder().registerTypeAdapter(Event.class, new GsonEventSerializer()).setPrettyPrinting().create();
+        Gson gson = GSON_BUILDER.get().setPrettyPrinting().create();
         return gson.toJson(event);
     }
+
+    private static final ThreadLocal<GsonBuilder> GSON_BUILDER = new ThreadLocal<GsonBuilder>() {
+        @Override
+        protected GsonBuilder initialValue() {
+            return new GsonBuilder().registerTypeAdapter(Event.class, new GsonEventSerializer());
+        }
+    };
 
 
     //  Technical

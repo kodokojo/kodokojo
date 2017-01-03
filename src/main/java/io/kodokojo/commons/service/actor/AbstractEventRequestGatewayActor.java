@@ -77,6 +77,9 @@ public abstract class AbstractEventRequestGatewayActor extends AbstractActor {
         EventBusMsgResult eventBusMsgResult = null;
         try {
             Event reply = eventBus.request(event, msg.duration(), msg.timeunit());
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Receive reply Event :\n{}", Event.convertToPrettyJson(reply));
+            }
             eventBusMsgResult = new EventBusMsgResult(msg, reply, false);
         } catch (InterruptedException e) {
             if (LOGGER.isDebugEnabled()) {

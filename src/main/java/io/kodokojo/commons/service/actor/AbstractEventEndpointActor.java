@@ -110,7 +110,7 @@ public abstract class AbstractEventEndpointActor extends AbstractActor {
         }
         Try<ActorRefWithMessage> eventBusOriginMessageTry = convertToActorRefWithMessage(event, requester);
         eventBusOriginMessageTry.andThen(tupleTry -> {
-            if (tupleTry.actorRef != null && tupleTry.eventBusOriginMessage != null) {
+            if (tupleTry.actorRef != null && tupleTry.eventBusOriginMessage != null && tupleTry.eventBusOriginMessage.requireToBeCompleteBeforeAckEventBus()) {
                 LOGGER.debug("Delegate processing to actor {}.", tupleTry.actorRef);
                 Future<Object> future = Patterns.ask(tupleTry.actorRef, tupleTry.eventBusOriginMessage, tupleTry.eventBusOriginMessage.timeout());
                 Patterns.pipe(future, getContext().dispatcher()).to(sender);
@@ -128,7 +128,7 @@ public abstract class AbstractEventEndpointActor extends AbstractActor {
                                 }
                             }
                         } else {
-                            LOGGER.error("An error occure when process event :\n{}", Event.convertToPrettyJson(event), failure);
+                            LOGGER.error("An error occur when process event :\n{}\n{}", Event.convertToPrettyJson(event), failure);
                             throw failure;
                         }
                     }

@@ -8,6 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
 
 import static java.util.Objects.requireNonNull;
@@ -21,14 +23,16 @@ public interface RabbitMqConnectionFactory {
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost(config.host());
         factory.setPort(config.port());
+
         if (StringUtils.isNotBlank(config.login())) {
             factory.setUsername(config.login());
             factory.setPassword(config.password());
         }
         try {
+            //ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
             return factory.newConnection();
         } catch (IOException | TimeoutException e) {
-            throw new RuntimeException("Unable to create a connection to Rabbit " + config.host() + ":" + config.port(), e);
+            throw new RuntimeException("Unable to create a consumeConnection to Rabbit " + config.host() + ":" + config.port(), e);
         }
     }
 

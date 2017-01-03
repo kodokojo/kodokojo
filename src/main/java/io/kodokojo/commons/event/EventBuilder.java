@@ -197,7 +197,7 @@ public class EventBuilder {
         return payload;
     }
 
-    public void addCustomHeader(String key, String value) {
+    public EventBuilder addCustomHeader(String key, String value) {
         if (isBlank(key)) {
             throw new IllegalArgumentException("key must be defined.");
         }
@@ -205,5 +205,6 @@ public class EventBuilder {
             custom = new HashMap<>();
         }
         custom.put(key, value);
+        return this;
     }
 }

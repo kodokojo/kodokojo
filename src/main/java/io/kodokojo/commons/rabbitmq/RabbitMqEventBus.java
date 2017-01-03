@@ -1,27 +1,22 @@
 package io.kodokojo.commons.rabbitmq;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.rabbitmq.client.*;
+import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.MessageProperties;
 import io.kodokojo.commons.config.MicroServiceConfig;
 import io.kodokojo.commons.config.RabbitMqConfig;
 import io.kodokojo.commons.event.*;
 import io.kodokojo.commons.model.ServiceInfo;
-import javaslang.control.Try;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
@@ -30,64 +25,62 @@ public class RabbitMqEventBus implements EventBus {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RabbitMqEventBus.class);
 
-    public static final String UTF_8 = "UTF-8";
-    public static final String FANOUT = "fanout";
+    private static final String UTF_8 = "UTF-8";
 
-    protected final RabbitMqConfig rabbitMqConfig;
+    private static final String FANOUT = "fanout";
 
-    protected final Object monitor = new Object();
+    private static final String X_DEAD_LETTER_EXCHANGE = "x-dead-letter-exchange";
 
-    protected final RabbitMqConnectionFactory connectionFactory;
+    private final RabbitMqConfig rabbitMqConfig;
 
-    protected final JsonToEventConverter jsonToEventConverter;
+    private final Object monitor = new Object();
+
+    private final RabbitMqConnectionFactory connectionFactory;
+
+    private final JsonToEventConverter jsonToEventConverter;
 
     protected final EventBuilderFactory eventBuilderFactory;
 
-    protected final ThreadLocal<Gson> gson = new ThreadLocal<Gson>() {
-        @Override
-        protected Gson initialValue() {
-            return new GsonBuilder().registerTypeAdapter(Event.class, new GsonEventSerializer()).create();
-        }
-    };
-    protected final MicroServiceConfig microServiceConfig;
-
-    protected Connection connection;
-
-    protected Channel channel;
+    private final MicroServiceConfig microServiceConfig;
 
     private final String from;
 
-    private final ServiceInfo serviceInfo;
+    private final String businessQueueName;
 
-    protected String localQueueName;
+    private final String localQueueName;
 
-    protected String serviceBroadcastExhangeName;
-
-    protected EventConsumer eventConsumer;
-
-    protected EventConsumer localEventConsumer;
+    private final String serviceBroadcastExhangeName;
 
     private final Set<EventListener> waitingListeners = new HashSet<>();
 
-    private final ReentrantLock lock;
+    private final Map<String, ReplyEvent> requests = new ConcurrentHashMap<>();
 
-    @Inject
-    public RabbitMqEventBus(RabbitMqConfig rabbitMqConfig, MicroServiceConfig microServiceConfig, RabbitMqConnectionFactory connectionFactory, JsonToEventConverter jsonToEventConverter, EventBuilderFactory eventBuilderFactory, ServiceInfo serviceInfo) {
-        requireNonNull(microServiceConfig, "microServiceConfig must be defined.");
+    private final ServiceInfo serviceInfo;
+
+    protected Connection connection;
+
+    private RabbitMqConsumer consumer;
+
+    private RabbitMqProducer producer;
+
+
+    public RabbitMqEventBus(RabbitMqConfig rabbitMqConfig, RabbitMqConnectionFactory connectionFactory, JsonToEventConverter jsonToEventConverter, MicroServiceConfig microServiceConfig, ServiceInfo serviceInfo) {
         requireNonNull(rabbitMqConfig, "rabbitMqConfig must be defined.");
         requireNonNull(connectionFactory, "connectionFactory must be defined.");
-        requireNonNull(jsonToEventConverter, "eventFactory must be defined.");
-        requireNonNull(eventBuilderFactory, "eventBuilderFactory must be defined.");
+        requireNonNull(jsonToEventConverter, "jsonToEventConverter must be defined.");
+        requireNonNull(microServiceConfig, "microServiceConfig must be defined.");
         requireNonNull(serviceInfo, "serviceInfo must be defined.");
-        this.connectionFactory = connectionFactory;
-        this.microServiceConfig = microServiceConfig;
+        eventBuilderFactory = new DefaultEventBuilderFactory(microServiceConfig);
+
         this.rabbitMqConfig = rabbitMqConfig;
+        this.connectionFactory = connectionFactory;
         this.jsonToEventConverter = jsonToEventConverter;
-        this.eventBuilderFactory = eventBuilderFactory;
-        this.localQueueName = rabbitMqConfig.serviceQueueName() + "-" + microServiceConfig.uuid();
-        this.from = microServiceConfig.name() + "@" + microServiceConfig.uuid();
+        this.microServiceConfig = microServiceConfig;
         this.serviceInfo = serviceInfo;
-        this.lock = new ReentrantLock();
+        this.businessQueueName = rabbitMqConfig.serviceQueueName() + "-business";
+        this.localQueueName = rabbitMqConfig.serviceQueueName() + "-" + microServiceConfig.uuid();
+        this.serviceBroadcastExhangeName = microServiceConfig.name() + "-broadcast";
+        this.from = microServiceConfig.name() + "@" + microServiceConfig.uuid();
     }
 
     @Override
@@ -97,81 +90,117 @@ public class RabbitMqEventBus implements EventBus {
 
     @Override
     public void connect(Set<EventListener> eventListeners) {
-        if (channel == null) {
+        requireNonNull(eventListeners, "eventListeners must be defined.");
+        if (!isConnected()) {
             synchronized (monitor) {
-                if (connection == null) {
-                    connection = connectionFactory.createFromRabbitMqConfig(rabbitMqConfig);
-                    if (channel != null) {
-                        try {
-                            channel.abort();
-                        } catch (IOException e) {
-                            LOGGER.warn("An error occur while trying to abort a previous existing channel.", e);
+                if (!isConnected()) {
+                    try {
+                        initConnection();
+                    } catch (IOException e) {
+                        LOGGER.debug("Unable to initiate connection.", e);
+                        if (connection != null) {
+                            IOUtils.closeQuietly(connection);
+                            connection = null;
                         }
                     }
                 }
-
-                try {
-                    channel = connection.createChannel();
-
-                    channel.exchangeDeclare(rabbitMqConfig.deadLetterExchangeName(), FANOUT, true, false, null);
-                    channel.queueDeclare(rabbitMqConfig.deadLetterQueueName(), true, false, false, null);
-                    channel.queueBind(rabbitMqConfig.deadLetterQueueName(), rabbitMqConfig.deadLetterExchangeName(), "");
-
-                    Map<String, Object> args = new HashMap<>();
-                    args.put("x-dead-letter-exchange", rabbitMqConfig.deadLetterExchangeName());
-
-                    channel.basicQos(1);
-
-                    channel.exchangeDeclare(rabbitMqConfig.businessExchangeName(), FANOUT, true, false, args);
-                    String businessQueueName = rabbitMqConfig.serviceQueueName() + "-business";
-                    AMQP.Queue.DeclareOk declareOk = channel.queueDeclare(businessQueueName, true, false, false, args);
-
-                    int consumerCount = declareOk.getConsumerCount();
-                    int messageCount = declareOk.getMessageCount();
-
-                    channel.queueBind(businessQueueName, rabbitMqConfig.businessExchangeName(), "");
-
-                    channel.exchangeDeclare(rabbitMqConfig.broadcastExchangeName(), FANOUT, true, false, args);
-                    channel.exchangeDeclare(microServiceConfig.name(), FANOUT, false, false, args);
-                    channel.exchangeBind(microServiceConfig.name(), rabbitMqConfig.broadcastExchangeName(), "");
-
-
-                    channel.queueDeclare(localQueueName, false, true, true, args);
-                    channel.queueBind(localQueueName, microServiceConfig.name(), "");
-
-                    serviceBroadcastExhangeName = microServiceConfig.name() + "-broadcast";
-                    channel.exchangeDeclare(serviceBroadcastExhangeName, FANOUT, false, false, args);
-                    channel.queueBind(localQueueName, serviceBroadcastExhangeName, "");
-
-
-                    eventConsumer = new EventConsumer(channel, rabbitMqConfig.serviceQueueName(), eventListeners);
-                    localEventConsumer = new EventConsumer(channel, localQueueName);
-
-                    channel.basicConsume(localQueueName, false, localEventConsumer);
-                    channel.basicConsume(businessQueueName, false, eventConsumer);
-
-
-                    EventBuilder eventBuilder = eventBuilderFactory.create();
-                    eventBuilder.setCategory(Event.Category.TECHNICAL)
-                            .setEventType(Event.SERVICE_CONNECT_TYPE)
-                            .setPayload(serviceInfo);
-                    broadcast(eventBuilder.build());
-
-                    LOGGER.info("Connected to RabbitMq {}:{} on queue '{}' which contain {} message and get {} consumer(s) already connected.",
-                            rabbitMqConfig.host(),
-                            rabbitMqConfig.port(),
-                            rabbitMqConfig.serviceQueueName(),
-                            messageCount,
-                            consumerCount
-                    );
-                } catch (IOException e) {
-                    throw new IllegalStateException("Unable to provide a valid channel or to connect to queue " + rabbitMqConfig.serviceQueueName() + ".", e);
-                }
             }
-        } else {
-            LOGGER.warn("Connect invoked but already connected. Ignore the request.");
         }
+    }
 
+    public boolean isConnected() {
+        synchronized (monitor) {
+            return connection != null && connection.isOpen();
+        }
+    }
+
+    private void initConnection() throws IOException {
+
+        connection = connectionFactory.createFromRabbitMqConfig(rabbitMqConfig);
+
+        //  Configure default Exchange, service queue, etc...
+        Channel channel = connection.createChannel();
+        Channel localChannel = connection.createChannel();
+        Channel publishChannel = connection.createChannel();
+
+        channel.exchangeDeclare(rabbitMqConfig.deadLetterExchangeName(), FANOUT, true, false, null);
+        channel.queueDeclare(rabbitMqConfig.deadLetterQueueName(), true, false, false, null);
+        channel.queueBind(rabbitMqConfig.deadLetterQueueName(), rabbitMqConfig.deadLetterExchangeName(), "");
+
+        Map<String, Object> args = new HashMap<>();
+        args.put(X_DEAD_LETTER_EXCHANGE, rabbitMqConfig.deadLetterExchangeName());
+
+
+        channel.exchangeDeclare(rabbitMqConfig.businessExchangeName(), FANOUT, true, false, args);
+        AMQP.Queue.DeclareOk declareOk = channel.queueDeclare(businessQueueName, true, false, false, args);
+
+        int consumerCount = declareOk.getConsumerCount();
+        int messageCount = declareOk.getMessageCount();
+
+        channel.queueBind(businessQueueName, rabbitMqConfig.businessExchangeName(), "");
+
+        channel.exchangeDeclare(rabbitMqConfig.broadcastExchangeName(), FANOUT, true, false, args);
+        channel.exchangeDeclare(microServiceConfig.name(), FANOUT, false, false, args);
+        channel.exchangeBind(microServiceConfig.name(), rabbitMqConfig.broadcastExchangeName(), "");
+
+
+        channel.queueDeclare(localQueueName, false, true, false, args);
+        channel.queueBind(localQueueName, microServiceConfig.name(), "");
+
+        channel.exchangeDeclare(serviceBroadcastExhangeName, FANOUT, false, false, args);
+        channel.queueBind(localQueueName, serviceBroadcastExhangeName, "");
+
+
+        RabbitMqConsumer.RabbitMqListener listener = (channelInner, consumerTag, envelope, properties, payload) -> {
+            Event event = jsonToEventConverter.converter(payload);
+            if (from.equals(event.getFrom())) {
+                LOGGER.debug("We are sender, ignore this message.");
+            } else {
+                String correlationId = event.getCorrelationId();
+                if (StringUtils.isNotBlank(correlationId)) {
+                    if (requests.containsKey(correlationId)) {
+                        requests.get(correlationId).setReply(event);
+                        requests.remove(correlationId);
+                        LOGGER.debug("Receive and remove request for following reply to request with correlation ID : {}\n{}", correlationId, Event.convertToPrettyJson(event));
+                    } else {
+                        LOGGER.debug("Receive a Reply form a Request we don't request [correlationId:{}]:\n{}", correlationId, Event.convertToPrettyJson(event));
+                    }
+                }
+                Map<String, String> custom = event.getCustom();
+                if (custom.containsKey(Event.BROADCAST_FROM_CUSTOM_HEADER) &&
+                        from.equals(custom.get(Event.BROADCAST_FROM_CUSTOM_HEADER))) {
+                    LOGGER.debug("Ignore a broacasted message sent by us.");
+                } else {
+                    for (EventListener eventListener : waitingListeners) {
+                        eventListener.receive(event);
+                    }
+                }
+
+            }
+        };
+
+        Set<String> queues = new HashSet<>();
+        queues.add(localQueueName);
+        consumer = new RabbitMqConsumer(localChannel, queues, listener);
+        queues = new HashSet<>();
+        queues.add(businessQueueName);
+        consumer = new RabbitMqConsumer(channel, queues, listener);
+        producer = new RabbitMqProducer(publishChannel);
+
+
+        EventBuilder eventBuilder = eventBuilderFactory.create();
+        eventBuilder.setCategory(Event.Category.TECHNICAL)
+                .setEventType(Event.SERVICE_CONNECT_TYPE)
+                .setPayload(serviceInfo);
+        broadcast(eventBuilder.build());
+
+        LOGGER.info("Connected to RabbitMq {}:{} on queue '{}' which contain {} message and get {} consumer(s) already connected.",
+                rabbitMqConfig.host(),
+                rabbitMqConfig.port(),
+                rabbitMqConfig.serviceQueueName(),
+                messageCount,
+                consumerCount
+        );
     }
 
     @Override
@@ -182,56 +211,70 @@ public class RabbitMqEventBus implements EventBus {
     @Override
     public void broadcast(Event event) {
         requireNonNull(event, "event must be defined.");
-
-        String message = gson.get().toJson(event);
-
-        sendAndAck(() -> {
-            try {
-                channel.basicPublish(rabbitMqConfig.broadcastExchangeName(), "",
-                        MessageProperties.PERSISTENT_TEXT_PLAIN,
-                        message.getBytes());
-            } catch (IOException e) {
-                LOGGER.error("Unable to send following event :{}", message, e);
-            }
-        });
+        connect();
+        String message = Event.convertToJson(event);
+        try {
+            producer.publish(rabbitMqConfig.broadcastExchangeName(), message, null, null);
+        } catch (Exception e) {
+            LOGGER.error("An error occur while broadcasting following event:\n{}", Event.convertToPrettyJson(event), e);
+        }
     }
 
     @Override
     public void broadcastToSameService(Event event) {
         requireNonNull(event, "event must be defined.");
+        connect();
+
         EventBuilder eventBuilder = new EventBuilder(event);
         eventBuilder.addCustomHeader(Event.BROADCAST_FROM_CUSTOM_HEADER, from);
-        String message = gson.get().toJson(eventBuilder.build());
-        sendAndAck(() -> {
-            try {
-                channel.basicPublish(serviceBroadcastExhangeName, "",
-                        MessageProperties.PERSISTENT_TEXT_PLAIN,
-                        message.getBytes());
-            } catch (IOException e) {
-                LOGGER.error("Unable to send following event :{}", message, e);
-            }
-        });
+        Event eventToSend = eventBuilder.build();
+        String message = Event.convertToJson(eventToSend);
+        try {
+            producer.publish(serviceBroadcastExhangeName, message, null, null);
+        } catch (Exception e) {
+            LOGGER.error("An error occur while broadcasting following event:\n{}", Event.convertToPrettyJson(eventToSend), e);
+        }
     }
 
     @Override
     public void send(Event event) {
         requireNonNull(event, "event must be defined.");
-        sendAndAck(() -> publish(event));
+        connect();
+        String message = Event.convertToJson(event);
+        try {
+            producer.publish(rabbitMqConfig.businessExchangeName(), message, null, null);
+        } catch (Exception e) {
+            LOGGER.error("Unable to send event:\n{}", Event.convertToPrettyJson(event), e);
+        }
     }
 
     @Override
-    public Event request(Event event, int timeout, TimeUnit timeUnit) throws InterruptedException {
-        requireNonNull(event, "event must be defined.");
+    public void send(Set<Event> events) {
+        requireNonNull(events, "events must be defined.");
+        connect();
+        List<String> messages = events.stream().map(Event::convertToJson).collect(Collectors.toList());
+        try {
+            producer.publish(rabbitMqConfig.businessExchangeName(), messages, null, null);
+        } catch (Exception e) {
+            LOGGER.error("Unable to send a list of events.", e);
+        }
+    }
 
-        EventBuilder eventBuilder = new EventBuilder(event);
+    @Override
+    public Event request(Event request, int duration, TimeUnit timeUnit) throws InterruptedException {
+        requireNonNull(request, "event must be defined.");
+        connect();
+
+        EventBuilder eventBuilder = new EventBuilder(request);
         eventBuilder.setReplyTo(localQueueName);
         String correlationId = UUID.randomUUID().toString();
         eventBuilder.setCorrelationId(correlationId);
 
         ReplyEvent replyEvent = new ReplyEvent(correlationId);
+
         addEventRequest(replyEvent);
 
-        String message = gson.get().toJson(eventBuilder.build());
+        String message = Event.convertToJson(eventBuilder.build());
 
         AMQP.BasicProperties props = new AMQP.BasicProperties
                 .Builder()
@@ -240,17 +283,13 @@ public class RabbitMqEventBus implements EventBus {
                 .deliveryMode(MessageProperties.PERSISTENT_TEXT_PLAIN.getDeliveryMode())
                 .build();
 
-        sendAndAck(() -> {
-            try {
-                channel.basicPublish(rabbitMqConfig.businessExchangeName(), "",
-                        props,
-                        message.getBytes());
-            } catch (IOException e) {
-                LOGGER.error("Unable to send following event :{}", message, e);
-            }
-        });
+        try {
+            producer.publish(rabbitMqConfig.businessExchangeName(), message, null, props);
+        } catch (Exception e) {
+            LOGGER.error("Unable to publish request with correlationId {}.", correlationId, e);
+        }
 
-        return replyEvent.getReply(timeout, timeUnit);
+        return replyEvent.getReply(duration, timeUnit);
     }
 
     @Override
@@ -260,9 +299,14 @@ public class RabbitMqEventBus implements EventBus {
         if (StringUtils.isBlank(request.getFrom())) {
             throw new IllegalArgumentException("Unable to reply to a request without from");
         }
+        if (reply.getFrom().equals(from)) {
+            throw new IllegalArgumentException("Unable to reply to myself.");
+        }
         if (StringUtils.isBlank(request.getCorrelationId())) {
             throw new IllegalArgumentException("Unable to reply to a request without correlationId");
         }
+
+        connect();
         EventBuilder eventBuilder = eventBuilderFactory.create();
         eventBuilder.setEvent(reply);
         if (StringUtils.isBlank(reply.getCorrelationId())) {
@@ -276,190 +320,51 @@ public class RabbitMqEventBus implements EventBus {
                 .correlationId(request.getCorrelationId())
                 .deliveryMode(MessageProperties.PERSISTENT_TEXT_PLAIN.getDeliveryMode())
                 .build();
-        String message = gson.get().toJson(eventBuilder.build());
-        sendAndAck(() -> {
-            try {
-                channel.basicPublish("", request.getReplyTo(),
-                        props,
-                        message.getBytes());
-            } catch (IOException e) {
-                LOGGER.error("Unable to send following event :{}", message, e);
-            }
-        });
-    }
-
-    @Override
-    public void send(Set<Event> events) {
-        requireNonNull(events, "events must be defined.");
-        sendAndAck(() -> events.stream().forEach(this::publish));
-    }
-
-    @Override
-    public void disconnect() {
-        if (connection != null) {
-            synchronized (monitor) {
-                try {
-                    channel.close();
-                } catch (IOException | TimeoutException e) {
-                    LOGGER.warn("Unable close channel.", e);
-                }
-                IOUtils.closeQuietly(connection);
-            }
+        Event event = eventBuilder.build();
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Sending following Reply to {}:\n{}", request.getReplyTo(), Event.convertToPrettyJson(event));
         }
+        String message = Event.convertToJson(event);
+        try {
+            producer.publish("", message, request.getReplyTo(), props);
+        } catch (Exception e) {
+            LOGGER.error("Unable to publish reply with correletaionId {} to {}", event.getCorrelationId(), request.getReplyTo(), e);
+        }
+
     }
 
     @Override
     public void addEventListener(EventListener eventListener) {
         requireNonNull(eventListener, "eventListener must be defined.");
-        if (eventConsumer == null) {
-            waitingListeners.add(eventListener);
-        } else {
-            this.eventConsumer.addEventlistener(eventListener);
-        }
+        waitingListeners.add(eventListener);
     }
 
     @Override
     public void removeEvenListener(EventListener eventListener) {
         requireNonNull(eventListener, "eventListener must be defined.");
-        if (eventConsumer == null) {
-            waitingListeners.remove(eventListener);
-        } else {
-            this.eventConsumer.removeEventlistener(eventListener);
+        waitingListeners.remove(eventListener);
+    }
+
+    @Override
+    public void disconnect() {
+        if (isConnected()) {
+            synchronized (monitor) {
+                IOUtils.closeQuietly(connection);
+            }
         }
     }
 
-    protected void addEventRequest(ReplyEvent event) {
+
+    private void addEventRequest(ReplyEvent event) {
         requireNonNull(event, "event must be defined.");
-        if (localEventConsumer != null) {
-            ConcurrentHashMap<String, ReplyEvent> requests = localEventConsumer.requests;
-            long now = System.currentTimeMillis();
-            List<Map.Entry<String, ReplyEvent>> toRemove = requests.entrySet().stream().filter(entry -> entry.getValue().getTimeout() < now).collect(Collectors.toList());
-            toRemove.stream().forEach(entry -> {
-                LOGGER.warn("Unable to get reply before timeout for following event request, removing it : {}", entry.getKey());
-                requests.remove(entry.getKey());
-            });
-            requests.put(event.getCorrelationId(), event);
-        }
+        connect();
+        long now = System.currentTimeMillis();
+        List<Map.Entry<String, ReplyEvent>> toRemove = requests.entrySet().stream().filter(entry -> entry.getValue().getTimeout() < now).collect(Collectors.toList());
+        toRemove.stream().forEach(entry -> {
+            LOGGER.warn("Unable to get reply before timeout for following event request, removing it : {}", entry.getKey());
+            requests.remove(entry.getKey());
+        });
+        requests.put(event.getCorrelationId(), event);
+        LOGGER.debug("Correlation Request added :{}", event.getCorrelationId());
     }
-
-
-    class EventConsumer extends DefaultConsumer {
-
-        protected final Set<EventListener> eventListeners = new HashSet<>();
-
-        private final String queueName;
-
-        private final ConcurrentHashMap<String, ReplyEvent> requests = new ConcurrentHashMap<>();
-
-        private EventConsumer(Channel channel, String queueName, Set<EventListener> eventListeners) {
-            super(channel);
-            this.queueName = queueName;
-            this.eventListeners.addAll(eventListeners);
-        }
-
-        private EventConsumer(Channel channel, String queueName) {
-            this(channel, queueName, new HashSet<>());
-        }
-
-        @Override
-        public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
-
-
-            String message = new String(body, UTF_8);
-            Event eventInit = jsonToEventConverter.converter(message);
-            Try.of(() -> {
-                if (LOGGER.isDebugEnabled() && !LOGGER.isTraceEnabled()) {
-                    Gson prettyGson = new GsonBuilder().registerTypeAdapter(Event.class, new GsonEventSerializer()).setPrettyPrinting().create();
-                    LOGGER.debug("EventBus receive:\n{}", prettyGson.toJson(eventInit));
-                }
-
-
-                Iterator<EventListener> eventListenerIterator = eventListeners.iterator();
-                eventListenerIterator.forEachRemaining(eventListener -> {
-                    Try<Boolean> receive = eventListener.receive(eventInit);
-                    receive.get();
-                });
-                return eventInit;
-            }).andThenTry(event -> {
-                channel.basicAck(envelope.getDeliveryTag(), false);
-            }).onFailure(e -> {
-                LOGGER.warn("Unable to process message : {}", message, e);
-                if (eventInit.getRedeliveryCount() > rabbitMqConfig.maxRedeliveryMessageCount()) {
-                    try {
-                        channel.basicReject(envelope.getDeliveryTag(), false);
-                        LOGGER.warn("Unqueue following Event:\n{}", Event.convertToPrettyJson(eventInit));
-                    } catch (IOException e1) {
-                        e1.printStackTrace();
-                    }
-                } else {
-                    EventBuilder eventBuilder = new EventBuilder(eventInit);
-                    eventBuilder.incrementRedeliveryCount();
-                    Event newEvent = eventBuilder.build();
-                    RabbitMqEventBus.this.send(newEvent);
-                    try {
-                        channel.basicAck(envelope.getDeliveryTag(), false);
-                        LOGGER.warn("Push with redelivery count message incremented:\n{}", Event.convertToPrettyJson(newEvent));
-                    } catch (IOException e1) {
-                        processAckException(message, true, e, e1);
-                    }
-                }
-            }).onSuccess(event -> {
-
-                if (!event.getFrom().equals(from) &&
-                        StringUtils.isNotBlank(event.getCorrelationId()) &&
-                        requests.containsKey(event.getCorrelationId())) {
-                    ReplyEvent replyEvent = requests.get(event.getCorrelationId());
-                    requests.remove(event.getCorrelationId());
-                    replyEvent.setReply(event);
-                }
-            });
-        }
-
-        private void processAckException(String message, boolean ack, Throwable e, IOException e1) {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            e.printStackTrace(pw);
-            LOGGER.error("Unable to {} message '{}' with error: {}", ack ? "ack" : "unack", message, sw.toString(), e1);
-        }
-
-        public void addEventlistener(EventListener eventListener) {
-            eventListeners.add(eventListener);
-        }
-
-        public void removeEventlistener(EventListener eventListener) {
-            eventListeners.remove(eventListener);
-        }
-
-    }
-
-    private void publish(Event event) {
-        String message = gson.get().toJson(event);
-
-        try {
-            channel.basicPublish(rabbitMqConfig.businessExchangeName(), "",
-                    MessageProperties.PERSISTENT_TEXT_PLAIN,
-                    message.getBytes());
-
-        } catch (IOException e) {
-            LOGGER.error("Unable to send following event :{}", message, e);
-        }
-    }
-
-    private void sendAndAck(AckMessageSentTemplate callback) {
-        lock.lock();
-        try {
-            channel.confirmSelect();
-            callback.send();
-            channel.waitForConfirms();
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException("Unable to send and ack an event.", e);
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    interface AckMessageSentTemplate {
-        void send();
-    }
-
 }
