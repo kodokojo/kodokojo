@@ -68,7 +68,9 @@ public abstract class AbstractRedisStore implements ApplicationLifeCycleListener
     protected abstract String getGenerateIdKey();
 
     protected JedisPool createJedisPool(String host, int port) {
-        return new JedisPool(new JedisPoolConfig(), host, port);
+        JedisPoolConfig poolConfig = new JedisPoolConfig();
+        poolConfig.setTestOnBorrow(true);
+        return new JedisPool(poolConfig, host, port);
     }
 
     @Override

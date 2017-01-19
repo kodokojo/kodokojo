@@ -29,9 +29,12 @@ public class BrickStateChanged implements Serializable {
 
     private final String brickName;
 
+    private final String newState;
+
     private final String oldState;
 
-    public BrickStateChanged(String projectConfigurationId, String stackName, String brickName, String oldState) {
+
+    public BrickStateChanged(String projectConfigurationId, String stackName, String brickName, String newState, String oldState) {
         if (isBlank(projectConfigurationId)) {
             throw new IllegalArgumentException("projectConfigurationId must be defined.");
         }
@@ -41,9 +44,13 @@ public class BrickStateChanged implements Serializable {
         if (isBlank(brickName)) {
             throw new IllegalArgumentException("brickName must be defined.");
         }
+        if (isBlank(newState)) {
+            throw new IllegalArgumentException("newState must be defined.");
+        }
         this.projectConfigurationId = projectConfigurationId;
         this.stackName = stackName;
         this.brickName = brickName;
+        this.newState = newState;
         this.oldState = oldState;
     }
 
@@ -57,6 +64,10 @@ public class BrickStateChanged implements Serializable {
 
     public String getBrickName() {
         return brickName;
+    }
+
+    public String getNewState() {
+        return newState;
     }
 
     public String getOldState() {

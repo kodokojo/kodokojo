@@ -40,4 +40,5 @@ public interface ApplicationConfig extends PropertyConfig {
     @Key(value = "user.creation.waitinglist", defaultValue = "false")
     Boolean userCreationRoutedInWaitingList();
 
+
 }

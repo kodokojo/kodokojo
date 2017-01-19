@@ -317,7 +317,8 @@ public class RabbitMqEventBus implements EventBus {
             throw new IllegalArgumentException("Unable to reply to a request without from");
         }
         if (reply.getFrom().equals(from)) {
-            throw new IllegalArgumentException("Unable to reply to myself.");
+            //throw new IllegalArgumentException("Unable to reply to myself.");
+            LOGGER.warn("You reply to yourself throw rabbit mq");
         }
         if (StringUtils.isBlank(request.getCorrelationId())) {
             throw new IllegalArgumentException("Unable to reply to a request without correlationId");

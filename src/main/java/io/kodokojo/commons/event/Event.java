@@ -293,11 +293,12 @@ public class Event implements Serializable {
     public static final String PROJECT_CREATION_REQUEST = "project_creation_request";
     public static final String PROJECT_CREATION_REPLY = "project_creation_reply";
     public static final String STACK_STARTED = "stack_started";
-    public static final String BRICK_STARTING = "brick_starting";
-    public static final String BRICK_CONFIGURING = "brick_configuring";
-    public static final String BRICK_RUNNING = "brick_running";
-    public static final String BRICK_ONFAILURE = "brick_onfailure";
-    public static final String BRICK_STOPPED = "brick_stopped";
+    public static final String BRICK_STATE_UPDATE = "brick_state_update";
+    public static final String BRICK_STARTING = "starting";
+    public static final String BRICK_CONFIGURING = "configuring";
+    public static final String BRICK_RUNNING = "running";
+    public static final String BRICK_ONFAILURE = "onfailure";
+    public static final String BRICK_STOPPED = "stopped";
     public static final String ERROR_THROW_FROM = "error_throw_from";
 
 }
