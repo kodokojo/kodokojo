@@ -58,7 +58,7 @@ backend ui-cluster-http
   mode    http
   redirect scheme https if !{ ssl_fc }
   balance leastconn
-{{range .Projects}}{{$projectName := .ProjectName}}{{if .IsReady}}{{range .HaProxyHTTPEntries}}{{if eq "ui" .EntryName}}
+{{range .Projects}}{{$projectConfigurationId := .ProjectName}}{{if .IsReady}}{{range .HaProxyHTTPEntries}}{{if eq "ui" .EntryName}}
 {{range $index,$backend := .Backends}}  server ui{{$index}} {{$backend.BackEndHost}}:{{$backend.BackEndPort}} check
 {{end}}
 {{end}}{{end}}{{end}}{{end}}
@@ -81,7 +81,7 @@ backend back-cluster-ws
   ## websocket health checking
   option httpchk GET / HTTP/1.1\r\nHost:\ lb.kodokojo.io\r\nConnection:\ Upgrade\r\nUpgrade:\ websocket\r\nSec-WebSocket-Key:\ haproxy\r\nSec-WebSocket-Version:\ 13\r\nSec-WebSocket-Protocol:\ echo-protocol
   http-check expect status 101
-{{range .Projects}}{{$projectName := .ProjectName}}{{if .IsReady}}{{range .HaProxyHTTPEntries}}{{if eq "back" .EntryName}}
+{{range .Projects}}{{$projectConfigurationId := .ProjectName}}{{if .IsReady}}{{range .HaProxyHTTPEntries}}{{if eq "back" .EntryName}}
 {{range $index,$backend := .Backends}}  server back{{$index}} {{$backend.BackEndHost}}:{{$backend.BackEndPort}} maxconn 30000 weight 10 cookie back{{$index}} check
 {{end}}
 {{end}}{{end}}{{end}}{{end}}

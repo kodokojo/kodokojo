@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Kodo Kojo - Software factory done right
-# Copyright © 2016 Kodo Kojo (infos@kodokojo.io)
+# Copyright © 2017 Kodo Kojo (infos@kodokojo.io)
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,8 +33,8 @@ if [[ $rc != 0 ]]; then
   exit $rc
 fi
 
-mkdir -p target/docker | true
-cp src/main/docker/local/Dockerfile target/docker/
-artifact=$(ls target | egrep kodokojo-.*-runnable.jar)
-cp target/$artifact target/docker/kodokojo.jar
-docker build -t="kodokojo/kodokojo" target/docker/
+#mkdir -p target/docker | true
+#cp src/main/docker/local/Dockerfile target/docker/
+#artifact=$(ls target | egrep kodokojo-.*-runnable.jar)
+#cp target/$artifact target/docker/kodokojo.jar
+#docker build -t="kodokojo/kodokojo" target/docker/
