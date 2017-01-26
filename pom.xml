@@ -416,10 +416,10 @@
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
         </repository>
-        <repository>
+        <!--repository>
             <id>nexus-kodokojo.kodokojo.io</id>
             <url>https://nexus-kodokojo.kodokojo.io</url>
-        </repository>
+        </repository -->
     </repositories>
     <distributionManagement>
         <repository>

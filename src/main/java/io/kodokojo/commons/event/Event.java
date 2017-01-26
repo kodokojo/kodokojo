@@ -292,8 +292,12 @@ public class Event implements Serializable {
     public static final String PROJECTCONFIG_STARTED = "projectconfig_started";
     public static final String PROJECT_CREATION_REQUEST = "project_creation_request";
     public static final String PROJECT_CREATION_REPLY = "project_creation_reply";
+    public static final String USER_ADD_TO_PROJECT = "user_add_projectconfig";
+    public static final String USER_REMOVE_TO_PROJECT = "user_remove_projectconfig";
     public static final String STACK_STARTED = "stack_started";
     public static final String BRICK_STATE_UPDATE = "brick_state_update";
+    public static final String BRICK_PROPERTY_UPDATE_REQUEST = "brick_property_update_request";
+    public static final String BRICK_PROPERTY_UPDATE_REPLY = "brick_property_update_reply";
     public static final String BRICK_STARTING = "starting";
     public static final String BRICK_CONFIGURING = "configuring";
     public static final String BRICK_RUNNING = "running";

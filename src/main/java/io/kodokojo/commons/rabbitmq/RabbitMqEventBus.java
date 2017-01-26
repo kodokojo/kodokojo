@@ -160,7 +160,6 @@ public class RabbitMqEventBus implements EventBus {
         channel.exchangeDeclare(microServiceConfig.name(), FANOUT, false, false, args);
         channel.exchangeBind(microServiceConfig.name(), rabbitMqConfig.broadcastExchangeName(), "");
 
-
         channel.queueDeclare(localQueueName, false, true, false, args);
         channel.queueBind(localQueueName, microServiceConfig.name(), "");
 
@@ -378,7 +377,7 @@ public class RabbitMqEventBus implements EventBus {
         connect();
         long now = System.currentTimeMillis();
         List<Map.Entry<String, ReplyEvent>> toRemove = requests.entrySet().stream().filter(entry -> entry.getValue().getTimeout() < now).collect(Collectors.toList());
-        toRemove.stream().forEach(entry -> {
+        toRemove.forEach(entry -> {
             LOGGER.warn("Unable to get reply before timeout for following event request, removing it : {}", entry.getKey());
             requests.remove(entry.getKey());
         });

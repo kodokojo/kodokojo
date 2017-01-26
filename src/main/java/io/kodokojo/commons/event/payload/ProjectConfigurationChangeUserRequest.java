@@ -17,7 +17,9 @@
  */
 package io.kodokojo.commons.event.payload;
 
+import io.kodokojo.commons.event.Event;
 import io.kodokojo.commons.model.User;
+import io.kodokojo.commons.service.actor.message.EventBusOriginMessage;
 
 import java.io.Serializable;
 import java.util.List;
@@ -25,7 +27,7 @@ import java.util.List;
 import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang.StringUtils.isBlank;
 
-public class ProjectConfigurationChangeUserRequest implements Serializable {
+public class ProjectConfigurationChangeUserRequest implements EventBusOriginMessage, Serializable {
 
     private final TypeChange typeChange;
 
@@ -35,7 +37,9 @@ public class ProjectConfigurationChangeUserRequest implements Serializable {
 
     private final User requester;
 
-    public ProjectConfigurationChangeUserRequest(User requester, io.kodokojo.commons.event.payload.TypeChange typeChange, String projectConfigurationId, List<String> userIdentifiers) {
+    private Event request;
+
+    public ProjectConfigurationChangeUserRequest(User requester, Event request,  io.kodokojo.commons.event.payload.TypeChange typeChange, String projectConfigurationId, List<String> userIdentifiers) {
         requireNonNull(requester, "requester must be defined.");
         requireNonNull(typeChange, "typeChange must be defined.");
         if (isBlank(projectConfigurationId)) {
@@ -45,9 +49,17 @@ public class ProjectConfigurationChangeUserRequest implements Serializable {
             throw new IllegalArgumentException("userIdentifiers must be defined.");
         }
         this.requester = requester;
+        this.request = request;
         this.typeChange = typeChange;
         this.projectConfigurationId = projectConfigurationId;
         this.userIdentifiers = userIdentifiers;
+    }
+    public ProjectConfigurationChangeUserRequest(User requester,  io.kodokojo.commons.event.payload.TypeChange typeChange, String projectConfigurationId, List<String> userIdentifiers) {
+        this(requester, null, typeChange, projectConfigurationId, userIdentifiers);
+    }
+
+    public void setRequest(Event request) {
+        this.request = request;
     }
 
     public TypeChange getTypeChange() {
@@ -64,5 +76,10 @@ public class ProjectConfigurationChangeUserRequest implements Serializable {
 
     public User getRequester() {
         return requester;
+    }
+
+    @Override
+    public Event originalEvent() {
+        return request;
     }
 }
