@@ -101,9 +101,7 @@ public class RedisProjectStore extends AbstractRedisStore implements ProjectStor
 
     @Override
     public void updateProjectConfiguration(ProjectConfigurationStoreModel projectConfiguration) {
-        if (projectConfiguration == null) {
-            throw new IllegalArgumentException("projectConfiguration must be defined.");
-        }
+        requireNonNull(projectConfiguration, "projectConfiguration must be defined.");
         writeProjectConfiguration(projectConfiguration);
     }
 
@@ -139,8 +137,13 @@ public class RedisProjectStore extends AbstractRedisStore implements ProjectStor
                 jedis.set(RedisUtils.aggregateKey(PROJECTCONFIG_TO_PROJECT_PREFIX, projectConfigurationIdentifier), identifier.getBytes());
                 return identifier;
             }
+        } else {
+            try (Jedis jedis = pool.getResource()) {
+                byte[] projectKey = RedisUtils.aggregateKey(PROJECT_PREFIX, project.getName());
+                return jedis.exists(projectKey) ? new String(jedis.get(projectKey)) : null;
+            }
         }
-        return null;
+
     }
 
     @Override

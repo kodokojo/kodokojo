@@ -92,7 +92,8 @@ public class RedisEntityStore extends AbstractRedisStore implements EntityStore 
             throw new IllegalArgumentException("entity must be defined.");
         }
         if (StringUtils.isNotBlank(entity.getIdentifier())) {
-            throw new IllegalArgumentException("entity had already an id.");
+            LOGGER.warn("Try to add entity {} which have already an ID ({}), we don't insert it in redis.", entity.getName(), entity.getIdentifier());
+            return entity.getIdentifier();
         }
         try (Jedis jedis = pool.getResource()) {
             String id = generateId();
