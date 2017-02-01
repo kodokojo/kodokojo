@@ -1,17 +1,17 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2017 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -78,7 +78,7 @@ public class Repository implements UserRepository, ProjectRepository, EntityRepo
         if (isBlank(entityIdentifier)) {
             throw new IllegalArgumentException("entityIdentifier must be defined.");
         }
-        entityStore.addUserToEntity(userIdentifier,entityIdentifier);
+        entityStore.addUserToEntity(userIdentifier, entityIdentifier);
     }
 
     @Override
@@ -94,7 +94,7 @@ public class Repository implements UserRepository, ProjectRepository, EntityRepo
             return convertToProjectConfiguration(model);
         }).collect(Collectors.toList());
 
-        return new Entity(entityStoreModel.getIdentifier(), entityStoreModel.getName(), entityStoreModel.isConcrete(),projectConfiguration, admins, users);
+        return new Entity(entityStoreModel.getIdentifier(), entityStoreModel.getName(), entityStoreModel.isConcrete(), projectConfiguration, admins, users);
     }
 
     @Override
@@ -121,7 +121,7 @@ public class Repository implements UserRepository, ProjectRepository, EntityRepo
         if (isBlank(projectConfigurationIdentifier)) {
             throw new IllegalArgumentException("projectConfigurationIdentifier must be defined.");
         }
-        return projectStore.addProject(project,  projectConfigurationIdentifier);
+        return projectStore.addProject(project, projectConfigurationIdentifier);
     }
 
     @Override
@@ -152,6 +152,19 @@ public class Repository implements UserRepository, ProjectRepository, EntityRepo
         return convertToProjectConfiguration(projectConfiguration);
     }
 
+
+    @Override
+    public ProjectConfiguration getProjectConfigurationByName(String name) {
+        if (isBlank(name)) {
+            throw new IllegalArgumentException("name must be defined.");
+        }
+        ProjectConfigurationStoreModel projectConfigurationStoreModel = projectStore.getProjectConfigurationByName(name);
+        if (projectConfigurationStoreModel == null) {
+            return null;
+        }
+        return convertToProjectConfiguration(projectConfigurationStoreModel);
+    }
+
     @Override
     public Project getProjectByIdentifier(String identifier) {
         if (isBlank(identifier)) {
@@ -159,6 +172,7 @@ public class Repository implements UserRepository, ProjectRepository, EntityRepo
         }
         return projectStore.getProjectByIdentifier(identifier);
     }
+
 
     @Override
     public Set<String> getProjectConfigIdsByUserIdentifier(String userIdentifier) {
@@ -203,7 +217,7 @@ public class Repository implements UserRepository, ProjectRepository, EntityRepo
     }
 
     @Override
-    public boolean addUserToWaitingList( UserInWaitingList userInWaitingList ) {
+    public boolean addUserToWaitingList(UserInWaitingList userInWaitingList) {
         requireNonNull(userInWaitingList, "userInWaitingList must be defined.");
         return userRepository.addUserToWaitingList(userInWaitingList);
     }
@@ -245,6 +259,6 @@ public class Repository implements UserRepository, ProjectRepository, EntityRepo
                 userFetcher::getUserByIdentifier
         ).collect(Collectors.toList());
         List<User> usersProjectConfig = model.getUsers().stream().map(userFetcher::getUserByIdentifier).collect(Collectors.toList());
-        return new ProjectConfiguration(model.getEntityIdentifier(), model.getIdentifier(), model.getName(), userService, adminsProjectConfig,model.getStackConfigurations(),usersProjectConfig);
+        return new ProjectConfiguration(model.getEntityIdentifier(), model.getIdentifier(), model.getName(), userService, adminsProjectConfig, model.getStackConfigurations(), usersProjectConfig);
     }
 }
