@@ -18,6 +18,7 @@
 package io.kodokojo.commons.service.repository.store;
 
 import io.kodokojo.commons.model.Project;
+import io.kodokojo.commons.model.ProjectConfiguration;
 
 import java.util.Set;
 
@@ -26,6 +27,8 @@ public interface ProjectStore {
     ProjectConfigurationStoreModel getProjectConfigurationById(String identifier);
 
     Project getProjectByIdentifier(String identifier);
+
+    ProjectConfigurationStoreModel getProjectConfigurationByName(String name);
 
     Set<String> getProjectConfigIdsByUserIdentifier(String userIdentifier);
 

@@ -28,6 +28,8 @@ public interface ProjectFetcher {
 
     Project getProjectByIdentifier(String identifier);
 
+    ProjectConfiguration getProjectConfigurationByName(String name);
+
     Set<String> getProjectConfigIdsByUserIdentifier(String userIdentifier);
 
     String getProjectIdByProjectConfigurationId(String projectConfigurationId);

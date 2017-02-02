@@ -19,6 +19,7 @@ package io.kodokojo.commons.service.redis;
 
 import io.kodokojo.commons.model.Project;
 import io.kodokojo.commons.RSAUtils;
+import io.kodokojo.commons.model.ProjectConfiguration;
 import io.kodokojo.commons.service.repository.store.ProjectConfigurationStoreModel;
 import io.kodokojo.commons.service.repository.store.ProjectStore;
 import org.apache.commons.lang.StringUtils;
@@ -54,6 +55,7 @@ public class RedisProjectStore extends AbstractRedisStore implements ProjectStor
 
     private static final Pattern PROJECT_NAME_PATTERN = Pattern.compile("([a-zA-Z0-9\\-_]){4,20}");
 
+    private static final String PROJECTCONFIG_NAME_TO_PROJECT_IDENTIFIER = "projectConfigurationName/";
 
     public RedisProjectStore(Key key, String host, int port) {
         super(key, host, port);
@@ -203,6 +205,21 @@ public class RedisProjectStore extends AbstractRedisStore implements ProjectStor
     }
 
     @Override
+    public ProjectConfigurationStoreModel getProjectConfigurationByName(String name) {
+        if (isBlank(name)) {
+            throw new IllegalArgumentException("name must be defined.");
+        }
+        try (Jedis jedis = pool.getResource()) {
+            byte[] aggregateKey = RedisUtils.aggregateKey(PROJECTCONFIG_NAME_TO_PROJECT_IDENTIFIER, name);
+            if (jedis.exists(aggregateKey)) {
+                String projectConfigurationIdentifier = new String(jedis.get(aggregateKey));
+                return getProjectConfigurationById(projectConfigurationIdentifier);
+            }
+        }
+        return null;
+    }
+
+    @Override
     public Project getProjectByIdentifier(String identifier) {
         if (isBlank(identifier)) {
             throw new IllegalArgumentException("identifier must be defined.");
@@ -227,6 +244,7 @@ public class RedisProjectStore extends AbstractRedisStore implements ProjectStor
             jedis.set(RedisUtils.aggregateKey(PROJECTCONFIGURATION_PREFIX, identifier), encryptedObject);
             writeUserToProjectConfigurationId(jedis, toInsert.getAdmins(), toInsert.getIdentifier());
             writeUserToProjectConfigurationId(jedis, toInsert.getUsers(), toInsert.getIdentifier());
+            jedis.set(RedisUtils.aggregateKey(PROJECTCONFIG_NAME_TO_PROJECT_IDENTIFIER, projectConfiguration.getName()), identifier.getBytes());
             return identifier;
         }
     }
