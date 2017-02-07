@@ -42,8 +42,8 @@ under the License.
 
     <mirrors>
         <mirror>
-            <id>local</id>
-            <mirrorOf>local</mirrorOf>
+            <id>concourse</id>
+            <mirrorOf>concourse</mirrorOf>
             <name>Human Readable Name for this Mirror.</name>
             <url>http://192.168.99.100:8081/repository/maven-central/</url>
         </mirror>
