@@ -43,7 +43,7 @@ under the License.
     <mirrors>
         <mirror>
             <id>concourse</id>
-            <mirrorOf>concourse</mirrorOf>
+            <mirrorOf>*</mirrorOf>
             <name>Human Readable Name for this Mirror.</name>
             <url>http://192.168.99.100:8081/repository/maven-public/</url>
         </mirror>
