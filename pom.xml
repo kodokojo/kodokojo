@@ -419,22 +419,22 @@
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
         </repository>
-        <!--repository>
-            <id>nexus-kodokojo.kodokojo.io</id>
+        <repository>
+            <id>nexus.kodokojo.io</id>
             <url>https://nexus-kodokojo.kodokojo.io</url>
-        </repository -->
+        </repository>
     </repositories>
     <distributionManagement>
         <repository>
             <id>kodokojo-snapshots</id>
             <name>kodokojo-snapshots</name>
-            <url>https://nexus-kodokojo.kodokojo.io/content/repositories/snapshots/</url>
+            <url>https://nexus.kodokojo.io/content/repositories/snapshots/</url>
         </repository>
 
         <snapshotRepository>
             <id>kodokojo-releases</id>
             <name>kodokojo-releases</name>
-            <url>https://nexus-kodokojo.kodokojo.io/content/repositories/snapshots/</url>
+            <url>https://nexus.kodokojo.io/content/repositories/snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
     <licenses>
