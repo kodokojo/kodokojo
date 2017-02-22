@@ -428,13 +428,13 @@
         <repository>
             <id>kodokojo-snapshots</id>
             <name>kodokojo-snapshots</name>
-            <url>https://nexus.kodokojo.io/content/repositories/snapshots/</url>
+            <url>https://nexus.kodokojo.io/repository/maven-releases/</url>
         </repository>
 
         <snapshotRepository>
             <id>kodokojo-releases</id>
             <name>kodokojo-releases</name>
-            <url>https://nexus.kodokojo.io/content/repositories/snapshots/</url>
+            <url>https://nexus.kodokojo.io/repository/maven-snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
     <licenses>
