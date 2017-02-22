@@ -57,8 +57,8 @@ public class RedisProjectStore extends AbstractRedisStore implements ProjectStor
 
     private static final String PROJECTCONFIG_NAME_TO_PROJECT_IDENTIFIER = "projectConfigurationName/";
 
-    public RedisProjectStore(Key key, String host, int port) {
-        super(key, host, port);
+    public RedisProjectStore(Key key, String host, int port, String password) {
+        super(key, host, port, password);
     }
 
     @Override

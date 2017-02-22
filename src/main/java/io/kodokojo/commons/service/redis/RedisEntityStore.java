@@ -45,8 +45,8 @@ public class RedisEntityStore extends AbstractRedisStore implements EntityStore 
     public static final String PROJECT_CONFIGS_KEY = "/projectConfigs";
 
     @Inject
-    public RedisEntityStore(Key key, String host, int port) {
-        super(key, host, port);
+    public RedisEntityStore(Key key, String host, int port, String password) {
+        super(key, host, port, password);
     }
 
     @Override

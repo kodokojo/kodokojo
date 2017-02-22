@@ -26,10 +26,15 @@ public interface RedisConfig extends PropertyConfig {
 
     String REDIS_PORT = "redis.port";
 
+    String REDIS_PASSWORD = "redis.password";
+
     @Key(value = REDIS_HOST, defaultValue = "redis")
     String host();
 
     @Key(value = REDIS_PORT, defaultValue = "6379")
     Integer port();
+
+    @Key(value = REDIS_PASSWORD)
+    String password();
 
 }

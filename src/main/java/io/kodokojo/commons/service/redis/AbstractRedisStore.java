@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
+import redis.clients.jedis.Protocol;
 
 import java.math.BigInteger;
 import java.security.Key;
@@ -44,7 +45,7 @@ public abstract class AbstractRedisStore implements ApplicationLifeCycleListener
 
     protected final MessageDigest messageDigest;
 
-    public AbstractRedisStore(Key key, String host, int port) {
+    public AbstractRedisStore(Key key, String host, int port, String password) {
         if (key == null) {
             throw new IllegalArgumentException("key must be defined.");
         }
@@ -52,7 +53,7 @@ public abstract class AbstractRedisStore implements ApplicationLifeCycleListener
             throw new IllegalArgumentException("host must be defined.");
         }
         this.key = key;
-        pool = createJedisPool(host, port);
+        pool = createJedisPool(host, port, password);
         try {
             messageDigest = MessageDigest.getInstance("SHA-1");
         } catch (NoSuchAlgorithmException e) {
@@ -67,10 +68,11 @@ public abstract class AbstractRedisStore implements ApplicationLifeCycleListener
 
     protected abstract String getGenerateIdKey();
 
-    protected JedisPool createJedisPool(String host, int port) {
+    protected JedisPool createJedisPool(String host, int port, String password) {
         JedisPoolConfig poolConfig = new JedisPoolConfig();
         poolConfig.setTestOnBorrow(true);
-        return new JedisPool(poolConfig, host, port);
+
+        return new JedisPool(poolConfig, host, port, Protocol.DEFAULT_TIMEOUT, password);
     }
 
     @Override

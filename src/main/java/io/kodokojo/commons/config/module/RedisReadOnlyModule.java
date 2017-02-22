@@ -45,7 +45,7 @@ public class RedisReadOnlyModule extends AbstractModule {
     @Provides
     @Singleton
     Repository provideRepository(EntityStore entityStore, ProjectStore projectStore, @Named("securityKey")SecretKey secretKey, RedisConfig redisConfig, ApplicationLifeCycleManager applicationLifeCycleManager) {
-        RedisUserRepository redisUserManager = new RedisUserRepository(secretKey, redisConfig.host(), redisConfig.port());
+        RedisUserRepository redisUserManager = new RedisUserRepository(secretKey, redisConfig.host(), redisConfig.port(), redisConfig.password());
         applicationLifeCycleManager.addService(redisUserManager);
         return new Repository(redisUserManager,redisUserManager, entityStore, projectStore);
     }
@@ -53,7 +53,7 @@ public class RedisReadOnlyModule extends AbstractModule {
     @Provides
     @Singleton
     UserFetcher provideUserRepository( @Named("securityKey")SecretKey secretKey, RedisConfig redisConfig, ApplicationLifeCycleManager applicationLifeCycleManager) {
-        RedisUserRepository redisUserManager = new RedisUserRepository(secretKey, redisConfig.host(), redisConfig.port());
+        RedisUserRepository redisUserManager = new RedisUserRepository(secretKey, redisConfig.host(), redisConfig.port(), redisConfig.password());
         applicationLifeCycleManager.addService(redisUserManager);
         return redisUserManager;
     }
@@ -62,7 +62,7 @@ public class RedisReadOnlyModule extends AbstractModule {
     @Provides
     @Singleton
     EntityStore provideEntityStore(@Named("securityKey") SecretKey key, RedisConfig redisConfig, ApplicationLifeCycleManager applicationLifeCycleManager) {
-        RedisEntityStore entityStore = new RedisEntityStore(key, redisConfig.host(), redisConfig.port());
+        RedisEntityStore entityStore = new RedisEntityStore(key, redisConfig.host(), redisConfig.port(), redisConfig.password());
         applicationLifeCycleManager.addService(entityStore);
         return entityStore;
     }
@@ -76,7 +76,7 @@ public class RedisReadOnlyModule extends AbstractModule {
     @Provides
     @Singleton
     ProjectStore provideProjectStore(@Named("securityKey") SecretKey key, RedisConfig redisConfig, ApplicationLifeCycleManager applicationLifeCycleManager) {
-        RedisProjectStore redisProjectStore = new RedisProjectStore(key, redisConfig.host(), redisConfig.port());
+        RedisProjectStore redisProjectStore = new RedisProjectStore(key, redisConfig.host(), redisConfig.port(), redisConfig.password());
         applicationLifeCycleManager.addService(redisProjectStore);
         return redisProjectStore;
     }

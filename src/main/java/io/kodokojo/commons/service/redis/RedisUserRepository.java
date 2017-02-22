@@ -64,8 +64,8 @@ public class RedisUserRepository extends AbstractRedisStore implements UserRepos
 
     private final int newIdExpirationTime;
 
-    public RedisUserRepository(Key key, String host, int port, int newIdExpirationTime) {
-        super(key, host, port);
+    public RedisUserRepository(Key key, String host, int port, String password, int newIdExpirationTime) {
+        super(key, host, port, password);
 
         this.newIdExpirationTime = newIdExpirationTime;
         try {
@@ -76,8 +76,8 @@ public class RedisUserRepository extends AbstractRedisStore implements UserRepos
 
     }
 
-    public RedisUserRepository(Key key, String host, int port) {
-        this(key, host, port, DEFAULT_NEW_ID_TTL);
+    public RedisUserRepository(Key key, String host, int port, String password) {
+        this(key, host, port, password, DEFAULT_NEW_ID_TTL);
     }
 
     @Override
