@@ -56,5 +56,6 @@ public interface RabbitMqConfig extends PropertyConfig {
     @Key(value = "rabbitmq.maxRedeliveryMessageCount", defaultValue = "3")
     Integer maxRedeliveryMessageCount();
 
-
+    @Key(value = "rabbitmq.virtualhost", defaultValue = "/")
+    String virtualHost();
 }

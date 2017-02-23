@@ -44,11 +44,16 @@ public interface RabbitMqConnectionFactory {
         if (StringUtils.isNotBlank(config.login())) {
             factory.setUsername(config.login());
             factory.setPassword(config.password());
+            LOGGER.debug("Using login : {} [{}]", config.login(), config.password());
         }
+
+        factory.setVirtualHost(config.virtualHost());
+        LOGGER.debug("Use virtualhost {}", config.virtualHost());
+
         try {
             //ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
             return factory.newConnection();
-        } catch (IOException | TimeoutException e) {
+        } catch (IOException e) {
             throw new RuntimeException("Unable to create a consumeConnection to Rabbit " + config.host() + ":" + config.port(), e);
         }
     }

@@ -116,7 +116,11 @@ public class RabbitMqEventBus implements EventBus {
                     } catch (IOException e) {
                         LOGGER.debug("Unable to initiate connection.", e);
                         if (connection != null) {
-                            IOUtils.closeQuietly(connection);
+                            try {
+                                connection.close();
+                            } catch (IOException e1) {
+                                LOGGER.error("Unable to close connection", e1);
+                            }
                             connection = null;
                         }
                     }
@@ -366,7 +370,13 @@ public class RabbitMqEventBus implements EventBus {
     public void disconnect() {
         if (isConnected()) {
             synchronized (monitor) {
-                IOUtils.closeQuietly(connection);
+                if (connection != null) {
+                    try {
+                        connection.close();
+                    } catch (IOException e) {
+                        LOGGER.error("Unable to close connection.", e);
+                    }
+                }
             }
         }
     }

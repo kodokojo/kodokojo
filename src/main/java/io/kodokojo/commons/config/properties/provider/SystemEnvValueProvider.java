@@ -49,6 +49,7 @@ public class SystemEnvValueProvider extends AbstarctStringPropertyValueProvider 
             throw new IllegalArgumentException("key must be defined.");
         }
         String res = System.getenv(key);
+        
         if (key.contains(".") && isBlank(res)) {
             res = System.getenv(key.replaceAll("\\.", "_"));
         }
