@@ -92,6 +92,11 @@ public class RabbitMqTest {
             public Integer maxRedeliveryMessageCount() {
                 return 4;
             }
+
+            @Override
+            public String virtualHost() {
+                return "/";
+            }
         };
         String uuid = UUID.randomUUID().toString();
         MicroServiceConfig microserviceConfig = new MicroServiceConfig() {
@@ -115,7 +120,7 @@ public class RabbitMqTest {
                 factory.setPort(rabbitMq.port());
                 try {
                     return factory.newConnection();
-                } catch (IOException | TimeoutException e) {
+                } catch (IOException e) {
                     e.printStackTrace();
                 }
                 return null;
