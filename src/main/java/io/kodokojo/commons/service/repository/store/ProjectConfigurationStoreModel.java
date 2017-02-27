@@ -59,7 +59,7 @@ public class ProjectConfigurationStoreModel implements Serializable {
         this.stackConfigurations = new HashSet<>(projectConfiguration.getStackConfigurations());
         this.userService = projectConfiguration.getUserService().getIdentifier();
         this.admins = new ArrayList<>();
-        projectConfiguration.getAdmins().forEachRemaining(a -> this.admins.add(a.getIdentifier()));
+        projectConfiguration.getTeamLeaders().forEachRemaining(a -> this.admins.add(a.getIdentifier()));
         this.users = new ArrayList<>();
         projectConfiguration.getUsers().forEachRemaining(u -> this.users.add(u.getIdentifier()));
     }

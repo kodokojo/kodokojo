@@ -49,7 +49,7 @@ public class ProjectConfigDto implements Serializable {
         this.name = projectConfiguration.getName();
         this.identifier = projectConfiguration.getIdentifier();
         this.admins = new ArrayList<>();
-        projectConfiguration.getAdmins().forEachRemaining(admin -> admins.add(new UserLightDto(admin)));
+        projectConfiguration.getTeamLeaders().forEachRemaining(admin -> admins.add(new UserLightDto(admin)));
         this.users = new ArrayList<>();
         this.stackConfigs = new ArrayList<>(projectConfiguration.getStackConfigurations().size());
         projectConfiguration.getUsers().forEachRemaining(user -> users.add(new UserLightDto(user)));

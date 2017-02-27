@@ -21,6 +21,9 @@ package io.kodokojo.commons.model;
 import com.google.gson.annotations.Expose;
 
 import java.io.Serializable;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
@@ -31,7 +34,7 @@ public class User implements Serializable {
     private final String identifier;
 
     @Expose
-    private final String entityIdentifier;
+    private final Set<String> organisationIds;
 
     @Expose
     private final String firstName;
@@ -53,7 +56,10 @@ public class User implements Serializable {
     @Expose
     private final String sshPublicKey;
 
-    public User(String identifier, String entityIdentifier, String firstName, String lastName, String username, String email, String password, String sshPublicKey) {
+    @Expose
+    private final boolean root;
+
+    public User(String identifier, Set<String> organisationIds, String firstName, String lastName, String username, String email, String password, String sshPublicKey, boolean root) {
         if (isBlank(identifier)) {
             throw new IllegalArgumentException("identifier must be defined.");
         }
@@ -67,7 +73,7 @@ public class User implements Serializable {
             throw new IllegalArgumentException("username must be defined.");
         }
         this.identifier = identifier;
-        this.entityIdentifier = entityIdentifier;
+        this.organisationIds = organisationIds;
         this.firstName = firstName.trim();
         this.lastName = lastName.trim();
         this.name = this.firstName + (isNotBlank(this.firstName) ? " " : "") + this.lastName;
@@ -75,18 +81,23 @@ public class User implements Serializable {
         this.email = email;
         this.password = password;
         this.sshPublicKey = sshPublicKey;
+        this.root = root;
+    }
+
+    public User(String identifier, Set<String> organisationIds, String name, String username, String email, String password, String sshPublicKey) {
+        this(identifier, organisationIds, (name.contains(" ") ? name.substring(0,name.lastIndexOf(" ")): name), (name.contains(" ") ?name.substring(name.lastIndexOf(" "), name.length()): name), username, email, password, sshPublicKey, false);
     }
 
     public User(String identifier, String entityIdentifier, String name, String username, String email, String password, String sshPublicKey) {
-        this(identifier, entityIdentifier, (name.contains(" ") ? name.substring(0,name.lastIndexOf(" ")): name), (name.contains(" ") ?name.substring(name.lastIndexOf(" "), name.length()): name), username, email, password, sshPublicKey);
+        this(identifier, Collections.singleton(entityIdentifier), name, username, email, password, sshPublicKey);
     }
 
     public String getIdentifier() {
         return identifier;
     }
 
-    public String getEntityIdentifier() {
-        return entityIdentifier;
+    public Set<String> getOrganisationIds() {
+        return new HashSet<>(organisationIds);
     }
 
     public String getName() {
@@ -117,6 +128,9 @@ public class User implements Serializable {
         return lastName;
     }
 
+    public boolean isRoot() {
+        return root;
+    }
 
     @Override
     public String toString() {
@@ -129,6 +143,7 @@ public class User implements Serializable {
                 ", email='" + email + '\'' +
                 ", password='" + (password != null ? "DEFINED" : "NOT DEFINED") + '\'' +
                 ", sshPublicKey='" + (sshPublicKey != null ? "DEFINED" : "NOT DEFINED") + '\'' +
+                ", root='" + root + '\'' +
                 '}';
     }
 

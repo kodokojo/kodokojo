@@ -34,6 +34,8 @@ public class EventBuilder {
 
     private String from;
 
+    private Event.RequestReplyType requestReplyType;
+
     private String replyTo;
 
     private String correlationId;
@@ -61,6 +63,7 @@ public class EventBuilder {
         requireNonNull(copyFrom, "copyFrom must be defined.");
         category = copyFrom.getCategory();
         from = copyFrom.getFrom();
+        requestReplyType = copyFrom.getRequestReplyType();
         replyTo = copyFrom.getReplyTo();
         correlationId = copyFrom.getCorrelationId();
         creationDate = copyFrom.getCreationDate();
@@ -88,7 +91,10 @@ public class EventBuilder {
         if (category == null) {
             category = Event.Category.BUSINESS;
         }
-        return new Event(new Event.Header(category, from, replyTo, correlationId, creationDate, ttl, redeliveryCount, maxRedeliveryCount, eventType, custom), payload);
+        if (requestReplyType == null) {
+            requestReplyType = Event.RequestReplyType.NONE;
+        }
+        return new Event(new Event.Header(category, from, requestReplyType, replyTo, correlationId, creationDate, ttl, redeliveryCount, maxRedeliveryCount, eventType, custom), payload);
     }
 
     public EventBuilder setCategory(Event.Category category) {
@@ -102,6 +108,11 @@ public class EventBuilder {
             throw new IllegalArgumentException("from must be defined.");
         }
         this.from = from;
+        return this;
+    }
+
+    public EventBuilder setRequestReplyType(Event.RequestReplyType requestReplyType) {
+        this.requestReplyType = requestReplyType;
         return this;
     }
 
@@ -181,6 +192,7 @@ public class EventBuilder {
 
     public EventBuilder setEvent(Event copyFrom) {
         category = copyFrom.getCategory();
+        requestReplyType = copyFrom.getRequestReplyType();
         replyTo = copyFrom.getReplyTo();
         correlationId = copyFrom.getCorrelationId();
         creationDate = copyFrom.getCreationDate();

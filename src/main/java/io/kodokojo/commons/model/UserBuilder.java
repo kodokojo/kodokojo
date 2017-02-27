@@ -19,13 +19,16 @@ package io.kodokojo.commons.model;
 
 import org.apache.commons.lang.StringUtils;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import static java.util.Objects.requireNonNull;
 
 public class UserBuilder {
 
     private  String identifier;
 
-    private  String entityIdentifier;
+    private Set<String> entityIdentifiers;
 
     private  String firstName;
 
@@ -41,6 +44,8 @@ public class UserBuilder {
 
     private  String sshPublicKey;
 
+    private boolean root;
+
     public UserBuilder() {
         super();
     }
@@ -48,7 +53,7 @@ public class UserBuilder {
     public UserBuilder(User user) {
         requireNonNull(user, "user must be defined.");
         this.identifier = user.getIdentifier();
-        this.entityIdentifier = user.getEntityIdentifier();
+        this.entityIdentifiers = user.getOrganisationIds();
         this.firstName = user.getFirstName();
         this.lastName = user.getLastName();
         this.name = user.getName();
@@ -56,10 +61,11 @@ public class UserBuilder {
         this.email = user.getEmail();
         this.password = user.getPassword();
         this.sshPublicKey = user.getSshPublicKey();
+        this.root = user.isRoot();
     }
 
     public User build() {
-        return new User(identifier, entityIdentifier, firstName, lastName, username, email, password, sshPublicKey);
+        return new User(identifier, entityIdentifiers, firstName, lastName, username, email, password, sshPublicKey, root);
     }
 
     public UserBuilder setIdentifier(String identifier) {
@@ -71,8 +77,16 @@ public class UserBuilder {
 
     public UserBuilder setEntityIdentifier(String entityIdentifier) {
         if (StringUtils.isNotBlank(entityIdentifier)) {
-            this.entityIdentifier = entityIdentifier;
+            if (entityIdentifiers == null) {
+                entityIdentifiers  = new HashSet<>();
+            }
+            entityIdentifiers.add(entityIdentifier);
         }
+        return this;
+    }
+
+    public UserBuilder setEntityIdentifiers(Set<String> entityIdentifiers) {
+        this.entityIdentifiers = entityIdentifiers;
         return this;
     }
 
@@ -123,5 +137,10 @@ public class UserBuilder {
             this.sshPublicKey = sshPublicKey;
         }
         return  this;
+    }
+
+    public UserBuilder setRoot(boolean root) {
+        this.root = root;
+        return this;
     }
 }

@@ -22,10 +22,11 @@ package io.kodokojo.commons.service.redis;
 import io.kodokojo.commons.model.User;
 
 import java.io.Serializable;
+import java.util.Set;
 
 public class UserValue implements Serializable {
 
-    private String entityId;
+    private Set<String> entityId;
 
     private String name;
 
@@ -37,7 +38,7 @@ public class UserValue implements Serializable {
 
     private String sshPublicKey;
 
-    public UserValue(String name, String username,String entityId, String email, byte[] password, String sshPublicKey) {
+    public UserValue(String name, String username,Set<String> entityId, String email, byte[] password, String sshPublicKey) {
         this.name = name;
         this.entityId = entityId;
         this.username = username;
@@ -47,7 +48,7 @@ public class UserValue implements Serializable {
     }
 
     public UserValue(User user, byte[] password) {
-        this(user.getName(), user.getUsername(), user.getEntityIdentifier(), user.getEmail(), password, user.getSshPublicKey());
+        this(user.getName(), user.getUsername(), user.getOrganisationIds(), user.getEmail(), password, user.getSshPublicKey());
     }
 
     public void setName(String name) {
@@ -58,7 +59,7 @@ public class UserValue implements Serializable {
         this.username = username;
     }
 
-    public String getEntityId() {
+    public Set<String> getEntityId() {
         return entityId;
     }
 

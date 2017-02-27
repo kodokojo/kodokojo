@@ -1,17 +1,17 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2017 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -25,7 +25,6 @@ import io.kodokojo.commons.config.MicroServiceConfig;
 import io.kodokojo.commons.config.RabbitMqConfig;
 import io.kodokojo.commons.event.*;
 import io.kodokojo.commons.model.ServiceInfo;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +36,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
+import static org.apache.commons.lang.StringUtils.isBlank;
 
 public class RabbitMqEventBus implements EventBus {
 
@@ -76,9 +76,9 @@ public class RabbitMqEventBus implements EventBus {
 
     protected Connection connection;
 
-    private RabbitMqConsumer consumer;
+    protected RabbitMqConsumer consumer;
 
-    private RabbitMqProducer producer;
+    protected RabbitMqProducer producer;
 
 
     public RabbitMqEventBus(RabbitMqConfig rabbitMqConfig, RabbitMqConnectionFactory connectionFactory, JsonToEventConverter jsonToEventConverter, MicroServiceConfig microServiceConfig, ServiceInfo serviceInfo) {
@@ -177,7 +177,7 @@ public class RabbitMqEventBus implements EventBus {
                 LOGGER.debug("We are sender, ignore this message.");
             } else {
                 String correlationId = event.getCorrelationId();
-                if (StringUtils.isNotBlank(correlationId)) {
+                if (event.getRequestReplyType() == Event.RequestReplyType.REPLY) {
                     if (requests.containsKey(correlationId)) {
                         requests.get(correlationId).setReply(event);
                         requests.remove(correlationId);
@@ -286,9 +286,11 @@ public class RabbitMqEventBus implements EventBus {
         connect();
 
         EventBuilder eventBuilder = new EventBuilder(request);
-        eventBuilder.setReplyTo(localQueueName);
         String correlationId = UUID.randomUUID().toString();
-        eventBuilder.setCorrelationId(correlationId);
+        eventBuilder
+                .setRequestReplyType(Event.RequestReplyType.REQUEST)
+                .setReplyTo(localQueueName)
+                .setCorrelationId(correlationId);
 
         ReplyEvent replyEvent = new ReplyEvent(correlationId);
 
@@ -316,21 +318,27 @@ public class RabbitMqEventBus implements EventBus {
     public void reply(Event request, Event reply) {
         requireNonNull(request, "request must be defined.");
         requireNonNull(reply, "reply must be defined.");
-        if (StringUtils.isBlank(request.getFrom())) {
+        if (request.getRequestReplyType() != Event.RequestReplyType.REQUEST) {
+            throw new IllegalArgumentException("Following event isn't a Request: " + Event.convertToJson(request));
+        }
+        if (isBlank(request.getFrom())) {
             throw new IllegalArgumentException("Unable to reply to a request without from");
         }
-        if (reply.getFrom().equals(from)) {
-            //throw new IllegalArgumentException("Unable to reply to myself.");
-            LOGGER.warn("You reply to yourself throw rabbit mq");
+        if (isBlank(request.getReplyTo())) {
+            throw new IllegalArgumentException("Unable to Reply to Unknown destination");
         }
-        if (StringUtils.isBlank(request.getCorrelationId())) {
+        if (request.getReplyTo().equals(from)) {
+            throw new IllegalArgumentException("Unable to reply to myself.");
+        }
+        if (isBlank(request.getCorrelationId())) {
             throw new IllegalArgumentException("Unable to reply to a request without correlationId");
         }
 
         connect();
         EventBuilder eventBuilder = eventBuilderFactory.create();
-        eventBuilder.setEvent(reply);
-        if (StringUtils.isBlank(reply.getCorrelationId())) {
+        eventBuilder.setEvent(reply)
+                .setRequestReplyType(Event.RequestReplyType.REPLY);
+        if (isBlank(reply.getCorrelationId())) {
             eventBuilder.setCorrelationId(request.getCorrelationId());
         } else if (!request.getCorrelationId().equals(reply.getCorrelationId())) {
             throw new IllegalArgumentException("Request correlationId " + request.getCorrelationId() + " is different in reply [" + reply.getCorrelationId() + "].");
@@ -347,6 +355,7 @@ public class RabbitMqEventBus implements EventBus {
         }
         String message = Event.convertToJson(event);
         try {
+
             producer.publish("", message, request.getReplyTo(), props);
         } catch (Exception e) {
             LOGGER.error("Unable to publish reply with correletaionId {} to {}", event.getCorrelationId(), request.getReplyTo(), e);

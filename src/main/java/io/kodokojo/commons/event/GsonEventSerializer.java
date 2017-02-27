@@ -47,6 +47,10 @@ public class GsonEventSerializer implements JsonSerializer<Event>, JsonDeseriali
                     Integer redeliveryCount = headers.getAsJsonPrimitive("redeliveryCount").getAsNumber().intValue();
                     builder.setRedeliveryCount(redeliveryCount);
                 }
+                if (headers.has("requestReplyType")) {
+                    String requestReplyTypeAsString = headers.getAsJsonPrimitive("requestReplyType").getAsString();
+                    builder.setRequestReplyType(Event.RequestReplyType.valueOf(requestReplyTypeAsString));
+                }
                 if (headers.has("replyTo")) {
                     builder.setReplyTo(headers.getAsJsonPrimitive("replyTo").getAsString());
                 }
@@ -88,6 +92,7 @@ public class GsonEventSerializer implements JsonSerializer<Event>, JsonDeseriali
         root.add("headers", headers);
         headers.addProperty("category", src.getCategory().name());
         headers.addProperty("from", src.getFrom());
+        headers.addProperty("requestReplyType", src.getRequestReplyType().name());
         headers.addProperty("replyTo", src.getReplyTo());
         headers.addProperty("creationDate", src.getCreationDate());
         headers.addProperty("correlationId", src.getCorrelationId());

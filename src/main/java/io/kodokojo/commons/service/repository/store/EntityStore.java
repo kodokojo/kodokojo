@@ -23,5 +23,7 @@ public interface EntityStore {
 
     String addEntity(EntityStoreModel entity);
 
+    void addAdminToEntity(String userIdentifier, String entityIdentifier);
+
     void addUserToEntity(String userIdentifier, String entityIdentifier);
 }

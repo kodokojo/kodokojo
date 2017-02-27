@@ -21,13 +21,15 @@ package io.kodokojo.commons.dto;
 
 import io.kodokojo.commons.model.User;
 
+import java.util.Set;
+
 import static org.apache.commons.lang.StringUtils.isBlank;
 
 public class UserCreationDto extends User {
 
     private final String privateKey;
 
-    public UserCreationDto(String identifier,String entityIdentifier, String name, String username, String email, String password, String privateKey, String sshPublicKey) {
+    public UserCreationDto(String identifier, Set<String> entityIdentifier, String name, String username, String email, String password, String privateKey, String sshPublicKey) {
         super(identifier,entityIdentifier,  name, username, email, password, sshPublicKey);
         if (isBlank(privateKey)) {
             throw new IllegalArgumentException("privateKey must be defined.");
@@ -36,7 +38,7 @@ public class UserCreationDto extends User {
     }
 
     public UserCreationDto(User user, String privateKey) {
-        this(user.getIdentifier(), user.getEntityIdentifier(), user.getName(), user.getUsername(), user.getEmail(), user.getPassword(), privateKey, user.getSshPublicKey());
+        this(user.getIdentifier(), user.getOrganisationIds(), user.getName(), user.getUsername(), user.getEmail(), user.getPassword(), privateKey, user.getSshPublicKey());
     }
     public String getPrivateKey() {
         return privateKey;

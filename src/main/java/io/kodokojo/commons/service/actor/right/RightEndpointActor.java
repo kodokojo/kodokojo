@@ -47,7 +47,7 @@ public class RightEndpointActor extends AbstractActor {
         receive(ReceiveBuilder.match(UserAdminRightRequestMsg.class, msg -> {
             ProjectConfiguration projectConfiguration = msg.projectConfiguration;
             User user = msg.getRequester();
-            List<User> users = IteratorUtils.toList(projectConfiguration.getAdmins());
+            List<User> users = IteratorUtils.toList(projectConfiguration.getTeamLeaders());
             boolean valid = false;
             if (CollectionUtils.isNotEmpty(users)) {
             if (LOGGER.isDebugEnabled()) {

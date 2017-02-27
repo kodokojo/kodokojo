@@ -55,7 +55,7 @@ public class ProjectConfigurationBuilder {
             entityIdentifier = projectConfiguration.getEntityIdentifier();
             name = projectConfiguration.getName();
             userService = projectConfiguration.getUserService();
-            admins = IteratorUtils.toList(projectConfiguration.getAdmins());
+            admins = IteratorUtils.toList(projectConfiguration.getTeamLeaders());
             users = IteratorUtils.toList(projectConfiguration.getUsers());
             stackConfigurations = new HashSet<>(projectConfiguration.getStackConfigurations());
         }
