@@ -135,5 +135,20 @@ public class RedisEntityStore extends AbstractRedisStore implements EntityStore 
         }
     }
 
+    @Override
+    public void addAdminToEntity(String userIdentifier, String entityIdentifier) {
+        if (isBlank(userIdentifier)) {
+            throw new IllegalArgumentException("userIdentifier must be defined.");
+        }
+        if (isBlank(entityIdentifier)) {
+            throw new IllegalArgumentException("entityIdentifier must be defined.");
+        }
+        try (Jedis jedis = pool.getResource()) {
+            if (jedis.exists(RedisUtils.aggregateKey(ENTITY_PREFIX, entityIdentifier))) {
+                jedis.sadd(ENTITY_PREFIX + entityIdentifier + ADMINS_KEY, userIdentifier);
+            }
+        }
+    }
+
 
 }

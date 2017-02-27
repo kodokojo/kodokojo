@@ -24,6 +24,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import java.io.Serializable;
 import java.util.*;
 
+import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang.StringUtils.isBlank;
 
 public class ProjectConfiguration implements Cloneable, Serializable {
@@ -41,7 +42,7 @@ public class ProjectConfiguration implements Cloneable, Serializable {
     private final UserService userService;
 
     @Expose
-    private final List<User> admins;
+    private final List<User> teamLeaders;
 
     @Expose
     private final Set<StackConfiguration> stackConfigurations;
@@ -49,7 +50,7 @@ public class ProjectConfiguration implements Cloneable, Serializable {
     @Expose
     private final List<User> users;
 
-    public ProjectConfiguration(String entityIdentifier, String identifier, String name,UserService userService,  List<User> admins, Set<StackConfiguration> stackConfigurations, List<User> users) {
+    public ProjectConfiguration(String entityIdentifier, String identifier, String name, UserService userService, List<User> teamLeaders, Set<StackConfiguration> stackConfigurations, List<User> users) {
         if (isBlank(entityIdentifier)) {
             throw new IllegalArgumentException("entityIdentifier must be defined.");
         }
@@ -59,8 +60,8 @@ public class ProjectConfiguration implements Cloneable, Serializable {
         if (userService == null) {
             throw new IllegalArgumentException("userService must be defined.");
         }
-        if (CollectionUtils.isEmpty(admins)) {
-            throw new IllegalArgumentException("admins must be defined.");
+        if (CollectionUtils.isEmpty(teamLeaders)) {
+            throw new IllegalArgumentException("teamLeaders must be defined.");
         }
         if (CollectionUtils.isEmpty(stackConfigurations)) {
             throw new IllegalArgumentException("stackConfigurations must be defined and contain some values.");
@@ -70,13 +71,13 @@ public class ProjectConfiguration implements Cloneable, Serializable {
         this.entityIdentifier = entityIdentifier;
         this.name = name;
         this.userService = userService;
-        this.admins = admins;
+        this.teamLeaders = teamLeaders;
         this.stackConfigurations = stackConfigurations;
         this.users = users;
     }
 
-    public ProjectConfiguration(String entityIdentifier, String name, UserService userService,List<User> admins, Set<StackConfiguration> stackConfigurations, List<User> users) {
-        this(entityIdentifier, null,name, userService, admins, stackConfigurations, users);
+    public ProjectConfiguration(String entityIdentifier, String name, UserService userService, List<User> teamLeaders, Set<StackConfiguration> stackConfigurations, List<User> users) {
+        this(entityIdentifier, null,name, userService, teamLeaders, stackConfigurations, users);
     }
 
     public String getIdentifier() {
@@ -91,8 +92,8 @@ public class ProjectConfiguration implements Cloneable, Serializable {
         return userService;
     }
 
-    public Iterator<User> getAdmins() {
-        return admins.iterator();
+    public Iterator<User> getTeamLeaders() {
+        return teamLeaders.iterator();
     }
 
     public String getName() {
@@ -120,6 +121,28 @@ public class ProjectConfiguration implements Cloneable, Serializable {
         return getDefaultStackConfiguration().getBrickConfigurations().iterator();
     }
 
+    public boolean containAsUser(User user) {
+        requireNonNull(user, "user must be defined.");
+        boolean res = false;
+        Iterator<User> userIterator = users.iterator();
+        while (!res && userIterator.hasNext()) {
+            res = userIterator.next().getIdentifier().equals(user.getIdentifier());
+        }
+        if (!res) {
+            res = containAsTeamLeader(user);
+        }
+        return res;
+    }
+    public boolean containAsTeamLeader(User user) {
+        requireNonNull(user, "user must be defined.");
+        boolean res = false;
+        Iterator<User> userIterator = teamLeaders.iterator();
+        while (!res && userIterator.hasNext()) {
+            res = userIterator.next().getIdentifier().equals(user.getIdentifier());
+        }
+        return res;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -131,7 +154,7 @@ public class ProjectConfiguration implements Cloneable, Serializable {
         if (entityIdentifier != null ? !entityIdentifier.equals(that.entityIdentifier) : that.entityIdentifier != null)
             return false;
         if (!name.equals(that.name)) return false;
-        if (!admins.equals(that.admins)) return false;
+        if (!teamLeaders.equals(that.teamLeaders)) return false;
         if (!stackConfigurations.equals(that.stackConfigurations)) return false;
         return users.equals(that.users);
 
@@ -142,7 +165,7 @@ public class ProjectConfiguration implements Cloneable, Serializable {
         int result = identifier.hashCode();
         result = 31 * result + (entityIdentifier != null ? entityIdentifier.hashCode() : 0);
         result = 31 * result + name.hashCode();
-        result = 31 * result + admins.hashCode();
+        result = 31 * result + teamLeaders.hashCode();
         result = 31 * result + stackConfigurations.hashCode();
         result = 31 * result + users.hashCode();
         return result;
@@ -155,7 +178,7 @@ public class ProjectConfiguration implements Cloneable, Serializable {
                 ", entityIdentifier='" + entityIdentifier + '\'' +
                 ", name='" + name + '\'' +
                 ", userService=" + userService +
-                ", admins=" + admins +
+                ", teamLeaders=" + teamLeaders +
                 ", stackConfigurations=" + stackConfigurations +
                 ", users=" + users +
                 '}';
@@ -163,7 +186,7 @@ public class ProjectConfiguration implements Cloneable, Serializable {
 
     @Override
     protected Object clone() throws CloneNotSupportedException {
-        return new ProjectConfiguration(entityIdentifier, name, userService, admins, new HashSet<>(stackConfigurations), new ArrayList<>(users));
+        return new ProjectConfiguration(entityIdentifier, name, userService, teamLeaders, new HashSet<>(stackConfigurations), new ArrayList<>(users));
     }
 
 

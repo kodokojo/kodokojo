@@ -82,6 +82,17 @@ public class Repository implements UserRepository, ProjectRepository, EntityRepo
     }
 
     @Override
+    public void addAdminToEntity(String userIdentifier, String entityIdentifier) {
+        if (isBlank(userIdentifier)) {
+            throw new IllegalArgumentException("userIdentifier must be defined.");
+        }
+        if (isBlank(entityIdentifier)) {
+            throw new IllegalArgumentException("entityIdentifier must be defined.");
+        }
+        entityStore.addAdminToEntity(userIdentifier, entityIdentifier);
+    }
+
+    @Override
     public Entity getEntityById(String entityIdentifier) {
         if (isBlank(entityIdentifier)) {
             throw new IllegalArgumentException("entityIdentifier must be defined.");

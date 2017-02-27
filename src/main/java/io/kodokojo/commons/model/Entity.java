@@ -92,6 +92,49 @@ public class Entity implements Serializable {
         return users.iterator();
     }
 
+    public boolean userIsAdmin(String userId) {
+        if (isBlank(userId)) {
+            throw new IllegalArgumentException("userId must be defined.");
+        }
+        boolean res = false;
+        Iterator<User> userIterator = admins.iterator();
+        while (!res && userIterator.hasNext()) {
+            res = userIterator.next().getIdentifier().equals(userId);
+        }
+        return res;
+    }
+
+    public boolean userIsUserOfEntity(String userId) {
+        if (isBlank(userId)) {
+            throw new IllegalArgumentException("userId must be defined.");
+        }
+        boolean res = false;
+        Iterator<User> userIterator = users.iterator();
+        while (!res && userIterator.hasNext()) {
+            res = userIterator.next().getIdentifier().equals(userId);
+        }
+        if (!res) {
+            res = userIsAdmin(userId);
+        }
+        return res;
+    }
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Entity entity = (Entity) o;
+
+        return identifier.equals(entity.identifier);
+    }
+
+    @Override
+    public int hashCode() {
+        return identifier.hashCode();
+    }
+
     @Override
     public String toString() {
         return "Entity{" +

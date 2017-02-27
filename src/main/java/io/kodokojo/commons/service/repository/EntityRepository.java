@@ -23,6 +23,8 @@ public interface EntityRepository extends EntityFetcher {
 
     String addEntity(Entity entity);
 
+    void addAdminToEntity(String userIdentifier, String entityIdentifier);
+
     void addUserToEntity(String userIdentifier, String entityIdentifier);
 
 }

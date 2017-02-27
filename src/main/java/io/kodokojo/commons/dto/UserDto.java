@@ -22,12 +22,13 @@ import io.kodokojo.commons.model.User;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class UserDto implements Serializable {
 
     private String identifier;
 
-    private String entityIdentifier;
+    private Set<String> entityIdentifiers;
 
     private String firstName;
 
@@ -41,7 +42,7 @@ public class UserDto implements Serializable {
 
     private String sshPublicKey;
 
-    private List<UserProjectConfigIdDto> projectConfigurationIds;
+    private List<UserOrganisationRightDto> organisations;
 
     public UserDto() {
         super();
@@ -49,14 +50,14 @@ public class UserDto implements Serializable {
 
     public UserDto(User user) {
         this.identifier = user.getIdentifier();
-        this.entityIdentifier = user.getEntityIdentifier();
+        this.entityIdentifiers = user.getOrganisationIds();
         this.firstName = user.getFirstName();
         this.lastName = user.getLastName();
         this.name = user.getName();
         this.username = user.getUsername();
         this.email = user.getEmail();
         this.sshPublicKey = user.getSshPublicKey();
-        this.projectConfigurationIds = new ArrayList<>();
+        this.organisations = new ArrayList<>();
     }
 
     public String getIdentifier() {
@@ -67,12 +68,12 @@ public class UserDto implements Serializable {
         this.identifier = identifier;
     }
 
-    public String getEntityIdentifier() {
-        return entityIdentifier;
+    public Set<String> getEntityIdentifiers() {
+        return entityIdentifiers;
     }
 
-    public void setEntityIdentifier(String entityIdentifier) {
-        this.entityIdentifier = entityIdentifier;
+    public void setEntityIdentifiers(Set<String> entityIdentifiers) {
+        this.entityIdentifiers = entityIdentifiers;
     }
 
     public String getFirstName() {
@@ -115,12 +116,12 @@ public class UserDto implements Serializable {
         this.email = email;
     }
 
-    public List<UserProjectConfigIdDto> getProjectConfigurationIds() {
-        return projectConfigurationIds;
+    public List<UserOrganisationRightDto> getOrganisations() {
+        return organisations;
     }
 
-    public void setProjectConfigurationIds(List<UserProjectConfigIdDto> projectConfigurationIds) {
-        this.projectConfigurationIds = projectConfigurationIds;
+    public void setOrganisations(List<UserOrganisationRightDto> organisations) {
+        this.organisations = organisations;
     }
 
     public String getSshPublicKey() {
@@ -135,13 +136,13 @@ public class UserDto implements Serializable {
     public String toString() {
         return "UserDto{" +
                 "identifier='" + identifier + '\'' +
-                ", entityIdentifier='" + entityIdentifier + '\'' +
+                ", entityIdentifiers='" + entityIdentifiers + '\'' +
                 ", firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +
                 ", name='" + name + '\'' +
                 ", username='" + username + '\'' +
                 ", email='" + email + '\'' +
-                ", projectConfigurationIds=" + projectConfigurationIds +
+                ", organisations=" + organisations +
                 '}';
     }
 }

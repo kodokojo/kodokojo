@@ -64,6 +64,10 @@ public class Event implements Serializable {
         return headers.getFrom();
     }
 
+    public RequestReplyType getRequestReplyType() {
+        return headers.getRequestReplyType();
+    }
+
     public String getReplyTo() {
         return headers.getReplyTo();
     }
@@ -113,6 +117,12 @@ public class Event implements Serializable {
         TECHNICAL
     }
 
+    public enum RequestReplyType {
+        REQUEST,
+        REPLY,
+        NONE
+    }
+
     static class Header implements Serializable {
 
         private final Category category;
@@ -122,6 +132,8 @@ public class Event implements Serializable {
         private final String replyTo;
 
         private final String correlationId;
+
+        private final RequestReplyType requestReplyType;
 
         private final long creationDate;
 
@@ -136,7 +148,7 @@ public class Event implements Serializable {
         private final Map<String, String> custom;
 
 
-        public Header(Category category, String from, String replyTo, String correlationId, long creationDate, long ttl,int redeliveryCount, int maxRedeliveryCount, String eventType, Map<String, String> custom) {
+        public Header(Category category, String from,  RequestReplyType requestReplyType, String replyTo, String correlationId, long creationDate, long ttl,int redeliveryCount, int maxRedeliveryCount, String eventType, Map<String, String> custom) {
             requireNonNull(category, "category must be defined.");
             if (isBlank(from)) {
                 throw new IllegalArgumentException("from must be defined.");
@@ -151,6 +163,11 @@ public class Event implements Serializable {
             }
             this.category = category;
             this.from = from;
+            if (requestReplyType == null) {
+                this.requestReplyType = RequestReplyType.NONE;
+            } else {
+                this.requestReplyType = requestReplyType;
+            }
             this.replyTo = replyTo;
             this.correlationId = correlationId;
             this.creationDate = creationDate;
@@ -158,15 +175,20 @@ public class Event implements Serializable {
             this.ttl = ttl;
             this.redeliveryCount = redeliveryCount;
             this.maxRedeliveryCount = maxRedeliveryCount;
+            if (requestReplyType == RequestReplyType.REQUEST) {
+                if (isBlank(replyTo)) {
+                    throw new IllegalArgumentException("Unable to create a Request without ReplyTo attribute");
+                }
+            }
         }
 
 
-        public Header(Category category, String from, String replyTo, String correlationId, long creationDate,String eventType, Map<String, String> custom) {
-            this(category, from, replyTo, correlationId,creationDate,0, -1, -1, eventType, custom);
+        public Header(Category category, String from,  RequestReplyType requestReplyType, String replyTo, String correlationId, long creationDate,String eventType, Map<String, String> custom) {
+            this(category, from,requestReplyType, replyTo, correlationId,creationDate,0, -1, -1, eventType, custom);
         }
 
         public Header(Category category, String from, long creationDate, String eventType) {
-            this(category, from, null, null, creationDate, eventType, null);
+            this(category, from,null, null, null, creationDate, eventType, null);
         }
 
 
@@ -176,6 +198,10 @@ public class Event implements Serializable {
 
         public String getFrom() {
             return from;
+        }
+
+        public RequestReplyType getRequestReplyType() {
+            return requestReplyType;
         }
 
         public String getReplyTo() {
@@ -216,6 +242,7 @@ public class Event implements Serializable {
                     "category=" + category +
                     ", from='" + from + '\'' +
                     ", replyTo='" + replyTo + '\'' +
+                    ", requestReplyType='" + requestReplyType + '\'' +
                     ", correlationId='" + correlationId + '\'' +
                     ", creationDate=" + creationDate +
                     ", eventType='" + eventType + '\'' +
@@ -273,7 +300,7 @@ public class Event implements Serializable {
     public static final String REQUESTER_ID_CUSTOM_HEADER = "requester_id";
     public static final String ENTITY_ID_CUSTOM_HEADER = "entity_id";
     public static final String PROJECTCONFIGURATION_ID_CUSTOM_HEADER = "projectconfiguration_id";
-    public static final String BROADCAST_FROM_CUSTOM_HEADER = "broadcst_from";
+    public static final String BROADCAST_FROM_CUSTOM_HEADER = "broadcast_from";
 
     public static final String USER_CREATION_REQUEST = "user_creation_request";
     public static final String USER_CREATION_REPLY = "user_creation_reply";
