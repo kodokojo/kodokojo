@@ -15,12 +15,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package io.kodokojo.commons.service.repository;
+package io.kodokojo.commons.service.repository.store;
 
-import io.kodokojo.commons.model.Entity;
+public interface OrganisationStore {
 
-public interface EntityFetcher {
+    OrganisationStoreModel getOrganisationById(String organisationIdentifier);
 
-    Entity getEntityById(String entityIdentifier);
+    String addOrganisation(OrganisationStoreModel organisation);
 
+    void addAdminToOrganisation(String userIdentifier, String organisationIdentifier);
+
+    void addUserToOrganisation(String userIdentifier, String organisationIdentifier);
 }

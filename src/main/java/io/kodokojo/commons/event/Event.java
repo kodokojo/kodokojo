@@ -298,7 +298,7 @@ public class Event implements Serializable {
 
     //  Business
     public static final String REQUESTER_ID_CUSTOM_HEADER = "requester_id";
-    public static final String ENTITY_ID_CUSTOM_HEADER = "entity_id";
+    public static final String ORGANISATION_ID_CUSTOM_HEADER = "organisation_id";
     public static final String PROJECTCONFIGURATION_ID_CUSTOM_HEADER = "projectconfiguration_id";
     public static final String BROADCAST_FROM_CUSTOM_HEADER = "broadcast_from";
 

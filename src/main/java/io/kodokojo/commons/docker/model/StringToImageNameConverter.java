@@ -17,9 +17,9 @@
  */
 package io.kodokojo.commons.docker.model;
 
-import io.kodokojo.commons.model.DockerImageNameBaseListener;
-import io.kodokojo.commons.model.DockerImageNameLexer;
-import io.kodokojo.commons.model.DockerImageNameParser;
+import io.kodokojo.commons.utils.DockerImageNameBaseListener;
+import io.kodokojo.commons.utils.DockerImageNameLexer;
+import io.kodokojo.commons.utils.DockerImageNameParser;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RecognitionException;

@@ -18,8 +18,8 @@
 package io.kodokojo.commons.service.repository;
 
 import io.kodokojo.commons.model.*;
-import io.kodokojo.commons.service.repository.store.EntityStore;
-import io.kodokojo.commons.service.repository.store.EntityStoreModel;
+import io.kodokojo.commons.service.repository.store.OrganisationStore;
+import io.kodokojo.commons.service.repository.store.OrganisationStoreModel;
 import io.kodokojo.commons.service.repository.store.ProjectConfigurationStoreModel;
 import io.kodokojo.commons.service.repository.store.ProjectStore;
 
@@ -31,25 +31,25 @@ import java.util.stream.Collectors;
 import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang.StringUtils.isBlank;
 
-public class Repository implements UserRepository, ProjectRepository, EntityRepository {
+public class Repository implements UserRepository, ProjectRepository, OrganisationRepository {
 
     private final UserRepository userRepository;
 
     private final UserFetcher userFetcher;
 
-    private final EntityStore entityStore;
+    private final OrganisationStore organisationStore;
 
     private final ProjectStore projectStore;
 
     @Inject
-    public Repository(UserRepository userRepository, UserFetcher userFetcher, EntityStore entityStore, ProjectStore projectStore) {
+    public Repository(UserRepository userRepository, UserFetcher userFetcher, OrganisationStore organisationStore, ProjectStore projectStore) {
         if (userRepository == null) {
             throw new IllegalArgumentException("userRepository must be defined.");
         }
         if (userFetcher == null) {
             throw new IllegalArgumentException("userFetcher must be defined.");
         }
-        if (entityStore == null) {
+        if (organisationStore == null) {
             throw new IllegalArgumentException("entityStore must be defined.");
         }
         if (projectStore == null) {
@@ -57,55 +57,55 @@ public class Repository implements UserRepository, ProjectRepository, EntityRepo
         }
         this.userRepository = userRepository;
         this.userFetcher = userFetcher;
-        this.entityStore = entityStore;
+        this.organisationStore = organisationStore;
         this.projectStore = projectStore;
     }
 
     @Override
-    public String addEntity(Entity entity) {
-        if (entity == null) {
-            throw new IllegalArgumentException("entity must be defined.");
+    public String addOrganisation(Organisation organisation) {
+        if (organisation == null) {
+            throw new IllegalArgumentException("organisation must be defined.");
         }
-        EntityStoreModel entityStoreModel = new EntityStoreModel(entity);
-        return entityStore.addEntity(entityStoreModel);
+        OrganisationStoreModel organisationStoreModel = new OrganisationStoreModel(organisation);
+        return organisationStore.addOrganisation(organisationStoreModel);
     }
 
     @Override
-    public void addUserToEntity(String userIdentifier, String entityIdentifier) {
+    public void addUserToOrganisation(String userIdentifier, String entityIdentifier) {
         if (isBlank(userIdentifier)) {
             throw new IllegalArgumentException("userIdentifier must be defined.");
         }
         if (isBlank(entityIdentifier)) {
             throw new IllegalArgumentException("entityIdentifier must be defined.");
         }
-        entityStore.addUserToEntity(userIdentifier, entityIdentifier);
+        organisationStore.addUserToOrganisation(userIdentifier, entityIdentifier);
     }
 
     @Override
-    public void addAdminToEntity(String userIdentifier, String entityIdentifier) {
+    public void addAdminToOrganisation(String userIdentifier, String organisationIdentifier) {
         if (isBlank(userIdentifier)) {
             throw new IllegalArgumentException("userIdentifier must be defined.");
         }
-        if (isBlank(entityIdentifier)) {
-            throw new IllegalArgumentException("entityIdentifier must be defined.");
+        if (isBlank(organisationIdentifier)) {
+            throw new IllegalArgumentException("organisationIdentifier must be defined.");
         }
-        entityStore.addAdminToEntity(userIdentifier, entityIdentifier);
+        organisationStore.addAdminToOrganisation(userIdentifier, organisationIdentifier);
     }
 
     @Override
-    public Entity getEntityById(String entityIdentifier) {
-        if (isBlank(entityIdentifier)) {
-            throw new IllegalArgumentException("entityIdentifier must be defined.");
+    public Organisation getOrganisationById(String organisationIdentifier) {
+        if (isBlank(organisationIdentifier)) {
+            throw new IllegalArgumentException("organisationIdentifier must be defined.");
         }
-        EntityStoreModel entityStoreModel = entityStore.getEntityById(entityIdentifier);
-        List<User> admins = entityStoreModel.getAdmins().stream().map(userFetcher::getUserByIdentifier).collect(Collectors.toList());
-        List<User> users = entityStoreModel.getUsers().stream().map(userFetcher::getUserByIdentifier).collect(Collectors.toList());
-        List<ProjectConfiguration> projectConfiguration = entityStoreModel.getProjectConfigurations().stream().map(p -> {
+        OrganisationStoreModel organisationStoreModel = organisationStore.getOrganisationById(organisationIdentifier);
+        List<User> admins = organisationStoreModel.getAdmins().stream().map(userFetcher::getUserByIdentifier).collect(Collectors.toList());
+        List<User> users = organisationStoreModel.getUsers().stream().map(userFetcher::getUserByIdentifier).collect(Collectors.toList());
+        List<ProjectConfiguration> projectConfiguration = organisationStoreModel.getProjectConfigurations().stream().map(p -> {
             ProjectConfigurationStoreModel model = projectStore.getProjectConfigurationById(p);
             return convertToProjectConfiguration(model);
         }).collect(Collectors.toList());
 
-        return new Entity(entityStoreModel.getIdentifier(), entityStoreModel.getName(), entityStoreModel.isConcrete(), projectConfiguration, admins, users);
+        return new Organisation(organisationStoreModel.getIdentifier(), organisationStoreModel.getName(), organisationStoreModel.isConcrete(), projectConfiguration, admins, users);
     }
 
     @Override

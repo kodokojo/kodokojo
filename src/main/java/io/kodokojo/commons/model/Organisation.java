@@ -24,7 +24,7 @@ import java.util.List;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
-public class Entity implements Serializable {
+public class Organisation implements Serializable {
 
     private final String identifier;
 
@@ -38,7 +38,7 @@ public class Entity implements Serializable {
 
     private final List<User> users;
 
-    public Entity(String identifier, String name, boolean concrete, List<ProjectConfiguration> projectConfigurations, List<User> admins, List<User> users) {
+    public Organisation(String identifier, String name, boolean concrete, List<ProjectConfiguration> projectConfigurations, List<User> admins, List<User> users) {
         if (isBlank(name)) {
             throw new IllegalArgumentException("name must be defined.");
         }
@@ -60,11 +60,11 @@ public class Entity implements Serializable {
     }
 
 
-    public Entity(String name, boolean concrete) {
+    public Organisation(String name, boolean concrete) {
         this(null, name, concrete, new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
     }
 
-    public Entity(String name) {
+    public Organisation(String name) {
         this(null, name, false, new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
     }
 
@@ -125,9 +125,9 @@ public class Entity implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        Entity entity = (Entity) o;
+        Organisation organisation = (Organisation) o;
 
-        return identifier.equals(entity.identifier);
+        return identifier.equals(organisation.identifier);
     }
 
     @Override

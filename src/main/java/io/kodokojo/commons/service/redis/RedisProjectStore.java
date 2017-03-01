@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang.StringUtils.isBlank;
+import static org.apache.commons.lang.StringUtils.isNotBlank;
 
 public class RedisProjectStore extends AbstractRedisStore implements ProjectStore {
 
@@ -88,15 +89,14 @@ public class RedisProjectStore extends AbstractRedisStore implements ProjectStor
 
     @Override
     public String addProjectConfiguration(ProjectConfigurationStoreModel projectConfiguration) {
-        if (projectConfiguration == null) {
-            throw new IllegalArgumentException("projectConfiguration must be defined.");
-        }
+        requireNonNull(projectConfiguration, "projectConfiguration must be defined.");
         if (isBlank(projectConfiguration.getEntityIdentifier())) {
             throw new IllegalArgumentException("EntityIdentifier must be defined.");
         }
-        if (StringUtils.isNotBlank(projectConfiguration.getIdentifier())) {
+        if (isNotBlank(projectConfiguration.getIdentifier())) {
             throw new IllegalArgumentException("ProjectConfiguration " + projectConfiguration.getName() + " already exist");
         }
+
         String identifier = generateId();
         return writeProjectConfiguration(new ProjectConfigurationStoreModel(projectConfiguration.getEntityIdentifier(), identifier, projectConfiguration.getName(), projectConfiguration.getUserService(), projectConfiguration.getAdmins(), projectConfiguration.getStackConfigurations(), projectConfiguration.getUsers()));
     }

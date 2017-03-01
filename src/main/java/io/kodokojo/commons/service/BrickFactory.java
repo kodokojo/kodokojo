@@ -26,4 +26,5 @@ public interface BrickFactory {
     BrickConfiguration createBrick(String name);
 
     List<BrickConfiguration> listBrickAvailable();
+    
 }
