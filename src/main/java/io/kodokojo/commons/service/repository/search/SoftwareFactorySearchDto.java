@@ -1,15 +1,15 @@
 package io.kodokojo.commons.service.repository.search;
 
-import io.kodokojo.commons.model.Organisation;
 import io.kodokojo.commons.model.ProjectConfiguration;
 import io.kodokojo.commons.service.elasticsearch.DataIdProvider;
 
-import java.io.Serializable;
 import java.util.function.Function;
 
 import static java.util.Objects.requireNonNull;
 
 public class SoftwareFactorySearchDto implements DataIdProvider {
+
+    private static final String SOFTWAREFACTORY = "softwarefactory";
 
     private String identifier;
 
@@ -37,6 +37,11 @@ public class SoftwareFactorySearchDto implements DataIdProvider {
     @Override
     public String getId() {
         return identifier;
+    }
+
+    @Override
+    public String getType() {
+        return SOFTWAREFACTORY;
     }
 
     public String getIdentifier() {

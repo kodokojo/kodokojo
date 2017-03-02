@@ -20,7 +20,9 @@ package io.kodokojo.commons.config.module;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import io.kodokojo.commons.config.ElasticSearchConfig;
 import io.kodokojo.commons.config.RedisConfig;
+import io.kodokojo.commons.service.elasticsearch.ElasticSearchSearcher;
 import io.kodokojo.commons.service.lifecycle.ApplicationLifeCycleManager;
 import io.kodokojo.commons.service.redis.RedisOrganisationStore;
 import io.kodokojo.commons.service.redis.RedisProjectStore;
@@ -28,6 +30,7 @@ import io.kodokojo.commons.service.redis.RedisUserRepository;
 import io.kodokojo.commons.service.repository.*;
 import io.kodokojo.commons.service.repository.store.OrganisationStore;
 import io.kodokojo.commons.service.repository.store.ProjectStore;
+import okhttp3.OkHttpClient;
 
 import javax.crypto.SecretKey;
 import javax.inject.Named;
@@ -58,7 +61,6 @@ public class RedisReadOnlyModule extends AbstractModule {
         return redisUserManager;
     }
 
-
     @Provides
     @Singleton
     OrganisationStore provideEntityStore(@Named("securityKey") SecretKey key, RedisConfig redisConfig, ApplicationLifeCycleManager applicationLifeCycleManager) {
@@ -87,4 +89,28 @@ public class RedisReadOnlyModule extends AbstractModule {
         return repository;
     }
 
+
+    @Provides
+    @Singleton
+    ElasticSearchSearcher proElasticSearchSearcher(ElasticSearchConfig elasticSearchConfig, OkHttpClient httpClient) {
+        return new ElasticSearchSearcher(elasticSearchConfig, httpClient);
+    }
+
+    @Provides
+    @Singleton
+    OrganisationSearcher provideOrganisationSearcher(ElasticSearchSearcher elasticSearchSearcher) {
+        return elasticSearchSearcher;
+    }
+
+    @Provides
+    @Singleton
+    UserSearcher provideUserSearcher(ElasticSearchSearcher elasticSearchSearcher) {
+        return elasticSearchSearcher;
+    }
+
+    @Provides
+    @Singleton
+    SoftwareFactorySearcher proSoftwareFactorySearcher(ElasticSearchSearcher elasticSearchSearcher) {
+        return elasticSearchSearcher;
+    }
 }

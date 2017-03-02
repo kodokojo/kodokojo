@@ -10,6 +10,8 @@ import static java.util.Objects.requireNonNull;
 
 public class OrganisationSearchDto implements DataIdProvider {
 
+    private static final String ORGANISATION = "organisation";
+
     private String identifier;
 
     private String name;
@@ -35,6 +37,11 @@ public class OrganisationSearchDto implements DataIdProvider {
     @Override
     public String getId() {
         return identifier;
+    }
+
+    @Override
+    public String getType() {
+        return ORGANISATION;
     }
 
     public String getIdentifier() {

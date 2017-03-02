@@ -18,6 +18,10 @@
 package io.kodokojo.commons.service.repository;
 
 import io.kodokojo.commons.model.*;
+import io.kodokojo.commons.service.elasticsearch.ElasticSearchSearcher;
+import io.kodokojo.commons.service.repository.search.OrganisationSearchDto;
+import io.kodokojo.commons.service.repository.search.SoftwareFactorySearchDto;
+import io.kodokojo.commons.service.repository.search.UserSearchDto;
 import io.kodokojo.commons.service.repository.store.OrganisationStore;
 import io.kodokojo.commons.service.repository.store.OrganisationStoreModel;
 import io.kodokojo.commons.service.repository.store.ProjectConfigurationStoreModel;
@@ -41,24 +45,32 @@ public class Repository implements UserRepository, ProjectRepository, Organisati
 
     private final ProjectStore projectStore;
 
+    private final ElasticSearchSearcher elasticSearchSearcher;
+
     @Inject
-    public Repository(UserRepository userRepository, UserFetcher userFetcher, OrganisationStore organisationStore, ProjectStore projectStore) {
-        if (userRepository == null) {
-            throw new IllegalArgumentException("userRepository must be defined.");
-        }
-        if (userFetcher == null) {
-            throw new IllegalArgumentException("userFetcher must be defined.");
-        }
-        if (organisationStore == null) {
-            throw new IllegalArgumentException("entityStore must be defined.");
-        }
-        if (projectStore == null) {
-            throw new IllegalArgumentException("projectStore must be defined.");
-        }
+    public Repository(UserRepository userRepository,
+                      UserFetcher userFetcher,
+                      OrganisationStore organisationStore,
+                      ProjectStore projectStore,
+                      ElasticSearchSearcher elasticSearchSearcher
+        ) {
+        requireNonNull(userRepository, "userRepository must be defined.");
+        requireNonNull(userFetcher, "userFetcher must be defined.");
+        requireNonNull(organisationStore, "organisationStore must be defined.");
+        requireNonNull(projectStore, "projectStore must be defined.");
         this.userRepository = userRepository;
         this.userFetcher = userFetcher;
         this.organisationStore = organisationStore;
         this.projectStore = projectStore;
+        this.elasticSearchSearcher = elasticSearchSearcher;
+    }
+
+    public Repository(UserRepository userRepository,
+                      UserFetcher userFetcher,
+                      OrganisationStore organisationStore,
+                      ProjectStore projectStore
+    ) {
+        this(userRepository, userFetcher, organisationStore, projectStore, null);
     }
 
     @Override
@@ -67,7 +79,13 @@ public class Repository implements UserRepository, ProjectRepository, Organisati
             throw new IllegalArgumentException("organisation must be defined.");
         }
         OrganisationStoreModel organisationStoreModel = new OrganisationStoreModel(organisation);
-        return organisationStore.addOrganisation(organisationStoreModel);
+        String res = organisationStore.addOrganisation(organisationStoreModel);
+        if (elasticSearchSearcher != null) {
+            OrganisationSearchDto dto = OrganisationSearchDto.convert(organisation);
+            dto.setIdentifier(res);
+            elasticSearchSearcher.addOrUpdate(dto);
+        }
+        return res;
     }
 
     @Override
@@ -121,7 +139,13 @@ public class Repository implements UserRepository, ProjectRepository, Organisati
         if (projectConfiguration == null) {
             throw new IllegalArgumentException("projectConfiguration must be defined.");
         }
-        return projectStore.addProjectConfiguration(new ProjectConfigurationStoreModel(projectConfiguration));
+        String res = projectStore.addProjectConfiguration(new ProjectConfigurationStoreModel(projectConfiguration));
+        if (elasticSearchSearcher != null) {
+            SoftwareFactorySearchDto dto = SoftwareFactorySearchDto.convert(projectConfiguration);
+            dto.setIdentifier(res);
+            elasticSearchSearcher.addOrUpdate(dto);
+        }
+        return res;
     }
 
     @Override
@@ -149,6 +173,10 @@ public class Repository implements UserRepository, ProjectRepository, Organisati
             throw new IllegalArgumentException("projectConfiguration must be defined.");
         }
         projectStore.updateProjectConfiguration(new ProjectConfigurationStoreModel(projectConfiguration));
+        if (elasticSearchSearcher != null) {
+            SoftwareFactorySearchDto dto = SoftwareFactorySearchDto.convert(projectConfiguration);
+            elasticSearchSearcher.addOrUpdate(dto);
+        }
     }
 
     @Override
@@ -224,7 +252,12 @@ public class Repository implements UserRepository, ProjectRepository, Organisati
 
     @Override
     public boolean addUser(User user) {
-        return userRepository.addUser(user);
+        boolean res = userRepository.addUser(user);
+        if (elasticSearchSearcher != null) {
+            UserSearchDto dto = UserSearchDto.convert(user);
+            elasticSearchSearcher.addOrUpdate(dto);
+        }
+        return res;
     }
 
     @Override
@@ -236,6 +269,10 @@ public class Repository implements UserRepository, ProjectRepository, Organisati
     @Override
     public boolean updateUser(User user) {
         requireNonNull(user, "user must be defined.");
+        if (elasticSearchSearcher != null) {
+            UserSearchDto dto = UserSearchDto.convert(user);
+            elasticSearchSearcher.addOrUpdate(dto);
+        }
         return userRepository.updateUser(user);
     }
 

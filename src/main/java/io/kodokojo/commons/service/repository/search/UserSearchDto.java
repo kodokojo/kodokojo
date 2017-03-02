@@ -11,6 +11,8 @@ import static java.util.Objects.requireNonNull;
 
 public class UserSearchDto implements DataIdProvider {
 
+    private static final String USER = "user";
+
     private String identifier;
 
     private String firstName;
@@ -28,6 +30,11 @@ public class UserSearchDto implements DataIdProvider {
     @Override
     public String getId() {
         return identifier;
+    }
+
+    @Override
+    public String getType() {
+        return USER;
     }
 
     public String getIdentifier() {

@@ -6,4 +6,5 @@ public interface DataIdProvider extends Serializable {
 
     String getId();
 
+    String getType();
 }

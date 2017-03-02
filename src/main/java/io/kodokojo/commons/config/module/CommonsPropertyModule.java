@@ -132,6 +132,12 @@ public class CommonsPropertyModule extends AbstractModule {
 
     @Provides
     @Singleton
+    ElasticSearchConfig provideElasticSearchConfig(PropertyValueProvider valueProvider) {
+        return createConfig(ElasticSearchConfig.class, valueProvider);
+    }
+
+    @Provides
+    @Singleton
     ServiceInfo provideServiceInfo(MicroServiceConfig microServiceConfig, VersionConfig versionConfig) {
         return new ServiceInfo(microServiceConfig.name(), microServiceConfig.uuid(), versionConfig.version(), versionConfig.gitSha1(), versionConfig.branch());
     }

@@ -8,18 +8,12 @@ import io.kodokojo.commons.service.repository.search.Criteria;
 import io.kodokojo.commons.service.repository.search.OrganisationSearchDto;
 import io.kodokojo.commons.service.repository.search.UserSearchDto;
 import javaslang.control.Option;
-import javaslang.control.Try;
 import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.ArrayList;
 import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @Ignore
 public class ElasticSearchSearcherIntTest implements DataBuilder {
@@ -36,11 +30,11 @@ public class ElasticSearchSearcherIntTest implements DataBuilder {
         insertData();
 
         OrganisationSearchDto data = anOrganisationSearchDto();
-        if (elasticSearchSearcher.addOrUpdate(ElasticSearchSearcher.ORAGNISATION_INDEX, data)) {
+        if (elasticSearchSearcher.addOrUpdate(data)) {
             System.out.println("Data update or insert");
         }
         Option<List<OrganisationSearchDto>> organisationResult = elasticSearchSearcher.searchOrganisationByCriterion(
-                new Criteria("name","xebia")
+                new Criteria("name", "xebia")
         );
         organisationResult.forEach(organisationSearchDtos -> {
             System.out.println(organisationSearchDtos);
@@ -52,9 +46,9 @@ public class ElasticSearchSearcherIntTest implements DataBuilder {
     }
 
     private void insertData() {
-        elasticSearchSearcher.addOrUpdate(ElasticSearchSearcher.USER_INDEX, anUserSearchDto());
-        elasticSearchSearcher.addOrUpdate(ElasticSearchSearcher.USER_INDEX, aSecondeUserSearchDto());
-        elasticSearchSearcher.addOrUpdate(ElasticSearchSearcher.USER_INDEX, aThirdUserSearchDto());
+        elasticSearchSearcher.addOrUpdate( anUserSearchDto());
+        elasticSearchSearcher.addOrUpdate(aSecondeUserSearchDto());
+        elasticSearchSearcher.addOrUpdate( aThirdUserSearchDto());
     }
 
 

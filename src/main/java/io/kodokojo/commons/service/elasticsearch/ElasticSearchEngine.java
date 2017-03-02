@@ -50,8 +50,8 @@ public class ElasticSearchEngine {
         return httpResponses.map(h -> h.code).getOrElse(-1) == 200;
     }
 
-    public boolean addOrUpdate(String type, DataIdProvider data) {
-        return addOrUpdate(type, data, data.getId());
+    public boolean addOrUpdate(DataIdProvider data) {
+        return addOrUpdate(data.getType(), data, data.getId());
     }
 
     public boolean addOrUpdate(String type, Serializable data, String identifier) {
