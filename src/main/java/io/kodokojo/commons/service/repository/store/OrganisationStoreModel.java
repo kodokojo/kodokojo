@@ -17,13 +17,13 @@
  */
 package io.kodokojo.commons.service.repository.store;
 
-import io.kodokojo.commons.model.Entity;
+import io.kodokojo.commons.model.Organisation;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class EntityStoreModel implements Serializable {
+public class OrganisationStoreModel implements Serializable {
 
     private final String identifier;
 
@@ -37,19 +37,19 @@ public class EntityStoreModel implements Serializable {
 
     private final List<String> users;
 
-    public EntityStoreModel(Entity entity) {
-        this.identifier = entity.getIdentifier();
-        this.name = entity.getName();
-        this.concrete = entity.isConcrete();
+    public OrganisationStoreModel(Organisation organisation) {
+        this.identifier = organisation.getIdentifier();
+        this.name = organisation.getName();
+        this.concrete = organisation.isConcrete();
         this.projectConfigurations = new ArrayList<>();
-        entity.getProjectConfigurations().forEachRemaining(c -> this.projectConfigurations.add(c.getIdentifier()));
+        organisation.getProjectConfigurations().forEachRemaining(c -> this.projectConfigurations.add(c.getIdentifier()));
         this.admins = new ArrayList<>();
-        entity.getAdmins().forEachRemaining(a -> this.admins.add(a.getIdentifier()));
+        organisation.getAdmins().forEachRemaining(a -> this.admins.add(a.getIdentifier()));
         this.users = new ArrayList<>();
-        entity.getUsers().forEachRemaining(u -> this.users.add(u.getIdentifier()));
+        organisation.getUsers().forEachRemaining(u -> this.users.add(u.getIdentifier()));
     }
 
-    public EntityStoreModel(String identifier, String name, boolean concrete, List<String> projectConfigurations, List<String> admins, List<String> users) {
+    public OrganisationStoreModel(String identifier, String name, boolean concrete, List<String> projectConfigurations, List<String> admins, List<String> users) {
         this.identifier = identifier;
         this.name = name;
         this.concrete = concrete;

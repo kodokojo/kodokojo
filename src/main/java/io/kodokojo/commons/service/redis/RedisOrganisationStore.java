@@ -18,8 +18,8 @@
 package io.kodokojo.commons.service.redis;
 
 import io.kodokojo.commons.RSAUtils;
-import io.kodokojo.commons.service.repository.store.EntityStore;
-import io.kodokojo.commons.service.repository.store.EntityStoreModel;
+import io.kodokojo.commons.service.repository.store.OrganisationStore;
+import io.kodokojo.commons.service.repository.store.OrganisationStoreModel;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -33,9 +33,9 @@ import java.util.List;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
-public class RedisEntityStore extends AbstractRedisStore implements EntityStore {
+public class RedisOrganisationStore extends AbstractRedisStore implements OrganisationStore {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RedisEntityStore.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RedisOrganisationStore.class);
 
     private static final String ENTITY_GENERATEID_KEY = "entityId";
 
@@ -45,7 +45,7 @@ public class RedisEntityStore extends AbstractRedisStore implements EntityStore 
     public static final String PROJECT_CONFIGS_KEY = "/projectConfigs";
 
     @Inject
-    public RedisEntityStore(Key key, String host, int port, String password) {
+    public RedisOrganisationStore(Key key, String host, int port, String password) {
         super(key, host, port, password);
     }
 
@@ -61,7 +61,7 @@ public class RedisEntityStore extends AbstractRedisStore implements EntityStore 
 
 
     @Override
-    public EntityStoreModel getEntityById(String entityIdentifier) {
+    public OrganisationStoreModel getOrganisationById(String entityIdentifier) {
         if (isBlank(entityIdentifier)) {
             throw new IllegalArgumentException("entityIdentifier must be defined.");
         }
@@ -69,7 +69,7 @@ public class RedisEntityStore extends AbstractRedisStore implements EntityStore 
             byte[] entityKey = RedisUtils.aggregateKey(ENTITY_PREFIX, entityIdentifier);
             if (jedis.exists(entityKey)) {
                 byte[] encrypted = jedis.get(entityKey);
-                EntityModelRedis entityModelRedis = (EntityModelRedis) RSAUtils.decryptObjectWithAES(key, encrypted);
+                OrganisationModelRedis organisationModelRedis = (OrganisationModelRedis) RSAUtils.decryptObjectWithAES(key, encrypted);
                 String adminsKey = ENTITY_PREFIX + entityIdentifier + ADMINS_KEY;
                 String userKey = ENTITY_PREFIX + entityIdentifier + USERS_KEY;
                 String projectConfigKey = ENTITY_PREFIX + entityIdentifier + PROJECT_CONFIGS_KEY;
@@ -79,7 +79,7 @@ public class RedisEntityStore extends AbstractRedisStore implements EntityStore 
                 admins.addAll(jedis.smembers(adminsKey));
                 List<String> projectConfiguration = new ArrayList<>();
                 projectConfiguration.addAll(jedis.smembers(projectConfigKey));
-                EntityStoreModel entity = new EntityStoreModel(entityModelRedis.getIdentifier(), entityModelRedis.getName(), entityModelRedis.isConcrete(), projectConfiguration, admins, users);
+                OrganisationStoreModel entity = new OrganisationStoreModel(organisationModelRedis.getIdentifier(), organisationModelRedis.getName(), organisationModelRedis.isConcrete(), projectConfiguration, admins, users);
                 return entity;
             }
         }
@@ -87,25 +87,25 @@ public class RedisEntityStore extends AbstractRedisStore implements EntityStore 
     }
 
     @Override
-    public String addEntity(EntityStoreModel entity) {
-        if (entity == null) {
-            throw new IllegalArgumentException("entity must be defined.");
+    public String addOrganisation(OrganisationStoreModel organisation) {
+        if (organisation == null) {
+            throw new IllegalArgumentException("organisation must be defined.");
         }
-        if (StringUtils.isNotBlank(entity.getIdentifier())) {
-            LOGGER.warn("Try to add entity {} which have already an ID ({}), we don't insert it in redis.", entity.getName(), entity.getIdentifier());
-            return entity.getIdentifier();
+        if (StringUtils.isNotBlank(organisation.getIdentifier())) {
+            LOGGER.warn("Try to add organisation {} which have already an ID ({}), we don't insert it in redis.", organisation.getName(), organisation.getIdentifier());
+            return organisation.getIdentifier();
         }
         try (Jedis jedis = pool.getResource()) {
             String id = generateId();
-            List<String> admins = entity.getAdmins();
-            List<String> users = entity.getUsers();
-            List<String> projectConfigurations = entity.getProjectConfigurations();
+            List<String> admins = organisation.getAdmins();
+            List<String> users = organisation.getUsers();
+            List<String> projectConfigurations = organisation.getProjectConfigurations();
 
-            EntityModelRedis entityModelRedis = new EntityModelRedis(entity);
+            OrganisationModelRedis organisationModelRedis = new OrganisationModelRedis(organisation);
 
             //LOGGER.debug("Using key {}", key.getAlgorithm());
 
-            byte[] encryptedObject = RSAUtils.encryptObjectWithAES(key, entityModelRedis);
+            byte[] encryptedObject = RSAUtils.encryptObjectWithAES(key, organisationModelRedis);
             jedis.set(RedisUtils.aggregateKey(ENTITY_PREFIX, id), encryptedObject);
             if (CollectionUtils.isNotEmpty(admins)) {
                 jedis.sadd(ENTITY_PREFIX + id + ADMINS_KEY, admins.toArray(new String[admins.size()]));
@@ -121,31 +121,31 @@ public class RedisEntityStore extends AbstractRedisStore implements EntityStore 
     }
 
     @Override
-    public void addUserToEntity(String userIdentifier, String entityIdentifier) {
+    public void addUserToOrganisation(String userIdentifier, String organisationIdentifier) {
         if (isBlank(userIdentifier)) {
             throw new IllegalArgumentException("userIdentifier must be defined.");
         }
-        if (isBlank(entityIdentifier)) {
-            throw new IllegalArgumentException("entityIdentifier must be defined.");
+        if (isBlank(organisationIdentifier)) {
+            throw new IllegalArgumentException("organisationIdentifier must be defined.");
         }
         try (Jedis jedis = pool.getResource()) {
-            if (jedis.exists(RedisUtils.aggregateKey(ENTITY_PREFIX, entityIdentifier))) {
-                jedis.sadd(ENTITY_PREFIX + entityIdentifier + USERS_KEY, userIdentifier);
+            if (jedis.exists(RedisUtils.aggregateKey(ENTITY_PREFIX, organisationIdentifier))) {
+                jedis.sadd(ENTITY_PREFIX + organisationIdentifier + USERS_KEY, userIdentifier);
             }
         }
     }
 
     @Override
-    public void addAdminToEntity(String userIdentifier, String entityIdentifier) {
+    public void addAdminToOrganisation(String userIdentifier, String organisationIdentifier) {
         if (isBlank(userIdentifier)) {
             throw new IllegalArgumentException("userIdentifier must be defined.");
         }
-        if (isBlank(entityIdentifier)) {
-            throw new IllegalArgumentException("entityIdentifier must be defined.");
+        if (isBlank(organisationIdentifier)) {
+            throw new IllegalArgumentException("organisationIdentifier must be defined.");
         }
         try (Jedis jedis = pool.getResource()) {
-            if (jedis.exists(RedisUtils.aggregateKey(ENTITY_PREFIX, entityIdentifier))) {
-                jedis.sadd(ENTITY_PREFIX + entityIdentifier + ADMINS_KEY, userIdentifier);
+            if (jedis.exists(RedisUtils.aggregateKey(ENTITY_PREFIX, organisationIdentifier))) {
+                jedis.sadd(ENTITY_PREFIX + organisationIdentifier + ADMINS_KEY, userIdentifier);
             }
         }
     }

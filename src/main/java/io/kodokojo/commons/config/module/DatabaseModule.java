@@ -20,14 +20,17 @@ package io.kodokojo.commons.config.module;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import io.kodokojo.commons.config.ElasticSearchConfig;
 import io.kodokojo.commons.config.RedisConfig;
+import io.kodokojo.commons.service.elasticsearch.ElasticSearchSearcher;
 import io.kodokojo.commons.service.lifecycle.ApplicationLifeCycleManager;
-import io.kodokojo.commons.service.redis.RedisEntityStore;
+import io.kodokojo.commons.service.redis.RedisOrganisationStore;
 import io.kodokojo.commons.service.redis.RedisProjectStore;
 import io.kodokojo.commons.service.redis.RedisUserRepository;
 import io.kodokojo.commons.service.repository.*;
-import io.kodokojo.commons.service.repository.store.EntityStore;
+import io.kodokojo.commons.service.repository.store.OrganisationStore;
 import io.kodokojo.commons.service.repository.store.ProjectStore;
+import okhttp3.OkHttpClient;
 
 import javax.crypto.SecretKey;
 import javax.inject.Named;
@@ -41,10 +44,10 @@ public class DatabaseModule extends AbstractModule {
 
     @Provides
     @Singleton
-    Repository provideRepository(EntityStore entityStore, ProjectStore projectStore, @Named("securityKey") SecretKey secretKey, RedisConfig redisConfig, ApplicationLifeCycleManager applicationLifeCycleManager) {
+    Repository provideRepository(OrganisationStore organisationStore, ProjectStore projectStore, @Named("securityKey") SecretKey secretKey, RedisConfig redisConfig, ElasticSearchSearcher elasticSearchSearcher,  ApplicationLifeCycleManager applicationLifeCycleManager) {
         RedisUserRepository redisUserManager = new RedisUserRepository(secretKey, redisConfig.host(), redisConfig.port(), redisConfig.password());
         applicationLifeCycleManager.addService(redisUserManager);
-        return new Repository(redisUserManager, redisUserManager, entityStore, projectStore);
+        return new Repository(redisUserManager, redisUserManager, organisationStore, projectStore, elasticSearchSearcher);
     }
 
     @Provides
@@ -61,7 +64,7 @@ public class DatabaseModule extends AbstractModule {
 
     @Provides
     @Singleton
-    EntityRepository provideEntityRepository(Repository repository) {
+    OrganisationRepository provideEntityRepository(Repository repository) {
         return repository;
     }
 
@@ -80,8 +83,8 @@ public class DatabaseModule extends AbstractModule {
 
     @Provides
     @Singleton
-    EntityStore provideEntityStore(@Named("securityKey") SecretKey key, RedisConfig redisConfig, ApplicationLifeCycleManager applicationLifeCycleManager) {
-        RedisEntityStore entityStore = new RedisEntityStore(key, redisConfig.host(), redisConfig.port(), redisConfig.password());
+    OrganisationStore provideEntityStore(@Named("securityKey") SecretKey key, RedisConfig redisConfig, ApplicationLifeCycleManager applicationLifeCycleManager) {
+        RedisOrganisationStore entityStore = new RedisOrganisationStore(key, redisConfig.host(), redisConfig.port(), redisConfig.password());
         applicationLifeCycleManager.addService(entityStore);
         return entityStore;
     }
@@ -92,6 +95,30 @@ public class DatabaseModule extends AbstractModule {
         RedisProjectStore redisProjectStore = new RedisProjectStore(key, redisConfig.host(), redisConfig.port(), redisConfig.password());
         applicationLifeCycleManager.addService(redisProjectStore);
         return redisProjectStore;
+    }
+
+    @Provides
+    @Singleton
+    ElasticSearchSearcher proElasticSearchSearcher(ElasticSearchConfig elasticSearchConfig, OkHttpClient httpClient) {
+        return new ElasticSearchSearcher(elasticSearchConfig, httpClient);
+    }
+
+    @Provides
+    @Singleton
+    OrganisationSearcher provideOrganisationSearcher(ElasticSearchSearcher elasticSearchSearcher) {
+        return elasticSearchSearcher;
+    }
+
+    @Provides
+    @Singleton
+    UserSearcher provideUserSearcher(ElasticSearchSearcher elasticSearchSearcher) {
+        return elasticSearchSearcher;
+    }
+
+    @Provides
+    @Singleton
+    SoftwareFactorySearcher proSoftwareFactorySearcher(ElasticSearchSearcher elasticSearchSearcher) {
+        return elasticSearchSearcher;
     }
 
 }
