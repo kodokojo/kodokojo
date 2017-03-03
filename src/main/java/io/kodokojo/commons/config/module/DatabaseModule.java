@@ -117,7 +117,7 @@ public class DatabaseModule extends AbstractModule {
 
     @Provides
     @Singleton
-    SoftwareFactorySearcher proSoftwareFactorySearcher(ElasticSearchSearcher elasticSearchSearcher) {
+    ProjectSearcher proSoftwareFactorySearcher(ElasticSearchSearcher elasticSearchSearcher) {
         return elasticSearchSearcher;
     }
 

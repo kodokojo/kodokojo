@@ -1,17 +1,17 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2017 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -29,27 +29,23 @@ import java.util.List;
 import java.util.Set;
 
 import static akka.event.Logging.getLogger;
+import static java.util.Objects.requireNonNull;
 
 public class EmailSenderActor extends AbstractActor {
 
     private final LoggingAdapter LOGGER = getLogger(getContext().system(), this);
 
     public static Props PROPS(EmailSender emailSender) {
-        if (emailSender == null) {
-            throw new IllegalArgumentException("emailSender must be defined.");
-        }
+        requireNonNull(emailSender, "emailSender must be defined.");
         return Props.create(EmailSenderActor.class, emailSender);
     }
 
     public EmailSenderActor(EmailSender emailSender) {
-        if (emailSender == null) {
-            throw new IllegalArgumentException("emailSender must be defined.");
-        }
         receive(ReceiveBuilder.match(EmailSenderMsg.class, msg -> {
             try {
-                emailSender.send(msg.to, msg.cc, msg.ci, msg.object, msg.content, msg.htmlContent,msg.attachments);
+                emailSender.send(msg.to, msg.cc, msg.ci, msg.object, msg.content, msg.htmlContent, msg.attachments);
             } catch (RuntimeException e) {
-                LOGGER.error("Unable to sent email to '{}', with subject '{}'", Arrays.toString(msg.to.toArray()), msg.object, e);
+                LOGGER.error("Unable to sent email to '{}', with subject '{}': {}", Arrays.toString(msg.to.toArray()), msg.object, e);
                 sender().tell(Futures.failed(e), self());
             }
             if (LOGGER.isDebugEnabled()) {

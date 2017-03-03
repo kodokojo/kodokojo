@@ -7,26 +7,26 @@ import java.util.function.Function;
 
 import static java.util.Objects.requireNonNull;
 
-public class SoftwareFactorySearchDto implements DataIdProvider {
+public class ProjectSearchDto implements DataIdProvider {
 
-    private static final String SOFTWAREFACTORY = "softwarefactory";
+    private static final String PROJECT = "project";
 
     private String identifier;
 
     private String name;
 
-    public SoftwareFactorySearchDto() {
+    public ProjectSearchDto() {
         super();
     }
 
-    public static SoftwareFactorySearchDto convert(ProjectConfiguration projectConfiguration) {
+    public static ProjectSearchDto convert(ProjectConfiguration projectConfiguration) {
         requireNonNull(projectConfiguration, "projectConfiguration must be defined.");
         return converter().apply(projectConfiguration);
     }
 
-    public static Function<ProjectConfiguration, SoftwareFactorySearchDto> converter() {
+    public static Function<ProjectConfiguration, ProjectSearchDto> converter() {
         return projectConfiguration -> {
-            SoftwareFactorySearchDto res = new SoftwareFactorySearchDto();
+            ProjectSearchDto res = new ProjectSearchDto();
             res.setIdentifier(projectConfiguration.getIdentifier());
             res.setName(projectConfiguration.getName());
             return res;
@@ -41,7 +41,7 @@ public class SoftwareFactorySearchDto implements DataIdProvider {
 
     @Override
     public String getType() {
-        return SOFTWAREFACTORY;
+        return PROJECT;
     }
 
     public String getIdentifier() {

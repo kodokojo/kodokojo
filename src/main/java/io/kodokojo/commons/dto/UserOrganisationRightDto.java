@@ -12,7 +12,7 @@ public class UserOrganisationRightDto implements Serializable {
 
     private Right right;
 
-    private List<UserSoftwareFactoryRightDto> softwareFactories;
+    private List<UserProjectRightDto> softwareFactories;
 
     public enum Right {
         ADMIN,
@@ -24,7 +24,7 @@ public class UserOrganisationRightDto implements Serializable {
         softwareFactories = new ArrayList<>();
     }
 
-    public UserOrganisationRightDto(String identifier, String name, Right right, List<UserSoftwareFactoryRightDto> softwareFactories) {
+    public UserOrganisationRightDto(String identifier, String name, Right right, List<UserProjectRightDto> softwareFactories) {
         this.identifier = identifier;
         this.name = name;
         this.right = right;
@@ -55,11 +55,11 @@ public class UserOrganisationRightDto implements Serializable {
         this.right = right;
     }
 
-    public List<UserSoftwareFactoryRightDto> getSoftwareFactories() {
+    public List<UserProjectRightDto> getSoftwareFactories() {
         return softwareFactories;
     }
 
-    public void setSoftwareFactories(List<UserSoftwareFactoryRightDto> softwareFactories) {
+    public void setSoftwareFactories(List<UserProjectRightDto> softwareFactories) {
         this.softwareFactories = softwareFactories;
     }
 

@@ -28,7 +28,7 @@ public class UserDto implements Serializable {
 
     private String identifier;
 
-    private Set<String> entityIdentifiers;
+    private Set<String> organisationIdentifiers;
 
     private String firstName;
 
@@ -50,7 +50,7 @@ public class UserDto implements Serializable {
 
     public UserDto(User user) {
         this.identifier = user.getIdentifier();
-        this.entityIdentifiers = user.getOrganisationIds();
+        this.organisationIdentifiers = user.getOrganisationIds();
         this.firstName = user.getFirstName();
         this.lastName = user.getLastName();
         this.name = user.getName();
@@ -68,12 +68,12 @@ public class UserDto implements Serializable {
         this.identifier = identifier;
     }
 
-    public Set<String> getEntityIdentifiers() {
-        return entityIdentifiers;
+    public Set<String> getOrganisationIdentifiers() {
+        return organisationIdentifiers;
     }
 
-    public void setEntityIdentifiers(Set<String> entityIdentifiers) {
-        this.entityIdentifiers = entityIdentifiers;
+    public void setOrganisationIdentifiers(Set<String> organisationIdentifiers) {
+        this.organisationIdentifiers = organisationIdentifiers;
     }
 
     public String getFirstName() {
@@ -136,7 +136,7 @@ public class UserDto implements Serializable {
     public String toString() {
         return "UserDto{" +
                 "identifier='" + identifier + '\'' +
-                ", entityIdentifiers='" + entityIdentifiers + '\'' +
+                ", organisationIdentifiers='" + organisationIdentifiers + '\'' +
                 ", firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +
                 ", name='" + name + '\'' +

@@ -2,11 +2,11 @@ package io.kodokojo.commons.service.elasticsearch;
 
 import io.kodokojo.commons.config.ElasticSearchConfig;
 import io.kodokojo.commons.service.repository.OrganisationSearcher;
-import io.kodokojo.commons.service.repository.SoftwareFactorySearcher;
+import io.kodokojo.commons.service.repository.ProjectSearcher;
 import io.kodokojo.commons.service.repository.UserSearcher;
 import io.kodokojo.commons.service.repository.search.Criteria;
 import io.kodokojo.commons.service.repository.search.OrganisationSearchDto;
-import io.kodokojo.commons.service.repository.search.SoftwareFactorySearchDto;
+import io.kodokojo.commons.service.repository.search.ProjectSearchDto;
 import io.kodokojo.commons.service.repository.search.UserSearchDto;
 import javaslang.control.Option;
 import okhttp3.OkHttpClient;
@@ -14,7 +14,7 @@ import okhttp3.OkHttpClient;
 import javax.inject.Inject;
 import java.util.List;
 
-public class ElasticSearchSearcher extends ElasticSearchEngine implements OrganisationSearcher, UserSearcher, SoftwareFactorySearcher {
+public class ElasticSearchSearcher extends ElasticSearchEngine implements OrganisationSearcher, UserSearcher, ProjectSearcher {
 
     @Inject
     public ElasticSearchSearcher(ElasticSearchConfig elasticSearchConfig, OkHttpClient httpClient) {
@@ -32,8 +32,8 @@ public class ElasticSearchSearcher extends ElasticSearchEngine implements Organi
     }
 
     @Override
-    public Option<List<SoftwareFactorySearchDto>> searchSoftwareFactoryByCriterion(Criteria... criterion) {
-        return search(SoftwareFactorySearchDto.class, SOFTWAREFACTORY_INDEX, criterion);
+    public Option<List<ProjectSearchDto>> searchSoftwareFactoryByCriterion(Criteria... criterion) {
+        return search(ProjectSearchDto.class, SOFTWAREFACTORY_INDEX, criterion);
     }
 
     protected static final String ORAGNISATION_INDEX = "organisation";

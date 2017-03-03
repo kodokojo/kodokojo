@@ -20,7 +20,7 @@ package io.kodokojo.commons.service.repository;
 import io.kodokojo.commons.model.*;
 import io.kodokojo.commons.service.elasticsearch.ElasticSearchSearcher;
 import io.kodokojo.commons.service.repository.search.OrganisationSearchDto;
-import io.kodokojo.commons.service.repository.search.SoftwareFactorySearchDto;
+import io.kodokojo.commons.service.repository.search.ProjectSearchDto;
 import io.kodokojo.commons.service.repository.search.UserSearchDto;
 import io.kodokojo.commons.service.repository.store.OrganisationStore;
 import io.kodokojo.commons.service.repository.store.OrganisationStoreModel;
@@ -141,7 +141,7 @@ public class Repository implements UserRepository, ProjectRepository, Organisati
         }
         String res = projectStore.addProjectConfiguration(new ProjectConfigurationStoreModel(projectConfiguration));
         if (elasticSearchSearcher != null) {
-            SoftwareFactorySearchDto dto = SoftwareFactorySearchDto.convert(projectConfiguration);
+            ProjectSearchDto dto = ProjectSearchDto.convert(projectConfiguration);
             dto.setIdentifier(res);
             elasticSearchSearcher.addOrUpdate(dto);
         }
@@ -174,7 +174,7 @@ public class Repository implements UserRepository, ProjectRepository, Organisati
         }
         projectStore.updateProjectConfiguration(new ProjectConfigurationStoreModel(projectConfiguration));
         if (elasticSearchSearcher != null) {
-            SoftwareFactorySearchDto dto = SoftwareFactorySearchDto.convert(projectConfiguration);
+            ProjectSearchDto dto = ProjectSearchDto.convert(projectConfiguration);
             elasticSearchSearcher.addOrUpdate(dto);
         }
     }

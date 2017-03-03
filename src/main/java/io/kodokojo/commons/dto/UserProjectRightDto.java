@@ -2,7 +2,7 @@ package io.kodokojo.commons.dto;
 
 import java.io.Serializable;
 
-public class UserSoftwareFactoryRightDto implements Serializable {
+public class UserProjectRightDto implements Serializable {
 
     private String identifier;
 
@@ -12,11 +12,11 @@ public class UserSoftwareFactoryRightDto implements Serializable {
 
     private boolean isTeamLeader;
 
-    public UserSoftwareFactoryRightDto() {
+    public UserProjectRightDto() {
         super();
     }
 
-    public UserSoftwareFactoryRightDto(String identifier,String projectId, String name, boolean isTeamLeader) {
+    public UserProjectRightDto(String identifier, String projectId, String name, boolean isTeamLeader) {
         this.identifier = identifier;
         this.projectId = projectId;
         this.name = name;
