@@ -22,7 +22,7 @@ public class ElasticSearchSearcherIntTest implements DataBuilder {
 
     private Gson gson;
 
-    private ElasticSearchSearcher elasticSearchSearcher;
+    private ElasticSearchConfigurationSearcher elasticSearchSearcher;
 
     @Test
     public void acceptance() {
@@ -66,7 +66,7 @@ public class ElasticSearchSearcherIntTest implements DataBuilder {
             }
         };
         gson = new GsonBuilder().create();
-        elasticSearchSearcher = new ElasticSearchSearcher(elasticSearchConfig, new OkHttpClient());
+        elasticSearchSearcher = new ElasticSearchConfigurationSearcher(elasticSearchConfig, new OkHttpClient());
     }
 
 }

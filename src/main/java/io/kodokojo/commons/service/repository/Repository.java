@@ -18,9 +18,9 @@
 package io.kodokojo.commons.service.repository;
 
 import io.kodokojo.commons.model.*;
-import io.kodokojo.commons.service.elasticsearch.ElasticSearchSearcher;
+import io.kodokojo.commons.service.elasticsearch.ElasticSearchConfigurationSearcher;
 import io.kodokojo.commons.service.repository.search.OrganisationSearchDto;
-import io.kodokojo.commons.service.repository.search.ProjectSearchDto;
+import io.kodokojo.commons.service.repository.search.ProjectConfigurationSearchDto;
 import io.kodokojo.commons.service.repository.search.UserSearchDto;
 import io.kodokojo.commons.service.repository.store.OrganisationStore;
 import io.kodokojo.commons.service.repository.store.OrganisationStoreModel;
@@ -45,14 +45,14 @@ public class Repository implements UserRepository, ProjectRepository, Organisati
 
     private final ProjectStore projectStore;
 
-    private final ElasticSearchSearcher elasticSearchSearcher;
+    private final ElasticSearchConfigurationSearcher elasticSearchSearcher;
 
     @Inject
     public Repository(UserRepository userRepository,
                       UserFetcher userFetcher,
                       OrganisationStore organisationStore,
                       ProjectStore projectStore,
-                      ElasticSearchSearcher elasticSearchSearcher
+                      ElasticSearchConfigurationSearcher elasticSearchSearcher
         ) {
         requireNonNull(userRepository, "userRepository must be defined.");
         requireNonNull(userFetcher, "userFetcher must be defined.");
@@ -141,7 +141,7 @@ public class Repository implements UserRepository, ProjectRepository, Organisati
         }
         String res = projectStore.addProjectConfiguration(new ProjectConfigurationStoreModel(projectConfiguration));
         if (elasticSearchSearcher != null) {
-            ProjectSearchDto dto = ProjectSearchDto.convert(projectConfiguration);
+            ProjectConfigurationSearchDto dto = ProjectConfigurationSearchDto.convert(projectConfiguration);
             dto.setIdentifier(res);
             elasticSearchSearcher.addOrUpdate(dto);
         }
@@ -174,7 +174,7 @@ public class Repository implements UserRepository, ProjectRepository, Organisati
         }
         projectStore.updateProjectConfiguration(new ProjectConfigurationStoreModel(projectConfiguration));
         if (elasticSearchSearcher != null) {
-            ProjectSearchDto dto = ProjectSearchDto.convert(projectConfiguration);
+            ProjectConfigurationSearchDto dto = ProjectConfigurationSearchDto.convert(projectConfiguration);
             elasticSearchSearcher.addOrUpdate(dto);
         }
     }

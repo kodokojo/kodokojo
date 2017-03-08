@@ -7,7 +7,7 @@ import java.util.function.Function;
 
 import static java.util.Objects.requireNonNull;
 
-public class ProjectSearchDto implements DataIdProvider {
+public class ProjectConfigurationSearchDto implements DataIdProvider {
 
     private static final String PROJECT = "project";
 
@@ -15,18 +15,18 @@ public class ProjectSearchDto implements DataIdProvider {
 
     private String name;
 
-    public ProjectSearchDto() {
+    public ProjectConfigurationSearchDto() {
         super();
     }
 
-    public static ProjectSearchDto convert(ProjectConfiguration projectConfiguration) {
+    public static ProjectConfigurationSearchDto convert(ProjectConfiguration projectConfiguration) {
         requireNonNull(projectConfiguration, "projectConfiguration must be defined.");
         return converter().apply(projectConfiguration);
     }
 
-    public static Function<ProjectConfiguration, ProjectSearchDto> converter() {
+    public static Function<ProjectConfiguration, ProjectConfigurationSearchDto> converter() {
         return projectConfiguration -> {
-            ProjectSearchDto res = new ProjectSearchDto();
+            ProjectConfigurationSearchDto res = new ProjectConfigurationSearchDto();
             res.setIdentifier(projectConfiguration.getIdentifier());
             res.setName(projectConfiguration.getName());
             return res;

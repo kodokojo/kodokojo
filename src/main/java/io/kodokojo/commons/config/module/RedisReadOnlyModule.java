@@ -22,7 +22,7 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import io.kodokojo.commons.config.ElasticSearchConfig;
 import io.kodokojo.commons.config.RedisConfig;
-import io.kodokojo.commons.service.elasticsearch.ElasticSearchSearcher;
+import io.kodokojo.commons.service.elasticsearch.ElasticSearchConfigurationSearcher;
 import io.kodokojo.commons.service.lifecycle.ApplicationLifeCycleManager;
 import io.kodokojo.commons.service.redis.RedisOrganisationStore;
 import io.kodokojo.commons.service.redis.RedisProjectStore;
@@ -92,25 +92,25 @@ public class RedisReadOnlyModule extends AbstractModule {
 
     @Provides
     @Singleton
-    ElasticSearchSearcher proElasticSearchSearcher(ElasticSearchConfig elasticSearchConfig, OkHttpClient httpClient) {
-        return new ElasticSearchSearcher(elasticSearchConfig, httpClient);
+    ElasticSearchConfigurationSearcher proElasticSearchSearcher(ElasticSearchConfig elasticSearchConfig, OkHttpClient httpClient) {
+        return new ElasticSearchConfigurationSearcher(elasticSearchConfig, httpClient);
     }
 
     @Provides
     @Singleton
-    OrganisationSearcher provideOrganisationSearcher(ElasticSearchSearcher elasticSearchSearcher) {
+    OrganisationSearcher provideOrganisationSearcher(ElasticSearchConfigurationSearcher elasticSearchSearcher) {
         return elasticSearchSearcher;
     }
 
     @Provides
     @Singleton
-    UserSearcher provideUserSearcher(ElasticSearchSearcher elasticSearchSearcher) {
+    UserSearcher provideUserSearcher(ElasticSearchConfigurationSearcher elasticSearchSearcher) {
         return elasticSearchSearcher;
     }
 
     @Provides
     @Singleton
-    ProjectSearcher proSoftwareFactorySearcher(ElasticSearchSearcher elasticSearchSearcher) {
+    ProjectConfigurationSearcher proSoftwareFactorySearcher(ElasticSearchConfigurationSearcher elasticSearchSearcher) {
         return elasticSearchSearcher;
     }
 }

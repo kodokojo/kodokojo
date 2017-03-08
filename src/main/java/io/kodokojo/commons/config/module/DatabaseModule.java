@@ -22,7 +22,7 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import io.kodokojo.commons.config.ElasticSearchConfig;
 import io.kodokojo.commons.config.RedisConfig;
-import io.kodokojo.commons.service.elasticsearch.ElasticSearchSearcher;
+import io.kodokojo.commons.service.elasticsearch.ElasticSearchConfigurationSearcher;
 import io.kodokojo.commons.service.lifecycle.ApplicationLifeCycleManager;
 import io.kodokojo.commons.service.redis.RedisOrganisationStore;
 import io.kodokojo.commons.service.redis.RedisProjectStore;
@@ -44,7 +44,7 @@ public class DatabaseModule extends AbstractModule {
 
     @Provides
     @Singleton
-    Repository provideRepository(OrganisationStore organisationStore, ProjectStore projectStore, @Named("securityKey") SecretKey secretKey, RedisConfig redisConfig, ElasticSearchSearcher elasticSearchSearcher,  ApplicationLifeCycleManager applicationLifeCycleManager) {
+    Repository provideRepository(OrganisationStore organisationStore, ProjectStore projectStore, @Named("securityKey") SecretKey secretKey, RedisConfig redisConfig, ElasticSearchConfigurationSearcher elasticSearchSearcher, ApplicationLifeCycleManager applicationLifeCycleManager) {
         RedisUserRepository redisUserManager = new RedisUserRepository(secretKey, redisConfig.host(), redisConfig.port(), redisConfig.password());
         applicationLifeCycleManager.addService(redisUserManager);
         return new Repository(redisUserManager, redisUserManager, organisationStore, projectStore, elasticSearchSearcher);
@@ -99,25 +99,25 @@ public class DatabaseModule extends AbstractModule {
 
     @Provides
     @Singleton
-    ElasticSearchSearcher proElasticSearchSearcher(ElasticSearchConfig elasticSearchConfig, OkHttpClient httpClient) {
-        return new ElasticSearchSearcher(elasticSearchConfig, httpClient);
+    ElasticSearchConfigurationSearcher proElasticSearchSearcher(ElasticSearchConfig elasticSearchConfig, OkHttpClient httpClient) {
+        return new ElasticSearchConfigurationSearcher(elasticSearchConfig, httpClient);
     }
 
     @Provides
     @Singleton
-    OrganisationSearcher provideOrganisationSearcher(ElasticSearchSearcher elasticSearchSearcher) {
+    OrganisationSearcher provideOrganisationSearcher(ElasticSearchConfigurationSearcher elasticSearchSearcher) {
         return elasticSearchSearcher;
     }
 
     @Provides
     @Singleton
-    UserSearcher provideUserSearcher(ElasticSearchSearcher elasticSearchSearcher) {
+    UserSearcher provideUserSearcher(ElasticSearchConfigurationSearcher elasticSearchSearcher) {
         return elasticSearchSearcher;
     }
 
     @Provides
     @Singleton
-    ProjectSearcher proSoftwareFactorySearcher(ElasticSearchSearcher elasticSearchSearcher) {
+    ProjectConfigurationSearcher proSoftwareFactorySearcher(ElasticSearchConfigurationSearcher elasticSearchSearcher) {
         return elasticSearchSearcher;
     }
 

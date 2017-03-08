@@ -2,11 +2,11 @@ package io.kodokojo.commons.service.elasticsearch;
 
 import io.kodokojo.commons.config.ElasticSearchConfig;
 import io.kodokojo.commons.service.repository.OrganisationSearcher;
-import io.kodokojo.commons.service.repository.ProjectSearcher;
+import io.kodokojo.commons.service.repository.ProjectConfigurationSearcher;
 import io.kodokojo.commons.service.repository.UserSearcher;
 import io.kodokojo.commons.service.repository.search.Criteria;
 import io.kodokojo.commons.service.repository.search.OrganisationSearchDto;
-import io.kodokojo.commons.service.repository.search.ProjectSearchDto;
+import io.kodokojo.commons.service.repository.search.ProjectConfigurationSearchDto;
 import io.kodokojo.commons.service.repository.search.UserSearchDto;
 import javaslang.control.Option;
 import okhttp3.OkHttpClient;
@@ -14,10 +14,10 @@ import okhttp3.OkHttpClient;
 import javax.inject.Inject;
 import java.util.List;
 
-public class ElasticSearchSearcher extends ElasticSearchEngine implements OrganisationSearcher, UserSearcher, ProjectSearcher {
+public class ElasticSearchConfigurationSearcher extends ElasticSearchEngine implements OrganisationSearcher, UserSearcher, ProjectConfigurationSearcher {
 
     @Inject
-    public ElasticSearchSearcher(ElasticSearchConfig elasticSearchConfig, OkHttpClient httpClient) {
+    public ElasticSearchConfigurationSearcher(ElasticSearchConfig elasticSearchConfig, OkHttpClient httpClient) {
         super(elasticSearchConfig, httpClient);
     }
 
@@ -32,8 +32,8 @@ public class ElasticSearchSearcher extends ElasticSearchEngine implements Organi
     }
 
     @Override
-    public Option<List<ProjectSearchDto>> searchSoftwareFactoryByCriterion(Criteria... criterion) {
-        return search(ProjectSearchDto.class, SOFTWAREFACTORY_INDEX, criterion);
+    public Option<List<ProjectConfigurationSearchDto>> searchProjectConfigurationByCriterion(Criteria... criterion) {
+        return search(ProjectConfigurationSearchDto.class, SOFTWAREFACTORY_INDEX, criterion);
     }
 
     protected static final String ORAGNISATION_INDEX = "organisation";

@@ -12,7 +12,7 @@ public class UserOrganisationRightDto implements Serializable {
 
     private Right right;
 
-    private List<UserProjectRightDto> softwareFactories;
+    private List<UserProjectConfigurationRightDto> projectConfigurations;
 
     public enum Right {
         ADMIN,
@@ -21,14 +21,14 @@ public class UserOrganisationRightDto implements Serializable {
 
     public UserOrganisationRightDto() {
         super();
-        softwareFactories = new ArrayList<>();
+        projectConfigurations = new ArrayList<>();
     }
 
-    public UserOrganisationRightDto(String identifier, String name, Right right, List<UserProjectRightDto> softwareFactories) {
+    public UserOrganisationRightDto(String identifier, String name, Right right, List<UserProjectConfigurationRightDto> projectConfigurations) {
         this.identifier = identifier;
         this.name = name;
         this.right = right;
-        this.softwareFactories = softwareFactories;
+        this.projectConfigurations = projectConfigurations;
     }
 
     public String getIdentifier() {
@@ -55,12 +55,12 @@ public class UserOrganisationRightDto implements Serializable {
         this.right = right;
     }
 
-    public List<UserProjectRightDto> getSoftwareFactories() {
-        return softwareFactories;
+    public List<UserProjectConfigurationRightDto> getProjectConfigurations() {
+        return projectConfigurations;
     }
 
-    public void setSoftwareFactories(List<UserProjectRightDto> softwareFactories) {
-        this.softwareFactories = softwareFactories;
+    public void setProjectConfigurations(List<UserProjectConfigurationRightDto> projectConfigurations) {
+        this.projectConfigurations = projectConfigurations;
     }
 
     @Override
@@ -69,7 +69,7 @@ public class UserOrganisationRightDto implements Serializable {
                 "identifier='" + identifier + '\'' +
                 ", name='" + name + '\'' +
                 ", right=" + right +
-                ", softwareFactories=" + softwareFactories +
+                ", projectConfigurations=" + projectConfigurations +
                 '}';
     }
 }
