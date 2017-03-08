@@ -25,20 +25,20 @@ import java.util.Set;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
-public class UserCreationDto extends User {
+public class UserCreationDto extends UserDto {
 
     private final String privateKey;
 
-    public UserCreationDto(String identifier, Set<String> entityIdentifier, String name, String username, String email, String password, String privateKey, String sshPublicKey) {
-        super(identifier,entityIdentifier,  name, username, email, password, sshPublicKey);
+
+    private final String password;
+
+    public UserCreationDto(User user, String privateKey) {
+        super(user);
         if (isBlank(privateKey)) {
             throw new IllegalArgumentException("privateKey must be defined.");
         }
         this.privateKey = privateKey;
-    }
-
-    public UserCreationDto(User user, String privateKey) {
-        this(user.getIdentifier(), user.getOrganisationIds(), user.getName(), user.getUsername(), user.getEmail(), user.getPassword(), privateKey, user.getSshPublicKey());
+        this.password = user.getPassword();
     }
     public String getPrivateKey() {
         return privateKey;
