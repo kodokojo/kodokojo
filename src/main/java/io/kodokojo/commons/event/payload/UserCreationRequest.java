@@ -29,12 +29,15 @@ public class UserCreationRequest implements Serializable {
 
     private final String entityId;
 
-    public UserCreationRequest(String id, String email, String username, String entityId) {
+    private final boolean isRoot;
+
+    public UserCreationRequest(String id, String email, String username, String entityId, boolean isRoot) {
 
         this.id = id;
         this.email = email;
         this.username = username;
         this.entityId = entityId;
+        this.isRoot = isRoot;
     }
 
     public String getId() {
@@ -51,5 +54,9 @@ public class UserCreationRequest implements Serializable {
 
     public String getEntityId() {
         return entityId;
+    }
+
+    public boolean isRoot() {
+        return isRoot;
     }
 }
