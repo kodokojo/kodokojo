@@ -332,4 +332,9 @@ public class Event implements Serializable {
     public static final String BRICK_STOPPED = "stopped";
     public static final String ERROR_THROW_FROM = "error_throw_from";
 
+
+    public static final String ORGANISATION_CREATE_REQUEST = "organisation_creation_request";
+    public static final String ORGANISATION_CREATE_REPLY = "organisation_creation_reply";
+    public static final String ORGANISATION_CREATED = "organisation_created";
+
 }
