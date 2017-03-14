@@ -22,6 +22,9 @@ import io.kodokojo.commons.config.properties.PropertyConfig;
 
 public interface SecurityConfig extends PropertyConfig {
 
+    @Key(value = "security.secretKey", defaultValue = "")
+    String secretKey();
+
     @Key(value = "security.secretkey.path", defaultValue = "secret.key")
     String privateKeyPath();
 

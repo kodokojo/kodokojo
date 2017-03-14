@@ -44,10 +44,12 @@ import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPublicKeySpec;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
+import static org.apache.commons.lang.StringUtils.isNotBlank;
 
 public class SecurityModule extends AbstractModule {
 
@@ -63,31 +65,36 @@ public class SecurityModule extends AbstractModule {
     @Singleton
     @Named("securityKey")
     SecretKey provideSecretKey(SecurityConfig securityConfig) {
-
-        File keyFile = createPrivateKeyFile(securityConfig);
-        if (keyFile.exists() && keyFile.canRead()) {
-            return provideAesKey(keyFile);
+        if (isNotBlank(securityConfig.secretKey())) {
+            String encodeSecretKey = securityConfig.secretKey();
+            byte[] key = Base64.getDecoder().decode(encodeSecretKey);
+            return new SecretKeySpec(key, "AES");
         } else {
-            boolean created;
-            try {
-                created = keyFile.createNewFile();
-            } catch (IOException e) {
-                throw new RuntimeException("Unable to create " + keyFile.getAbsolutePath() + " file.", e);
-            }
-            if (created) {
-                SecretKey res = generateAesKey();
-                try (FileOutputStream out = new FileOutputStream(securityConfig.privateKeyPath())) {
-                    out.write(res.getEncoded());
-                    out.flush();
-                    return res;
-                } catch (IOException e) {
-                    throw new RuntimeException("unable to read and/or create key file at path " + keyFile.getAbsolutePath(), e);
-                }
-            } else if (keyFile.exists() && keyFile.canRead()) {
-                //May another intance try to create file in same moment. Try to read ot again.
+            File keyFile = createPrivateKeyFile(securityConfig);
+            if (keyFile.exists() && keyFile.canRead()) {
                 return provideAesKey(keyFile);
+            } else {
+                boolean created;
+                try {
+                    created = keyFile.createNewFile();
+                } catch (IOException e) {
+                    throw new RuntimeException("Unable to create " + keyFile.getAbsolutePath() + " file.", e);
+                }
+                if (created) {
+                    SecretKey res = generateAesKey();
+                    try (FileOutputStream out = new FileOutputStream(securityConfig.privateKeyPath())) {
+                        out.write(res.getEncoded());
+                        out.flush();
+                        return res;
+                    } catch (IOException e) {
+                        throw new RuntimeException("unable to read and/or create key file at path " + keyFile.getAbsolutePath(), e);
+                    }
+                } else if (keyFile.exists() && keyFile.canRead()) {
+                    //May another intance try to create file in same moment. Try to read ot again.
+                    return provideAesKey(keyFile);
+                }
+                throw new IllegalStateException("Unable to know if file '" + securityConfig.privateKeyPath() + "' exist or not.");
             }
-            throw new IllegalStateException("Unable to know if file '" + securityConfig.privateKeyPath() +"' exist or not.");
         }
     }
 
@@ -97,7 +104,7 @@ public class SecurityModule extends AbstractModule {
         if (securityConfig == null) {
             throw new IllegalArgumentException("securityConfig must be defined.");
         }
-        if (StringUtils.isNotBlank(securityConfig.wildcardPemPath())) {
+        if (isNotBlank(securityConfig.wildcardPemPath())) {
 
             File pemFile = new File(securityConfig.wildcardPemPath());
             try {
