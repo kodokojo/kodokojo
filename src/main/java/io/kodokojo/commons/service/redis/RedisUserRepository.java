@@ -25,6 +25,7 @@ import io.kodokojo.commons.model.User;
 import io.kodokojo.commons.model.UserService;
 import io.kodokojo.commons.RSAUtils;
 import io.kodokojo.commons.service.repository.UserRepository;
+import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
@@ -34,6 +35,8 @@ import java.security.*;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang.StringUtils.isBlank;
@@ -51,6 +54,8 @@ public class RedisUserRepository extends AbstractRedisStore implements UserRepos
     public static final String NEW_ID_PREFIX = "newId/";
 
     public static final String USER_PREFIX = "user/";
+
+    public static final String ROOT_KEY = "user-roots";
 
     public static final String USERNAME_PREFIX = "usenamer/";
 
@@ -129,6 +134,9 @@ public class RedisUserRepository extends AbstractRedisStore implements UserRepos
                     jedis.set(RedisUtils.aggregateKey(USER_PREFIX, user.getIdentifier()), byteArray.toByteArray());
                     jedis.set(USERNAME_PREFIX + user.getUsername(), user.getIdentifier());
                     jedis.del((NEW_ID_PREFIX + user.getIdentifier()).getBytes());
+                    if (user.isRoot()) {
+                        jedis.sadd(ROOT_KEY, user.getIdentifier());
+                    }
                     return true;
                 }
 
@@ -137,6 +145,19 @@ public class RedisUserRepository extends AbstractRedisStore implements UserRepos
             throw new RuntimeException("Unable to serialized UserValue.", e);
         }
         return false;
+    }
+
+    @Override
+    public Set<User> getRootUsers() {
+        try(Jedis jedis = pool.getResource()) {
+            Set<String> rootIds = jedis.smembers(ROOT_KEY);
+            if (CollectionUtils.isNotEmpty(rootIds)) {
+                return rootIds.stream()
+                        .map(this::getUserByIdentifier)
+                        .collect(Collectors.toSet());
+            }
+        }
+        return null;
     }
 
     @Override

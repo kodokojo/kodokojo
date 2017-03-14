@@ -17,6 +17,8 @@
  */
 package io.kodokojo.commons.service.repository.store;
 
+import java.util.Set;
+
 public interface OrganisationStore {
 
     OrganisationStoreModel getOrganisationById(String organisationIdentifier);
@@ -26,4 +28,6 @@ public interface OrganisationStore {
     void addAdminToOrganisation(String userIdentifier, String organisationIdentifier);
 
     void addUserToOrganisation(String userIdentifier, String organisationIdentifier);
+
+    Set<String> getOrganisationIds();
 }

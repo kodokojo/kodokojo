@@ -19,8 +19,12 @@ package io.kodokojo.commons.service.repository;
 
 import io.kodokojo.commons.model.Organisation;
 
+import java.util.Set;
+
 public interface OrganisationFetcher {
 
     Organisation getOrganisationById(String organisationIdentifier);
+
+    Set<String> getOrganisationIds();
 
 }

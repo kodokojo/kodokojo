@@ -30,6 +30,7 @@ import javax.inject.Inject;
 import java.security.Key;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 
@@ -37,11 +38,12 @@ public class RedisOrganisationStore extends AbstractRedisStore implements Organi
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RedisOrganisationStore.class);
 
-    private static final String ENTITY_GENERATEID_KEY = "entityId";
+    private static final String ENTITY_GENERATEID_KEY = "organisationId";
 
-    public static final String ENTITY_PREFIX = "entity/";
+    public static final String ENTITY_PREFIX = "organisation/";
     public static final String ADMINS_KEY = "/admins";
     public static final String USERS_KEY = "/users";
+    public static final String ORAGNISATIONS_KEY = "organisations";
     public static final String PROJECT_CONFIGS_KEY = "/projectConfigs";
 
     @Inject
@@ -86,6 +88,16 @@ public class RedisOrganisationStore extends AbstractRedisStore implements Organi
         return null;
     }
 
+
+    @Override
+    public Set<String> getOrganisationIds() {
+        try (Jedis jedis = pool.getResource()) {
+            return jedis.smembers(ORAGNISATIONS_KEY);
+
+        }
+    }
+
+
     @Override
     public String addOrganisation(OrganisationStoreModel organisation) {
         if (organisation == null) {
@@ -116,6 +128,7 @@ public class RedisOrganisationStore extends AbstractRedisStore implements Organi
             if (CollectionUtils.isNotEmpty(projectConfigurations)) {
                 jedis.sadd(ENTITY_PREFIX + id + PROJECT_CONFIGS_KEY, projectConfigurations.toArray(new String[projectConfigurations.size()]));
             }
+            jedis.sadd(ORAGNISATIONS_KEY, id);
             return id;
         }
     }

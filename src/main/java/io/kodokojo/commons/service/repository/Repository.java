@@ -26,6 +26,7 @@ import io.kodokojo.commons.service.repository.store.OrganisationStore;
 import io.kodokojo.commons.service.repository.store.OrganisationStoreModel;
 import io.kodokojo.commons.service.repository.store.ProjectConfigurationStoreModel;
 import io.kodokojo.commons.service.repository.store.ProjectStore;
+import org.apache.commons.collections4.CollectionUtils;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -80,6 +81,10 @@ public class Repository implements UserRepository, ProjectRepository, Organisati
         }
         OrganisationStoreModel organisationStoreModel = new OrganisationStoreModel(organisation);
         String res = organisationStore.addOrganisation(organisationStoreModel);
+        Set<User> rootUsers = userFetcher.getRootUsers();
+        if (CollectionUtils.isNotEmpty(rootUsers)) {
+            rootUsers.forEach(root -> addAdminToOrganisation(root.getIdentifier(), res));  // All root are Admin of all organisations.
+        }
         if (elasticSearchSearcher != null) {
             OrganisationSearchDto dto = OrganisationSearchDto.convert(organisation);
             dto.setIdentifier(res);
@@ -124,6 +129,11 @@ public class Repository implements UserRepository, ProjectRepository, Organisati
         }).collect(Collectors.toList());
 
         return new Organisation(organisationStoreModel.getIdentifier(), organisationStoreModel.getName(), organisationStoreModel.isConcrete(), projectConfiguration, admins, users);
+    }
+
+    @Override
+    public Set<String> getOrganisationIds() {
+        return organisationStore.getOrganisationIds();
     }
 
     @Override
@@ -253,6 +263,12 @@ public class Repository implements UserRepository, ProjectRepository, Organisati
     @Override
     public boolean addUser(User user) {
         boolean res = userRepository.addUser(user);
+        if (user.isRoot()) {
+            Set<String> organisationIds = organisationStore.getOrganisationIds();
+            if (CollectionUtils.isNotEmpty(organisationIds)) {
+                organisationIds.forEach(organisationId -> organisationStore.addAdminToOrganisation(user.getIdentifier(), organisationId));
+            }
+        }
         if (elasticSearchSearcher != null) {
             UserSearchDto dto = UserSearchDto.convert(user);
             elasticSearchSearcher.addOrUpdate(dto);
@@ -289,6 +305,11 @@ public class Repository implements UserRepository, ProjectRepository, Organisati
     @Override
     public User getUserByIdentifier(String identifier) {
         return userRepository.getUserByIdentifier(identifier);
+    }
+
+    @Override
+    public Set<User> getRootUsers() {
+        return userRepository.getRootUsers();
     }
 
     @Override

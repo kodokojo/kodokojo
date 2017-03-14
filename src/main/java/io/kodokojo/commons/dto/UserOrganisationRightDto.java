@@ -1,8 +1,14 @@
 package io.kodokojo.commons.dto;
 
+import io.kodokojo.commons.model.Organisation;
+import io.kodokojo.commons.model.User;
+import io.kodokojo.commons.service.repository.OrganisationFetcher;
+import io.kodokojo.commons.service.repository.ProjectFetcher;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class UserOrganisationRightDto implements Serializable {
 
@@ -71,5 +77,38 @@ public class UserOrganisationRightDto implements Serializable {
                 ", right=" + right +
                 ", projectConfigurations=" + projectConfigurations +
                 '}';
+    }
+
+    public static List<UserOrganisationRightDto> computeUserOrganisationRights(User user, OrganisationFetcher organisationFetcher, ProjectFetcher projectFetcher) {
+        return user.getOrganisationIds().stream()
+                .map(organisationId -> computeUserOrganisationRightDto(user, organisationId, organisationFetcher, projectFetcher))
+                .collect(Collectors.toList());
+    }
+
+    public static UserOrganisationRightDto computeUserOrganisationRightDto(User user, String entityId, OrganisationFetcher organisationFetcher, ProjectFetcher projectFetcher) {
+        Organisation organisation = organisationFetcher.getOrganisationById(entityId);
+        UserOrganisationRightDto organisationRightDto = new UserOrganisationRightDto();
+        organisationRightDto.setIdentifier(entityId);
+        organisationRightDto.setName(organisation.getName());
+        if (organisation.userIsAdmin(user.getIdentifier())) {
+            organisationRightDto.setRight(UserOrganisationRightDto.Right.ADMIN);
+        } else {
+            organisationRightDto.setRight(UserOrganisationRightDto.Right.USER);
+        }
+        List<UserProjectConfigurationRightDto> softwareFactories = new ArrayList<>();
+        organisation.getProjectConfigurations().forEachRemaining(projectConfiguration -> {
+            if (projectConfiguration.containAsUser(user)) {
+                UserProjectConfigurationRightDto softwareFactoryDto = new UserProjectConfigurationRightDto();
+                softwareFactoryDto.setName(projectConfiguration.getName());
+                softwareFactoryDto.setIdentifier(projectConfiguration.getIdentifier());
+                softwareFactoryDto.setProjectId(projectFetcher.getProjectIdByProjectConfigurationId(projectConfiguration.getEntityIdentifier()));
+                if (projectConfiguration.containAsTeamLeader(user)) {
+                    softwareFactoryDto.setTeamLeader(true);
+                }
+                softwareFactories.add(softwareFactoryDto);
+            }
+        });
+        organisationRightDto.setProjectConfigurations(softwareFactories);
+        return organisationRightDto;
     }
 }

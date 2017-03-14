@@ -20,8 +20,9 @@ package io.kodokojo.commons.service.repository;
 import io.kodokojo.commons.model.User;
 import io.kodokojo.commons.model.UserService;
 
-public interface UserFetcher {
+import java.util.Set;
 
+public interface UserFetcher {
 
     User getUserByUsername(String username);
 
@@ -30,4 +31,7 @@ public interface UserFetcher {
     UserService getUserServiceByName(String name);
 
     UserService getUserServiceByIdentifier(String identifier);
+
+    Set<User> getRootUsers();
+
 }
