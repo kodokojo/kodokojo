@@ -85,7 +85,7 @@ public class User implements Serializable {
     }
 
     public User(String identifier, Set<String> organisationIds, String name, String username, String email, String password, String sshPublicKey, boolean isRoot) {
-        this(identifier, organisationIds, (name.contains(" ") ? name.substring(0,name.lastIndexOf(" ")): name), (name.contains(" ") ?name.substring(name.lastIndexOf(" "), name.length()): name), username, email, password, sshPublicKey, false);
+        this(identifier, organisationIds, (name.contains(" ") ? name.substring(0,name.lastIndexOf(" ")): name), (name.contains(" ") ?name.substring(name.lastIndexOf(" "), name.length()): name), username, email, password, sshPublicKey, isRoot);
     }
 
     public User(String identifier, String entityIdentifier, String name, String username, String email, String password, String sshPublicKey) {
