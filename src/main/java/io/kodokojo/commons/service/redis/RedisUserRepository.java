@@ -249,7 +249,7 @@ public class RedisUserRepository extends AbstractRedisStore implements UserRepos
             return null;
         }
         String password = RSAUtils.decryptWithAES(key, userValue.getPassword());
-        return new User(identifier,userValue.getEntityId() , userValue.getName(), userValue.getUsername(), userValue.getEmail(), password, userValue.getSshPublicKey());
+        return new User(identifier,userValue.getEntityId() , userValue.getName(), userValue.getUsername(), userValue.getEmail(), password, userValue.getSshPublicKey(), userValue.isRoot());
     }
 
     @Override

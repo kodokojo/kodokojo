@@ -36,19 +36,22 @@ public class UserValue implements Serializable {
 
     private byte[] password;
 
+    private boolean isRoot;
+
     private String sshPublicKey;
 
-    public UserValue(String name, String username,Set<String> entityId, String email, byte[] password, String sshPublicKey) {
+    public UserValue(String name, String username,Set<String> entityId, String email, byte[] password, String sshPublicKey, boolean isRoot) {
         this.name = name;
         this.entityId = entityId;
         this.username = username;
         this.email = email;
         this.password = password;
         this.sshPublicKey = sshPublicKey;
+        this.isRoot = isRoot;
     }
 
     public UserValue(User user, byte[] password) {
-        this(user.getName(), user.getUsername(), user.getOrganisationIds(), user.getEmail(), password, user.getSshPublicKey());
+        this(user.getName(), user.getUsername(), user.getOrganisationIds(), user.getEmail(), password, user.getSshPublicKey(), user.isRoot());
     }
 
     public void setName(String name) {
@@ -95,12 +98,21 @@ public class UserValue implements Serializable {
         return sshPublicKey;
     }
 
+    public boolean isRoot() {
+        return isRoot;
+    }
+
+    public void setRoot(boolean root) {
+        isRoot = root;
+    }
+
     @Override
     public String toString() {
         return "UserValue{" +
                 "name='" + name + '\'' +
                 ", username='" + username + '\'' +
                 ", entityId='" + entityId + '\'' +
+                ", isRoot='" + isRoot + '\'' +
                 ", email='" + email + '\'' +
                 ", sshPublicKey='" + sshPublicKey + '\'' +
                 '}';
