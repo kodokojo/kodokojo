@@ -54,6 +54,7 @@ import static org.apache.commons.lang.StringUtils.isNotBlank;
 public class SecurityModule extends AbstractModule {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SecurityModule.class);
+
     public static final String AES = "AES";
 
     @Override
@@ -68,7 +69,7 @@ public class SecurityModule extends AbstractModule {
         if (isNotBlank(securityConfig.secretKey())) {
             String encodeSecretKey = securityConfig.secretKey();
             byte[] key = Base64.getDecoder().decode(encodeSecretKey);
-            return new SecretKeySpec(key, "AES");
+            return new SecretKeySpec(key, AES);
         } else {
             File keyFile = createPrivateKeyFile(securityConfig);
             if (keyFile.exists() && keyFile.canRead()) {
@@ -161,7 +162,7 @@ public class SecurityModule extends AbstractModule {
     private SecretKey provideAesKey(File keyFile) {
         try {
             byte[] keyByteArray = FileUtils.readFileToByteArray(keyFile);
-            return new SecretKeySpec(keyByteArray, "AES");
+            return new SecretKeySpec(keyByteArray, AES);
         } catch (IOException e) {
             throw new RuntimeException("Unable to read key file from following path: '" + keyFile.getAbsolutePath() + "'.", e);
         }

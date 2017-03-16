@@ -40,6 +40,8 @@ public class UserDto implements Serializable {
 
     private String email;
 
+    private boolean isRoot;
+
     private String sshPublicKey;
 
     private List<UserOrganisationRightDto> organisations;
@@ -57,6 +59,7 @@ public class UserDto implements Serializable {
         this.username = user.getUsername();
         this.email = user.getEmail();
         this.sshPublicKey = user.getSshPublicKey();
+        this.isRoot = user.isRoot();
         this.organisations = new ArrayList<>();
     }
 
@@ -126,6 +129,14 @@ public class UserDto implements Serializable {
 
     public String getSshPublicKey() {
         return sshPublicKey;
+    }
+
+    public boolean isRoot() {
+        return isRoot;
+    }
+
+    public void setRoot(boolean root) {
+        isRoot = root;
     }
 
     public void setSshPublicKey(String sshPublicKey) {
