@@ -88,9 +88,15 @@ public class User implements Serializable {
         this(identifier, organisationIds, (name.contains(" ") ? name.substring(0,name.lastIndexOf(" ")): name), (name.contains(" ") ?name.substring(name.lastIndexOf(" "), name.length()): name), username, email, password, sshPublicKey, isRoot);
     }
 
-    public User(String identifier, String entityIdentifier, String name, String username, String email, String password, String sshPublicKey) {
-        this(identifier, Collections.singleton(entityIdentifier), name, username, email, password, sshPublicKey, false);
+    public User(String identifier, String entityIdentifier, String name, String username, String email, String password, String sshPublicKey, boolean isRoot) {
+        this(identifier, Collections.singleton(entityIdentifier), name, username, email, password, sshPublicKey, isRoot);
     }
+
+    public User(String identifier, String entityIdentifier, String name, String username, String email, String password, String sshPublicKey) {
+        this(identifier, entityIdentifier, name, username, email, password, sshPublicKey, false);
+    }
+
+
 
     public String getIdentifier() {
         return identifier;
