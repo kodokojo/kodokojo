@@ -25,6 +25,8 @@ public interface OrganisationFetcher {
 
     Organisation getOrganisationById(String organisationIdentifier);
 
+    Organisation getOrganisationByName(String name);
+
     Set<String> getOrganisationIds();
 
 }

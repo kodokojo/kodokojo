@@ -121,14 +121,16 @@ public class Repository implements UserRepository, ProjectRepository, Organisati
             throw new IllegalArgumentException("organisationIdentifier must be defined.");
         }
         OrganisationStoreModel organisationStoreModel = organisationStore.getOrganisationById(organisationIdentifier);
-        List<User> admins = organisationStoreModel.getAdmins().stream().map(userFetcher::getUserByIdentifier).collect(Collectors.toList());
-        List<User> users = organisationStoreModel.getUsers().stream().map(userFetcher::getUserByIdentifier).collect(Collectors.toList());
-        List<ProjectConfiguration> projectConfiguration = organisationStoreModel.getProjectConfigurations().stream().map(p -> {
-            ProjectConfigurationStoreModel model = projectStore.getProjectConfigurationById(p);
-            return convertToProjectConfiguration(model);
-        }).collect(Collectors.toList());
+        return convertToOrganisation(organisationStoreModel);
+    }
 
-        return new Organisation(organisationStoreModel.getIdentifier(), organisationStoreModel.getName(), organisationStoreModel.isConcrete(), projectConfiguration, admins, users);
+    @Override
+    public Organisation getOrganisationByName(String name) {
+        if (isBlank(name)) {
+            throw new IllegalArgumentException(" must be defined.");
+        }
+        OrganisationStoreModel organisationStoreModel=  organisationStore.getOrganisationIdByName(name);
+        return convertToOrganisation(organisationStoreModel);
     }
 
     @Override
@@ -329,5 +331,16 @@ public class Repository implements UserRepository, ProjectRepository, Organisati
         ).collect(Collectors.toList());
         List<User> usersProjectConfig = model.getUsers().stream().map(userFetcher::getUserByIdentifier).collect(Collectors.toList());
         return new ProjectConfiguration(model.getEntityIdentifier(), model.getIdentifier(), model.getName(), userService, adminsProjectConfig, model.getStackConfigurations(), usersProjectConfig);
+    }
+
+    private Organisation convertToOrganisation(OrganisationStoreModel organisationStoreModel) {
+        List<User> admins = organisationStoreModel.getAdmins().stream().map(userFetcher::getUserByIdentifier).collect(Collectors.toList());
+        List<User> users = organisationStoreModel.getUsers().stream().map(userFetcher::getUserByIdentifier).collect(Collectors.toList());
+        List<ProjectConfiguration> projectConfiguration = organisationStoreModel.getProjectConfigurations().stream().map(p -> {
+            ProjectConfigurationStoreModel model = projectStore.getProjectConfigurationById(p);
+            return convertToProjectConfiguration(model);
+        }).collect(Collectors.toList());
+
+        return new Organisation(organisationStoreModel.getIdentifier(), organisationStoreModel.getName(), organisationStoreModel.isConcrete(), projectConfiguration, admins, users);
     }
 }

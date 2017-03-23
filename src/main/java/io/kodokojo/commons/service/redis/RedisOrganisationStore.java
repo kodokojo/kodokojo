@@ -43,7 +43,9 @@ public class RedisOrganisationStore extends AbstractRedisStore implements Organi
     public static final String ENTITY_PREFIX = "organisation/";
     public static final String ADMINS_KEY = "/admins";
     public static final String USERS_KEY = "/users";
-    public static final String ORAGNISATIONS_KEY = "organisations";
+    public static final String ORGANISATIONS_KEY = "organisations";
+    public static final String ORGANISATIONS_NAME_TO_ID_KEY = "organisations_name_id/";
+
     public static final String PROJECT_CONFIGS_KEY = "/projectConfigs";
 
     @Inject
@@ -88,12 +90,24 @@ public class RedisOrganisationStore extends AbstractRedisStore implements Organi
         return null;
     }
 
+    @Override
+    public OrganisationStoreModel getOrganisationIdByName(String name) {
+        if (isBlank(name)) {
+            throw new IllegalArgumentException("name must be defined.");
+        }
+        try (Jedis jedis = pool.getResource()) {
+            String currentkey = ORGANISATIONS_NAME_TO_ID_KEY + name;
+            if (jedis.exists(currentkey)) {
+                return getOrganisationById(jedis.get(currentkey));
+            }
+        }
+        return null;
+    }
 
     @Override
     public Set<String> getOrganisationIds() {
         try (Jedis jedis = pool.getResource()) {
-            return jedis.smembers(ORAGNISATIONS_KEY);
-
+            return jedis.smembers(ORGANISATIONS_KEY);
         }
     }
 
@@ -128,7 +142,8 @@ public class RedisOrganisationStore extends AbstractRedisStore implements Organi
             if (CollectionUtils.isNotEmpty(projectConfigurations)) {
                 jedis.sadd(ENTITY_PREFIX + id + PROJECT_CONFIGS_KEY, projectConfigurations.toArray(new String[projectConfigurations.size()]));
             }
-            jedis.sadd(ORAGNISATIONS_KEY, id);
+            jedis.sadd(ORGANISATIONS_KEY, id);
+            jedis.set(ORGANISATIONS_NAME_TO_ID_KEY+ organisation.getName(), id);
             return id;
         }
     }

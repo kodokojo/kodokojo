@@ -30,4 +30,6 @@ public interface OrganisationStore {
     void addUserToOrganisation(String userIdentifier, String organisationIdentifier);
 
     Set<String> getOrganisationIds();
+
+    OrganisationStoreModel getOrganisationIdByName(String name);
 }
