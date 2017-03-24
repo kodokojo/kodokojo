@@ -27,8 +27,10 @@ import io.kodokojo.commons.service.repository.store.OrganisationStoreModel;
 import io.kodokojo.commons.service.repository.store.ProjectConfigurationStoreModel;
 import io.kodokojo.commons.service.repository.store.ProjectStore;
 import org.apache.commons.collections4.CollectionUtils;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -37,6 +39,8 @@ import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang.StringUtils.isBlank;
 
 public class Repository implements UserRepository, ProjectRepository, OrganisationRepository {
+
+    private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(Repository.class);
 
     private final UserRepository userRepository;
 
@@ -83,7 +87,10 @@ public class Repository implements UserRepository, ProjectRepository, Organisati
         String res = organisationStore.addOrganisation(organisationStoreModel);
         Set<User> rootUsers = userFetcher.getRootUsers();
         if (CollectionUtils.isNotEmpty(rootUsers)) {
-            rootUsers.forEach(root -> addAdminToOrganisation(root.getIdentifier(), res));  // All root are Admin of all organisations.
+            rootUsers.forEach(root -> {
+                addAdminToOrganisation(root.getIdentifier(), res);
+                addUserToOrganisationOnUserRedis(res, root);
+            });  // All root are Admin of all organisations.
         }
         if (elasticSearchSearcher != null) {
             OrganisationSearchDto dto = OrganisationSearchDto.convert(organisation);
@@ -94,14 +101,16 @@ public class Repository implements UserRepository, ProjectRepository, Organisati
     }
 
     @Override
-    public void addUserToOrganisation(String userIdentifier, String entityIdentifier) {
+    public void addUserToOrganisation(String userIdentifier, String organisationIdentifier) {
         if (isBlank(userIdentifier)) {
             throw new IllegalArgumentException("userIdentifier must be defined.");
         }
-        if (isBlank(entityIdentifier)) {
-            throw new IllegalArgumentException("entityIdentifier must be defined.");
+        if (isBlank(organisationIdentifier)) {
+            throw new IllegalArgumentException("organisationIdentifier must be defined.");
         }
-        organisationStore.addUserToOrganisation(userIdentifier, entityIdentifier);
+        organisationStore.addUserToOrganisation(userIdentifier, organisationIdentifier);
+        User user = getUserByIdentifier(userIdentifier);
+        addUserToOrganisationOnUserRedis(organisationIdentifier, user);
     }
 
     @Override
@@ -113,6 +122,7 @@ public class Repository implements UserRepository, ProjectRepository, Organisati
             throw new IllegalArgumentException("organisationIdentifier must be defined.");
         }
         organisationStore.addAdminToOrganisation(userIdentifier, organisationIdentifier);
+        addUserToOrganisationOnUserRedis(organisationIdentifier, getUserByIdentifier(userIdentifier));
     }
 
     @Override
@@ -127,9 +137,13 @@ public class Repository implements UserRepository, ProjectRepository, Organisati
     @Override
     public Organisation getOrganisationByName(String name) {
         if (isBlank(name)) {
-            throw new IllegalArgumentException(" must be defined.");
+            throw new IllegalArgumentException("name must be defined.");
         }
         OrganisationStoreModel organisationStoreModel=  organisationStore.getOrganisationIdByName(name);
+        if (organisationStoreModel == null) {
+            LOGGER.debug("Unable to found organisation with name {}", name);
+            return null;
+        }
         return convertToOrganisation(organisationStoreModel);
     }
 
@@ -342,5 +356,14 @@ public class Repository implements UserRepository, ProjectRepository, Organisati
         }).collect(Collectors.toList());
 
         return new Organisation(organisationStoreModel.getIdentifier(), organisationStoreModel.getName(), organisationStoreModel.isConcrete(), projectConfiguration, admins, users);
+    }
+    
+    private void addUserToOrganisationOnUserRedis(String organisationIdentifier, User user) {
+        UserBuilder userBuilder = new UserBuilder(user);
+        Set<String> organisationIdentifiers = new HashSet<>(user.getOrganisationIds());
+        organisationIdentifiers.add(organisationIdentifier);
+        userBuilder.setEntityIdentifiers(organisationIdentifiers);
+        updateUser(userBuilder.build());
+
     }
 }

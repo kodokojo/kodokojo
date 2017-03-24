@@ -90,7 +90,8 @@ public class ElasticSearchEngine {
 
         } else {
             Request.Builder builder = new Request.Builder();
-            Request request = builder.url(computeUrl(type)).post(body).build();
+            String url = computeUrl(type) + "?refresh=wait_for";
+            Request request = builder.url(url).post(body).build();
             LOGGER.debug("Inserting data: {}", data);
             Try<HttpResponse> httpResponses = executeRequest(request);
             return httpResponses.map(httpResponse -> {
@@ -118,6 +119,9 @@ public class ElasticSearchEngine {
         Try<Boolean> exist = httpResponses.map(httpResponse -> {
             String body = httpResponse.getBody();
             JsonObject json = (JsonObject) parser.parse(body);
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Result already exist for {} with id {}:\n{}", type, id, new GsonBuilder().setPrettyPrinting().create().toJson(json));
+            }
             return json.getAsJsonObject(HITS_ATTRIBUTES).getAsJsonPrimitive("total").getAsInt() > 0;
         });
         return exist.getOrElse(Boolean.FALSE);
@@ -129,6 +133,7 @@ public class ElasticSearchEngine {
         List<Criteria> criterion = new ArrayList<>();
         criterion.add(new Criteria(provideIdAttribute(type), id));
         String query = generateQuery(criterion);
+        LOGGER.debug("Generated lookup query for {} with id {}:\n{}",type, id, query);
         Request request = builder.url(url)
                 .post(RequestBody.create(JSON_MINETYPE, query))
                 .build();

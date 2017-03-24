@@ -18,10 +18,16 @@
 package io.kodokojo.commons.service.repository.store;
 
 import io.kodokojo.commons.model.Organisation;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+
+import static java.util.Objects.requireNonNull;
 
 public class OrganisationStoreModel implements Serializable {
 
@@ -50,6 +56,12 @@ public class OrganisationStoreModel implements Serializable {
     }
 
     public OrganisationStoreModel(String identifier, String name, boolean concrete, List<String> projectConfigurations, List<String> admins, List<String> users) {
+        requireNonNull(admins, "admins must be defined.");
+        requireNonNull(users, "users must be defined.");
+        requireNonNull(projectConfigurations, "projectConfigurations must be defined.");
+        if (StringUtils.isBlank(name)) {
+            throw new IllegalArgumentException("name must be defined.");
+        }
         this.identifier = identifier;
         this.name = name;
         this.concrete = concrete;
