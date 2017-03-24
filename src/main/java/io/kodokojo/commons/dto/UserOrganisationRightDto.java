@@ -8,6 +8,7 @@ import io.kodokojo.commons.service.repository.ProjectFetcher;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class UserOrganisationRightDto implements Serializable {
@@ -19,6 +20,10 @@ public class UserOrganisationRightDto implements Serializable {
     private Right right;
 
     private List<UserProjectConfigurationRightDto> projectConfigurations;
+
+    private int nbUserTotal;
+
+    private int nbProjectTotal;
 
     public enum Right {
         ADMIN,
@@ -69,12 +74,30 @@ public class UserOrganisationRightDto implements Serializable {
         this.projectConfigurations = projectConfigurations;
     }
 
+    public int getNbUserTotal() {
+        return nbUserTotal;
+    }
+
+    public void setNbUserTotal(int nbUserTotal) {
+        this.nbUserTotal = nbUserTotal;
+    }
+
+    public int getNbProjectTotal() {
+        return nbProjectTotal;
+    }
+
+    public void setNbProjectTotal(int nbProjectTotal) {
+        this.nbProjectTotal = nbProjectTotal;
+    }
+
     @Override
     public String toString() {
         return "UserOrganisationRightDto{" +
                 "identifier='" + identifier + '\'' +
                 ", name='" + name + '\'' +
                 ", right=" + right +
+                ", nbUserTotal=" + nbUserTotal +
+                ", nbProjectTotal=" + nbProjectTotal +
                 ", projectConfigurations=" + projectConfigurations +
                 '}';
     }
@@ -95,8 +118,12 @@ public class UserOrganisationRightDto implements Serializable {
         } else {
             organisationRightDto.setRight(UserOrganisationRightDto.Right.USER);
         }
+        final AtomicInteger nbUserTotal = new AtomicInteger(0);
+        final AtomicInteger nbProjectTotal = new AtomicInteger(0);
         List<UserProjectConfigurationRightDto> softwareFactories = new ArrayList<>();
         organisation.getProjectConfigurations().forEachRemaining(projectConfiguration -> {
+            nbProjectTotal.incrementAndGet();
+            nbUserTotal.addAndGet(projectConfiguration.getNbUsers());
             if (projectConfiguration.containAsUser(user)) {
                 UserProjectConfigurationRightDto softwareFactoryDto = new UserProjectConfigurationRightDto();
                 softwareFactoryDto.setName(projectConfiguration.getName());
@@ -108,6 +135,8 @@ public class UserOrganisationRightDto implements Serializable {
                 softwareFactories.add(softwareFactoryDto);
             }
         });
+        organisationRightDto.setNbUserTotal(nbUserTotal.get());
+        organisationRightDto.setNbProjectTotal(nbProjectTotal.get());
         organisationRightDto.setProjectConfigurations(softwareFactories);
         return organisationRightDto;
     }

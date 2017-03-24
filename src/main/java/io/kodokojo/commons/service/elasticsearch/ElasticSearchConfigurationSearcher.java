@@ -10,11 +10,27 @@ import io.kodokojo.commons.service.repository.search.ProjectConfigurationSearchD
 import io.kodokojo.commons.service.repository.search.UserSearchDto;
 import javaslang.control.Option;
 import okhttp3.OkHttpClient;
+import org.apache.velocity.Template;
+import org.apache.velocity.VelocityContext;
+import org.apache.velocity.app.VelocityEngine;
+import org.apache.velocity.runtime.RuntimeConstants;
+import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 
 import javax.inject.Inject;
+import java.io.StringWriter;
 import java.util.List;
+import java.util.Properties;
 
 public class ElasticSearchConfigurationSearcher extends ElasticSearchEngine implements OrganisationSearcher, UserSearcher, ProjectConfigurationSearcher {
+
+
+    private static final Properties VE_PROPERTIES = new Properties();
+
+    static {
+        VE_PROPERTIES.setProperty(RuntimeConstants.RESOURCE_LOADER, "classpath");
+        VE_PROPERTIES.setProperty("classpath.resource.loader.class", ClasspathResourceLoader.class.getName());
+        VE_PROPERTIES.setProperty("runtime.log.logsystem.class", "org.apache.velocity.runtime.log.NullLogChute");
+    }
 
     @Inject
     public ElasticSearchConfigurationSearcher(ElasticSearchConfig elasticSearchConfig, OkHttpClient httpClient) {
@@ -23,7 +39,7 @@ public class ElasticSearchConfigurationSearcher extends ElasticSearchEngine impl
 
     @Override
     public Option<List<OrganisationSearchDto>> searchOrganisationByCriterion(Criteria... criterionArray) {
-        return search(OrganisationSearchDto.class, ORAGNISATION_INDEX, criterionArray);
+        return search(OrganisationSearchDto.class, ORGANISATION_INDEX, criterionArray);
     }
 
     @Override
@@ -33,13 +49,27 @@ public class ElasticSearchConfigurationSearcher extends ElasticSearchEngine impl
 
     @Override
     public Option<List<ProjectConfigurationSearchDto>> searchProjectConfigurationByCriterion(Criteria... criterion) {
-        return search(ProjectConfigurationSearchDto.class, SOFTWAREFACTORY_INDEX, criterion);
+        return search(ProjectConfigurationSearchDto.class, SOFTWARE_FACTORY_INDEX, criterion);
     }
 
-    protected static final String ORAGNISATION_INDEX = "organisation";
+    @Override
+    protected String generateQuery(List<Criteria> criterion) {
+        VelocityEngine ve = new VelocityEngine();
+        ve.init(VE_PROPERTIES);
+
+        Template template = ve.getTemplate("marathon/" + brickConfiguration.getName().toLowerCase() + ".json.vm");
+
+        VelocityContext context = new VelocityContext();
+        context.put("ID", "id");
+        StringWriter sw = new StringWriter();
+        template.merge(context, sw);
+        return super.generateQuery(criterion);
+    }
+
+    protected static final String ORGANISATION_INDEX = "organisation";
 
     protected static final String USER_INDEX = "user";
 
-    protected static final String SOFTWAREFACTORY_INDEX = "softwarefactory";
+    protected static final String SOFTWARE_FACTORY_INDEX = "softwarefactory";
 
 }

@@ -156,7 +156,7 @@ public class ElasticSearchEngine {
         }
     }
 
-    protected static String generateQuery(List<Criteria> criterion) {
+    protected String generateQuery(List<Criteria> criterion) {
         assert criterion != null : "criterion must be defined";
 
         StringBuilder res = new StringBuilder("{\"query\": { \"bool\": { ");

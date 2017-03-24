@@ -143,6 +143,10 @@ public class ProjectConfiguration implements Cloneable, Serializable {
         return res;
     }
 
+    public int getNbUsers() {
+        return users.size();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
