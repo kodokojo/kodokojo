@@ -4,6 +4,8 @@ import io.kodokojo.commons.model.User;
 import io.kodokojo.commons.service.elasticsearch.DataIdProvider;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -23,8 +25,19 @@ public class UserSearchDto implements DataIdProvider {
 
     private String email;
 
+    private List<String> organisationIds;
+
     public UserSearchDto() {
         super();
+        organisationIds = new ArrayList<>();
+    }
+
+    public List<String> getOrganisationIds() {
+        return organisationIds;
+    }
+
+    public void setOrganisationIds(List<String> organisationIds) {
+        this.organisationIds = organisationIds;
     }
 
     @Override
@@ -90,6 +103,7 @@ public class UserSearchDto implements DataIdProvider {
             res.setEmail(user.getEmail());
             res.setFirstName(user.getFirstName());
             res.setLastName(user.getLastName());
+            res.setOrganisationIds(new ArrayList<>(user.getOrganisationIds()));
             return res;
         };
     }

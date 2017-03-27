@@ -33,7 +33,7 @@ public class ElasticSearchSearcherIntTest implements DataBuilder {
         if (elasticSearchSearcher.addOrUpdate(data)) {
             System.out.println("Data update or insert");
         }
-        Option<List<OrganisationSearchDto>> organisationResult = elasticSearchSearcher.searchOrganisationByCriterion(
+        Option<List<OrganisationSearchDto>> organisationResult = elasticSearchSearcher.searchOrganisationByCriterion(null,
                 new Criteria("name", "xebia")
         );
         organisationResult.forEach(organisationSearchDtos -> {
@@ -41,7 +41,7 @@ public class ElasticSearchSearcherIntTest implements DataBuilder {
         });
 
 
-        Option<List<UserSearchDto>> emailOption = elasticSearchSearcher.searchUserByCriterion(new Criteria("email", Criteria.CriteriaOperator.COULD_BE, "durand.pierre"));
+        Option<List<UserSearchDto>> emailOption = elasticSearchSearcher.searchUserByCriterion(null, new Criteria("email", Criteria.CriteriaOperator.COULD_BE, "durand.pierre"));
         emailOption.get().forEach(System.out::println);
     }
 

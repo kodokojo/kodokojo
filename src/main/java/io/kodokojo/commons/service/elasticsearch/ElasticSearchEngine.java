@@ -13,11 +13,10 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import static java.util.Objects.requireNonNull;
+import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
 
@@ -37,6 +36,12 @@ public class ElasticSearchEngine {
     public ElasticSearchEngine(ElasticSearchConfig elasticSearchConfig, OkHttpClient httpClient) {
         requireNonNull(elasticSearchConfig, "elasticSearchConfig must be defined.");
         requireNonNull(httpClient, "httpClient must be defined.");
+        if (isBlank(elasticSearchConfig.url())) {
+            throw new IllegalArgumentException("Es url must be defined.");
+        }
+        if (isBlank(elasticSearchConfig.indexName())) {
+            throw new IllegalArgumentException("Es index name must be defined.");
+        }
         this.elasticSearchConfig = elasticSearchConfig;
         this.httpClient = httpClient;
     }
@@ -132,8 +137,8 @@ public class ElasticSearchEngine {
         String url = computeUrl(type, SEARCH_ACTION);
         List<Criteria> criterion = new ArrayList<>();
         criterion.add(new Criteria(provideIdAttribute(type), id));
-        String query = generateQuery(criterion);
-        LOGGER.debug("Generated lookup query for {} with id {}:\n{}",type, id, query);
+        String query = generateQuery(null, criterion.toArray(new Criteria[0]));
+        LOGGER.debug("Generated lookup query for {} with id {}:\n{}", type, id, query);
         Request request = builder.url(url)
                 .post(RequestBody.create(JSON_MINETYPE, query))
                 .build();
@@ -156,8 +161,23 @@ public class ElasticSearchEngine {
         }
     }
 
-    protected String generateQuery(List<Criteria> criterion) {
-        assert criterion != null : "criterion must be defined";
+    protected String generateQuery(Collection<String> organisationIds, Criteria... criterionArray) {
+        assert criterionArray != null : "criterion must be defined";
+        List<Criteria> criterion = Arrays.asList(criterionArray);
+        if (isNotEmpty(organisationIds)) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("[");
+            Iterator<String> it = organisationIds.iterator();
+            while (it.hasNext()) {
+                sb.append("\"").append(it.next()).append("\"");
+                if (it.hasNext()) {
+                    sb.append(",");
+                }
+            }
+            sb.append("]");
+            Criteria organisationIdsCriteria = new Criteria("organisationIds", Criteria.CriteriaOperator.MUST_BE, sb.toString());
+            criterion.add(organisationIdsCriteria);
+        }
 
         StringBuilder res = new StringBuilder("{\"query\": { \"bool\": { ");
         StringBuilder must = new StringBuilder("\"must\": [");
@@ -208,14 +228,17 @@ public class ElasticSearchEngine {
         return res.toString();
     }
 
-    protected <T> Option<List<T>> search(Class<T> classe, String esType, Criteria... criterionArray) {
+    protected <T> Option<List<T>> search(Class<T> classe, String esType, Collection<String> organisationIds, Criteria... criterionArray) {
+        return search(classe, esType, this::generateQuery, organisationIds, criterionArray);
+    }
+
+    protected <T> Option<List<T>> search(Class<T> classe, String esType, QueryComputer queryComputer, Collection<String> organisationIds, Criteria... criterionArray) {
         requireNonNull(criterionArray, "criterion must be defined.");
-        List<Criteria> criterion = Arrays.asList(criterionArray);
         JsonParser parser = new JsonParser();
 
         Request.Builder builder = new Request.Builder();
         String url = computeUrl(esType, SEARCH_ACTION);
-        String query = generateQuery(criterion);
+        String query = queryComputer.computeQuery(organisationIds, criterionArray);
         if (LOGGER.isTraceEnabled()) {
             JsonElement jsonEl = parser.parse(query);
             Gson prettyGson = new GsonBuilder().setPrettyPrinting().create();
@@ -290,6 +313,10 @@ public class ElasticSearchEngine {
         public String getBody() {
             return body;
         }
+    }
+
+    protected interface QueryComputer {
+        String computeQuery(Collection<String> organisationIds, Criteria... criterion);
     }
 
     protected static final String ID_ATTRIBUTE = "_id";

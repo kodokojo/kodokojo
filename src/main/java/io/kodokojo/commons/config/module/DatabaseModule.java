@@ -99,7 +99,7 @@ public class DatabaseModule extends AbstractModule {
 
     @Provides
     @Singleton
-    ElasticSearchConfigurationSearcher proElasticSearchSearcher(ElasticSearchConfig elasticSearchConfig, OkHttpClient httpClient) {
+    ElasticSearchConfigurationSearcher provideElasticSearchSearcher(ElasticSearchConfig elasticSearchConfig, OkHttpClient httpClient) {
         return new ElasticSearchConfigurationSearcher(elasticSearchConfig, httpClient);
     }
 

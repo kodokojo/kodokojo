@@ -8,10 +8,10 @@ import java.util.List;
 
 public interface ProjectConfigurationSearcher {
 
-    Option<List<ProjectConfigurationSearchDto>> searchProjectConfigurationByCriterion(Criteria... criterion);
+    Option<List<ProjectConfigurationSearchDto>> searchProjectConfigurationByCriterion(List<String> organisationIds,Criteria... criterion);
 
-    default Option<List<ProjectConfigurationSearchDto>> searchSofwareFactoryByName(String name) {
+    default Option<List<ProjectConfigurationSearchDto>> searchSofwareFactoryByName(List<String> organisationIds,String name) {
         Criteria criteria = new Criteria("name", name);
-        return searchProjectConfigurationByCriterion(criteria);
+        return searchProjectConfigurationByCriterion(organisationIds, criteria);
     }
 }

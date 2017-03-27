@@ -5,19 +5,20 @@ import io.kodokojo.commons.service.repository.search.UserSearchDto;
 import javaslang.control.Option;
 
 import java.util.List;
+import java.util.Set;
 
 public interface UserSearcher {
 
-    Option<List<UserSearchDto>> searchUserByCriterion(Criteria... criterion);
+    Option<List<UserSearchDto>> searchUserByCriterion(Set<String> organisationIds, Criteria... criterion);
 
-    default Option<List<UserSearchDto>> searchUserByUsername(String name) {
+    default Option<List<UserSearchDto>> searchUserByUsername(Set<String> organisationIds, String name) {
         Criteria criteria = new Criteria("username", name);
-        return searchUserByCriterion(criteria);
+        return searchUserByCriterion(organisationIds, criteria);
     }
 
-    default Option<List<UserSearchDto>> searchUserByEmail(String email) {
+    default Option<List<UserSearchDto>> searchUserByEmail(Set<String> organisationIds, String email) {
         Criteria criteria = new Criteria("email", email);
-        return searchUserByCriterion(criteria);
+        return searchUserByCriterion(organisationIds, criteria);
     }
 
 }

@@ -5,14 +5,15 @@ import io.kodokojo.commons.service.repository.search.OrganisationSearchDto;
 import javaslang.control.Option;
 
 import java.util.List;
+import java.util.Set;
 
 public interface OrganisationSearcher {
 
-    Option<List<OrganisationSearchDto>> searchOrganisationByCriterion(Criteria... criterion);
+    Option<List<OrganisationSearchDto>> searchOrganisationByCriterion(Set<String> organisationIds,Criteria... criterion);
 
-    default Option<List<OrganisationSearchDto>> searchOrganisationByName(String name) {
+    default Option<List<OrganisationSearchDto>> searchOrganisationByName(Set<String> organisationIds, String name) {
         Criteria criteria = new Criteria("name", name);
-        return searchOrganisationByCriterion(criteria);
+        return searchOrganisationByCriterion(organisationIds, criteria);
     }
 
 }

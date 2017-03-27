@@ -1,0 +1,48 @@
+{
+  "query": {
+    "constant_score": {
+      "filter": {
+        "bool": {
+          "should": [
+#foreach($term in ${should})##
+            {
+              "match": {
+                "${term.field}": "${term.value}"
+              }
+            }#if(!$foreach.last),
+#end##
+#end##
+
+          ],
+          "must": [
+#if ($organisationIds)
+          {
+            "bool": {
+              "should": [
+#foreach($organisationId in $organisationIds)
+                  {
+                    "term": {
+                      "organisationIds": "${organisationId}"
+                    }
+                  }#if(!$foreach.last),#end##
+#end##
+
+                ]
+              }
+            }#end##
+#foreach($term in ${must})##
+#if(($foreach.first) && ($organisationIds && $organisationIds != "null")),#end
+
+              {
+              "term": {
+                "${term.field}": "${term.value}"
+              }
+            }#if(!$foreach.last),#end##
+#end##
+
+          ]
+        }
+      }
+    }
+  }
+}
