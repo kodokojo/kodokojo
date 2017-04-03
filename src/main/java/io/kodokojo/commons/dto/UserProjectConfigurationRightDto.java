@@ -2,7 +2,7 @@ package io.kodokojo.commons.dto;
 
 import java.io.Serializable;
 
-public class    UserProjectConfigurationRightDto implements Serializable {
+public class UserProjectConfigurationRightDto implements Serializable {
 
     private String identifier;
 

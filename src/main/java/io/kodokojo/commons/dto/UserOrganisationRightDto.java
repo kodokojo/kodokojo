@@ -128,7 +128,7 @@ public class UserOrganisationRightDto implements Serializable {
                 UserProjectConfigurationRightDto softwareFactoryDto = new UserProjectConfigurationRightDto();
                 softwareFactoryDto.setName(projectConfiguration.getName());
                 softwareFactoryDto.setIdentifier(projectConfiguration.getIdentifier());
-                softwareFactoryDto.setProjectId(projectFetcher.getProjectIdByProjectConfigurationId(projectConfiguration.getEntityIdentifier()));
+                softwareFactoryDto.setProjectId(projectFetcher.getProjectIdByProjectConfigurationId(projectConfiguration.getIdentifier()));
                 if (projectConfiguration.containAsTeamLeader(user)) {
                     softwareFactoryDto.setTeamLeader(true);
                 }
