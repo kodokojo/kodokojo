@@ -24,7 +24,7 @@ public class ProjectConfigurationCreationDto implements Serializable {
 
     private String name;
 
-    private String entityIdentifier;
+    private String organisationIdentifier;
 
     private String ownerIdentifier;
 
@@ -32,8 +32,8 @@ public class ProjectConfigurationCreationDto implements Serializable {
 
     private List<StackConfigDto> stackConfigs;
 
-    public ProjectConfigurationCreationDto(String entityIdentifier, String name, String ownerIdentifier, List<StackConfigDto> stackConfigs, List<String> userIdentifiers) {
-        this.entityIdentifier = entityIdentifier;
+    public ProjectConfigurationCreationDto(String organisationIdentifier, String name, String ownerIdentifier, List<StackConfigDto> stackConfigs, List<String> userIdentifiers) {
+        this.organisationIdentifier = organisationIdentifier;
         this.name = name;
         this.ownerIdentifier = ownerIdentifier;
         this.stackConfigs = stackConfigs;
@@ -56,8 +56,8 @@ public class ProjectConfigurationCreationDto implements Serializable {
         this.name = name;
     }
 
-    public void setEntityIdentifier(String entityIdentifier) {
-        this.entityIdentifier = entityIdentifier;
+    public void setOrganisationIdentifier(String organisationIdentifier) {
+        this.organisationIdentifier = organisationIdentifier;
     }
 
     public List<StackConfigDto> getStackConfigs() {
@@ -76,15 +76,15 @@ public class ProjectConfigurationCreationDto implements Serializable {
         this.userIdentifiers = userIdentifiers;
     }
 
-    public String getEntityIdentifier() {
-        return entityIdentifier;
+    public String getOrganisationIdentifier() {
+        return organisationIdentifier;
     }
 
     @Override
     public String toString() {
         return "ProjectConfigurationCreationDto{" +
                 "name='" + name + '\'' +
-                ", entityIdentifier='" + entityIdentifier + '\'' +
+                ", entityIdentifier='" + organisationIdentifier + '\'' +
                 ", ownerIdentifier='" + ownerIdentifier + '\'' +
                 ", stackConfigs=" + stackConfigs +
                 ", userIdentifiers=" + userIdentifiers +
