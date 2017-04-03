@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang.StringUtils.isBlank;
 
 public class Organisation implements Serializable {
@@ -82,6 +83,11 @@ public class Organisation implements Serializable {
 
     public Iterator<ProjectConfiguration> getProjectConfigurations() {
         return projectConfigurations.iterator();
+    }
+
+    public void addProjectConfiguration(ProjectConfiguration projectConfiguration) {
+        requireNonNull(projectConfiguration, "projectConfiguration must be defined.");
+        this.projectConfigurations.add(projectConfiguration);
     }
 
     public Iterator<User> getAdmins() {

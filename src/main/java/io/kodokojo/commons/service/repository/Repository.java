@@ -114,6 +114,19 @@ public class Repository implements UserRepository, ProjectRepository, Organisati
     }
 
     @Override
+    public void removeUserToOrganisation(String userIdentifier, String organisationIdentifier) {
+        if (isBlank(userIdentifier)) {
+            throw new IllegalArgumentException("userIdentifier must be defined.");
+        }
+        if (isBlank(organisationIdentifier)) {
+            throw new IllegalArgumentException("organisationIdentifier must be defined.");
+        }
+        organisationStore.removeUserToOrganisation(userIdentifier, organisationIdentifier);
+        User user = getUserByIdentifier(userIdentifier);
+        removeUserToOrganisationOnUserRedis(organisationIdentifier, user);
+    }
+
+    @Override
     public void addAdminToOrganisation(String userIdentifier, String organisationIdentifier) {
         if (isBlank(userIdentifier)) {
             throw new IllegalArgumentException("userIdentifier must be defined.");
@@ -123,6 +136,30 @@ public class Repository implements UserRepository, ProjectRepository, Organisati
         }
         organisationStore.addAdminToOrganisation(userIdentifier, organisationIdentifier);
         addUserToOrganisationOnUserRedis(organisationIdentifier, getUserByIdentifier(userIdentifier));
+    }
+
+    @Override
+    public void removeAdminToOrganisation(String userIdentifier, String organisationIdentifier) {
+        if (isBlank(userIdentifier)) {
+            throw new IllegalArgumentException("userIdentifier must be defined.");
+        }
+        if (isBlank(organisationIdentifier)) {
+            throw new IllegalArgumentException("organisationIdentifier must be defined.");
+        }
+        organisationStore.removeAdminToOrganisation(userIdentifier, organisationIdentifier);
+        removeUserToOrganisationOnUserRedis(organisationIdentifier, getUserByIdentifier(userIdentifier));
+
+    }
+
+    @Override
+    public void addProjectConfigurationToOrganisation(String organisationId, String projectConfigurationid) {
+        if (isBlank(organisationId)) {
+            throw new IllegalArgumentException("organisationId must be defined.");
+        }
+        if (isBlank(projectConfigurationid)) {
+            throw new IllegalArgumentException("projectConfigurationid must be defined.");
+        }
+        organisationStore.addProjectConfigurationToOrganisation(organisationId, projectConfigurationid);
     }
 
     @Override
@@ -166,6 +203,7 @@ public class Repository implements UserRepository, ProjectRepository, Organisati
             throw new IllegalArgumentException("projectConfiguration must be defined.");
         }
         String res = projectStore.addProjectConfiguration(new ProjectConfigurationStoreModel(projectConfiguration));
+
         if (elasticSearchSearcher != null) {
             ProjectConfigurationSearchDto dto = ProjectConfigurationSearchDto.convert(projectConfiguration);
             dto.setIdentifier(res);
@@ -364,6 +402,13 @@ public class Repository implements UserRepository, ProjectRepository, Organisati
         organisationIdentifiers.add(organisationIdentifier);
         userBuilder.setEntityIdentifiers(organisationIdentifiers);
         updateUser(userBuilder.build());
+    }
 
+    private void removeUserToOrganisationOnUserRedis(String organisationIdentifier, User user) {
+        UserBuilder userBuilder = new UserBuilder(user);
+        Set<String> organisationIdentifiers = new HashSet<>(user.getOrganisationIds());
+        organisationIdentifiers.remove(organisationIdentifier);
+        userBuilder.setEntityIdentifiers(organisationIdentifiers);
+        updateUser(userBuilder.build());
     }
 }

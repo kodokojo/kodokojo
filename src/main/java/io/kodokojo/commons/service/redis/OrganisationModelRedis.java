@@ -20,6 +20,7 @@ package io.kodokojo.commons.service.redis;
 import io.kodokojo.commons.service.repository.store.OrganisationStoreModel;
 
 import java.io.Serializable;
+import java.util.List;
 
 class OrganisationModelRedis implements Serializable {
 
@@ -29,10 +30,13 @@ class OrganisationModelRedis implements Serializable {
 
     private final boolean concrete;
 
+    private final List<String> projectConfigurationIds;
+
     public OrganisationModelRedis(OrganisationStoreModel model) {
         this.identifier = model.getIdentifier();
         this.name = model.getName();
         this.concrete = model.isConcrete();
+        this.projectConfigurationIds = model.getProjectConfigurations();
     }
 
     public String getIdentifier() {
@@ -45,5 +49,9 @@ class OrganisationModelRedis implements Serializable {
 
     public boolean isConcrete() {
         return concrete;
+    }
+
+    public List<String> getProjectConfigurationIds() {
+        return projectConfigurationIds;
     }
 }

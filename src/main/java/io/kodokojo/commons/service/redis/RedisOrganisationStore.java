@@ -18,6 +18,7 @@
 package io.kodokojo.commons.service.redis;
 
 import io.kodokojo.commons.RSAUtils;
+import io.kodokojo.commons.model.ProjectConfiguration;
 import io.kodokojo.commons.service.repository.store.OrganisationStore;
 import io.kodokojo.commons.service.repository.store.OrganisationStoreModel;
 import org.apache.commons.collections4.CollectionUtils;
@@ -32,6 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang.StringUtils.isBlank;
 
 public class RedisOrganisationStore extends AbstractRedisStore implements OrganisationStore {
@@ -164,6 +166,21 @@ public class RedisOrganisationStore extends AbstractRedisStore implements Organi
     }
 
     @Override
+    public void removeUserToOrganisation(String userIdentifier, String organisationIdentifier) {
+        if (isBlank(userIdentifier)) {
+            throw new IllegalArgumentException("userIdentifier must be defined.");
+        }
+        if (isBlank(organisationIdentifier)) {
+            throw new IllegalArgumentException("organisationIdentifier must be defined.");
+        }
+        try (Jedis jedis = pool.getResource()) {
+            if (jedis.exists(RedisUtils.aggregateKey(ENTITY_PREFIX, organisationIdentifier))) {
+                jedis.srem(ENTITY_PREFIX + organisationIdentifier + USERS_KEY, userIdentifier);
+            }
+        }
+    }
+
+    @Override
     public void addAdminToOrganisation(String userIdentifier, String organisationIdentifier) {
         if (isBlank(userIdentifier)) {
             throw new IllegalArgumentException("userIdentifier must be defined.");
@@ -178,5 +195,31 @@ public class RedisOrganisationStore extends AbstractRedisStore implements Organi
         }
     }
 
+    @Override
+    public void removeAdminToOrganisation(String userIdentifier, String organisationIdentifier) {
+        if (isBlank(userIdentifier)) {
+            throw new IllegalArgumentException("userIdentifier must be defined.");
+        }
+        if (isBlank(organisationIdentifier)) {
+            throw new IllegalArgumentException("organisationIdentifier must be defined.");
+        }
+        try (Jedis jedis = pool.getResource()) {
+            if (jedis.exists(RedisUtils.aggregateKey(ENTITY_PREFIX, organisationIdentifier))) {
+                jedis.srem(ENTITY_PREFIX + organisationIdentifier + ADMINS_KEY, userIdentifier);
+            }
+        }
+    }
 
+    @Override
+    public void addProjectConfigurationToOrganisation(String organisationId, String projectConfigurationId) {
+        if (isBlank(organisationId)) {
+            throw new IllegalArgumentException("organisationId must be defined.");
+        }
+        if (isBlank(projectConfigurationId)) {
+            throw new IllegalArgumentException("projectConfigurationId must be defined.");
+        }
+        try (Jedis jedis = pool.getResource()) {
+            jedis.sadd(ENTITY_PREFIX + organisationId + PROJECT_CONFIGS_KEY, projectConfigurationId );
+        }
+    }
 }

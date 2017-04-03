@@ -336,5 +336,7 @@ public class Event implements Serializable {
     public static final String ORGANISATION_CREATE_REQUEST = "organisation_creation_request";
     public static final String ORGANISATION_CREATE_REPLY = "organisation_creation_reply";
     public static final String ORGANISATION_CREATED = "organisation_created";
+    public static final String ORGANISATION_CHANGE_ADMIN_REQUEST = "organisation_change_admin_request";
+    public static final String ORGANISATION_CHANGE_ADMIN_REPLY = "organisation_change_admin_reply";
 
 }
