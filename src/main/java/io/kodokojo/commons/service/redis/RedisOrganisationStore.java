@@ -35,6 +35,7 @@ import java.util.Set;
 
 import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang.StringUtils.isBlank;
+import static org.apache.commons.lang.StringUtils.isNotBlank;
 
 public class RedisOrganisationStore extends AbstractRedisStore implements OrganisationStore {
 
@@ -116,10 +117,8 @@ public class RedisOrganisationStore extends AbstractRedisStore implements Organi
 
     @Override
     public String addOrganisation(OrganisationStoreModel organisation) {
-        if (organisation == null) {
-            throw new IllegalArgumentException("organisation must be defined.");
-        }
-        if (StringUtils.isNotBlank(organisation.getIdentifier())) {
+        requireNonNull(organisation, "organisation must be defined.");
+        if (isNotBlank(organisation.getIdentifier())) {
             LOGGER.warn("Try to add organisation {} which have already an ID ({}), we don't insert it in redis.", organisation.getName(), organisation.getIdentifier());
             return organisation.getIdentifier();
         }

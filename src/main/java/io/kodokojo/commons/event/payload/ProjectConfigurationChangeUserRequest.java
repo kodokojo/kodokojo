@@ -82,4 +82,5 @@ public class ProjectConfigurationChangeUserRequest implements EventBusOriginMess
     public Event originalEvent() {
         return request;
     }
+
 }

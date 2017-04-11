@@ -139,8 +139,8 @@ public abstract class AbstractEventEndpointActor extends AbstractActor {
                                 self().tell(result, self());
                                 LOGGER.debug("Process an event success");
                             } else {
-                                LOGGER.debug("Process an event FAIL");
                                 if (result instanceof Throwable) {
+                                LOGGER.debug("Process an event FAIL");
                                     throw (Throwable) result;
                                 }
                             }

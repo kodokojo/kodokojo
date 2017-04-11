@@ -71,7 +71,7 @@ public class EventBuilder {
         maxRedeliveryCount = copyFrom.getMaxRedeliveryCount();
         redeliveryCount = copyFrom.getRedeliveryCount();
         eventType = copyFrom.getEventType();
-        custom = copyFrom.getCustom();
+        custom = copyFrom.getCustom() == null ? new HashMap<>() : new HashMap<>(copyFrom.getCustom());
         payload = copyFrom.getPayload();
     }
 
