@@ -124,7 +124,7 @@ public class UserOrganisationRightDto implements Serializable {
         organisation.getProjectConfigurations().forEachRemaining(projectConfiguration -> {
             nbProjectTotal.incrementAndGet();
             nbUserTotal.addAndGet(projectConfiguration.getNbUsers());
-            if (projectConfiguration.containAsUser(user)) {
+            if (organisation.userIsAdmin(user.getIdentifier()) || projectConfiguration.containAsUser(user)) {
                 UserProjectConfigurationRightDto softwareFactoryDto = new UserProjectConfigurationRightDto();
                 softwareFactoryDto.setName(projectConfiguration.getName());
                 softwareFactoryDto.setIdentifier(projectConfiguration.getIdentifier());
