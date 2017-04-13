@@ -27,6 +27,7 @@ import io.kodokojo.commons.service.repository.store.OrganisationStoreModel;
 import io.kodokojo.commons.service.repository.store.ProjectConfigurationStoreModel;
 import io.kodokojo.commons.service.repository.store.ProjectStore;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.IteratorUtils;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
@@ -58,7 +59,7 @@ public class Repository implements UserRepository, ProjectRepository, Organisati
                       OrganisationStore organisationStore,
                       ProjectStore projectStore,
                       ElasticSearchConfigurationSearcher elasticSearchSearcher
-        ) {
+    ) {
         requireNonNull(userRepository, "userRepository must be defined.");
         requireNonNull(userFetcher, "userFetcher must be defined.");
         requireNonNull(organisationStore, "organisationStore must be defined.");
@@ -80,14 +81,17 @@ public class Repository implements UserRepository, ProjectRepository, Organisati
 
     @Override
     public String addOrganisation(Organisation organisation) {
-        if (organisation == null) {
-            throw new IllegalArgumentException("organisation must be defined.");
-        }
+        requireNonNull(organisation, "organisation must be defined.");
+
         OrganisationStoreModel organisationStoreModel = new OrganisationStoreModel(organisation);
         String res = organisationStore.addOrganisation(organisationStoreModel);
         Set<User> rootUsers = userFetcher.getRootUsers();
+
         if (CollectionUtils.isNotEmpty(rootUsers)) {
             rootUsers.forEach(root -> {
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("Add root user {} to organisation {}.", root.getUsername(), organisation.getName());
+                }
                 addAdminToOrganisation(root.getIdentifier(), res);
                 addUserToOrganisationOnUserRedis(res, root);
             });  // All root are Admin of all organisations.
@@ -111,6 +115,17 @@ public class Repository implements UserRepository, ProjectRepository, Organisati
         organisationStore.addUserToOrganisation(userIdentifier, organisationIdentifier);
         User user = getUserByIdentifier(userIdentifier);
         addUserToOrganisationOnUserRedis(organisationIdentifier, user);
+        OrganisationStoreModel organisationStoreModel = organisationStore.getOrganisationById(organisationIdentifier);
+        organisationStoreModel.getProjectConfigurations().stream()
+                .forEach(projectConfigurationId -> {
+                    ProjectConfigurationStoreModel projectConfigurationModel = projectStore.getProjectConfigurationById(projectConfigurationId);
+                    ProjectConfiguration projectConfiguration = convertToProjectConfiguration(projectConfigurationModel);
+                    ProjectConfigurationBuilder builder = new ProjectConfigurationBuilder(projectConfiguration);
+                    List<User> users = IteratorUtils.toList(projectConfiguration.getUsers());
+                    users.add(user);
+                    builder.setUsers(users);
+                    updateProjectConfiguration(builder.build());
+                });
     }
 
     @Override
@@ -124,6 +139,18 @@ public class Repository implements UserRepository, ProjectRepository, Organisati
         organisationStore.removeUserToOrganisation(userIdentifier, organisationIdentifier);
         User user = getUserByIdentifier(userIdentifier);
         removeUserToOrganisationOnUserRedis(organisationIdentifier, user);
+        OrganisationStoreModel organisationStoreModel = organisationStore.getOrganisationById(organisationIdentifier);
+        organisationStoreModel.getProjectConfigurations().stream()
+                .forEach(projectConfigurationId -> {
+                    ProjectConfigurationStoreModel projectConfigurationModel = projectStore.getProjectConfigurationById(projectConfigurationId);
+                    ProjectConfiguration projectConfiguration = convertToProjectConfiguration(projectConfigurationModel);
+                    ProjectConfigurationBuilder builder = new ProjectConfigurationBuilder(projectConfiguration);
+                    List<User> users = IteratorUtils.toList(projectConfiguration.getUsers());
+                    users.remove(user);
+                    builder.setUsers(users);
+                    updateProjectConfiguration(builder.build());
+                });
+
     }
 
     @Override
@@ -134,8 +161,22 @@ public class Repository implements UserRepository, ProjectRepository, Organisati
         if (isBlank(organisationIdentifier)) {
             throw new IllegalArgumentException("organisationIdentifier must be defined.");
         }
+
+        User adminUser = getUserByIdentifier(userIdentifier);
+
         organisationStore.addAdminToOrganisation(userIdentifier, organisationIdentifier);
-        addUserToOrganisationOnUserRedis(organisationIdentifier, getUserByIdentifier(userIdentifier));
+        addUserToOrganisationOnUserRedis(organisationIdentifier, adminUser);
+        OrganisationStoreModel organisationStoreModel = organisationStore.getOrganisationById(organisationIdentifier);
+        organisationStoreModel.getProjectConfigurations().stream()
+                .forEach(projectConfigurationId -> {
+                    ProjectConfigurationStoreModel projectConfigurationModel = projectStore.getProjectConfigurationById(projectConfigurationId);
+                    ProjectConfiguration projectConfiguration = convertToProjectConfiguration(projectConfigurationModel);
+                    ProjectConfigurationBuilder builder = new ProjectConfigurationBuilder(projectConfiguration);
+                    List<User> teamLeaders = IteratorUtils.toList(projectConfiguration.getTeamLeaders());
+                    teamLeaders.add(adminUser);
+                    builder.setAdmins(teamLeaders);
+                    updateProjectConfiguration(builder.build());
+                });
     }
 
     @Override
@@ -146,9 +187,21 @@ public class Repository implements UserRepository, ProjectRepository, Organisati
         if (isBlank(organisationIdentifier)) {
             throw new IllegalArgumentException("organisationIdentifier must be defined.");
         }
+        User adminUser = getUserByIdentifier(userIdentifier);
         organisationStore.removeAdminToOrganisation(userIdentifier, organisationIdentifier);
         removeUserToOrganisationOnUserRedis(organisationIdentifier, getUserByIdentifier(userIdentifier));
-
+        OrganisationStoreModel organisationStoreModel = organisationStore.getOrganisationById(organisationIdentifier);
+        organisationStoreModel.getProjectConfigurations().stream()
+                .forEach(projectConfigurationId -> {
+                            ProjectConfigurationStoreModel projectConfigurationModel = projectStore.getProjectConfigurationById(projectConfigurationId);
+                            ProjectConfiguration projectConfiguration = convertToProjectConfiguration(projectConfigurationModel);
+                            ProjectConfigurationBuilder builder = new ProjectConfigurationBuilder(projectConfiguration);
+                            List<User> teamLeaders = IteratorUtils.toList(projectConfiguration.getTeamLeaders());
+                            teamLeaders.remove(adminUser);
+                            builder.setAdmins(teamLeaders);
+                            updateProjectConfiguration(builder.build());
+                        }
+                );
     }
 
     @Override
@@ -176,7 +229,7 @@ public class Repository implements UserRepository, ProjectRepository, Organisati
         if (isBlank(name)) {
             throw new IllegalArgumentException("name must be defined.");
         }
-        OrganisationStoreModel organisationStoreModel=  organisationStore.getOrganisationIdByName(name);
+        OrganisationStoreModel organisationStoreModel = organisationStore.getOrganisationIdByName(name);
         if (organisationStoreModel == null) {
             LOGGER.debug("Unable to found organisation with name {}", name);
             return null;
@@ -395,7 +448,7 @@ public class Repository implements UserRepository, ProjectRepository, Organisati
 
         return new Organisation(organisationStoreModel.getIdentifier(), organisationStoreModel.getName(), organisationStoreModel.isConcrete(), projectConfiguration, admins, users);
     }
-    
+
     private void addUserToOrganisationOnUserRedis(String organisationIdentifier, User user) {
         UserBuilder userBuilder = new UserBuilder(user);
         Set<String> organisationIdentifiers = new HashSet<>(user.getOrganisationIds());

@@ -152,9 +152,15 @@ public class RedisUserRepository extends AbstractRedisStore implements UserRepos
         try(Jedis jedis = pool.getResource()) {
             Set<String> rootIds = jedis.smembers(ROOT_KEY);
             if (CollectionUtils.isNotEmpty(rootIds)) {
-                return rootIds.stream()
+                Set<User> res = rootIds.stream()
                         .map(this::getUserByIdentifier)
                         .collect(Collectors.toSet());
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("Collect following roots: {}", res.stream().map(User::getUsername).collect(Collectors.toList()));
+                }
+                return res;
+            } else if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Database don't contain any root user.");
             }
         }
         return null;

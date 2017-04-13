@@ -8,7 +8,6 @@ import io.kodokojo.commons.service.repository.ProjectFetcher;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class UserOrganisationRightDto implements Serializable {
@@ -118,12 +117,9 @@ public class UserOrganisationRightDto implements Serializable {
         } else {
             organisationRightDto.setRight(UserOrganisationRightDto.Right.USER);
         }
-        final AtomicInteger nbUserTotal = new AtomicInteger(0);
-        final AtomicInteger nbProjectTotal = new AtomicInteger(0);
+
         List<UserProjectConfigurationRightDto> softwareFactories = new ArrayList<>();
         organisation.getProjectConfigurations().forEachRemaining(projectConfiguration -> {
-            nbProjectTotal.incrementAndGet();
-            nbUserTotal.addAndGet(projectConfiguration.getNbUsers());
             if (organisation.userIsAdmin(user.getIdentifier()) || projectConfiguration.containAsUser(user)) {
                 UserProjectConfigurationRightDto softwareFactoryDto = new UserProjectConfigurationRightDto();
                 softwareFactoryDto.setName(projectConfiguration.getName());
@@ -135,8 +131,8 @@ public class UserOrganisationRightDto implements Serializable {
                 softwareFactories.add(softwareFactoryDto);
             }
         });
-        organisationRightDto.setNbUserTotal(nbUserTotal.get());
-        organisationRightDto.setNbProjectTotal(nbProjectTotal.get());
+        organisationRightDto.setNbUserTotal(organisation.nbUsers());
+        organisationRightDto.setNbProjectTotal(organisation.nbProjectConfiguration());
         organisationRightDto.setProjectConfigurations(softwareFactories);
         return organisationRightDto;
     }

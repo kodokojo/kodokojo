@@ -98,6 +98,14 @@ public class Organisation implements Serializable {
         return users.iterator();
     }
 
+    public int nbUsers() {
+        return users.size();
+    }
+
+    public int nbProjectConfiguration() {
+        return projectConfigurations.size();
+    }
+
     public boolean userIsAdmin(String userId) {
         if (isBlank(userId)) {
             throw new IllegalArgumentException("userId must be defined.");

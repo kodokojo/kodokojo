@@ -124,10 +124,11 @@ public class ElasticSearchEngine {
         Try<Boolean> exist = httpResponses.map(httpResponse -> {
             String body = httpResponse.getBody();
             JsonObject json = (JsonObject) parser.parse(body);
+            boolean res = json.getAsJsonObject(HITS_ATTRIBUTES).getAsJsonPrimitive("total").getAsInt() > 0;
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Result already exist for {} with id {}:\n{}", type, id, new GsonBuilder().setPrettyPrinting().create().toJson(json));
+                LOGGER.debug("Result {} exist for {} with id {}:\n{}", res ? "already" : "not", type, id, new GsonBuilder().setPrettyPrinting().create().toJson(json));
             }
-            return json.getAsJsonObject(HITS_ATTRIBUTES).getAsJsonPrimitive("total").getAsInt() > 0;
+            return res;
         });
         return exist.getOrElse(Boolean.FALSE);
     }
