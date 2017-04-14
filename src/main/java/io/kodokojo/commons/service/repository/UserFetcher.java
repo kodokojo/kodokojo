@@ -34,4 +34,5 @@ public interface UserFetcher {
 
     Set<User> getRootUsers();
 
+    boolean usernameAlreadyExist(String username);
 }

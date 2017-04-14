@@ -18,9 +18,8 @@
 package io.kodokojo.commons.model;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang.StringUtils.isBlank;
@@ -99,7 +98,9 @@ public class Organisation implements Serializable {
     }
 
     public int nbUsers() {
-        return users.size();
+        Set<String> userIds = users.stream().filter(Objects::nonNull).map(User::getIdentifier).collect(Collectors.toSet());
+        userIds.addAll(admins.stream().filter(Objects::nonNull).map(User::getIdentifier).collect(Collectors.toSet()));
+        return userIds.size();
     }
 
     public int nbProjectConfiguration() {

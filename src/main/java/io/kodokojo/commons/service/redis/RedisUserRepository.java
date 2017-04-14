@@ -1,37 +1,40 @@
 /**
  * Kodo Kojo - Software factory done right
  * Copyright © 2017 Kodo Kojo (infos@kodokojo.io)
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package io.kodokojo.commons.service.redis;
 
 
-
-import io.kodokojo.commons.model.UserInWaitingList;
-import io.kodokojo.commons.service.lifecycle.ApplicationLifeCycleListener;
-import io.kodokojo.commons.model.User;
-import io.kodokojo.commons.model.UserService;
 import io.kodokojo.commons.RSAUtils;
+import io.kodokojo.commons.model.User;
+import io.kodokojo.commons.model.UserInWaitingList;
+import io.kodokojo.commons.model.UserService;
+import io.kodokojo.commons.service.lifecycle.ApplicationLifeCycleListener;
 import io.kodokojo.commons.service.repository.UserRepository;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 
-import java.io.*;
-import java.security.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.security.Key;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Arrays;
@@ -40,6 +43,7 @@ import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang.StringUtils.isBlank;
+import static org.apache.commons.lang.StringUtils.isNotBlank;
 
 public class RedisUserRepository extends AbstractRedisStore implements UserRepository, ApplicationLifeCycleListener {
 
@@ -57,7 +61,7 @@ public class RedisUserRepository extends AbstractRedisStore implements UserRepos
 
     public static final String ROOT_KEY = "user-roots";
 
-    public static final String USERNAME_PREFIX = "usenamer/";
+    public static final String USERNAME_PREFIX = "username/";
 
     public static final String USER_WAITING_LIST_PREFIX = "user-waitinglist/";
 
@@ -126,7 +130,7 @@ public class RedisUserRepository extends AbstractRedisStore implements UserRepos
                 byte[] previous = jedis.get(RedisUtils.aggregateKey(NEW_ID_PREFIX, user.getIdentifier()));
                 if (Arrays.equals(previous, NEW_USER_CONTENT) &&
                         !jedis.exists(RedisUtils.aggregateKey(USER_PREFIX, user.getIdentifier()))) {
-                    byte[] password = RSAUtils.encryptWithAES(key,user.getPassword());
+                    byte[] password = RSAUtils.encryptWithAES(key, user.getPassword());
 
                     UserValue userValue = new UserValue(user, password);
                     out.writeObject(userValue);
@@ -149,7 +153,7 @@ public class RedisUserRepository extends AbstractRedisStore implements UserRepos
 
     @Override
     public Set<User> getRootUsers() {
-        try(Jedis jedis = pool.getResource()) {
+        try (Jedis jedis = pool.getResource()) {
             Set<String> rootIds = jedis.smembers(ROOT_KEY);
             if (CollectionUtils.isNotEmpty(rootIds)) {
                 Set<User> res = rootIds.stream()
@@ -167,7 +171,7 @@ public class RedisUserRepository extends AbstractRedisStore implements UserRepos
     }
 
     @Override
-    public boolean addUserToWaitingList( UserInWaitingList userInWaitingList ) {
+    public boolean addUserToWaitingList(UserInWaitingList userInWaitingList) {
         requireNonNull(userInWaitingList, "userInWaitingList must be defined.");
         ByteArrayOutputStream byteArray = new ByteArrayOutputStream();
         try (ObjectOutputStream out = new ObjectOutputStream(byteArray); Jedis jedis = pool.getResource()) {
@@ -186,7 +190,7 @@ public class RedisUserRepository extends AbstractRedisStore implements UserRepos
         ByteArrayOutputStream byteArray = new ByteArrayOutputStream();
         try (ObjectOutputStream out = new ObjectOutputStream(byteArray); Jedis jedis = pool.getResource()) {
             if (jedis.exists(userKey)) {
-                byte[] password = RSAUtils.encryptWithAES(key,user.getPassword());
+                byte[] password = RSAUtils.encryptWithAES(key, user.getPassword());
                 UserValue userValue = new UserValue(user, password);
                 out.writeObject(userValue);
                 jedis.set(userKey, byteArray.toByteArray());
@@ -218,16 +222,28 @@ public class RedisUserRepository extends AbstractRedisStore implements UserRepos
     }
 
     @Override
+    public boolean usernameAlreadyExist(String username) {
+        if (isBlank(username)) {
+            throw new IllegalArgumentException("username must be defined.");
+        }
+        try (Jedis jedis = pool.getResource()) {
+            return jedis.exists(USERNAME_PREFIX + username);
+        }
+    }
+
+    @Override
     public User getUserByUsername(String username) {
         if (isBlank(username)) {
             throw new IllegalArgumentException("username must be defined.");
         }
         try (Jedis jedis = pool.getResource()) {
-            String identifier = jedis.get(USERNAME_PREFIX + username);
-            if (isBlank(identifier)) {
-                return null;
+            if (jedis.exists(USERNAME_PREFIX + username)) {
+                String identifier = jedis.get(USERNAME_PREFIX + username);
+                if (isNotBlank(identifier)) {
+                    return getUserByIdentifier(identifier);
+                }
             }
-            return getUserByIdentifier(identifier);
+            return null;
         }
     }
 
@@ -255,7 +271,7 @@ public class RedisUserRepository extends AbstractRedisStore implements UserRepos
             return null;
         }
         String password = RSAUtils.decryptWithAES(key, userValue.getPassword());
-        return new User(identifier,userValue.getEntityId() , userValue.getName(), userValue.getUsername(), userValue.getEmail(), password, userValue.getSshPublicKey(), userValue.isRoot());
+        return new User(identifier, userValue.getEntityId(), userValue.getName(), userValue.getUsername(), userValue.getEmail(), password, userValue.getSshPublicKey(), userValue.isRoot());
     }
 
     @Override

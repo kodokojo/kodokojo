@@ -126,6 +126,9 @@ public class Repository implements UserRepository, ProjectRepository, Organisati
                     builder.setUsers(users);
                     updateProjectConfiguration(builder.build());
                 });
+        Set<String> users = new HashSet<>(organisationStoreModel.getUsers());
+        users.add(userIdentifier);
+
     }
 
     @Override
@@ -402,6 +405,14 @@ public class Repository implements UserRepository, ProjectRepository, Organisati
     @Override
     public boolean addUserService(UserService userService) {
         return userRepository.addUserService(userService);
+    }
+
+    @Override
+    public boolean usernameAlreadyExist(String username) {
+        if (isBlank(username)) {
+            throw new IllegalArgumentException("username must be defined.");
+        }
+        return userRepository.usernameAlreadyExist(username);
     }
 
     @Override

@@ -2,8 +2,6 @@ package io.kodokojo.commons.event.payload;
 
 import java.io.Serializable;
 
-import static org.apache.commons.lang.StringUtils.isBlank;
-
 public class OrganisationCreationReply implements Serializable{
 
     private String identifier;
@@ -11,9 +9,6 @@ public class OrganisationCreationReply implements Serializable{
     private boolean alreadyExist;
 
     public OrganisationCreationReply(String identifier, boolean alreadyExist) {
-        if (isBlank(identifier)) {
-            throw new IllegalArgumentException("identifier must be defined.");
-        }
         this.identifier = identifier;
         this.alreadyExist = alreadyExist;
     }

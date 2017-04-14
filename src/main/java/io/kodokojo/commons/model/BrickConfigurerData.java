@@ -42,6 +42,7 @@ public class BrickConfigurerData implements Serializable {
     private final String stackName;
 
     private final Map<String, Serializable> context;
+    
     private String brickName;
 
     public BrickConfigurerData(String projectName, String projectConfigurationIdentifier, String stackName, String brickName, String entrypoint, String domaine, List<User> admins, List<User> users) {
