@@ -23,6 +23,8 @@ import org.apache.commons.collections4.CollectionUtils;
 
 import java.io.Serializable;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang.StringUtils.isBlank;
@@ -42,13 +44,13 @@ public class ProjectConfiguration implements Cloneable, Serializable {
     private final UserService userService;
 
     @Expose
-    private final List<User> teamLeaders;
+    private final Map<String,User> teamLeaders;
 
     @Expose
     private final Set<StackConfiguration> stackConfigurations;
 
     @Expose
-    private final List<User> users;
+    private final Map<String,User> users;
 
     public ProjectConfiguration(String entityIdentifier, String identifier, String name, UserService userService, List<User> teamLeaders, Set<StackConfiguration> stackConfigurations, List<User> users) {
         if (isBlank(entityIdentifier)) {
@@ -71,9 +73,9 @@ public class ProjectConfiguration implements Cloneable, Serializable {
         this.entityIdentifier = entityIdentifier;
         this.name = name;
         this.userService = userService;
-        this.teamLeaders = teamLeaders;
+        this.teamLeaders = teamLeaders.stream().collect(Collectors.toMap(User::getIdentifier, Function.identity()));
         this.stackConfigurations = stackConfigurations;
-        this.users = users;
+        this.users = users.stream().collect(Collectors.toMap(User::getIdentifier, Function.identity()));
     }
 
     public ProjectConfiguration(String entityIdentifier, String name, UserService userService, List<User> teamLeaders, Set<StackConfiguration> stackConfigurations, List<User> users) {
@@ -93,7 +95,7 @@ public class ProjectConfiguration implements Cloneable, Serializable {
     }
 
     public Iterator<User> getTeamLeaders() {
-        return teamLeaders.iterator();
+        return teamLeaders.values().iterator();
     }
 
     public String getName() {
@@ -105,12 +107,12 @@ public class ProjectConfiguration implements Cloneable, Serializable {
     }
 
     public Iterator<User> getUsers() {
-        return users.iterator();
+        return users.values().iterator();
     }
 
     public void setUsers(List<User> users) {
         this.users.clear();
-        this.users.addAll(users);
+        this.users.putAll(users.stream().collect(Collectors.toMap(User::getIdentifier, Function.identity())));
     }
 
     public StackConfiguration getDefaultStackConfiguration() {
@@ -123,24 +125,11 @@ public class ProjectConfiguration implements Cloneable, Serializable {
 
     public boolean containAsUser(User user) {
         requireNonNull(user, "user must be defined.");
-        boolean res = false;
-        Iterator<User> userIterator = users.iterator();
-        while (!res && userIterator.hasNext()) {
-            res = userIterator.next().getIdentifier().equals(user.getIdentifier());
-        }
-        if (!res) {
-            res = containAsTeamLeader(user);
-        }
-        return res;
+        return users.containsKey(user.getIdentifier());
     }
     public boolean containAsTeamLeader(User user) {
         requireNonNull(user, "user must be defined.");
-        boolean res = false;
-        Iterator<User> userIterator = teamLeaders.iterator();
-        while (!res && userIterator.hasNext()) {
-            res = userIterator.next().getIdentifier().equals(user.getIdentifier());
-        }
-        return res;
+        return teamLeaders.containsKey(user.getIdentifier());
     }
 
     public int getNbUsers() {
@@ -190,7 +179,7 @@ public class ProjectConfiguration implements Cloneable, Serializable {
 
     @Override
     protected Object clone() throws CloneNotSupportedException {
-        return new ProjectConfiguration(entityIdentifier, name, userService, teamLeaders, new HashSet<>(stackConfigurations), new ArrayList<>(users));
+        return new ProjectConfiguration(entityIdentifier, name, userService, new ArrayList<>(teamLeaders.values()), new HashSet<>(stackConfigurations), new ArrayList<>(users.values()));
     }
 
 
